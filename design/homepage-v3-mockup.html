@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Omora — Your entire online presence</title>
+<script src="./vendor/react.js"></script>
+<script src="./vendor/react-dom.js"></script>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant:wght@400;500&amp;family=Libre+Franklin:wght@400;500;600;700&amp;family=Inter:wght@400;500&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap">
+<style>
+body { margin: 0; background: #0D0908; font-family: 'Inter', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+a { color: #C18CFF; text-decoration: none; }
+a:hover { color: #E7DBFA; }
+.slot { border: 1px dashed #43266E; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: #8A7694; background: #140E13; text-align: center; padding: 16px; }
+</style>
+</helmet>
+
+<div style="width: 100%; background: #0D0908; color: #F0EEE6; overflow-x: hidden">
+
+  <!-- NAV -->
+  <div style="display: flex; flex-wrap: wrap; gap: 24px; align-items: center; justify-content: space-between; padding: 28px 7%; border-bottom: 1px solid #2C211E">
+    <div style="font-family: 'Cormorant', serif; font-size: 20px; text-transform: uppercase; letter-spacing: 0.35em; color: #F0EEE6">Omora</div>
+    <div style="display: flex; flex-wrap: wrap; gap: 32px; align-items: center; font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase">
+      <a href="#services" style="color: #A49C92">What we do</a>
+      <a href="#work" style="color: #A49C92">Work</a>
+      <a href="#about" style="color: #A49C92">About</a>
+      <a href="#contact" style="border: 1px solid #6B32C4; border-radius: 3px; padding: 9px 18px; color: #C18CFF">Start a project</a>
+    </div>
+  </div>
+
+  <!-- HERO -->
+  <div style="padding: 88px 7% 72px; max-width: 1180px">
+    <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase; color: #8B4FE6; margin-bottom: 30px">Bay Area · Websites, media &amp; systems</div>
+    <h1 style="margin: 0 0 30px; font-family: 'Libre Franklin', sans-serif; font-weight: 600; font-size: 76px; line-height: 1.04; letter-spacing: -0.03em; color: #FBFAF7; max-width: 15ch">Your entire online presence. Handled.</h1>
+    <p style="margin: 0 0 42px; font-size: 20px; line-height: 1.6; color: #C2BAB1; max-width: 60ch">Websites, AI call answering, booking systems, and the media and ads around them. Built for local businesses, by one team.</p>
+    <div style="display: flex; flex-wrap: wrap; gap: 16px; align-items: center">
+      <a href="#contact" style="background: #6B32C4; color: #FBFAF7; padding: 16px 32px; border-radius: 3px; font-family: 'Libre Franklin', sans-serif; font-weight: 600; font-size: 15px">Start a project</a>
+      <a href="#services" style="border: 1px solid #2C211E; color: #D8D2CA; padding: 16px 32px; border-radius: 3px; font-family: 'Libre Franklin', sans-serif; font-weight: 500; font-size: 15px">See what we do</a>
+    </div>
+  </div>
+
+  <!-- WORK REEL SLOT -->
+  <div style="padding: 0 7% 84px">
+    <div class="slot" style="width: 100%; height: 440px">[ Work reel — looping video or hero image ]</div>
+  </div>
+
+  <!-- TEAM VIDEO -->
+  <div style="padding: 0 7% 92px">
+    <div style="display: flex; flex-wrap: wrap; gap: 56px; align-items: center">
+      <div style="flex: 999 1 460px; min-width: 0">
+        <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase; color: #8B4FE6; margin-bottom: 20px">Meet the team</div>
+        <h2 style="margin: 0 0 20px; font-family: 'Libre Franklin', sans-serif; font-weight: 600; font-size: 38px; line-height: 1.18; letter-spacing: -0.02em; color: #FBFAF7">Two minutes on how we work</h2>
+        <p style="margin: 0; font-size: 17px; line-height: 1.7; color: #B5ADA4; max-width: 46ch">Who we are, what we build, and what working with us actually looks like.</p>
+      </div>
+      <div style="flex: 1 1 420px; min-width: 0">
+        <div class="slot" style="width: 100%; height: 300px">[ Team video — Ashan &amp; Jordan ]</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- WHAT WE DO -->
+  <div id="services" style="padding: 84px 7% 96px; background: #110C0B; border-top: 1px solid #2C211E; border-bottom: 1px solid #2C211E">
+    <div style="display: flex; flex-wrap: wrap; gap: 28px; align-items: flex-end; justify-content: space-between; margin-bottom: 56px">
+      <div>
+        <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase; color: #8B4FE6; margin-bottom: 20px">What we do</div>
+        <h2 style="margin: 0; font-family: 'Libre Franklin', sans-serif; font-weight: 600; font-size: 44px; line-height: 1.12; letter-spacing: -0.025em; color: #FBFAF7; max-width: 20ch">Four ways we show up for a business</h2>
+      </div>
+      <a href="#" style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; border-bottom: 1px solid #43266E; padding-bottom: 5px">View all services →</a>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px">
+
+      <a href="#" style="display: block; background: #181110; border: 1px solid #2C211E; border-radius: 5px; padding: 0; overflow: hidden; color: inherit">
+        <div class="slot" style="width: 100%; height: 200px; border: none; border-bottom: 1px dashed #43266E; border-radius: 0">[ Websites image ]</div>
+        <div style="padding: 32px">
+          <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.18em; color: #8B4FE6; margin-bottom: 14px">01</div>
+          <h3 style="margin: 0 0 12px; font-family: 'Libre Franklin', sans-serif; font-weight: 600; font-size: 24px; color: #FBFAF7">Websites</h3>
+          <p style="margin: 0 0 20px; font-size: 16px; line-height: 1.65; color: #B5ADA4">The site itself, built to turn visitors into inquiries. Fast, clean, yours day one.</p>
+          <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: #C18CFF">Learn more →</span>
+        </div>
+      </a>
+
+      <a href="#" style="display: block; background: #181110; border: 1px solid #2C211E; border-radius: 5px; padding: 0; overflow: hidden; color: inherit">
+        <div class="slot" style="width: 100%; height: 200px; border: none; border-bottom: 1px dashed #43266E; border-radius: 0">[ Media &amp; content image ]</div>
+        <div style="padding: 32px">
+          <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.18em; color: #8B4FE6; margin-bottom: 14px">02</div>
+          <h3 style="margin: 0 0 12px; font-family: 'Libre Franklin', sans-serif; font-weight: 600; font-size: 24px; color: #FBFAF7">Media &amp; content</h3>
+          <p style="margin: 0 0 20px; font-size: 16px; line-height: 1.65; color: #B5ADA4">Photo, video, scripts and the posts that go with them. Shot and edited in house.</p>
+          <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: #C18CFF">Learn more →</span>
+        </div>
+      </a>
+
+      <a href="#" style="display: block; background: #181110; border: 1px solid #2C211E; border-radius: 5px; padding: 0; overflow: hidden; color: inherit">
+        <div class="slot" style="width: 100%; height: 200px; border: none; border-bottom: 1px dashed #43266E; border-radius: 0">[ Traffic &amp; ads image ]</div>
+        <div style="padding: 32px">
+          <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.18em; color: #8B4FE6; margin-bottom: 14px">03</div>
+          <h3 style="margin: 0 0 12px; font-family: 'Libre Franklin', sans-serif; font-weight: 600; font-size: 24px; color: #FBFAF7">Traffic &amp; ads</h3>
+          <p style="margin: 0 0 20px; font-size: 16px; line-height: 1.65; color: #B5ADA4">Getting the right people to the site. Paid, local search, and the tracking to prove it.</p>
+          <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: #C18CFF">Learn more →</span>
+        </div>
+      </a>
+
+      <a href="#" style="display: block; background: #181110; border: 1px solid #2C211E; border-radius: 5px; padding: 0; overflow: hidden; color: inherit">
+        <div class="slot" style="width: 100%; height: 200px; border: none; border-bottom: 1px dashed #43266E; border-radius: 0">[ Smart systems image ]</div>
+        <div style="padding: 32px">
+          <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.18em; color: #8B4FE6; margin-bottom: 14px">04</div>
+          <h3 style="margin: 0 0 12px; font-family: 'Libre Franklin', sans-serif; font-weight: 600; font-size: 24px; color: #FBFAF7">Smart systems</h3>
+          <p style="margin: 0 0 20px; font-size: 16px; line-height: 1.65; color: #B5ADA4">Call answering, follow-up, booking, lead finding, and the internal tools that kill duplicate work.</p>
+          <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: #C18CFF">Learn more →</span>
+        </div>
+      </a>
+
+    </div>
+
+    <div style="margin-top: 44px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center">
+      <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: #8A827A; margin-right: 8px">Also:</span>
+      <span style="border: 1px solid #2C211E; border-radius: 3px; padding: 7px 14px; font-size: 13px; color: #B0A89E">Call answering</span>
+      <span style="border: 1px solid #2C211E; border-radius: 3px; padding: 7px 14px; font-size: 13px; color: #B0A89E">CRM follow-up</span>
+      <span style="border: 1px solid #2C211E; border-radius: 3px; padding: 7px 14px; font-size: 13px; color: #B0A89E">Booking systems</span>
+      <span style="border: 1px solid #2C211E; border-radius: 3px; padding: 7px 14px; font-size: 13px; color: #B0A89E">Lead research</span>
+      <span style="border: 1px solid #2C211E; border-radius: 3px; padding: 7px 14px; font-size: 13px; color: #B0A89E">Internal tools</span>
+      <span style="border: 1px solid #2C211E; border-radius: 3px; padding: 7px 14px; font-size: 13px; color: #B0A89E">E-commerce</span>
+    </div>
+  </div>
+
+  <!-- ABOUT -->
+  <div id="about" style="padding: 88px 7%">
+    <div style="display: flex; flex-wrap: wrap; gap: 72px">
+      <div style="flex: 999 1 500px; min-width: 0">
+        <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase; color: #8B4FE6; margin-bottom: 20px">About us</div>
+        <h2 style="margin: 0 0 24px; font-family: 'Libre Franklin', sans-serif; font-weight: 600; font-size: 38px; line-height: 1.18; letter-spacing: -0.02em; color: #FBFAF7; max-width: 20ch">A small team out of the East Bay</h2>
+        <p style="margin: 0 0 18px; font-size: 17px; line-height: 1.75; color: #B5ADA4; max-width: 56ch">We build the websites, make the media, and wire up the systems that run behind them. Most shops do one of those and hand you off for the rest.</p>
+        <p style="margin: 0; font-size: 17px; line-height: 1.75; color: #B5ADA4; max-width: 56ch">You own the code, the domain and the data from day one.</p>
+      </div>
+      <div style="flex: 1 1 340px; min-width: 0">
+        <div class="slot" style="width: 100%; height: 300px">[ Team photo ]</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RECENT WORK -->
+  <div id="work" style="padding: 76px 7% 88px; border-top: 1px solid #2C211E">
+    <div style="display: flex; flex-wrap: wrap; gap: 28px; align-items: flex-end; justify-content: space-between; margin-bottom: 48px">
+      <h2 style="margin: 0; font-family: 'Libre Franklin', sans-serif; font-weight: 600; font-size: 34px; letter-spacing: -0.02em; color: #FBFAF7">Recent work</h2>
+      <a href="#" style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; border-bottom: 1px solid #43266E; padding-bottom: 5px">See all projects →</a>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px">
+      <a href="#" style="display: block; color: inherit">
+        <div class="slot" style="width: 100%; height: 230px; margin-bottom: 18px">[ Project screenshot ]</div>
+        <div style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: #8B4FE6; margin-bottom: 9px">Websites</div>
+        <div style="font-family: 'Libre Franklin', sans-serif; font-weight: 600; font-size: 19px; color: #FBFAF7; margin-bottom: 14px">[ Project name ]</div>
+        <div style="display: flex; flex-direction: column; gap: 9px; font-size: 14px; line-height: 1.55">
+          <div><span style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: #8A827A; display: block; margin-bottom: 3px">Problem</span><span style="color: #B0A89E">[ What was broken ]</span></div>
+          <div><span style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: #8A827A; display: block; margin-bottom: 3px">Built</span><span style="color: #B0A89E">[ What we made ]</span></div>
+          <div><span style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: #8A827A; display: block; margin-bottom: 3px">Result</span><span style="color: #C18CFF">[ The number ]</span></div>
+        </div>
+      </a>
+      <a href="#" style="display: block; color: inherit">
+        <div class="slot" style="width: 100%; height: 230px; margin-bottom: 18px">[ Project screenshot ]</div>
+        <div style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: #8B4FE6; margin-bottom: 9px">Smart systems</div>
+        <div style="font-family: 'Libre Franklin', sans-serif; font-weight: 600; font-size: 19px; color: #FBFAF7; margin-bottom: 14px">[ Project name ]</div>
+        <div style="display: flex; flex-direction: column; gap: 9px; font-size: 14px; line-height: 1.55">
+          <div><span style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: #8A827A; display: block; margin-bottom: 3px">Problem</span><span style="color: #B0A89E">[ What was broken ]</span></div>
+          <div><span style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: #8A827A; display: block; margin-bottom: 3px">Built</span><span style="color: #B0A89E">[ What we made ]</span></div>
+          <div><span style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: #8A827A; display: block; margin-bottom: 3px">Result</span><span style="color: #C18CFF">[ The number ]</span></div>
+        </div>
+      </a>
+      <a href="#" style="display: block; color: inherit">
+        <div class="slot" style="width: 100%; height: 230px; margin-bottom: 18px">[ Project screenshot ]</div>
+        <div style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: #8B4FE6; margin-bottom: 9px">Media &amp; content</div>
+        <div style="font-family: 'Libre Franklin', sans-serif; font-weight: 600; font-size: 19px; color: #FBFAF7; margin-bottom: 14px">[ Project name ]</div>
+        <div style="display: flex; flex-direction: column; gap: 9px; font-size: 14px; line-height: 1.55">
+          <div><span style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: #8A827A; display: block; margin-bottom: 3px">Problem</span><span style="color: #B0A89E">[ What was broken ]</span></div>
+          <div><span style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: #8A827A; display: block; margin-bottom: 3px">Built</span><span style="color: #B0A89E">[ What we made ]</span></div>
+          <div><span style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: #8A827A; display: block; margin-bottom: 3px">Result</span><span style="color: #C18CFF">[ The number ]</span></div>
+        </div>
+      </a>
+    </div>
+  </div>
+
+  <!-- CONTACT -->
+  <div id="contact" style="padding: 84px 7% 92px; background: #110C0B; border-top: 1px solid #2C211E">
+    <div style="display: flex; flex-wrap: wrap; gap: 72px">
+      <div style="flex: 1 1 400px; min-width: 0">
+        <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase; color: #8B4FE6; margin-bottom: 20px">Get in touch</div>
+        <h2 style="margin: 0 0 22px; font-family: 'Libre Franklin', sans-serif; font-weight: 600; font-size: 42px; line-height: 1.12; letter-spacing: -0.025em; color: #FBFAF7; max-width: 16ch">Tell us the problem</h2>
+        <p style="margin: 0 0 34px; font-size: 17px; line-height: 1.7; color: #B5ADA4; max-width: 44ch">We'll come back with what we'd do about it and what it costs. No pitch deck.</p>
+        <div style="border-top: 1px solid #2C211E; padding-top: 26px">
+          <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: #8A827A; margin-bottom: 10px">Rather text?</div>
+          <div style="font-family: 'Libre Franklin', sans-serif; font-weight: 600; font-size: 24px; color: #C18CFF">[ 925 · 000 · 0000 ]</div>
+        </div>
+      </div>
+      <div style="flex: 1 1 420px; min-width: 0; background: #181110; border: 1px solid #2C211E; border-radius: 5px; padding: 36px">
+        <div style="display: flex; flex-direction: column; gap: 20px">
+          <div>
+            <label for="nm" style="display: block; font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: #A49C92; margin-bottom: 9px">Name</label>
+            <input id="nm" type="text" style="width: 100%; box-sizing: border-box; background: #0D0908; border: 1px solid #2C211E; border-radius: 3px; padding: 14px; color: #F0EEE6; font-size: 15px; font-family: 'Inter', sans-serif">
+          </div>
+          <div>
+            <label for="em" style="display: block; font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: #A49C92; margin-bottom: 9px">Email or phone</label>
+            <input id="em" type="text" style="width: 100%; box-sizing: border-box; background: #0D0908; border: 1px solid #2C211E; border-radius: 3px; padding: 14px; color: #F0EEE6; font-size: 15px; font-family: 'Inter', sans-serif">
+          </div>
+          <div>
+            <label for="ms" style="display: block; font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: #A49C92; margin-bottom: 9px">What's the problem</label>
+            <textarea id="ms" rows="4" style="width: 100%; box-sizing: border-box; background: #0D0908; border: 1px solid #2C211E; border-radius: 3px; padding: 14px; color: #F0EEE6; font-size: 15px; font-family: 'Inter', sans-serif; resize: vertical"></textarea>
+          </div>
+          <button type="button" style="width: 100%; background: #6B32C4; color: #FBFAF7; border: none; border-radius: 3px; padding: 17px; font-family: 'Libre Franklin', sans-serif; font-weight: 600; font-size: 15px; cursor: pointer">Start the project</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <div style="padding: 44px 7%; border-top: 1px solid #2C211E; display: flex; flex-wrap: wrap; gap: 24px; align-items: center; justify-content: space-between">
+    <div style="font-family: 'Cormorant', serif; font-size: 17px; text-transform: uppercase; letter-spacing: 0.35em; color: #A49C92">Omora</div>
+    <div style="display: flex; flex-wrap: wrap; gap: 28px; font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase">
+      <a href="#" style="color: #8A827A">Instagram</a>
+      <a href="#" style="color: #8A827A">Terms</a>
+      <a href="#" style="color: #8A827A">Privacy</a>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1400,"height":5600}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

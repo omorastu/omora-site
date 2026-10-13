@@ -1,0 +1,13 @@
+.vercel
+node_modules
+.next
+.env
+.env.local
+# Local lead capture (see lib/leads.ts) — never commit real submissions.
+.data
+
+node_modules/
+.next/
+.vercel/
+.env*.local
+.DS_Store
