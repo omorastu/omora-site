@@ -1,26 +1,19 @@
 import { Nav } from "@/components/site/nav";
 import { Footer } from "@/components/site/footer";
 import { HomeHero } from "@/components/home/hero";
-import { Leak } from "@/components/home/leak";
+import { TeamVideo } from "@/components/home/team-video";
 import { HomeServices } from "@/components/home/services";
+import { About } from "@/components/home/about";
 import { Work } from "@/components/home/work";
-import { Founders } from "@/components/home/founders";
-import { HomeTeam } from "@/components/home/team";
-import { HomeTestimonials } from "@/components/home/testimonials";
-import { HomePricing } from "@/components/home/pricing";
 import { Contact } from "@/components/home/contact";
 
 /**
- * The home page, v3 layout — ported from design/homepage-v3-mockup.html.
+ * The home page, v3 layout — ported from design/homepage-v3-mockup.html, spec
+ * in docs/layout.md.
  *
- * Dark throughout, with one exception: the founders' letter is the page's one
- * cream section, and it carries the `data-light-zone` marker the nav watches.
- * Sections run in the order a visitor needs them — the problem, the four
- * fixes, the proof, the people, what it costs, the ticket.
- *
- * Section components live in components/home/. Copy and the page's own slots
- * live in lib/home.ts; the shared datasets (services, projects, testimonials,
- * pricing, team) are read from their own files.
+ * Dark throughout. Sections run hero and reel, team video, what we do, about,
+ * recent work, contact. Section components live in components/home/; copy
+ * and slots live in lib/home.ts.
  */
 export default function Home() {
   return (
@@ -29,13 +22,10 @@ export default function Home() {
       <main id="main" className="relative">
         <span id="top" />
         <HomeHero />
-        <Leak />
+        <TeamVideo />
         <HomeServices />
+        <About />
         <Work />
-        <Founders />
-        <HomeTeam />
-        <HomeTestimonials />
-        <HomePricing />
         <Contact />
       </main>
       <Footer />

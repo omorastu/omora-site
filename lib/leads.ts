@@ -25,7 +25,9 @@ export type Lead = {
   ticket: string;
   createdAt: string;
   name: string;
-  email: string;
+  /** At least one of email or phone is always set; the route enforces it. */
+  email?: string;
+  phone?: string;
   business?: string;
   needs: string[];
   budget?: string;
@@ -94,7 +96,8 @@ async function toEmail(lead: Lead): Promise<DurableResult> {
     const lines = [
       `Ticket:   ${lead.ticket}`,
       `Name:     ${lead.name}`,
-      `Email:    ${lead.email}`,
+      `Email:    ${lead.email || "—"}`,
+      `Phone:    ${lead.phone || "—"}`,
       `Business: ${lead.business || "—"}`,
       `Needs:    ${lead.needs.length ? lead.needs.join(", ") : "—"}`,
       `Budget:   ${lead.budget || "—"}`,
@@ -109,8 +112,9 @@ async function toEmail(lead: Lead): Promise<DurableResult> {
     const { error } = await resend.emails.send({
       from,
       to,
-      // resend v3 spells this snake_case; v4+ renamed it to `replyTo`.
-      reply_to: lead.email,
+      // resend v3 spells this snake_case; v4+ renamed it to `replyTo`. A lead
+      // that left only a phone number has nothing to reply to by email.
+      ...(lead.email ? { reply_to: lead.email } : {}),
       subject: `${lead.ticket} — ${lead.business || lead.name}`,
       text: lines,
     });

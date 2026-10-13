@@ -37,4 +37,4 @@ export type MediaAsset =
     };
 
 /** The proportions a slot is built for. Maps to a Tailwind aspect-ratio class. */
-export type MediaRatio = "16/9" | "4/3" | "3/4" | "1/1";
+export type MediaRatio = "21/9" | "16/9" | "16/10" | "2/1" | "4/3" | "3/4" | "1/1";

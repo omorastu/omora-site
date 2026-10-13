@@ -4,15 +4,13 @@ import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 
 /**
- * Four real routes, in the order the home page's sections run. "How we work"
- * left with the v3 layout: the home page no longer has a process section, so
- * there is nothing for a /#how link to land on.
+ * The home page's sections, per docs/layout.md. Root-relative so they work
+ * from the inner pages too.
  */
 const LINKS = [
-  { href: "/services", label: "Services" },
-  { href: "/work", label: "Work" },
-  { href: "/pricing", label: "Pricing" },
-  { href: "/team", label: "Team" },
+  { href: "/#services", label: "What we do" },
+  { href: "/#work", label: "Work" },
+  { href: "/#about", label: "About" },
 ];
 
 /**
@@ -122,7 +120,7 @@ export function Nav() {
         </ul>
 
         <a
-          href="/#ticket"
+          href="/#contact"
           className={cn(
             "rounded-full border px-4 py-2 font-mono text-[11px] uppercase tracking-[0.16em] transition-colors duration-300",
             overLight
@@ -130,7 +128,7 @@ export function Nav() {
               : "border-violet-deep text-violet hover:bg-violet hover:text-bg"
           )}
         >
-          Start a ticket
+          Start a project
         </a>
       </nav>
     </header>

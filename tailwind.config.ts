@@ -29,6 +29,13 @@ const config: Config = {
         violet: "#C18CFF",
         "violet-deep": "#8B4FE6",
         "violet-dim": "#43266E",
+        /* The third violet in docs/layout.md — the filled-button colour on
+           the dark home page. Same hex as violet-ink, which is a light-zone
+           text token; this is its dark-ground name. */
+        "violet-strong": "#6B32C4",
+        /* Alternating section ground on the home page (What we do, Contact):
+           one step up from bg, still below raised so cards on it read. */
+        band: "#110C0B",
         blue: "#7FA0C4",
         "blue-dim": "#3E5570",
 

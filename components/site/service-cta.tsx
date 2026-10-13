@@ -11,14 +11,14 @@ import { PREFILL_EVENT } from "@/lib/prefill";
  * button they've read what the thing is, and the form arrives with the right
  * box already ticked.
  *
- * The href does the work on its own if JS hasn't loaded: the ticket form is on
+ * The href does the work on its own if JS hasn't loaded: the contact form is on
  * this same page, so the anchor still lands in the right place, just without
  * the preselection.
  */
 export function ServiceCta({ service }: { service: Service }) {
   return (
     <a
-      href="#ticket"
+      href="#contact"
       onClick={() =>
         window.dispatchEvent(
           new CustomEvent(PREFILL_EVENT, { detail: { need: service.slug } })

@@ -98,7 +98,7 @@ export function LeadForm() {
           className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_50%_0%,rgba(193,140,255,0.14),transparent_65%)]"
         />
         <div className="relative">
-          <p className="plate">Ticket opened</p>
+          <p className="plate">Project started</p>
 
           <p className="mt-5 inline-block -rotate-2 rounded-lg border-2 border-violet px-6 py-3 font-mono text-2xl tracking-[0.14em] text-violet shadow-[0_0_36px_-10px_rgba(193,140,255,0.65)] sm:text-3xl">
             {ticket ?? "OMR-—"}
@@ -108,7 +108,7 @@ export function LeadForm() {
             We&rsquo;ve got it.
           </h3>
           <p className="mx-auto mt-3 max-w-prose text-pretty leading-relaxed text-muted">
-            One of us reads every ticket that comes in — usually same day, always
+            One of us reads every message that comes in — usually same day, always
             within one business day. Quote your number if you need to chase it.
           </p>
         </div>
@@ -237,7 +237,7 @@ export function LeadForm() {
             disabled={busy}
             className="group relative inline-flex items-center justify-center gap-2.5 overflow-hidden rounded-full bg-violet-deep px-7 py-3.5 font-medium text-ink shadow-[0_14px_40px_-16px_rgba(139,79,230,0.75)] transition-transform duration-300 hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0 motion-reduce:hover:translate-y-0"
           >
-            {busy ? "Filing…" : "Open the ticket"}
+            {busy ? "Sending…" : "Start the project"}
             {!busy && (
               <svg viewBox="0 0 16 16" className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" fill="none" aria-hidden="true">
                 <path d="M2.5 8h11m0 0-4-4m4 4-4 4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
@@ -252,7 +252,7 @@ export function LeadForm() {
         </div>
 
         <p aria-live="polite" className="sr-only">
-          {busy ? "Filing your ticket." : ""}
+          {busy ? "Sending." : ""}
         </p>
 
         {status === "error" && (
