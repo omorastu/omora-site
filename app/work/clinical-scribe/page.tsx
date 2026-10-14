@@ -6,7 +6,7 @@ import { Nav } from "@/components/site/nav";
 import { Footer } from "@/components/site/footer";
 import { Closing } from "@/components/site/closing";
 import { MediaSlot } from "@/components/home/media-slot";
-import { Capabilities, Step, NoteBlock } from "@/components/work/case-study";
+import { Capabilities, Step, NoteBlock, ComplianceBlock } from "@/components/work/case-study";
 
 const SLUG = "clinical-scribe";
 
@@ -85,14 +85,13 @@ export default function ClinicalScribe() {
           </div>
         </section>
 
-        {/* ── How we approached it, and what this page claims ──────────── */}
+        {/* ── How we approached it, and how patient data is handled ──── */}
         <section className="layer scroll-mt-16 border-t border-line px-6 py-20 sm:py-24">
-          <div className="mx-auto grid max-w-wrap gap-14 lg:grid-cols-2 lg:gap-16">
+          <div className="mx-auto grid max-w-wrap gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.85fr)] lg:gap-16">
             <NoteBlock heading={study.note.heading} body={study.note.body} />
-            <NoteBlock
-              heading={study.scope.heading}
-              body={study.scope.body}
-              tone="bounded"
+            <ComplianceBlock
+              heading={study.compliance.heading}
+              lines={study.compliance.lines}
             />
           </div>
         </section>

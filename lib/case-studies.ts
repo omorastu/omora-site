@@ -53,10 +53,14 @@ export type CaseStudy = {
     heading: string;
     body: string;
   };
-  /** What this page does and does not claim. Plain, and not in small print. */
-  scope: {
+  /**
+   * How patient data is handled. Statements of fact about what was actually
+   * done — never the bare phrase "HIPAA compliant", which is not a thing
+   * anyone can be certified as and so claims more than it says.
+   */
+  compliance: {
     heading: string;
-    body: string;
+    lines: string[];
   };
   cta: {
     heading: string;
@@ -110,9 +114,14 @@ export const caseStudies: CaseStudy[] = [
       heading: "How we approached it",
       body: "The point was never note-taking. Notes are a by-product. The point is that a practice can tell you its close rate to a decimal place and cannot tell you why the people who said no actually said no. That answer only ever existed in the room, and the room was the one place nothing was being written down.",
     },
-    scope: {
-      heading: "What this page claims",
-      body: "This describes a system that has been built and is being put into use. It publishes no figures from the practice and claims no change to their numbers. It was built under a signed business associate agreement, with patient data handled accordingly.",
+    compliance: {
+      heading: "Handling patient data",
+      lines: [
+        "Built to handle protected health information from the start.",
+        "Business associate agreements signed with the practice and with the infrastructure providers.",
+        "The clinical system runs on dedicated HIPAA-eligible infrastructure, not general consumer services.",
+        "Patient data never passes through consumer AI tools.",
+      ],
     },
     cta: {
       heading: "Could you say why your last ten no's said no?",

@@ -74,35 +74,55 @@ export function Step({ step, index }: { step: CaseStep; index: number }) {
 }
 
 /**
- * A short prose block with a mono heading — used for the approach note and the
- * scope disclaimer.
- *
- * The scope block is deliberately the same size and weight as the note above
- * it. Setting it smaller or greyer would make it small print, and the point of
- * saying plainly what is and isn't being claimed is that it gets read.
+ * A short prose block with a mono heading. One tone — the approach note is the
+ * only thing that uses it.
  */
-export function NoteBlock({
-  heading,
-  body,
-  tone = "plain",
-}: {
-  heading: string;
-  body: string;
-  tone?: "plain" | "bounded";
-}) {
+export function NoteBlock({ heading, body }: { heading: string; body: string }) {
   return (
     <Reveal>
-      <div
-        className={
-          tone === "bounded"
-            ? "rounded-lg border border-violet-dim bg-raised/40 px-6 py-7 sm:px-8"
-            : ""
-        }
-      >
+      <div>
         <p className="plate">{heading}</p>
         <p className="mt-4 max-w-prose text-pretty text-[17px] leading-[1.7] text-muted">
           {body}
         </p>
+      </div>
+    </Reveal>
+  );
+}
+
+/**
+ * How patient data is handled: a few statements of fact, hairline-separated.
+ *
+ * Deliberately quieter than the numbered steps — smaller type, no display
+ * face, bounded by a panel — because it is reference, not argument. Someone
+ * who needs it will go looking for it; someone who doesn't should be able to
+ * see at a glance that it is there and move on.
+ */
+export function ComplianceBlock({
+  heading,
+  lines,
+}: {
+  heading: string;
+  lines: string[];
+}) {
+  return (
+    <Reveal delay={80}>
+      <div className="rounded-lg border border-line bg-raised/40 px-6 py-6 sm:px-7">
+        <p className="plate">{heading}</p>
+        <ul className="mt-4">
+          {lines.map((line, i) => (
+            <li
+              key={line}
+              className={
+                i === 0
+                  ? "py-2.5 text-pretty text-sm leading-relaxed text-muted"
+                  : "border-t border-line py-2.5 text-pretty text-sm leading-relaxed text-muted"
+              }
+            >
+              {line}
+            </li>
+          ))}
+        </ul>
       </div>
     </Reveal>
   );
