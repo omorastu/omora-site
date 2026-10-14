@@ -20,7 +20,7 @@ export default function Privacy() {
           heading: "What we collect",
           body: (
             <p>
-              When you open a ticket we collect your name, email, business name,
+              When you start a project we collect your name, email or phone number, business name,
               what you said you need, and whatever you write in the message. We
               don&rsquo;t use tracking cookies and we don&rsquo;t sell anything
               to third parties.
@@ -31,7 +31,7 @@ export default function Privacy() {
           heading: "How it's used",
           body: (
             <p>
-              Tickets go to our inbox so we can reply, and are stored against the
+              Messages go to our inbox so we can reply, and are stored against the
               reference number we send back to you. That&rsquo;s it. You
               don&rsquo;t get added to a mailing list.
             </p>
@@ -59,7 +59,7 @@ export default function Privacy() {
                 studio.omora@gmail.com
               </a>{" "}
               any time to see what we hold on you or to have it deleted. Quote
-              your ticket number if you have one and it&rsquo;s faster.
+              your reference number if you have one and it&rsquo;s faster.
             </p>
           ),
         },

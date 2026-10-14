@@ -1,66 +1,59 @@
-import { sections } from "@/lib/home";
+import { contact } from "@/lib/home";
 import { Reveal } from "@/components/motion";
-import { SectionHead } from "@/components/site/section-head";
-import { LeadForm } from "@/components/site/lead-form";
+import { ContactForm } from "@/components/home/contact-form";
 
 /**
- * The ticket. Same form and same /api/lead backend as every other page — the
- * work order, the spam handling, the stamped docket on success — under the
- * home page's heading. Keeps `id="ticket"` because every CTA on the site,
- * including the nav's, lands on it.
+ * Contact: heading and the text-us line on the left, the three-field form on
+ * the right. `id="contact"` is where every "Start a project" on the site
+ * lands.
  *
- * Under the form, the text line. Nobody on a jobsite fills out a form, so the
- * moment there's a number that's answered it goes in lib/home.ts and this
- * prints it; until then the slot says so rather than printing a fake one.
+ * The text-us number prints once it's set in lib/home.ts; until then the slot
+ * shows the mockup's bracketed placeholder rather than a fake number.
  */
 export function Contact() {
-  const { phone } = sections.contact;
+  const { phone } = contact;
 
   return (
     <section
-      id="ticket"
-      className="layer border-t border-violet-deep/40 bg-raised/40 px-6 py-24 sm:py-32"
+      id="contact"
+      className="layer scroll-mt-16 border-t border-line bg-band px-6 py-20 sm:py-24"
     >
-      <div className="mx-auto max-w-wrap">
-        <SectionHead
-          tone="dark"
-          plate="Start here"
-          title={sections.contact.title}
-          intro={sections.contact.lede}
-        />
+      <div className="mx-auto grid max-w-wrap gap-12 md:grid-cols-2 md:gap-16 lg:gap-[72px]">
+        <Reveal>
+          <p className="plate">{contact.eyebrow}</p>
+          <h2 className="mt-5 max-w-[16ch] text-balance font-display text-3xl font-semibold leading-[1.12] tracking-[-0.025em] text-ink sm:text-[42px]">
+            {contact.title}
+          </h2>
+          <p className="mt-5 max-w-[44ch] text-pretty text-[17px] leading-[1.7] text-muted">
+            {contact.lede}
+          </p>
 
-        <div className="max-w-3xl">
-          <Reveal delay={80}>
-            <LeadForm />
-          </Reveal>
-
-          <Reveal delay={160}>
+          <div className="mt-8 border-t border-line pt-6">
+            <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-muted/80">
+              {contact.textLabel}
+            </p>
             {phone ? (
-              <p className="mt-7 rounded-lg border border-violet-dim px-5 py-4 text-pretty text-sm leading-relaxed text-muted">
-                <b className="font-semibold text-ink">Rather just text?</b> Send a message to{" "}
-                <a
-                  href={`sms:${phone.replace(/[^\d+]/g, "")}`}
-                  className="text-violet underline-offset-4 transition-colors hover:text-ink hover:underline"
-                >
-                  {phone}
-                </a>
-                .
-              </p>
+              <a
+                href={`sms:${phone.replace(/[^\d+]/g, "")}`}
+                className="mt-2.5 inline-block font-display text-2xl font-semibold text-violet transition-colors hover:text-ink"
+              >
+                {phone}
+              </a>
             ) : (
               <p
                 role="note"
                 aria-label="Text number — not yet supplied"
-                className="mt-7 rounded-lg border border-dashed border-violet/40 px-5 py-4 text-pretty text-sm leading-relaxed text-muted/70"
+                className="mt-2.5 font-display text-2xl font-semibold text-violet/50"
               >
-                <b className="font-semibold text-muted">Rather just text?</b>{" "}
-                <span className="font-mono text-[11px] uppercase tracking-[0.12em] text-violet/70">
-                  Number to come
-                </span>{" "}
-                — the line prints here once there&rsquo;s one that&rsquo;s answered.
+                [ 925 · 000 · 0000 ]
               </p>
             )}
-          </Reveal>
-        </div>
+          </div>
+        </Reveal>
+
+        <Reveal delay={100}>
+          <ContactForm submitLabel={contact.submit} />
+        </Reveal>
       </div>
     </section>
   );

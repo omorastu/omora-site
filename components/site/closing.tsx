@@ -6,12 +6,12 @@ import { LeadForm } from "@/components/site/lead-form";
  * Closing CTA — bookends the hero with the second animated background.
  *
  * The work order lives here rather than on a separate contact page: every CTA
- * on the page points at #ticket, and this is where it lands.
+ * on the page points at #contact, and this is where it lands.
  */
 export function Closing() {
   return (
     <section
-      id="ticket"
+      id="contact"
       className="relative w-full overflow-hidden border-t border-[rgba(123,92,176,0.35)] px-6 pb-24 pt-[120px] sm:pb-32"
     >
       <BackgroundBeams />

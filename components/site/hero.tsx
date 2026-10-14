@@ -71,7 +71,7 @@ export function Hero() {
 
         <div className="rise mt-10" style={{ animationDelay: "600ms" }}>
           <a
-            href="#ticket"
+            href="#contact"
             className="group relative inline-flex items-center gap-3 overflow-hidden rounded-full bg-violet-deep px-7 py-4 font-medium text-ink shadow-[0_14px_40px_-14px_rgba(139,79,230,0.7)] transition-transform duration-300 hover:-translate-y-0.5 active:translate-y-0"
           >
             {/* Sheen sweeping across the button on hover. */}

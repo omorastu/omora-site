@@ -14,7 +14,7 @@ export const dynamic = "force-dynamic";
 const NEEDS = NEED_OPTIONS;
 const BUDGETS = ["under-2k", "2-5k", "5-15k", "15k-plus", "not-sure"];
 
-const LIMITS = { name: 100, email: 200, business: 120, message: 4000 } as const;
+const LIMITS = { name: 100, email: 200, phone: 40, business: 120, message: 4000 } as const;
 
 function str(v: unknown, max: number) {
   if (typeof v !== "string") return "";
@@ -24,6 +24,14 @@ function str(v: unknown, max: number) {
 // Deliberately permissive: the goal is to catch typos, not to adjudicate the
 // RFC. Anything that gets past this is verified by the reply actually arriving.
 const EMAIL_RE = /^[^\s@]+@[^\s@.]+(\.[^\s@.]+)+$/;
+
+// A phone number as people type one: digits plus the usual separators, and
+// enough digits to be a real number (7 local, up to 15 international).
+const PHONE_RE = /^\+?[\d\s().-]+$/;
+function looksLikePhone(v: string) {
+  const digits = v.replace(/\D/g, "").length;
+  return PHONE_RE.test(v) && digits >= 7 && digits <= 15;
+}
 
 /* ── Rate limiting ────────────────────────────────────────────────────── */
 
@@ -96,7 +104,15 @@ export async function POST(req: Request) {
   }
 
   const name = str(body.name, LIMITS.name);
-  const email = str(body.email, LIMITS.email);
+
+  // The home page form sends one "email or phone" field as `contact`; the
+  // longer form on the inner pages sends `email`. Errors go back under
+  // whichever key the form used, so they land on the right field.
+  const usesContact = typeof body.contact === "string";
+  const contactKey = usesContact ? "contact" : "email";
+  const contact = usesContact ? str(body.contact, LIMITS.email) : "";
+  const email = usesContact ? (contact.includes("@") ? contact : "") : str(body.email, LIMITS.email);
+  const phone = usesContact && !contact.includes("@") ? contact.slice(0, LIMITS.phone) : "";
   const business = str(body.business, LIMITS.business);
   const message = str(body.message, LIMITS.message);
   const budget = BUDGETS.includes(String(body.budget)) ? String(body.budget) : undefined;
@@ -106,8 +122,15 @@ export async function POST(req: Request) {
 
   const fieldErrors: Record<string, string> = {};
   if (!name) fieldErrors.name = "Tell us your name.";
-  if (!email) fieldErrors.email = "We need an email to reply to.";
-  else if (!EMAIL_RE.test(email)) fieldErrors.email = "That email doesn't look right.";
+  if (!email && !phone) {
+    fieldErrors[contactKey] = usesContact
+      ? "We need an email or a number to reply to."
+      : "We need an email to reply to.";
+  } else if (email && !EMAIL_RE.test(email)) {
+    fieldErrors[contactKey] = "That email doesn't look right.";
+  } else if (phone && !looksLikePhone(phone)) {
+    fieldErrors[contactKey] = "That doesn't look like an email or a phone number.";
+  }
   if (!message) fieldErrors.message = "Tell us what's going wrong — a sentence is plenty.";
 
   if (Object.keys(fieldErrors).length) {
@@ -116,7 +139,8 @@ export async function POST(req: Request) {
 
   const lead = newLead({
     name,
-    email,
+    email: email || undefined,
+    phone: phone || undefined,
     business: business || undefined,
     needs,
     budget,

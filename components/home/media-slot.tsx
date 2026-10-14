@@ -13,19 +13,25 @@ import type { MediaAsset, MediaRatio } from "@/lib/media";
  * empty and read as unfinished rather than broken, and filling a slot later
  * is a data edit, not a markup change.
  *
- * `tone` follows the surface — the founders section is the page's one cream
- * zone and needs the light treatment.
+ * `tone` follows the surface. The home page is dark throughout; the light
+ * treatment is for slots inside the cream zones on the inner pages.
  */
 
 const RATIO: Record<MediaRatio, string> = {
+  "21/9": "aspect-[21/9]",
   "16/9": "aspect-video",
+  "16/10": "aspect-[16/10]",
+  "2/1": "aspect-[2/1]",
   "4/3": "aspect-[4/3]",
   "3/4": "aspect-[3/4]",
   "1/1": "aspect-square",
 };
 
 const RATIO_LABEL: Record<MediaRatio, string> = {
+  "21/9": "21:9",
   "16/9": "16:9",
+  "16/10": "16:10",
+  "2/1": "2:1",
   "4/3": "4:3",
   "3/4": "3:4",
   "1/1": "1:1",
