@@ -100,7 +100,14 @@ export function LeadForm() {
         <div className="relative">
           <p className="plate">Project started</p>
 
-          <p className="mt-5 inline-block -rotate-2 rounded-lg border-2 border-violet px-6 py-3 font-mono text-2xl tracking-[0.14em] text-violet shadow-[0_0_36px_-10px_rgba(193,140,255,0.65)] sm:text-3xl">
+          {/* Names the code for the visitor. The value, the `ticket` state and
+              the OMR- format are the lead's filing reference and are unchanged
+              — this labels it, it doesn't rename it. */}
+          <p className="mt-6 font-mono text-[10px] uppercase tracking-[0.16em] text-muted/70">
+            Your reference
+          </p>
+
+          <p className="mt-2 inline-block -rotate-2 rounded-lg border-2 border-violet px-6 py-3 font-mono text-2xl tracking-[0.14em] text-violet shadow-[0_0_36px_-10px_rgba(193,140,255,0.65)] sm:text-3xl">
             {ticket ?? "OMR-—"}
           </p>
 

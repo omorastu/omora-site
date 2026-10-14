@@ -114,6 +114,8 @@ export const about = {
 export type RecentProject = {
   category: string;
   name?: string;
+  /** One line on what the thing is. Sits under the name, above Problem. */
+  description?: string;
   problem?: string;
   built?: string;
   /** Carries the number. */
@@ -126,9 +128,20 @@ export type RecentProject = {
 export const recentWork = {
   title: "Recent work",
   all: { label: "See all projects →", href: "/work" },
+  /** The per-card link. Cards with no `href` of their own fall back to `all`. */
+  learnMore: "Learn more →",
   items: [
+    {
+      category: "Smart systems",
+      name: "Clinical Scribe",
+      description:
+        "A consult capture and follow-up system for an orthodontic practice.",
+      problem: "A consult happened in a room, and nothing about it survived the room.",
+      built: "Records the consult, drafts both letters from it, and gives the coordinator follow-up she can send.",
+      result: "Every consult now leaves a record the practice can actually look at.",
+      href: "/work/clinical-scribe",
+    },
     { category: "Websites" },
-    { category: "Smart systems" },
     { category: "Media & content" },
   ] as RecentProject[],
 };

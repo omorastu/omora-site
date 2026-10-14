@@ -119,6 +119,22 @@ export const projects: Project[] = [
   /* ── The rest of the portfolio ─────────────────────────────────────── */
 
   {
+    name: "Clinical Scribe",
+    category: "Consult capture",
+    outcome: "Every consult leaves a record, and the letters draft themselves from it",
+    detail:
+      "A consult capture and follow-up system for an orthodontic practice. It records the consultation, drafts the doctor letter and the patient take-home letter from it, and gives the coordinator follow-up messages written from what was actually said.",
+    // No `href`: the system holds patient data and sits behind the practice's
+    // login, so there is nothing a visitor could be sent to.
+    // /work/clinical-scribe is the public record instead, which is why this
+    // carries no "Visit site" anywhere on the site. The practice is not named.
+    //
+    // Untagged on purpose: consult capture is none of the four services we
+    // sell by name. An honest empty tag beats padding it onto a page it
+    // doesn't belong on — see the tagging rule at the top of this file.
+    services: [],
+  },
+  {
     name: "Travelyt",
     category: "Booking platform",
     outcome: "Full quote-to-booking flow, live",

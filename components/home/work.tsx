@@ -56,11 +56,23 @@ function ProjectCard({ item, index }: { item: RecentProject; index: number }) {
         <h3 className="mt-2 font-display text-[19px] font-semibold text-ink">
           {item.name ?? <Pending>Project name</Pending>}
         </h3>
+        {item.description && (
+          <p className="mt-2 text-pretty text-sm leading-[1.55] text-muted">
+            {item.description}
+          </p>
+        )}
         <dl className="mt-3.5 flex flex-col gap-[9px] text-sm leading-[1.55]">
           <Line label="Problem" value={item.problem} pending="What was broken" />
           <Line label="Built" value={item.built} pending="What we made" />
           <Line label="Result" value={item.result} pending="The number" accent />
         </dl>
+
+        {/* A span, not an anchor: the whole card is already the link, and an
+            <a> inside an <a> is invalid. The card's own href decides where
+            this goes — the study where there is one, /work where there isn't. */}
+        <span className="mt-5 inline-block border-b border-violet-dim pb-1 font-mono text-[10px] uppercase tracking-[0.14em] text-violet transition-colors group-hover:text-ink">
+          {recentWork.learnMore}
+        </span>
       </a>
     </Reveal>
   );
