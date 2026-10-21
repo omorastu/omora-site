@@ -121,11 +121,15 @@ export const projects: Project[] = [
   {
     name: "Clinical Scribe",
     category: "Consult capture",
-    outcome: "Every consult leaves a record, and the letters draft themselves from it",
+    // Built, entering pilot testing on a few real consults — no outcome to
+    // claim yet. Move to `outcome` when the pilot reports, in step with
+    // /work/clinical-scribe.
+    status: "in-progress",
+    intent: "Built to keep a record of every consult. Now entering pilot testing.",
     detail:
       "A consult capture and follow-up system for an orthodontic practice. It records the consultation, drafts the doctor letter and the patient take-home letter from it, and gives the coordinator follow-up messages written from what was actually said.",
-    // No `href`: the system holds patient data and sits behind the practice's
-    // login, so there is nothing a visitor could be sent to.
+    // No `href`: the system handles patient data and will sit behind the
+    // practice's login, so there is nothing a visitor could be sent to.
     // /work/clinical-scribe is the public record instead, which is why this
     // carries no "Visit site" anywhere on the site. The practice is not named.
     //

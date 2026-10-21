@@ -38,9 +38,13 @@ const NAV_LINE = 32;
  * cream, because it was already over pale gradient — but with a hard edge the
  * seam and the colour change are the same line, so any lead-in would fire the
  * swap early over the wrong background.
+ *
+ * "Start a project" goes to the home page's contact section by default. A page
+ * that closes on that same section — the case studies — passes "#contact" so
+ * the button scrolls to its own form instead of leaving the page.
  */
 
-export function Nav() {
+export function Nav({ contactHref = "/#contact" }: { contactHref?: string }) {
   const [settled, setSettled] = useState(false);
   const [overLight, setOverLight] = useState(false);
 
@@ -120,7 +124,7 @@ export function Nav() {
         </ul>
 
         <a
-          href="/#contact"
+          href={contactHref}
           className={cn(
             "rounded-full border px-4 py-2 font-mono text-[11px] uppercase tracking-[0.16em] transition-colors duration-300",
             overLight

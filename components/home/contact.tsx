@@ -9,8 +9,21 @@ import { ContactForm } from "@/components/home/contact-form";
  *
  * The text-us number prints once it's set in lib/home.ts; until then the slot
  * shows the mockup's bracketed placeholder rather than a fake number.
+ *
+ * Case studies close on it too, with their own question as the heading and
+ * their own page as the lead's source. Left unset, everything is the home
+ * page's.
  */
-export function Contact() {
+export function Contact({
+  title = contact.title,
+  lede = contact.lede,
+  source,
+}: {
+  title?: string;
+  lede?: string;
+  /** Where the lead is filed as coming from. ContactForm defaults to the home page. */
+  source?: string;
+}) {
   const { phone } = contact;
 
   return (
@@ -22,10 +35,10 @@ export function Contact() {
         <Reveal>
           <p className="plate">{contact.eyebrow}</p>
           <h2 className="mt-5 max-w-[16ch] text-balance font-display text-3xl font-semibold leading-[1.12] tracking-[-0.025em] text-ink sm:text-[42px]">
-            {contact.title}
+            {title}
           </h2>
           <p className="mt-5 max-w-[44ch] text-pretty text-[17px] leading-[1.7] text-muted">
-            {contact.lede}
+            {lede}
           </p>
 
           <div className="mt-8 border-t border-line pt-6">
@@ -52,7 +65,7 @@ export function Contact() {
         </Reveal>
 
         <Reveal delay={100}>
-          <ContactForm submitLabel={contact.submit} />
+          <ContactForm submitLabel={contact.submit} source={source} />
         </Reveal>
       </div>
     </section>

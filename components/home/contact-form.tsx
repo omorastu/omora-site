@@ -18,7 +18,14 @@ type Status = "idle" | "sending" | "done" | "error";
 const fieldBase =
   "w-full rounded-[3px] border border-line bg-bg px-3.5 py-3.5 text-[15px] text-ink outline-none transition-colors duration-300 focus:border-violet-deep";
 
-export function ContactForm({ submitLabel }: { submitLabel: string }) {
+export function ContactForm({
+  submitLabel,
+  source = "omora.studio/home",
+}: {
+  submitLabel: string;
+  /** Filed with the lead as where it came from. */
+  source?: string;
+}) {
   const [status, setStatus] = useState<Status>("idle");
   const [formError, setFormError] = useState("");
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
@@ -82,7 +89,7 @@ export function ContactForm({ submitLabel }: { submitLabel: string }) {
       noValidate
       className="flex flex-col gap-5 rounded-[5px] border border-line bg-raised p-7 sm:p-9"
     >
-      <Field label="Name" name="name" error={fieldErrors.name}>
+      <Field label="Name" id="name" error={fieldErrors.name}>
         <input
           id="name"
           name="name"
@@ -94,19 +101,22 @@ export function ContactForm({ submitLabel }: { submitLabel: string }) {
         />
       </Field>
 
-      <Field label="Email or phone" name="contact" error={fieldErrors.contact}>
+      {/* id, not name, is "contact-method": the section this form sits in is
+          #contact, the anchor every "Start a project" lands on. The field
+          name stays `contact`, which is what /api/lead reads. */}
+      <Field label="Email or phone" id="contact-method" error={fieldErrors.contact}>
         <input
-          id="contact"
+          id="contact-method"
           name="contact"
           type="text"
           autoComplete="email"
           className={fieldBase}
           aria-invalid={!!fieldErrors.contact}
-          aria-describedby={fieldErrors.contact ? "contact-error" : undefined}
+          aria-describedby={fieldErrors.contact ? "contact-method-error" : undefined}
         />
       </Field>
 
-      <Field label="What's the problem" name="message" error={fieldErrors.message}>
+      <Field label="What's the problem" id="message" error={fieldErrors.message}>
         <textarea
           id="message"
           name="message"
@@ -123,7 +133,7 @@ export function ContactForm({ submitLabel }: { submitLabel: string }) {
         <input id="website" name="website" type="text" tabIndex={-1} autoComplete="off" />
       </div>
 
-      <input type="hidden" name="source" value="omora.studio/home" />
+      <input type="hidden" name="source" value={source} />
 
       <button
         type="submit"
@@ -151,26 +161,27 @@ export function ContactForm({ submitLabel }: { submitLabel: string }) {
 
 function Field({
   label,
-  name,
+  id,
   error,
   children,
 }: {
   label: string;
-  name: string;
+  /** The control's id. Labels it, and prefixes the error line's id. */
+  id: string;
   error?: string;
   children: React.ReactNode;
 }) {
   return (
     <div>
       <label
-        htmlFor={name}
+        htmlFor={id}
         className="mb-[9px] block font-mono text-[10px] uppercase tracking-[0.16em] text-muted"
       >
         {label}
       </label>
       {children}
       {error && (
-        <p id={`${name}-error`} className="mt-1.5 text-xs text-[#E0663C]">
+        <p id={`${id}-error`} className="mt-1.5 text-xs text-[#E0663C]">
           {error}
         </p>
       )}

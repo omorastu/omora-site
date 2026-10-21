@@ -136,9 +136,11 @@ export const recentWork = {
       name: "Clinical Scribe",
       description:
         "A consult capture and follow-up system for an orthodontic practice.",
-      problem: "A consult happened in a room, and nothing about it survived the room.",
+      // Present tense: the problem is still the practice's until the pilot
+      // says otherwise. Match the result line to /work/clinical-scribe's.
+      problem: "A consult happens in a room, and nothing about it survives the room.",
       built: "Records the consult, drafts both letters from it, and gives the coordinator follow-up she can send.",
-      result: "Every consult now leaves a record the practice can actually look at.",
+      result: "Built, and entering pilot testing on a few real consults. No outcomes yet.",
       href: "/work/clinical-scribe",
     },
     { category: "Websites" },
