@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { newLead, saveLead } from "@/lib/leads";
 import { NEED_OPTIONS } from "@/lib/prefill";
+import { contact as homeContact, people } from "@/lib/kozmoz";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -13,6 +14,9 @@ export const dynamic = "force-dynamic";
 // pulls in plain data, not client components.)
 const NEEDS = NEED_OPTIONS;
 const BUDGETS = ["under-2k", "2-5k", "5-15k", "15k-plus", "not-sure"];
+// The home page's "Who should get back to you?" — one of the two of us, or
+// either. Read from the same data the form renders, for the same reason.
+const REPLY_FROM = [people.a.name, people.j.name, homeContact.either];
 
 const LIMITS = { name: 100, email: 200, phone: 40, business: 120, message: 4000 } as const;
 
@@ -80,7 +84,7 @@ export async function POST(req: Request) {
   // Honeypot: a real person never fills a field they can't see.
   if (str(body.website, 200)) {
     // Answer as though it worked, so a bot gets no signal to retry differently.
-    return NextResponse.json({ ok: true, ticket: "OMR-0000" });
+    return NextResponse.json({ ok: true, ticket: "KZM-0000" });
   }
 
   // Bots submit near-instantly. Unlike the honeypot this is a heuristic, not a
@@ -98,7 +102,7 @@ export async function POST(req: Request) {
 
   if (rateLimited(clientIp(req))) {
     return NextResponse.json(
-      { error: "That's a few too many in a row. Try again in a few minutes." },
+      { error: "That’s a few too many in a row. Try again in a few minutes." },
       { status: 429 }
     );
   }
@@ -116,6 +120,7 @@ export async function POST(req: Request) {
   const business = str(body.business, LIMITS.business);
   const message = str(body.message, LIMITS.message);
   const budget = BUDGETS.includes(String(body.budget)) ? String(body.budget) : undefined;
+  const replyFrom = REPLY_FROM.includes(String(body.who)) ? String(body.who) : undefined;
   const needs = Array.isArray(body.needs)
     ? body.needs.filter((n): n is string => typeof n === "string" && NEEDS.includes(n))
     : [];
@@ -127,11 +132,11 @@ export async function POST(req: Request) {
       ? "We need an email or a number to reply to."
       : "We need an email to reply to.";
   } else if (email && !EMAIL_RE.test(email)) {
-    fieldErrors[contactKey] = "That email doesn't look right.";
+    fieldErrors[contactKey] = "That email doesn’t look right.";
   } else if (phone && !looksLikePhone(phone)) {
-    fieldErrors[contactKey] = "That doesn't look like an email or a phone number.";
+    fieldErrors[contactKey] = "That doesn’t look like an email or a phone number.";
   }
-  if (!message) fieldErrors.message = "Tell us what's going wrong — a sentence is plenty.";
+  if (!message) fieldErrors.message = "Tell us what’s going wrong — a sentence is plenty.";
 
   if (Object.keys(fieldErrors).length) {
     return NextResponse.json({ error: "Some fields need fixing.", fieldErrors }, { status: 400 });
@@ -144,6 +149,7 @@ export async function POST(req: Request) {
     business: business || undefined,
     needs,
     budget,
+    replyFrom,
     message,
     source: str(body.source, 200) || "omora.studio",
     userAgent: req.headers.get("user-agent")?.slice(0, 300) ?? undefined,

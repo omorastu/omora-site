@@ -31,6 +31,8 @@ export type Lead = {
   business?: string;
   needs: string[];
   budget?: string;
+  /** Who the visitor asked to hear back from: "Ashan", "Jordan" or "Either". Home page form only. */
+  replyFrom?: string;
   message?: string;
   source?: string;
   userAgent?: string;
@@ -44,7 +46,7 @@ const ALPHABET = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
 export function makeTicket() {
   let out = "";
   for (let i = 0; i < 4; i++) out += ALPHABET[randomInt(ALPHABET.length)];
-  return `OMR-${out}`;
+  return `KZM-${out}`;
 }
 
 export function newLead(input: Omit<Lead, "id" | "ticket" | "createdAt">): Lead {
@@ -78,7 +80,7 @@ async function toFile(lead: Lead): Promise<DurableResult> {
 async function toEmail(lead: Lead): Promise<DurableResult> {
   const apiKey = process.env.RESEND_API_KEY;
   const to = process.env.CONTACT_TO_EMAIL;
-  const from = process.env.CONTACT_FROM_EMAIL ?? "Omora <onboarding@resend.dev>";
+  const from = process.env.CONTACT_FROM_EMAIL ?? "Kozmoz <onboarding@resend.dev>";
 
   if (!apiKey || !to) {
     return {
@@ -101,6 +103,7 @@ async function toEmail(lead: Lead): Promise<DurableResult> {
       `Business: ${lead.business || "—"}`,
       `Needs:    ${lead.needs.length ? lead.needs.join(", ") : "—"}`,
       `Budget:   ${lead.budget || "—"}`,
+      `Reply:    ${lead.replyFrom || "—"}`,
       `Source:   ${lead.source || "—"}`,
       "",
       "The problem:",

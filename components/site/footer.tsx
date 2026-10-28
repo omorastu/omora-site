@@ -1,8 +1,10 @@
+import { Wordmark } from "@/components/wordmark";
+
 /**
  * Footer, per docs/layout.md: the wordmark on the left; Instagram, Terms and
  * Privacy on the right.
  *
- * INSTAGRAM is unset until the Omora handle is final — the label prints
+ * INSTAGRAM is unset until the Kozmoz handle is final — the label prints
  * unlinked meanwhile rather than pointing at someone's personal account.
  */
 const INSTAGRAM: string | undefined = undefined;
@@ -20,9 +22,9 @@ export function Footer() {
       <div className="mx-auto flex max-w-wrap flex-wrap items-center justify-between gap-6">
         <a
           href="/"
-          className="font-logo text-[17px] font-normal uppercase tracking-[0.35em] text-muted transition-colors hover:text-ink"
+          className="text-[17px] text-muted transition-colors hover:text-ink"
         >
-          Omora
+          <Wordmark />
         </a>
 
         <nav aria-label="Footer">

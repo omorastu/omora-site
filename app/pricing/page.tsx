@@ -7,7 +7,7 @@ import { Footer } from "@/components/site/footer";
 import { Closing } from "@/components/site/closing";
 
 export const metadata: Metadata = {
-  title: "Pricing — Omora",
+  title: "Pricing — Kozmoz",
   description:
     "Real ranges, not “contact us for pricing.” Landing pages from $497, websites from $3,000, systems from $5,000.",
 };

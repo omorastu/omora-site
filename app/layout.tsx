@@ -1,12 +1,14 @@
 import type { Metadata, Viewport } from "next";
-import { Libre_Franklin, Cormorant, Inter, IBM_Plex_Mono } from "next/font/google";
+import { Libre_Franklin, Cormorant_Garamond, Inter, IBM_Plex_Mono } from "next/font/google";
 import { Analytics } from "@vercel/analytics/react";
 import "./globals.css";
 
 /*
- * The four families the live site runs on, carried over from V1 unchanged —
- * same families, same weights, same CSS variable names, so the two builds set
- * type identically.
+ * The four families the inner pages run on, carried over from V1 — same
+ * weights, same CSS variable names. The one change is the wordmark face: the
+ * KOZMOZ mark is Cormorant Garamond 500 (see .wordmark in globals.css), and
+ * it is the only thing --font-logo sets. The home page loads its own two
+ * faces on top (components/kozmoz/fonts.ts).
  *
  * Weights are V1's list exactly. Nothing above 700 is loaded, so no utility
  * heavier than font-bold is used anywhere: an 800 would only ever render as a
@@ -14,15 +16,17 @@ import "./globals.css";
  */
 const libreFranklin = Libre_Franklin({
   subsets: ["latin"],
+  // Inner pages only: not preloaded, so the home page doesn't fetch it.
+  preload: false,
   variable: "--font-display",
   weight: ["400", "500", "600", "700"],
   display: "swap",
 });
 
-const cormorant = Cormorant({
+const cormorantGaramond = Cormorant_Garamond({
   subsets: ["latin"],
   variable: "--font-logo",
-  weight: ["400", "500"],
+  weight: ["500"],
   display: "swap",
 });
 
@@ -30,6 +34,8 @@ const cormorant = Cormorant({
 // two configs diff cleanly.
 const inter = Inter({
   subsets: ["latin"],
+  // Inner pages only: not preloaded, so the home page doesn't fetch it.
+  preload: false,
   variable: "--font-inter",
   weight: ["400", "500", "600"],
   display: "swap",
@@ -37,6 +43,8 @@ const inter = Inter({
 
 const plexMono = IBM_Plex_Mono({
   subsets: ["latin"],
+  // Inner pages only: not preloaded, so the home page doesn't fetch it.
+  preload: false,
   variable: "--font-mono",
   weight: ["400", "500"],
   display: "swap",
@@ -46,9 +54,9 @@ const SITE = "https://omora.studio";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE),
-  title: "Omora — You've got a problem. We're the fixers.",
+  title: "Kozmoz | Ashan & Jordan",
   description:
-    "Omora builds websites, AI receptionists, booking systems and sales-intelligence tools for businesses. Tell us the problem, we'll build the fix.",
+    "Two people who build websites, shoot the photo and video, and set up call answering and booking for local businesses. You talk to the people doing the work.",
   icons: {
     icon: [
       { url: "/favicon.ico", sizes: "any" },
@@ -58,18 +66,18 @@ export const metadata: Metadata = {
     apple: [{ url: "/apple-touch-icon.png", sizes: "180x180" }],
   },
   openGraph: {
-    title: "Omora — You've got a problem. We're the fixers.",
+    title: "Kozmoz | Ashan & Jordan",
     description:
-      "Websites, AI agents, booking systems — whatever your business needs, we build it.",
+      "Two people who build websites, shoot the photo and video, and set up call answering and booking for local businesses. You talk to the people doing the work.",
     url: SITE,
-    siteName: "Omora",
+    siteName: "Kozmoz",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Omora — You've got a problem. We're the fixers.",
+    title: "Kozmoz | Ashan & Jordan",
     description:
-      "Websites, AI agents, booking systems — whatever your business needs, we build it.",
+      "Two people who build websites, shoot the photo and video, and set up call answering and booking for local businesses. You talk to the people doing the work.",
   },
 };
 
@@ -82,12 +90,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html
       lang="en"
-      className={`${libreFranklin.variable} ${cormorant.variable} ${inter.variable} ${plexMono.variable}`}
+      className={`${libreFranklin.variable} ${cormorantGaramond.variable} ${inter.variable} ${plexMono.variable}`}
     >
       <body className="font-body antialiased">
+        {/* skip-link: the home page hides this one and renders its own, in its own type. */}
         <a
           href="#main"
-          className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-violet focus:px-4 focus:py-2 focus:font-mono focus:text-sm focus:text-bg"
+          className="skip-link sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-violet focus:px-4 focus:py-2 focus:font-mono focus:text-sm focus:text-bg"
         >
           Skip to content
         </a>

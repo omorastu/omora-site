@@ -7,7 +7,7 @@ import { SectionHead } from "@/components/site/section-head";
 import { WorkGrid } from "@/components/site/work-grid";
 
 export const metadata: Metadata = {
-  title: "Work — Omora",
+  title: "Work — Kozmoz",
   description:
     "Everything we've built: websites, AI receptionists, booking systems and custom platforms.",
 };

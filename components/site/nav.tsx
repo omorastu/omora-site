@@ -2,15 +2,16 @@
 
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
+import { Wordmark } from "@/components/wordmark";
 
 /**
- * The home page's sections, per docs/layout.md. Root-relative so they work
- * from the inner pages too.
+ * The home page's sections (components/kozmoz/), root-relative so they work
+ * from the inner pages too. Labels stay V3's; the ids are the new page's.
  */
 const LINKS = [
-  { href: "/#services", label: "What we do" },
+  { href: "/#do", label: "What we do" },
   { href: "/#work", label: "Work" },
-  { href: "/#about", label: "About" },
+  { href: "/#us", label: "About" },
 ];
 
 /**
@@ -92,17 +93,16 @@ export function Nav({ contactHref = "/#contact" }: { contactHref?: string }) {
         aria-label="Main"
         className="mx-auto flex h-16 max-w-wrap items-center justify-between gap-6 px-6"
       >
-        {/* The wordmark is the one place Cormorant is used — V1's lockup,
-            uppercase and widely tracked. No trailing dot: the letterspacing is
-            what makes it read as a mark. */}
+        {/* The KOZMOZ wordmark — the one place Cormorant Garamond is used.
+            No trailing dot: the letterspacing is what makes it read as a mark. */}
         <a
           href="/"
           className={cn(
-            "font-logo text-xl font-normal uppercase tracking-[0.35em] transition-colors duration-300",
+            "text-xl transition-colors duration-300",
             overLight ? "text-cream-ink hover:text-blue-ink" : "text-ink hover:text-violet"
           )}
         >
-          Omora
+          <Wordmark />
         </a>
 
         <ul className="hidden items-center gap-8 md:flex">

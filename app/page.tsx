@@ -1,37 +1,59 @@
-import { Nav } from "@/components/site/nav";
-import { Footer } from "@/components/site/footer";
-import { HomeHero } from "@/components/home/hero";
-import { TeamVideo } from "@/components/home/team-video";
-import { HomeServices } from "@/components/home/services";
-import { About } from "@/components/home/about";
-import { Work } from "@/components/home/work";
-import { Contact } from "@/components/home/contact";
+import type { Viewport } from "next";
+import { Hands } from "@/components/kozmoz/hands";
+import { Header } from "@/components/kozmoz/header";
+import { Hero } from "@/components/kozmoz/hero";
+import { Us } from "@/components/kozmoz/us";
+import { Services } from "@/components/kozmoz/services";
+import { Work } from "@/components/kozmoz/work";
+import { Contact } from "@/components/kozmoz/contact";
+import { Footer } from "@/components/kozmoz/footer";
+import { Intro } from "@/components/intro/intro";
+import { fraunces, hanken } from "@/components/kozmoz/fonts";
+import "@/components/kozmoz/kozmoz.css";
 
 /**
- * The home page, v3 layout — ported from design/homepage-v3-mockup.html, spec
- * in docs/layout.md.
+ * The home page — Kozmoz, "Names on the door". Rebuilt from the live preview
+ * at omora-a.vercel.app; styles in components/kozmoz/kozmoz.css, copy and
+ * data in lib/kozmoz.ts.
  *
- * Dark throughout. Sections run hero and reel, team video, what we do, about,
- * recent work, contact. Section components live in components/home/; copy
- * and slots live in lib/home.ts.
+ * Sections run hero, us, what we do, work, contact. Unlike the inner pages
+ * (still V3, dark), this page is one ink on paper, so it sets its own
+ * browser chrome colour.
+ *
+ * The V3 home sections are still in components/home/, unused here.
  */
+
+export const viewport: Viewport = {
+  themeColor: "#F4F1EA",
+  colorScheme: "light",
+};
+
 export default function Home() {
   return (
     <>
-      <Nav />
-      <main id="main" className="relative">
-        <span id="top" />
-        <HomeHero />
-        <TeamVideo />
-        <HomeServices />
-        <About />
-        <Work />
-        <Contact />
-      </main>
-      <Footer />
+      <Intro />
+      <Hands className={`${fraunces.variable} ${hanken.variable}`}>
+        <a className="skip label" href="#main">
+          Skip to content
+        </a>
+        <Header />
+        <main id="main">
+          <div className="seam" aria-hidden="true" />
+          <Hero />
+          <Us />
+          <Services />
+          <Work />
+          <Contact />
+        </main>
+        <Footer />
 
-      {/* Above every background, below the nav. */}
-      <div className="grain" aria-hidden="true" />
+        {/* With scripting off nothing will run the names' entrance, so show them now. */}
+        <noscript>
+          <style>
+            {".kz:not(.is-in) .name, .kz:not(.is-in) .name-amp { opacity: 1; animation: none; }"}
+          </style>
+        </noscript>
+      </Hands>
     </>
   );
 }

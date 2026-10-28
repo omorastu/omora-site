@@ -101,6 +101,18 @@ body {
 }
 
 @layer components {
+  /* The KOZMOZ wordmark (components/wordmark.tsx), on every page: Cormorant
+     Garamond 500, caps, 0.42em tracking. The negative right margin takes back
+     the tracking after the last Z, so the mark's box ends where its ink does
+     and it centres and aligns optically. Size is left to the caller. */
+  .wordmark {
+    font-family: var(--font-logo), serif;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.42em;
+    margin-right: -0.42em;
+  }
+
   .rise {
     opacity: 0;
     animation: rise 0.9s cubic-bezier(0.22, 1, 0.36, 1) forwards;
