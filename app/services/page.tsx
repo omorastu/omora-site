@@ -5,7 +5,7 @@ import { Page } from "@/components/kozmoz/page";
 import { ServiceRow } from "@/components/kozmoz/services";
 
 export const metadata: Metadata = {
-  title: "Services — Omora",
+  title: "Services — Elorro",
   description:
     "Websites, photo and video, getting found on Google, and the phones, booking and follow-up behind it, for local businesses around the Bay. What each one includes, and how a project starts.",
 };

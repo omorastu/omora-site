@@ -5,7 +5,7 @@ import { Page } from "@/components/kozmoz/page";
 import { ProjectCard, shownProjects } from "@/components/kozmoz/work";
 
 export const metadata: Metadata = {
-  title: "Work — Omora",
+  title: "Work — Elorro",
   description:
     "Sites, shoots and tools we've made for businesses around the Bay and beyond, from a vineyard labor company to a dental practice.",
 };

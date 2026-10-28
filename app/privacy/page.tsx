@@ -6,8 +6,8 @@ import { LegalPage } from "../legal-layout";
 // before that; worth a real pass once you're handling client data at volume.
 
 export const metadata: Metadata = {
-  title: "Privacy — Omora",
-  description: "What Omora collects through the site, and what happens to it.",
+  title: "Privacy — Elorro",
+  description: "What Elorro collects through the site, and what happens to it.",
 };
 
 export default function Privacy() {

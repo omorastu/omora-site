@@ -27,7 +27,7 @@ export async function generateMetadata({
   if (!study) return {};
 
   return {
-    title: `${study.name} — Omora`,
+    title: `${study.name} — Elorro`,
     description: study.description,
   };
 }

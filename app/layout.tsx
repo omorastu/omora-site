@@ -20,7 +20,7 @@ const SITE = "https://omora.studio";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE),
-  title: "Omora | Ashan & Jordan",
+  title: "Elorro | Ashan & Jordan",
   description:
     "Two people who build websites, shoot the photo and video, and set up call answering and booking for local businesses. You talk to the people doing the work.",
   icons: {
@@ -32,16 +32,16 @@ export const metadata: Metadata = {
     apple: [{ url: "/apple-touch-icon.png", sizes: "180x180" }],
   },
   openGraph: {
-    title: "Omora | Ashan & Jordan",
+    title: "Elorro | Ashan & Jordan",
     description:
       "Two people who build websites, shoot the photo and video, and set up call answering and booking for local businesses. You talk to the people doing the work.",
     url: SITE,
-    siteName: "Omora",
+    siteName: "Elorro",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Omora | Ashan & Jordan",
+    title: "Elorro | Ashan & Jordan",
     description:
       "Two people who build websites, shoot the photo and video, and set up call answering and booking for local businesses. You talk to the people doing the work.",
   },

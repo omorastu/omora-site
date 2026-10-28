@@ -15,7 +15,7 @@
 export type Who = "a" | "j";
 
 export const brand = {
-  name: "Omora",
+  name: "Elorro",
   /** The two rings — Ashan's brass, Jordan's cyan. The page's two inks come from it. */
   mark: "/m/brand/mark-192.png",
   email: "studio.omora@gmail.com",

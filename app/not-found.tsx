@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Page } from "@/components/kozmoz/page";
 
 export const metadata: Metadata = {
-  title: "Not found — Omora",
+  title: "Not found — Elorro",
 };
 
 /** Any address the site doesn't have, in the site's own frame. */

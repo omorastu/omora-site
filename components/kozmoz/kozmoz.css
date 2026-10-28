@@ -151,7 +151,7 @@ html:has(.kz) body {
 
 .kz .skip {
   position: absolute; left: -9999px; top: .5rem; z-index: 300;
-  min-width: 11rem;                  /* covers the whole wordmark lockup */
+  min-width: 12rem;                  /* covers the whole wordmark lockup */
   background: var(--ink); color: var(--paper); padding: .75rem 1rem;
 }
 .kz .skip:focus { left: var(--pad); }
