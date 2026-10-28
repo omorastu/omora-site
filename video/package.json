@@ -1,0 +1,22 @@
+{
+  "name": "omora-site-video",
+  "private": true,
+  "description": "The Work section's live-card loops, made with Remotion. Separate from the site: its own dependencies, nothing imported by the app.",
+  "scripts": {
+    "capture": "node scripts/capture.mjs",
+    "render": "node scripts/render.mjs",
+    "build": "npm run capture && npm run render",
+    "studio": "remotion studio src/index.ts"
+  },
+  "dependencies": {
+    "@remotion/cli": "4.0.539",
+    "playwright": "1.63.0",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "remotion": "4.0.539"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.18",
+    "typescript": "^5.9.3"
+  }
+}

@@ -6,6 +6,7 @@ import {
   workPage,
   type Project,
   type ProjectMedia,
+  type Still,
 } from "@/lib/kozmoz";
 import { WorkVideo } from "@/components/kozmoz/work-video";
 import { cn } from "@/lib/utils";
@@ -76,25 +77,32 @@ export function ProjectCard({
 
 /**
  * The project's screen: the 16:10 desktop still from 1024px up, the 4:5
- * portrait one below it, and the loop over either once it plays. On desktop
- * it opens out from the seam as it scrolls in. Desktop shows it at 60rem,
- * two thirds of the frame (and 1280px once the root stops growing at 1920).
+ * portrait one below it, and the loop over either once it plays. Under
+ * reduced motion, a project with `still` set shows those instead (the loop
+ * never plays there). On desktop it opens out from the seam as it scrolls in.
+ * Desktop shows it at 60rem, two thirds of the frame (and 1280px once the
+ * root stops growing at 1920).
  */
 function ProjectScreen({ media: m }: { media: ProjectMedia }) {
   const sizes = "(max-width: 1023px) 100vw, (min-width: 1921px) 1280px, 67vw";
   const common = { alt: m.alt, sizes };
-  const {
-    props: { srcSet: mobile },
-  } = getImageProps({ ...common, ...m.mobile });
+  const srcSet = (still: Still) => getImageProps({ ...common, ...still }).props.srcSet;
   const { props: img } = getImageProps({ ...common, ...m.desktop });
+  const reduced = "(prefers-reduced-motion: reduce)";
 
   return (
     <figure className="proj-media open-both">
       <picture>
-        <source media="(max-width: 1023px)" srcSet={mobile} sizes={sizes} />
+        {m.still && (
+          <>
+            <source media={`${reduced} and (max-width: 1023px)`} srcSet={srcSet(m.still.mobile)} sizes={sizes} />
+            <source media={reduced} srcSet={srcSet(m.still.desktop)} sizes={sizes} />
+          </>
+        )}
+        <source media="(max-width: 1023px)" srcSet={srcSet(m.mobile)} sizes={sizes} />
         <img {...img} alt={m.alt} />
       </picture>
-      {m.loop && <WorkVideo desktop={m.loop.desktop} mobile={m.loop.mobile} />}
+      {m.loop && <WorkVideo {...m.loop} />}
     </figure>
   );
 }

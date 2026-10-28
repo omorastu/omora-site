@@ -1,0 +1,179 @@
+{
+  "site": "https://www.numenventures.co",
+  "capturedAt": "2026-10-28T09:02:07.627Z",
+  "overlap": 4,
+  "sizes": {
+    "desktop": {
+      "width": 1440,
+      "dpr": 2,
+      "tile": 1800,
+      "pages": {
+        "home": {
+          "url": "https://www.numenventures.co",
+          "height": 7668,
+          "header": 79,
+          "stickyHeader": true,
+          "anchors": {
+            "whatWeDo": 738,
+            "partners": 3371,
+            "pitchScore": 5803
+          },
+          "tiles": [
+            {
+              "file": "desktop-home-00.jpg",
+              "y": 0,
+              "h": 1804
+            },
+            {
+              "file": "desktop-home-01.jpg",
+              "y": 1800,
+              "h": 1804
+            },
+            {
+              "file": "desktop-home-02.jpg",
+              "y": 3600,
+              "h": 1804
+            },
+            {
+              "file": "desktop-home-03.jpg",
+              "y": 5400,
+              "h": 1804
+            },
+            {
+              "file": "desktop-home-04.jpg",
+              "y": 7200,
+              "h": 468
+            }
+          ]
+        },
+        "pitch": {
+          "url": "https://www.numenventures.co/pitch-score",
+          "height": 4141,
+          "header": 77,
+          "stickyHeader": false,
+          "anchors": {
+            "howItWorks": 956
+          },
+          "tiles": [
+            {
+              "file": "desktop-pitch-00.jpg",
+              "y": 0,
+              "h": 1804
+            },
+            {
+              "file": "desktop-pitch-01.jpg",
+              "y": 1800,
+              "h": 1804
+            },
+            {
+              "file": "desktop-pitch-02.jpg",
+              "y": 3600,
+              "h": 541
+            }
+          ]
+        }
+      }
+    },
+    "phone": {
+      "width": 390,
+      "dpr": 3,
+      "tile": 1300,
+      "pages": {
+        "home": {
+          "url": "https://www.numenventures.co",
+          "height": 11110,
+          "header": 79,
+          "stickyHeader": true,
+          "anchors": {
+            "whatWeDo": 974,
+            "partners": 4698,
+            "pitchScore": 7627
+          },
+          "tiles": [
+            {
+              "file": "phone-home-00.jpg",
+              "y": 0,
+              "h": 1304
+            },
+            {
+              "file": "phone-home-01.jpg",
+              "y": 1300,
+              "h": 1304
+            },
+            {
+              "file": "phone-home-02.jpg",
+              "y": 2600,
+              "h": 1304
+            },
+            {
+              "file": "phone-home-03.jpg",
+              "y": 3900,
+              "h": 1304
+            },
+            {
+              "file": "phone-home-04.jpg",
+              "y": 5200,
+              "h": 1304
+            },
+            {
+              "file": "phone-home-05.jpg",
+              "y": 6500,
+              "h": 1304
+            },
+            {
+              "file": "phone-home-06.jpg",
+              "y": 7800,
+              "h": 1304
+            },
+            {
+              "file": "phone-home-07.jpg",
+              "y": 9100,
+              "h": 1304
+            },
+            {
+              "file": "phone-home-08.jpg",
+              "y": 10400,
+              "h": 710
+            }
+          ]
+        },
+        "pitch": {
+          "url": "https://www.numenventures.co/pitch-score",
+          "height": 5705,
+          "header": 102,
+          "stickyHeader": false,
+          "anchors": {
+            "howItWorks": 1167
+          },
+          "tiles": [
+            {
+              "file": "phone-pitch-00.jpg",
+              "y": 0,
+              "h": 1304
+            },
+            {
+              "file": "phone-pitch-01.jpg",
+              "y": 1300,
+              "h": 1304
+            },
+            {
+              "file": "phone-pitch-02.jpg",
+              "y": 2600,
+              "h": 1304
+            },
+            {
+              "file": "phone-pitch-03.jpg",
+              "y": 3900,
+              "h": 1304
+            },
+            {
+              "file": "phone-pitch-04.jpg",
+              "y": 5200,
+              "h": 505
+            }
+          ]
+        }
+      }
+    }
+  }
+}

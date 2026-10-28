@@ -158,10 +158,18 @@ export type ProjectMedia = {
   /** Portrait crop at 4:5, shown under 1024px. */
   mobile: Still;
   /**
-   * Muted loop that fades in over the still once it plays. Phones get the -m
-   * cut; a project without one keeps its still on phones.
+   * Shown instead of the two above to visitors who've turned on reduced
+   * motion, for whom the loop never plays: the loop's clearest frame, larger.
+   * Unset, they get the same stills as everyone.
    */
-  loop?: { desktop: string; mobile?: string };
+  still?: { desktop: Still; mobile: Still };
+  /**
+   * Muted loop that fades in over the still once it plays. Phones get the -m
+   * cut; a project without one keeps its still on phones. The -sd cuts, where
+   * there are any, go to slow and Save-Data connections
+   * (components/kozmoz/work-video.tsx).
+   */
+  loop?: { desktop: string; mobile?: string; desktopSd?: string; mobileSd?: string };
 };
 
 /**
@@ -208,13 +216,24 @@ export const projects: Project[] = [
   },
   {
     name: "Numen Ventures",
-    place: "Silicon Valley",
+    place: "Bay Area",
     status: "Live",
-    line: "A venture studio and seed fund for startups entering the US. A new site, plus Pitch Score: founders upload a pitch deck and get it scored against what US investors look for.",
+    line: "Their old site had been down for months. Now founders land on a new site and can score their pitch deck in minutes.",
+    // The loops, posters and stills are made in video/ (see its README).
     media: {
-      alt: "The Numen Ventures homepage: “Helping Companies Build, Grow and Scale in the US Market” in white on near-black, under “Bridging global startups to Silicon Valley” in orange.",
-      desktop: { src: "/m/work/numen-d-poster.jpg", width: 2336, height: 1460 },
-      mobile: { src: "/m/work/numen-m-poster.jpg", width: 768, height: 960 },
+      alt: "numenventures.co first screen: Helping Companies Build, Grow and Scale in the US Market",
+      desktop: { src: "/m/work/numen-d-poster.jpg", width: 960, height: 600 },
+      mobile: { src: "/m/work/numen-m-poster.jpg", width: 544, height: 680 },
+      still: {
+        desktop: { src: "/m/work/numen-d-still.jpg", width: 1920, height: 1200 },
+        mobile: { src: "/m/work/numen-m-still.jpg", width: 1080, height: 1350 },
+      },
+      loop: {
+        desktop: "/m/work/numen-d.mp4",
+        desktopSd: "/m/work/numen-d-sd.mp4",
+        mobile: "/m/work/numen-m.mp4",
+        mobileSd: "/m/work/numen-m-sd.mp4",
+      },
     },
     link: { href: "https://www.numenventures.co", label: "numenventures.co" },
   },
