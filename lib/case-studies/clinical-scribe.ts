@@ -1,3 +1,4 @@
+import { clinicalScribeMedia } from "@/lib/kozmoz";
 import type { CaseStudy } from "@/lib/case-studies/types";
 
 /**
@@ -27,9 +28,14 @@ export const clinicalScribe: CaseStudy = {
     "Drafts the doctor letter and the patient take-home letter from it.",
     "Surfaces the patterns across consults.",
   ],
-  hero: {
-    label: "Product screenshot",
-    hint: "The consult record: the summary of what was said, with the two drafted letters beside it.",
+  // The screens are a replica of the app's, with made-up patients (video/,
+  // see its README): the real app, and anything with a real patient in it,
+  // is never recorded.
+  demo: "Demo data",
+  live: {
+    media: clinicalScribeMedia,
+    caption:
+      "One made-up consult from start to finish: recorded, summarized, both letters drafted, then the follow-up messages. The app’s own screens, rebuilt with invented patients.",
   },
   problem: {
     kind: "The problem",
@@ -40,10 +46,29 @@ export const clinicalScribe: CaseStudy = {
     kind: "The build",
     heading: "One recording, a summary, and the letters that follow from it.",
     body: "The system records the consultation and produces a summary of it. From that summary and the exam findings it drafts both letters — the doctor letter and the patient take-home letter — each in its own register. When a patient does not sign that day, it gives the coordinator a few follow-up messages she can read, pick, edit and send, written from what was actually said in the consult rather than from a blank box.",
-    shot: {
-      label: "Interface screenshot",
-      hint: "The follow-up step: the consult summary, the suggested messages, and the coordinator editing one before it goes.",
-    },
+    figures: [
+      {
+        src: "/m/work/clinical-summary.jpg",
+        width: 1920,
+        height: 1200,
+        alt: "Clinical Scribe with made-up demo data: the summary of a consult.",
+        caption: "The summary of the consult, drafted from the recording.",
+      },
+      {
+        src: "/m/work/clinical-doctor-letter.jpg",
+        width: 1920,
+        height: 1200,
+        alt: "Clinical Scribe with made-up demo data: the drafted doctor letter.",
+        caption: "The doctor letter, drafted from the summary and the exam findings.",
+      },
+      {
+        src: "/m/work/clinical-follow-ups.jpg",
+        width: 1920,
+        height: 1200,
+        alt: "Clinical Scribe with made-up demo data: suggested follow-up messages.",
+        caption: "Follow-up messages to pick, edit and send when a patient doesn’t sign that day.",
+      },
+    ],
   },
   result: {
     kind: "The result so far",

@@ -10,8 +10,8 @@ import "@/components/kozmoz/kozmoz.css";
  * type, header and footer. The home page builds its own (app/page.tsx),
  * because its root is also the "pick a name" toggle.
  *
- * `seam` runs the line down the middle, for pages laid out across it, like
- * /services and /work; reading pages go without. `local` lists the header
+ * `seam` runs the line down the middle, for a page laid out across it
+ * (/services); the rest go without. `local` lists the header
  * links whose sections are on this page itself (see Header).
  */
 export function Page({

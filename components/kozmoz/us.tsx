@@ -1,35 +1,35 @@
 import Image from "next/image";
-import { people, us, type Who } from "@/lib/kozmoz";
+import { people, sectionLabel, us, type Who } from "@/lib/kozmoz";
 import { cn } from "@/lib/utils";
 
 /**
- * Us: the line about who does the work, then the two people side by side —
- * each on their own side of the seam — then where we are and the three
- * promises, which cross it.
+ * Us: on the left, the line about who does the work, where we are and the
+ * three promises; on the right, the two people side by side.
  */
 export function Us() {
   return (
-    <section className="us" id="us" aria-labelledby="us-h">
+    <section className="us sec" id="us" aria-labelledby="us-h">
       {/* The V3 home page's id for this section, kept so old links still land here. */}
       <span id="about" aria-hidden="true" />
-      <h2 className="say across" id="us-h">
-        {us.title}
-      </h2>
+      <div className="wrap">
+        <div className="us-head">
+          <p className="sec-label label">{sectionLabel("#us")}</p>
+          <h2 className="sec-h" id="us-h">
+            {us.title}
+          </h2>
+          <p className="where">{us.where}</p>
+          <ul className="promises">
+            {us.promises.map((p) => (
+              <li key={p}>{p}</li>
+            ))}
+          </ul>
+        </div>
 
-      <div className="pair">
-        <PersonCard who="a" />
-        <PersonCard who="j" />
+        <div className="pair">
+          <PersonCard who="a" />
+          <PersonCard who="j" />
+        </div>
       </div>
-
-      <p className="where across">{us.where}</p>
-
-      <ul className="promises">
-        {us.promises.map((p) => (
-          <li key={p} className="across rule-both">
-            {p}
-          </li>
-        ))}
-      </ul>
     </section>
   );
 }
@@ -43,10 +43,10 @@ export function Us() {
 function PersonCard({ who }: { who: Who }) {
   const p = people[who];
   return (
-    <article className={cn("person", `person--${who}`, `rule-${who}`)}>
+    <article className={cn("person", `person--${who}`)}>
       <div className={cn("frame", `slide-${who}`, p.photo && "has-photo")}>
         {p.photo && (
-          <Image src={p.photo} alt={p.name} fill sizes="(max-width: 1023px) 100vw, 27rem" />
+          <Image src={p.photo} alt={p.name} fill sizes="(max-width: 1023px) 50vw, 18rem" />
         )}
         <span className="frame-initial" aria-hidden="true">
           {p.initial}

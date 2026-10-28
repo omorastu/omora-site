@@ -58,6 +58,9 @@ export const nav = [
   { href: "#contact", label: "Contact" },
 ];
 
+/** A home section's label, over it on the page: its name in the header. */
+export const sectionLabel = (href: string) => nav.find((n) => n.href === href)?.label;
+
 /* ── Hero ─────────────────────────────────────────────────────────────── */
 
 export const hero = {
@@ -88,11 +91,14 @@ export type Service = {
   /** What comes with it, listed under the text on /services. */
   included: string[];
   /**
-   * "both" centres the service across the seam; "j" puts it on Jordan's side
-   * on the home page (/services centres every one) and credits it to Jordan.
+   * Whose it is. On /services, where every service is centred across the
+   * seam, the tag on its credit line says so: "A+J" for "both", "J" for "j".
    */
   hands: "both" | Who;
-  /** Each person's part, printed on their side of the credit line. */
+  /**
+   * Each person's part, "Ashan <verb>" and "Jordan <verb>": the home page
+   * prints them as one line, /services on either side of the seam.
+   */
   credit: Record<Who, string>;
 };
 
@@ -131,7 +137,7 @@ export const services: Service[] = [
       "Ads when they make sense, with what each one brings in tracked",
     ],
     hands: "both",
-    credit: { a: "Ashan", j: "Jordan" },
+    credit: { a: "Ashan writes", j: "Jordan sets up" },
   },
   {
     id: "phones-booking",
@@ -164,29 +170,53 @@ export type ProjectMedia = {
    */
   still?: { desktop: Still; mobile: Still };
   /**
-   * Muted loop that fades in over the still once it plays. Phones get the -m
-   * cut; a project without one keeps its still on phones. The -sd cuts, where
-   * there are any, go to slow and Save-Data connections
-   * (components/kozmoz/work-video.tsx).
+   * Muted loop that fades in over the still once it plays: the -d cut from
+   * 1024px up, the -m cut below, and their -sd cuts on slow and Save-Data
+   * connections (components/kozmoz/work-video.tsx). List every cut the
+   * project should have: one that isn't in public/ yet is left out when the
+   * page is built and named in the build log, and the card shows its still
+   * in that place meanwhile (lib/work-media.ts).
    */
-  loop?: { desktop: string; mobile?: string; desktopSd?: string; mobileSd?: string };
+  loop?: { desktop?: string; mobile?: string; desktopSd?: string; mobileSd?: string };
 };
 
 /**
  * One piece of shared work. Every project is laid out the same way and
- * credits no one: it is the studio's work, not one person's.
+ * credits no one: it is the studio's work, not one person's. The order here
+ * is the order on the home page and /work.
  */
 export type Project = {
   name: string;
   place: string;
   status: string;
   line: string;
-  /** Unset: the project is set as type only, its name printed large. */
+  /** Unset: the card is its text alone. */
   media?: ProjectMedia;
   /** A link starting "/" stays on the site; any other opens in a new tab. */
   link?: { href: string; label: string };
   /** Not ready to show. Every component that reads `projects` skips these. */
   hidden?: boolean;
+};
+
+/**
+ * Clinical Scribe's live card, on its Work card and at the top of its case
+ * study. A replica of the app's screens with made-up patients, made in
+ * video/ (see its README): the real app is never recorded.
+ */
+export const clinicalScribeMedia: ProjectMedia = {
+  alt: "Clinical Scribe with made-up demo data: a consult being recorded, then its summary, the two letters and the follow-up messages drafting.",
+  desktop: { src: "/m/work/clinical-d-poster.jpg", width: 960, height: 600 },
+  mobile: { src: "/m/work/clinical-m-poster.jpg", width: 544, height: 680 },
+  still: {
+    desktop: { src: "/m/work/clinical-d-still.jpg", width: 1920, height: 1200 },
+    mobile: { src: "/m/work/clinical-m-still.jpg", width: 1080, height: 1350 },
+  },
+  loop: {
+    desktop: "/m/work/clinical-d.mp4",
+    desktopSd: "/m/work/clinical-d-sd.mp4",
+    mobile: "/m/work/clinical-m.mp4",
+    mobileSd: "/m/work/clinical-m-sd.mp4",
+  },
 };
 
 export const projects: Project[] = [
@@ -199,20 +229,14 @@ export const projects: Project[] = [
       alt: "The Pearls Farm Labor homepage, opening on a vineyard seen from the air.",
       desktop: { src: "/m/work/pearls-d-poster.jpg", width: 960, height: 600 },
       mobile: { src: "/m/work/pearls-m-poster.jpg", width: 400, height: 500 },
-      loop: { desktop: "/m/work/pearls-d.mp4", mobile: "/m/work/pearls-m.mp4" },
+      loop: {
+        desktop: "/m/work/pearls-d.mp4",
+        desktopSd: "/m/work/pearls-d-sd.mp4",
+        mobile: "/m/work/pearls-m.mp4",
+        mobileSd: "/m/work/pearls-m-sd.mp4",
+      },
     },
     link: { href: "https://pearlsfarminc.com", label: "pearlsfarminc.com" },
-  },
-  {
-    name: "Galvan Dental Care",
-    place: "Danville & Vallejo",
-    status: "In progress",
-    line: "A two-office dental practice. New site and a team shoot.",
-    media: {
-      alt: "The Galvan Dental Care homepage in progress: the practice name on yellow beside photos of the team.",
-      desktop: { src: "/m/work/galvan-d-poster.jpg", width: 2880, height: 1800 },
-      mobile: { src: "/m/work/galvan-m-poster.jpg", width: 780, height: 975 },
-    },
   },
   {
     name: "Numen Ventures",
@@ -238,6 +262,14 @@ export const projects: Project[] = [
     link: { href: "https://www.numenventures.co", label: "numenventures.co" },
   },
   {
+    name: "Clinical Scribe",
+    place: "Orthodontic practice",
+    status: "In testing with the practice",
+    line: "Records the consult, then drafts the doctor’s letter and the patient’s take-home letter from it.",
+    media: clinicalScribeMedia,
+    link: { href: "/work/clinical-scribe", label: "Read the case study" },
+  },
+  {
     name: "Cubic Ship",
     place: "15 counters in 8 states",
     status: "Live",
@@ -246,8 +278,13 @@ export const projects: Project[] = [
       alt: "The Cubic Ship homepage: “From your screen to our counter.” above the steps from starting online to shipping, with only the first, start online, drawn in orange so far.",
       desktop: { src: "/m/work/cubic-d-poster.jpg", width: 1280, height: 800 },
       mobile: { src: "/m/work/cubic-m-poster.jpg", width: 800, height: 1000 },
-      // Phones keep the still: it's framed on the headline, which the loop isn't.
-      loop: { desktop: "/m/work/cubic-d.mp4" },
+      // No phone cut yet: phones keep the still, which is framed on the headline.
+      loop: {
+        desktop: "/m/work/cubic-d.mp4",
+        desktopSd: "/m/work/cubic-d-sd.mp4",
+        mobile: "/m/work/cubic-m.mp4",
+        mobileSd: "/m/work/cubic-m-sd.mp4",
+      },
     },
     link: { href: "https://cubicship.com", label: "cubicship.com" },
   },
@@ -260,16 +297,28 @@ export const projects: Project[] = [
       alt: "The Sticker Smith homepage, with die-cut stickers under the headline.",
       desktop: { src: "/m/work/sticker-d-poster.jpg", width: 1280, height: 800 },
       mobile: { src: "/m/work/sticker-m-poster.jpg", width: 720, height: 900 },
+      // No SD cuts: both loops are already lighter than an SD cut may be.
       loop: { desktop: "/m/work/sticker-d.mp4", mobile: "/m/work/sticker-m.mp4" },
     },
     link: { href: "https://tssprint.com", label: "tssprint.com" },
   },
   {
-    name: "Clinical Scribe",
-    place: "Orthodontic practice",
-    status: "In testing with the practice",
-    line: "Records the consult, then drafts the doctor’s letter and the patient’s take-home letter from it.",
-    link: { href: "/work/clinical-scribe", label: "Read the case study" },
+    name: "Galvan Dental Care",
+    place: "Danville & Vallejo",
+    status: "In progress",
+    line: "A two-office dental practice. New site and a team shoot.",
+    media: {
+      alt: "The Galvan Dental Care homepage in progress: the practice name on yellow beside photos of the team.",
+      desktop: { src: "/m/work/galvan-d-poster.jpg", width: 2880, height: 1800 },
+      mobile: { src: "/m/work/galvan-m-poster.jpg", width: 780, height: 975 },
+      // Not made yet; the card shows the stills until they are.
+      loop: {
+        desktop: "/m/work/galvan-d.mp4",
+        desktopSd: "/m/work/galvan-d-sd.mp4",
+        mobile: "/m/work/galvan-m.mp4",
+        mobileSd: "/m/work/galvan-m-sd.mp4",
+      },
+    },
   },
   {
     name: "Estética de Génesis",
@@ -282,7 +331,7 @@ export const projects: Project[] = [
 ];
 
 /** How many projects the home page shows before "See all work". */
-export const homeWorkCount = 3;
+export const homeWorkCount = 4;
 
 /* ── Contact ──────────────────────────────────────────────────────────── */
 

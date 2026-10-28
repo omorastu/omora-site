@@ -8,8 +8,9 @@ import captures from "./captures.json";
  * and a short scroll down it, then a fade back to the top, which is frame 0,
  * so the loop has no seam.
  *
- * Everything is in the page's own CSS px (from scripts/capture.mjs) and scaled
- * to the frame: a 1440-wide page across 1280px, a 390-wide one across 720px.
+ * Everything is in the page's own CSS px (from scripts/capture.mjs) and drawn
+ * at the captures' own resolution, so no tile is resampled here;
+ * scripts/render.mjs scales the finished frames down to each file's size.
  */
 
 export type Size = "desktop" | "phone";
@@ -31,14 +32,19 @@ export const FRAMES = 540; // 18s
 /** The frame the reduced-motion still is taken from: the middle of the hero's hold. */
 export const STILL_FRAME = 27;
 
+/**
+ * The master frame: one page CSS px to one capture pixel (1.5x on desktop,
+ * 3x on the phone), at the cards' 16:10 and 4:5. Every file is a lanczos
+ * downscale of it: 1280x800 and 720x900, and the SD cuts below those.
+ */
 export const FRAME_SIZE: Record<Size, { width: number; height: number }> = {
-  desktop: { width: 1280, height: 800 },
-  phone: { width: 720, height: 900 },
+  desktop: { width: 2160, height: 1350 },
+  phone: { width: 1170, height: 1462 },
 };
 
 const page = (size: Size, name: PageName) => captures.sizes[size].pages[name] as PageCapture;
 
-/** Video px per page CSS px. */
+/** Frame px per page CSS px: the capture's device scale. */
 const scaleOf = (size: Size) => FRAME_SIZE[size].width / captures.sizes[size].width;
 
 /** How much of the page the frame shows, in CSS px. */
@@ -146,7 +152,7 @@ const PageView: React.FC<{ size: Size; at: At }> = ({ size, at }) => {
   const s = scaleOf(size);
   const { width } = FRAME_SIZE[size];
   const view = viewOf(size);
-  // Whole video pixels, so text is as sharp in motion as at rest.
+  // Whole pixels, so every tile lands on the pixel grid, in motion as at rest.
   const shift = Math.round(at.y * s);
   const tiles = p.tiles.filter((t) => t.y + t.h > at.y - 2 && t.y < at.y + view + 2);
   const first = p.tiles[0];
@@ -162,7 +168,7 @@ const PageView: React.FC<{ size: Size; at: At }> = ({ size, at }) => {
       ))}
       {/* A sticky header stays at the top while the page moves under it. */}
       {p.stickyHeader && at.y > 0 && (
-        <div style={{ position: "absolute", left: 0, top: 0, width, height: p.header * s, overflow: "hidden" }}>
+        <div style={{ position: "absolute", left: 0, top: 0, width, height: Math.round(p.header * s), overflow: "hidden" }}>
           <Img
             src={staticFile(`captures/${first.file}`)}
             style={{ position: "absolute", left: 0, top: 0, width, height: first.h * s }}

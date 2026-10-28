@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { hero, workPage } from "@/lib/kozmoz";
 import { Page } from "@/components/kozmoz/page";
-import { ProjectCard, shownProjects } from "@/components/kozmoz/work";
+import { WorkGrid, shownProjects } from "@/components/kozmoz/work";
 
 export const metadata: Metadata = {
   title: "Work — Elorro",
@@ -12,25 +12,21 @@ export const metadata: Metadata = {
 
 /**
  * /work — every project ready to show (lib/kozmoz.ts `projects`, hidden ones
- * skipped), on the same card as the home page's Work.
+ * skipped), on the home page's cards, two across.
  */
 export default function WorkPage() {
   return (
-    <Page seam>
-      <header className="page-head">
-        <h1 className="page-title label across">{workPage.title}</h1>
-      </header>
-
+    <Page>
       <div className="work work--page">
-        {shownProjects().map((p) => (
-          <ProjectCard key={p.name} project={p} heading="h2" />
-        ))}
-      </div>
-
-      <div className="page-end">
-        <Link className="act" href={`/${hero.cta.href}`}>
-          {hero.cta.label}
-        </Link>
+        <div className="wrap">
+          <h1 className="sec-label label">{workPage.title}</h1>
+          <WorkGrid projects={shownProjects()} heading="h2" />
+          <p className="page-end">
+            <Link className="act" href={`/${hero.cta.href}`}>
+              {hero.cta.label}
+            </Link>
+          </p>
+        </div>
       </div>
     </Page>
   );

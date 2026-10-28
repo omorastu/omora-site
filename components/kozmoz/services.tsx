@@ -1,62 +1,64 @@
 import Link from "next/link";
-import { people, services, servicesPage, type Service } from "@/lib/kozmoz";
+import { people, sectionLabel, services, servicesPage, type Service } from "@/lib/kozmoz";
 import { cn } from "@/lib/utils";
 
 /**
- * What we do. A shared service is centred across the seam; one that is
- * Jordan's sits on Jordan's side. Under each, the credit line splits the work
- * along the seam — Ashan's part on the left, Jordan's on the right — with a
- * tag on the seam itself saying whose it is.
+ * What we do: the four services two by two, each with its credit line saying
+ * who does which part, then the way to /services.
  */
 export function Services() {
   return (
-    <section className="do" id="do" aria-labelledby="do-h">
+    <section className="do sec" id="do" aria-labelledby="do-h">
       {/* The V3 home page's id for this section, kept so old links still land here. */}
       <span id="services" aria-hidden="true" />
-      <h2 className="sr-only" id="do-h">
-        What we do
-      </h2>
-      {services.map((s) => (
-        <ServiceRow key={s.id} service={s} />
-      ))}
-      <p className="more across">
-        <Link href="/services">{servicesPage.more}</Link>
-      </p>
+      <div className="wrap">
+        <h2 className="sec-label label" id="do-h">
+          {sectionLabel("#do")}
+        </h2>
+        <div className="do-grid">
+          {services.map((s) => (
+            <article key={s.id} className="svc-card">
+              <h3 className="svc-card-title">{s.title}</h3>
+              <p className="svc-card-text">{s.text}</p>
+              <p className="svc-card-credit label">
+                <span className="c-a">{s.credit.a}</span>, <span className="c-j">{s.credit.j}</span>
+              </p>
+            </article>
+          ))}
+        </div>
+        <p className="more">
+          <Link href="/services">{servicesPage.more}</Link>
+        </p>
+      </div>
     </section>
   );
 }
 
 /**
- * One service. On /services (`detail`) it is a section of its own, under its
- * id, with what's included listed between the text and the credit line, and
- * every service is centred across the seam — Jordan's too; its credit line
- * still says whose it is.
+ * One service on /services: a section of its own, under its id, centred
+ * across the seam, with what's included listed between the text and the
+ * credit line. The credit line splits the work along the seam — Ashan's part
+ * on the left, Jordan's on the right — with a tag on the seam itself saying
+ * whose it is.
  */
-export function ServiceRow({ service: s, detail = false }: { service: Service; detail?: boolean }) {
+export function ServiceRow({ service: s }: { service: Service }) {
   const hands = s.hands === "both" ? undefined : s.hands;
-  const place = detail ? "both" : s.hands;
-  // Centred lines cross the seam on paper.
-  const shared = place === "both";
-  const Box = detail ? "section" : "article";
-  const Title = detail ? "h2" : "h3";
 
   return (
-    <Box
-      className={cn("svc", `svc--${place}`, `rule-${s.hands}`, detail && "svc--detail")}
-      id={detail ? s.id : undefined}
-      aria-labelledby={detail ? `${s.id}-h` : undefined}
+    <section
+      className={cn("svc", "svc--both", `rule-${s.hands}`, "svc--detail")}
+      id={s.id}
+      aria-labelledby={`${s.id}-h`}
     >
-      <Title className={cn("svc-title", shared && "across")} id={detail ? `${s.id}-h` : undefined}>
+      <h2 className="svc-title across" id={`${s.id}-h`}>
         {s.title}
-      </Title>
-      <p className={cn("svc-text", shared && "across")}>{s.text}</p>
-      {detail && (
-        <ul className={cn("incl", shared && "across")}>
-          {s.included.map((item) => (
-            <li key={item}>{item}</li>
-          ))}
-        </ul>
-      )}
+      </h2>
+      <p className="svc-text across">{s.text}</p>
+      <ul className="incl across">
+        {s.included.map((item) => (
+          <li key={item}>{item}</li>
+        ))}
+      </ul>
       <p className="credit">
         <span className="credit-a">{s.credit.a}</span>
         {hands ? (
@@ -70,6 +72,6 @@ export function ServiceRow({ service: s, detail = false }: { service: Service; d
         )}
         <span className="credit-j">{s.credit.j}</span>
       </p>
-    </Box>
+    </section>
   );
 }

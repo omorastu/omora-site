@@ -3,10 +3,11 @@
  * components/work/case-study.tsx needs to render a /work/<slug> page.
  *
  * Same rule as lib/kozmoz.ts: the copy lives in the data file, not in the JSX.
- * Screenshots stay unset until the client signs them off, and print nothing
- * meanwhile.
+ * Screenshots of the client's own data stay unset until the client signs them
+ * off, and print nothing meanwhile; screens with made-up data say so (`demo`).
  */
 
+import type { ProjectMedia, Still } from "@/lib/kozmoz";
 import type { MediaAsset } from "@/lib/media";
 
 /** A screenshot slot. With no `media` it renders as a labelled placeholder. */
@@ -14,6 +15,16 @@ export type CaseShot = {
   label: string;
   hint: string;
   media?: MediaAsset;
+};
+
+/**
+ * A still on the page with a short caption under it. A study whose screens
+ * show made-up data says so on the page (`demo` on the study), and every
+ * figure's caption carries that label.
+ */
+export type CaseFigure = Still & {
+  alt: string;
+  caption: string;
 };
 
 /**
@@ -27,6 +38,8 @@ export type CaseStep = {
   body: string;
   /** Optional screenshot beneath the body. */
   shot?: CaseShot;
+  /** Stills beneath the body, each with its caption. */
+  figures?: CaseFigure[];
 };
 
 export type CaseStudy = {
@@ -55,7 +68,17 @@ export type CaseStudy = {
    */
   capabilities: string[];
   /** The product shot near the top of the page. */
-  hero: CaseShot;
+  hero?: CaseShot;
+  /**
+   * The project's live card under the intro, in place of a product shot: the
+   * same loop, stills and loading as its card on /work, with a caption.
+   */
+  live?: { media: ProjectMedia; caption: string };
+  /**
+   * Set when the screens on the page show made-up data rather than the
+   * client's: the label printed with the live card and every figure.
+   */
+  demo?: string;
   problem: CaseStep;
   /** What we built. */
   build: CaseStep;

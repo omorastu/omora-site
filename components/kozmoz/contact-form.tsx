@@ -116,7 +116,7 @@ export function ContactForm({
         </legend>
         <div className="whom-row">
           <input className="sr-only" type="radio" name="who" id="who-a" value={people.a.name} />
-          <label className="whom-opt whom-a rule-a" htmlFor="who-a">
+          <label className="whom-opt whom-a" htmlFor="who-a">
             {people.a.name}
           </label>
           <input
@@ -127,14 +127,14 @@ export function ContactForm({
             value={contact.either}
             defaultChecked
           />
-          <label className="whom-opt whom-e rule-both" htmlFor="who-e">
+          <label className="whom-opt whom-e" htmlFor="who-e">
             <span className="whom-amp" aria-hidden="true">
               &amp;
             </span>
             <span className="label">{contact.either}</span>
           </label>
           <input className="sr-only" type="radio" name="who" id="who-j" value={people.j.name} />
-          <label className="whom-opt whom-j rule-j" htmlFor="who-j">
+          <label className="whom-opt whom-j" htmlFor="who-j">
             {people.j.name}
           </label>
         </div>

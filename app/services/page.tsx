@@ -26,7 +26,7 @@ export default function ServicesPage() {
 
       <div className="do do--page">
         {services.map((s) => (
-          <ServiceRow key={s.id} service={s} detail />
+          <ServiceRow key={s.id} service={s} />
         ))}
       </div>
 

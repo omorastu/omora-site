@@ -10,7 +10,7 @@
 import type { CaseStudy } from "@/lib/case-studies/types";
 import { clinicalScribe } from "@/lib/case-studies/clinical-scribe";
 
-export type { CaseShot, CaseStep, CaseStudy } from "@/lib/case-studies/types";
+export type { CaseFigure, CaseShot, CaseStep, CaseStudy } from "@/lib/case-studies/types";
 
 export const caseStudies: CaseStudy[] = [clinicalScribe];
 

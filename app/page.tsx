@@ -1,6 +1,5 @@
 import { Hands } from "@/components/kozmoz/hands";
 import { Header } from "@/components/kozmoz/header";
-import { Seam } from "@/components/kozmoz/seam";
 import { Hero } from "@/components/kozmoz/hero";
 import { Us } from "@/components/kozmoz/us";
 import { Services } from "@/components/kozmoz/services";
@@ -16,7 +15,8 @@ import "@/components/kozmoz/kozmoz.css";
  * at omora-a.vercel.app; styles in components/kozmoz/kozmoz.css, copy and
  * data in lib/kozmoz.ts.
  *
- * Sections run hero, us, what we do, work, contact. The other pages share its
+ * Sections run hero, us, what we do, work, contact: the hero across the seam,
+ * the rest on one left-aligned grid below it. The other pages share its
  * header, footer and type through components/kozmoz/page.tsx; this one builds
  * its own frame, because its root is also the "pick a name" toggle.
  */
@@ -31,7 +31,6 @@ export default function Home() {
         </a>
         <Header home />
         <main id="main">
-          <Seam />
           <Hero />
           <Us />
           <Services />

@@ -2,7 +2,7 @@
 //
 //   npm run capture
 //
-// Each page is shot at 1440 wide (desktop, 2×) and 390 wide (phone, 3×) once
+// Each page is shot at 1440 wide (desktop, 1.5×) and 390 wide (phone, 3×) once
 // its fonts and images have loaded and any popup is hidden, and saved as
 // overlapping horizontal tiles in public/captures/, so the composition never
 // has to hold one enormous image. Where the sections it pauses on start, and
@@ -18,7 +18,9 @@ const OUT = path.join(ROOT, "public", "captures");
 const SITE = "https://www.numenventures.co";
 
 const SIZES = {
-  desktop: { width: 1440, height: 900, dpr: 2, mobile: false },
+  // 1.5× is 2160px across, well over the 1280px video. The phone needs more:
+  // 1.5× of 390 is 585px, narrower than its 720px video, so it stays at 3×.
+  desktop: { width: 1440, height: 900, dpr: 1.5, mobile: false },
   phone: { width: 390, height: 844, dpr: 3, mobile: true },
 };
 
@@ -40,9 +42,9 @@ const PAGES = {
   },
 };
 
-// Tiles are this many CSS px tall (chosen so each scales to whole video pixels:
-// 1800 × 1280/1440 = 1600; 1300 × 720/390 = 2400), and overlap by OVERLAP so
-// no seam can show where two meet.
+// Tiles are this many CSS px tall (chosen so each starts on a whole capture
+// pixel: 1800 × 1.5 = 2700; 1300 × 3 = 3900), and overlap by OVERLAP so no
+// seam can show where two meet. PNG, so small text keeps its edges.
 const TILE = { desktop: 1800, phone: 1300 };
 const OVERLAP = 4;
 
@@ -129,11 +131,10 @@ for (const [size, vp] of Object.entries(SIZES)) {
     const tiles = [];
     for (let y = 0, i = 0; y < geo.height; y += TILE[size], i++) {
       const h = Math.min(TILE[size] + OVERLAP, geo.height - y);
-      const file = `${size}-${name}-${String(i).padStart(2, "0")}.jpg`;
+      const file = `${size}-${name}-${String(i).padStart(2, "0")}.png`;
       await p.screenshot({
         path: path.join(OUT, file),
-        type: "jpeg",
-        quality: 92,
+        type: "png",
         fullPage: true,
         clip: { x: 0, y, width: vp.width, height: h },
       });

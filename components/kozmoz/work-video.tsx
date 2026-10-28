@@ -4,8 +4,8 @@ import { useEffect, useRef, useState } from "react";
 
 /**
  * A project's muted loop, laid over its still. Nothing downloads until the
- * card is near the screen; phones get the portrait cut, or keep the still when
- * there isn't one. It fades in only once it is actually playing, so a slow
+ * card is near the screen; phones get the portrait cut, wide screens the
+ * landscape one, and either keeps the still when its cut isn't there. It fades in only once it is actually playing, so a slow
  * connection just keeps showing the still. Under reduced motion it never loads
  * (and kozmoz.css hides it).
  *
@@ -16,7 +16,7 @@ import { useEffect, useRef, useState } from "react";
  * than 3 seconds gives way to its still for the rest of the visit.
  */
 
-type Cuts = { desktop: string; mobile?: string; desktopSd?: string; mobileSd?: string };
+type Cuts = { desktop?: string; mobile?: string; desktopSd?: string; mobileSd?: string };
 type Connection = { saveData?: boolean; effectiveType?: string; downlink?: number };
 
 const MAX_LOADING = 2;
@@ -79,7 +79,8 @@ export function WorkVideo({ desktop, mobile, desktopSd, mobileSd }: Cuts) {
       if (b === "none") return undefined;
       const hd = small.matches ? mobile : desktop;
       const sd = small.matches ? mobileSd : desktopSd;
-      return hd && b === "sd" && sd ? sd : hd;
+      // Either cut will do when the other isn't there.
+      return b === "sd" ? (sd ?? hd) : (hd ?? sd);
     };
 
     const letGo = () => {

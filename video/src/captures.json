@@ -1,11 +1,11 @@
 {
   "site": "https://www.numenventures.co",
-  "capturedAt": "2026-10-28T09:02:07.627Z",
+  "capturedAt": "2026-10-28T20:43:14.832Z",
   "overlap": 4,
   "sizes": {
     "desktop": {
       "width": 1440,
-      "dpr": 2,
+      "dpr": 1.5,
       "tile": 1800,
       "pages": {
         "home": {
@@ -20,27 +20,27 @@
           },
           "tiles": [
             {
-              "file": "desktop-home-00.jpg",
+              "file": "desktop-home-00.png",
               "y": 0,
               "h": 1804
             },
             {
-              "file": "desktop-home-01.jpg",
+              "file": "desktop-home-01.png",
               "y": 1800,
               "h": 1804
             },
             {
-              "file": "desktop-home-02.jpg",
+              "file": "desktop-home-02.png",
               "y": 3600,
               "h": 1804
             },
             {
-              "file": "desktop-home-03.jpg",
+              "file": "desktop-home-03.png",
               "y": 5400,
               "h": 1804
             },
             {
-              "file": "desktop-home-04.jpg",
+              "file": "desktop-home-04.png",
               "y": 7200,
               "h": 468
             }
@@ -56,17 +56,17 @@
           },
           "tiles": [
             {
-              "file": "desktop-pitch-00.jpg",
+              "file": "desktop-pitch-00.png",
               "y": 0,
               "h": 1804
             },
             {
-              "file": "desktop-pitch-01.jpg",
+              "file": "desktop-pitch-01.png",
               "y": 1800,
               "h": 1804
             },
             {
-              "file": "desktop-pitch-02.jpg",
+              "file": "desktop-pitch-02.png",
               "y": 3600,
               "h": 541
             }
@@ -91,47 +91,47 @@
           },
           "tiles": [
             {
-              "file": "phone-home-00.jpg",
+              "file": "phone-home-00.png",
               "y": 0,
               "h": 1304
             },
             {
-              "file": "phone-home-01.jpg",
+              "file": "phone-home-01.png",
               "y": 1300,
               "h": 1304
             },
             {
-              "file": "phone-home-02.jpg",
+              "file": "phone-home-02.png",
               "y": 2600,
               "h": 1304
             },
             {
-              "file": "phone-home-03.jpg",
+              "file": "phone-home-03.png",
               "y": 3900,
               "h": 1304
             },
             {
-              "file": "phone-home-04.jpg",
+              "file": "phone-home-04.png",
               "y": 5200,
               "h": 1304
             },
             {
-              "file": "phone-home-05.jpg",
+              "file": "phone-home-05.png",
               "y": 6500,
               "h": 1304
             },
             {
-              "file": "phone-home-06.jpg",
+              "file": "phone-home-06.png",
               "y": 7800,
               "h": 1304
             },
             {
-              "file": "phone-home-07.jpg",
+              "file": "phone-home-07.png",
               "y": 9100,
               "h": 1304
             },
             {
-              "file": "phone-home-08.jpg",
+              "file": "phone-home-08.png",
               "y": 10400,
               "h": 710
             }
@@ -147,27 +147,27 @@
           },
           "tiles": [
             {
-              "file": "phone-pitch-00.jpg",
+              "file": "phone-pitch-00.png",
               "y": 0,
               "h": 1304
             },
             {
-              "file": "phone-pitch-01.jpg",
+              "file": "phone-pitch-01.png",
               "y": 1300,
               "h": 1304
             },
             {
-              "file": "phone-pitch-02.jpg",
+              "file": "phone-pitch-02.png",
               "y": 2600,
               "h": 1304
             },
             {
-              "file": "phone-pitch-03.jpg",
+              "file": "phone-pitch-03.png",
               "y": 3900,
               "h": 1304
             },
             {
-              "file": "phone-pitch-04.jpg",
+              "file": "phone-pitch-04.png",
               "y": 5200,
               "h": 505
             }

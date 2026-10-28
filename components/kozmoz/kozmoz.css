@@ -3,8 +3,9 @@
    Ported rule for rule from the live preview (omora-a.vercel.app:
    /hk/tokens.css + /brand.css). Four decisions, kept from the original:
    1. Concept: the door of a two-partner firm. Two names joined by an
-      ampersand; a seam down the middle; everything sits on the side of
-      whoever's hands it is in, shared things cross the seam.
+      ampersand, a seam down the middle between them. The seam runs the
+      hero only; below it the page is one left-aligned editorial grid
+      ("below the hero"), and the two people's inks say whose part is whose.
    2. One ink on one paper. Second and third inks = the two people
       (taken from the mark). They colour names, initials and credit
       lines only. Nothing decorative.
@@ -371,11 +372,56 @@ html:has(.kz) body {
   .kz .act:hover:not([aria-disabled="true"]) { letter-spacing: .22em; }
 }
 
-/* ---------- sections ---------- */
-.kz .us, .kz .do, .kz .work, .kz .contact, .kz .start {
+/* ---------- below the hero: one grid ----------
+   The seam stops with the hero. Every section under it sits on one
+   12-column grid, 75rem wide (1200px in the 1440 frame) and left-aligned:
+   its label top left, headings on the left, running text held to a reading
+   measure (--measure). Rules divide sections and items; nothing sits on one. */
+.kz .sec {
   border-top: 1px solid var(--ink-20);
-  padding: 8rem var(--pad);
+  padding: 5rem var(--pad);
 }
+.kz .wrap {
+  --measure: 62ch;
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  column-gap: 2rem;
+  align-items: start;
+  max-width: 75rem;
+  margin-inline: auto;
+}
+.kz .wrap > * { grid-column: 1 / -1; }
+.kz .sec-h {
+  margin-top: 1.25rem;
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  font-size: 3.25rem;
+  font-weight: 380;
+  line-height: 1.04;
+  letter-spacing: -.028em;
+  text-wrap: balance;
+  font-variation-settings: "SOFT" 100, "WONK" 0;
+}
+/* The way on from a home section to its own page, under it. */
+.kz .more {
+  margin-top: 2rem;
+  font-family: var(--font-label);
+  font-weight: 600;
+  font-size: max(.8125rem, 12px);
+  letter-spacing: .14em;
+  line-height: 1.3;
+  text-transform: uppercase;
+}
+.kz .more a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: .3em;
+}
+
+/* /services' big line, centred across its seam. */
 .kz .say {
   width: fit-content;
   max-width: 64rem;
@@ -392,16 +438,37 @@ html:has(.kz) body {
   font-variation-settings: "SOFT" 100, "WONK" 0;
 }
 
-/* ---------- us ---------- */
-.kz .pair {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  column-gap: var(--gap);
-  margin-top: 6rem;
+/* ---------- us ----------
+   The line, where and the promises on the left; the two people on the right. */
+.kz .us-head { grid-column: 1 / span 5; }
+.kz .where {
+  margin-top: 2rem;
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  font-size: 1.625rem;
+  font-weight: 350;
+  line-height: 1.2;
+  font-variation-settings: "SOFT" 50, "WONK" 0;
 }
-.kz .person { width: min(100%, 27rem); }
-.kz .person--a { justify-self: end; text-align: right; }
-.kz .person--j { justify-self: start; }
+.kz .promises { margin-top: 1.75rem; border-top: 1px solid var(--ink-20); }
+.kz .promises li {
+  padding-block: .875rem;
+  border-bottom: 1px solid var(--ink-20);
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  font-size: 1.375rem;
+  font-weight: 380;
+  line-height: 1.2;
+  letter-spacing: -.01em;
+  text-wrap: pretty;
+  font-variation-settings: "SOFT" 100, "WONK" 0;
+}
+.kz .pair {
+  grid-column: 7 / -1;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 2rem;
+}
 .kz .frame {
   position: relative;
   aspect-ratio: 4 / 5;
@@ -416,7 +483,7 @@ html:has(.kz) body {
   display: inline-block;
   font-family: var(--font-display);
   font-optical-sizing: auto;
-  font-size: 21rem;
+  font-size: 14rem;
   font-weight: 300;
   line-height: 1;
   letter-spacing: -.04em;
@@ -427,137 +494,58 @@ html:has(.kz) body {
 .kz .frame-name {
   position: absolute;
   z-index: 1;
-  bottom: 1.25rem;
+  left: 1rem;
+  bottom: 1rem;
   color: var(--ink);
 }
 .kz .frame.has-photo .frame-name { background: var(--paper); padding: .25rem .5rem; }
-.kz .person--a .frame-name { right: 1.25rem; }
-.kz .person--j .frame-name { left: 1.25rem; }
 .kz .person-line {
-  margin-top: 1.75rem;
-  max-width: 25rem;
-  font-size: 1.25rem;
-  line-height: 1.42;
-}
-.kz .person--a .person-line { margin-left: auto; }
-
-.kz .where {
-  width: fit-content;
-  margin: 6rem auto 0;
-  padding: .5rem 1rem;
-  font-family: var(--font-display);
-  font-optical-sizing: auto;
-  font-size: 2.125rem;
-  font-weight: 350;
-  line-height: 1.15;
-  text-align: center;
-  font-variation-settings: "SOFT" 50, "WONK" 0;
-}
-.kz .promises {
-  display: grid;
-  justify-items: center;
-  row-gap: 2.75rem;
-  margin-top: 6rem;
-}
-.kz .promises li {
-  width: fit-content;
-  max-width: 56rem;
-  padding-block: .375rem;
-  font-family: var(--font-display);
-  font-optical-sizing: auto;
-  font-size: 3.25rem;
-  font-weight: 380;
-  line-height: 1.06;
-  letter-spacing: -.022em;
-  text-align: center;
-  text-wrap: balance;
-  font-variation-settings: "SOFT" 100, "WONK" 0;
+  margin-top: 1.25rem;
+  font-size: max(1.0625rem, 15px);
+  line-height: 1.45;
+  text-wrap: pretty;
 }
 
-/* ---------- what we do ---------- */
-.kz .svc {
+/* ---------- what we do ----------
+   The home page's four, two by two, each credit line one sentence in the
+   two inks. */
+.kz .do-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  column-gap: var(--gap);
-  padding-block: 4.5rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 3rem 2rem;
+  margin-top: 2rem;
 }
-.kz .svc:first-of-type { padding-top: 0; }
-.kz .svc-title {
+.kz .svc-card { padding-top: 1.5rem; border-top: 1px solid var(--ink-20); }
+.kz .svc-card-title {
   font-family: var(--font-display);
   font-optical-sizing: auto;
-  font-size: 6.5rem;
+  font-size: 2.5rem;
   font-weight: 400;
-  line-height: .94;
-  letter-spacing: -.034em;
-  font-variation-settings: "SOFT" 100, "WONK" 1;
+  line-height: 1;
+  letter-spacing: -.03em;
   text-wrap: balance;
+  font-variation-settings: "SOFT" 100, "WONK" 1;
 }
-.kz .svc-text {
-  margin-top: 1.75rem;
-  max-width: 34rem;
-  font-size: 1.375rem;
-  line-height: 1.42;
+.kz .svc-card-text {
+  max-width: var(--measure);
+  margin-top: 1rem;
+  font-size: max(1.125rem, 15px);
+  line-height: 1.45;
+  text-wrap: pretty;
 }
-.kz .svc--both .svc-title,
-.kz .svc--both .svc-text {
-  grid-column: 1 / -1;
-  justify-self: center;
-  width: fit-content;
-  padding-inline: 1rem;
-  text-align: center;
-}
-.kz .svc--both .svc-text { max-width: 36rem; }
-.kz .svc--j .svc-title,
-.kz .svc--j .svc-text { grid-column: 2; }
-.kz .svc--j .svc-title { max-width: 40rem; }
-
-.kz .credit {
-  grid-column: 1 / -1;
-  position: relative;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  column-gap: var(--gap);
-  align-items: center;
-  margin-top: 2.25rem;
-  font-family: var(--font-label);
-  font-weight: 600;
-  font-size: max(.8125rem, 12px);
-  letter-spacing: .14em;
-  text-transform: uppercase;
-  line-height: 1.3;
-}
-.kz .credit-a, .kz .credit-j { display: inline-block; }
-.kz .credit-a { grid-column: 1; justify-self: end; color: var(--ashan-text); }
-.kz .credit-j { grid-column: 2; justify-self: start; color: var(--jordan-text); }
-.kz .tag {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  translate: -50% -50%;
-  z-index: 1;
-  padding: .3rem .4rem;
-  background: var(--paper);
-  letter-spacing: .04em;
-  white-space: nowrap;
-}
+.kz .svc-card-credit { margin-top: 1.25rem; }
 
 /* ---------- work ----------
-   Shared work, every card placed the same way: the screen centred across
-   the seam, the text centred under it on paper. (The preview put a project
-   on one person's side when it was theirs and credited it; Work no longer
-   credits anyone.) On desktop a card is 60rem wide — 960px in the 1440
-   frame — and narrower on a shorter window, so its screen and its text
-   always fit on one screen together (17.5rem: the header, the text under
-   the screen at its longest, and a little air). */
-.kz .proj {
+   Two across, every card the same: the screen at 16:10 (4:5 on phones),
+   then the name, where and how it stands, the line and the link. */
+.kz .work-grid {
   display: grid;
-  justify-items: center;
-  padding-block: 3rem 6rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 3.5rem 2rem;
+  margin-top: 2rem;
 }
-.kz .proj:first-of-type { padding-top: 0; }
 .kz .proj-media {
   position: relative;
-  width: min(100%, clamp(36rem, (100svh - 17.5rem) * 1.6, 60rem));
   aspect-ratio: 16 / 10;
   overflow: hidden;
   margin: 0;
@@ -575,34 +563,25 @@ html:has(.kz) body {
 }
 .kz .proj-media video { opacity: 0; transition: opacity .5s var(--ease); }
 .kz .proj-media video.is-on { opacity: 1; }
-.kz .proj-body {
-  width: fit-content;
-  max-width: 60rem;
-  margin-top: 1.25rem;
-  padding: .25rem 1rem;
-  text-align: center;
-}
-.kz .proj--type { padding-block: 4rem 2rem; }
-.kz .proj--type .proj-body { margin-top: 0; }
+.kz .proj-body { margin-top: 1.25rem; }
 .kz .proj-name {
   font-family: var(--font-display);
   font-optical-sizing: auto;
-  font-size: 2.75rem;
+  font-size: 2rem;
   font-weight: 400;
-  line-height: .95;
+  line-height: 1;
   letter-spacing: -.03em;
   font-variation-settings: "SOFT" 100, "WONK" 1;
 }
-.kz .proj-name--big { font-size: 6rem; }
-.kz .proj-meta { margin-top: .75rem; color: var(--ink-65); }
+.kz .proj-meta { margin-top: .625rem; color: var(--ink-65); }
 .kz .proj-line {
-  margin: .75rem auto 0;
-  max-width: 52rem;
-  font-size: 1.125rem;
-  line-height: 1.42;
-  text-wrap: balance;
+  max-width: var(--measure);
+  margin-top: .75rem;
+  font-size: max(1.0625rem, 15px);
+  line-height: 1.45;
+  text-wrap: pretty;
 }
-.kz .proj-site { margin-top: .75rem; }
+.kz .proj-site { margin-top: .625rem; }
 .kz .proj-link {
   font-weight: 500;
   text-decoration: underline;
@@ -610,52 +589,26 @@ html:has(.kz) body {
   text-underline-offset: .22em;
 }
 
-/* The way on from a home section to its own page: small, on the seam. */
-.kz .more {
-  width: fit-content;
-  margin: 1.5rem auto 0;
-  padding: 0 .75rem;
-  font-family: var(--font-label);
-  font-weight: 600;
-  font-size: max(.8125rem, 12px);
-  letter-spacing: .14em;
-  line-height: 1.3;
-  text-transform: uppercase;
-}
-.kz .more a {
-  display: inline-flex;
-  align-items: center;
-  min-height: 44px;
-  text-decoration: underline;
-  text-decoration-thickness: 1px;
-  text-underline-offset: .3em;
-}
-
-/* ---------- contact ---------- */
+/* ---------- contact ----------
+   The line and the promise on the left; the form on the right, in two
+   columns: the three short fields, and the message beside them. */
+.kz .contact-head { grid-column: 1 / span 5; }
 .kz .contact-lede {
-  width: fit-content;
-  max-width: 36rem;
-  margin: 1.75rem auto 0;
-  padding: .25rem 1rem;
-  font-size: 1.375rem;
-  line-height: 1.42;
-  text-align: center;
+  max-width: var(--measure);
+  margin-top: 1.25rem;
+  font-size: max(1.125rem, 15px);
+  line-height: 1.45;
 }
-.kz .form { margin-top: 5rem; }
+.kz .form { grid-column: 7 / -1; }
 .kz .fields {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  column-gap: var(--gap);
-  row-gap: 2.5rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 2rem;
+  row-gap: 1.75rem;
 }
-.kz .field {
-  display: grid;
-  align-content: start;
-  gap: .625rem;
-  width: min(100%, 30rem);
-}
-.kz .field:nth-child(odd) { justify-self: end; }
-.kz .field:nth-child(even) { justify-self: start; }
+.kz .field { grid-column: 1; display: grid; align-content: start; gap: .5rem; }
+/* The message beside the first two, its line level with the second's. */
+.kz .field--msg { grid-column: 2; grid-row: 1 / span 2; grid-template-rows: auto 1fr; align-content: stretch; }
 .kz .field input,
 .kz .field textarea {
   width: 100%;
@@ -663,7 +616,7 @@ html:has(.kz) body {
   border: 0;
   border-bottom: 1px solid var(--ink);
   background: transparent;
-  font-size: max(1.25rem, 16px);
+  font-size: max(1.125rem, 16px);
   line-height: 1.3;
 }
 .kz .field textarea { resize: vertical; min-height: 6.5rem; }
@@ -672,21 +625,21 @@ html:has(.kz) body {
 .kz .field [aria-invalid="true"] { border-bottom-width: 2px; padding-bottom: calc(.625rem - 1px); }
 .kz .field-error { font-size: max(.875rem, 13px); line-height: 1.3; }
 
-.kz .whom { margin: 6.5rem 0 0; padding: 0; border: 0; min-width: 0; }
-.kz .whom legend { float: left; width: 100%; padding: 0; text-align: center; color: var(--ink-65); }
-.kz .whom legend span { position: relative; z-index: 1; background: var(--paper); padding: .25rem .5rem; }
+.kz .whom { margin: 2.5rem 0 0; padding: 0; border: 0; min-width: 0; }
+.kz .whom legend { float: left; width: 100%; padding: 0; color: var(--ink-65); }
 .kz .whom-row {
   clear: both;
-  position: relative;
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
-  align-items: center;
-  padding-top: 1.75rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 2rem;
+  row-gap: .5rem;
+  padding-top: .75rem;
 }
 .kz .whom-opt {
   font-family: var(--font-display);
   font-optical-sizing: auto;
-  font-size: 7rem;
+  font-size: 3rem;
   font-weight: 400;
   line-height: 1;
   letter-spacing: -.034em;
@@ -697,18 +650,8 @@ html:has(.kz) body {
   text-underline-offset: .14em;
   transition: color .35s var(--ease);
 }
-.kz .whom-a { grid-column: 1; justify-self: end; padding-right: 1.5rem; }
-.kz .whom-j { grid-column: 3; justify-self: start; padding-left: 1.5rem; }
-.kz .whom-e {
-  grid-column: 2;
-  position: relative;
-  z-index: 1;
-  display: grid;
-  justify-items: center;
-  padding-inline: .5rem;
-  background: var(--paper);
-}
-.kz .whom-e .label { margin-top: -.5rem; letter-spacing: .14em; font-size: max(.75rem, 11px); }
+.kz .whom-e { display: inline-flex; align-items: baseline; gap: .625rem; }
+.kz .whom-e .label { letter-spacing: .14em; font-size: max(.75rem, 11px); }
 .kz .whom-amp { font-weight: 300; }
 /* Either (default) = both names in their colours; one name = that name only. */
 .kz .whom-row:has(#who-a:checked) .whom-a,
@@ -721,24 +664,17 @@ html:has(.kz) body {
 .kz #who-e:checked + .whom-e .label { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: .3em; }
 .kz .whom input:focus-visible + .whom-opt { outline: 1px solid var(--ink); outline-offset: .25rem; }
 
+/* The button and the email beside it; what the form says back, under both. */
 .kz .send-row {
-  display: grid;
-  justify-items: center;
-  row-gap: 1.25rem;
-  margin-top: 4rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem 1.75rem;
+  margin-top: 2.5rem;
 }
 .kz .send-row .act { margin-top: 0; }
+.kz .form-status { order: 1; flex-basis: 100%; max-width: var(--measure); }
 .kz .form-status:empty { display: none; }
-.kz .form-status,
-.kz .or {
-  position: relative;
-  z-index: 1;
-  width: fit-content;
-  max-width: 34rem;
-  padding: .25rem .75rem;
-  background: var(--paper);
-  text-align: center;
-}
 .kz .or a { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: .22em; }
 
 /* ---------- footer ---------- */
@@ -784,14 +720,17 @@ html:has(.kz) body {
   .kz .person--j:hover .frame-initial { translate: -1.25rem 0; }
 }
 
-/* ---------- scroll: the seam draws, people and work come in from their side ---------- */
+/* ---------- scroll: the seam draws, the people come in from their side ----------
+   The seam finishes drawing at --seam-end, the scroll at which its tip
+   reaches the bottom of the hero (components/kozmoz/seam.tsx). */
 @media (min-width: 1024px) and (prefers-reduced-motion: no-preference) {
   @supports (animation-timeline: view()) {
     .kz .seam {
       animation: kz-seam-draw linear both;
       animation-timeline: scroll(root block);
+      animation-range: 0 var(--seam-end, 100%);
     }
-    .kz .slide-a, .kz .slide-j, .kz .open-both {
+    .kz .slide-a, .kz .slide-j {
       animation-fill-mode: both;
       animation-timing-function: cubic-bezier(.2, .65, .25, 1);
       animation-duration: auto;
@@ -800,7 +739,6 @@ html:has(.kz) body {
     }
     .kz .slide-a { animation-name: kz-slide-a; }
     .kz .slide-j { animation-name: kz-slide-j; }
-    .kz .open-both { animation-name: kz-open-both; }
   }
 }
 @keyframes kz-seam-draw {
@@ -809,7 +747,6 @@ html:has(.kz) body {
 }
 @keyframes kz-slide-a { from { translate: -5rem 0; } to { translate: 0 0; } }
 @keyframes kz-slide-j { from { translate: 5rem 0; } to { translate: 0 0; } }
-@keyframes kz-open-both { from { clip-path: inset(0 16% 0 16%); } to { clip-path: inset(0 0 0 0); } }
 
 /* =====================================================================
    inner pages — /services, /work, the case studies, legal, not found.
@@ -821,7 +758,73 @@ html:has(.kz) body {
 .kz .page-head { display: grid; justify-items: center; padding: 6rem var(--pad) 4rem; }
 .kz .page-title { padding: .25rem .5rem; }
 
-/* ---------- /services ---------- */
+/* ---------- /services ----------
+   Still laid out across the seam: each service centred on it, its credit
+   line split along it, the steps of how it starts across it. */
+.kz .svc {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: var(--gap);
+  padding-block: 4.5rem;
+}
+.kz .svc:first-of-type { padding-top: 0; }
+.kz .svc-title {
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  font-size: 6.5rem;
+  font-weight: 400;
+  line-height: .94;
+  letter-spacing: -.034em;
+  font-variation-settings: "SOFT" 100, "WONK" 1;
+  text-wrap: balance;
+}
+.kz .svc-text {
+  margin-top: 1.75rem;
+  max-width: 34rem;
+  font-size: 1.375rem;
+  line-height: 1.42;
+}
+.kz .svc--both .svc-title,
+.kz .svc--both .svc-text {
+  grid-column: 1 / -1;
+  justify-self: center;
+  width: fit-content;
+  padding-inline: 1rem;
+  text-align: center;
+}
+.kz .svc--both .svc-text { max-width: 36rem; }
+
+.kz .credit {
+  grid-column: 1 / -1;
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: var(--gap);
+  align-items: center;
+  margin-top: 2.25rem;
+  font-family: var(--font-label);
+  font-weight: 600;
+  font-size: max(.8125rem, 12px);
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  line-height: 1.3;
+}
+.kz .credit-a, .kz .credit-j { display: inline-block; }
+.kz .credit-a { grid-column: 1; justify-self: end; color: var(--ashan-text); }
+.kz .credit-j { grid-column: 2; justify-self: start; color: var(--jordan-text); }
+.kz .tag {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  translate: -50% -50%;
+  z-index: 1;
+  padding: .3rem .4rem;
+  background: var(--paper);
+  letter-spacing: .04em;
+  white-space: nowrap;
+}
+
+.kz .start { border-top: 1px solid var(--ink-20); padding: 8rem var(--pad); }
 .kz .do--page { border-top: 0; padding: 0 var(--pad) 3rem; }
 .kz .svc--detail { padding-block: 5rem; }
 /* What's included: a ruled list between the text and the credit line. */
@@ -889,27 +892,23 @@ html:has(.kz) body {
 }
 .kz .start .act { margin-top: 3rem; }
 
-/* ---------- /work ---------- */
-.kz .work--page { border-top: 0; padding-top: 0; }
-.kz .page-end { display: grid; justify-items: center; padding: 0 var(--pad) 8rem; }
+/* ---------- /work ----------
+   The home page's Work grid with every project, under the page's label. */
+.kz .work--page { padding: 4rem var(--pad) 6rem; }
+.kz .page-end { margin-top: 4.5rem; }
 .kz .page-end .act { margin-top: 0; }
 
 /* ---------- case study (/work/<slug>) ----------
-   A reading page: the head centred like the home page's lines, the long
-   text in one left-aligned column. */
-.kz .cs-head {
-  display: grid;
-  justify-items: center;
-  padding: 7rem var(--pad) 6rem;
-  text-align: center;
-}
+   A reading page on the home page's grid: the head and the live card, then
+   the long text in one left-aligned column. */
+.kz .cs-head { padding: 5rem var(--pad) 5rem; }
+.kz .cs-intro { grid-column: 1 / span 9; }
 .kz .cs-eyebrow { color: var(--ink-65); }
 .kz .cs-title {
-  max-width: 64rem;
-  margin-top: 2rem;
+  margin-top: 1.5rem;
   font-family: var(--font-display);
   font-optical-sizing: auto;
-  font-size: 4.25rem;
+  font-size: 4rem;
   font-weight: 380;
   line-height: 1.04;
   letter-spacing: -.028em;
@@ -917,34 +916,46 @@ html:has(.kz) body {
   font-variation-settings: "SOFT" 100, "WONK" 0;
 }
 .kz .cs-sub {
-  max-width: 46rem;
-  margin-top: 2rem;
+  max-width: 44rem;
+  margin-top: 1.5rem;
   font-family: var(--font-display);
   font-optical-sizing: auto;
-  font-size: 1.75rem;
+  font-size: 1.625rem;
   font-weight: 350;
   line-height: 1.25;
-  text-wrap: balance;
+  text-wrap: pretty;
   font-variation-settings: "SOFT" 50, "WONK" 0;
 }
-.kz .cs-facts { display: flex; justify-content: center; gap: 4rem; margin-top: 3rem; }
+.kz .cs-facts { display: flex; gap: 4rem; margin-top: 2.5rem; }
 .kz .cs-facts dt { color: var(--ink-65); }
 .kz .cs-facts dd { margin-top: .5rem; font-size: 1.25rem; line-height: 1.3; }
 .kz .cs-caps {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  width: min(100%, 72rem);
-  margin-top: 4.5rem;
+  margin-top: 3rem;
   border-block: 1px solid var(--ink-20);
 }
 .kz .cs-caps li {
-  padding: 1.75rem 2rem;
+  padding: 1.5rem 2rem 1.5rem 0;
   font-size: 1.25rem;
   line-height: 1.42;
-  text-align: left;
   text-wrap: pretty;
 }
-.kz .cs-caps li + li { border-left: 1px solid var(--ink-20); }
+.kz .cs-caps li + li { padding-left: 2rem; border-left: 1px solid var(--ink-20); }
+/* The live card, as on /work, and its caption. */
+.kz .cs-live { grid-column: 1 / span 10; margin-top: 3.5rem; }
+.kz .cs-caption {
+  max-width: var(--measure);
+  margin-top: .875rem;
+  color: var(--ink-65);
+  font-size: max(1rem, 14px);
+  line-height: 1.45;
+  text-wrap: pretty;
+}
+.kz .cs-demo { margin-right: .375rem; color: var(--ink); }
+.kz .cs-fig { margin-top: 2.5rem; }
+.kz .cs-fig-frame { border: 1px solid var(--ink-20); background: var(--frame); }
+.kz .cs-fig-frame img { width: 100%; height: auto; }
 .kz .cs-shot {
   position: relative;
   width: min(100%, 60rem);
@@ -963,8 +974,8 @@ html:has(.kz) body {
 }
 .kz .cs-step .cs-shot { width: 100%; margin-top: 2.5rem; }
 
-.kz .cs-steps, .kz .cs-notes { border-top: 1px solid var(--ink-20); padding: 7rem var(--pad); }
-.kz .cs-steps ol { display: grid; row-gap: 6rem; width: min(100%, 46rem); margin-inline: auto; }
+.kz .cs-steps, .kz .cs-notes { border-top: 1px solid var(--ink-20); padding: 5rem var(--pad); }
+.kz .cs-steps ol { grid-column: 1 / span 8; display: grid; row-gap: 5rem; }
 .kz .cs-step-n {
   display: flex;
   gap: .875rem;
@@ -996,8 +1007,9 @@ html:has(.kz) body {
 }
 .kz .cs-figure .label { margin-top: .75rem; color: var(--ink-65); }
 
-.kz .cs-notes { display: grid; justify-content: center; grid-template-columns: min(100%, 46rem); }
-.kz .cs-notes--two { grid-template-columns: minmax(0, 40rem) minmax(0, 30rem); column-gap: 6rem; }
+.kz .cs-note { grid-column: 1 / span 8; }
+.kz .cs-notes--two .cs-note { grid-column: 1 / span 6; }
+.kz .cs-notes--two .cs-note--data { grid-column: 8 / -1; }
 .kz .cs-note h2 { color: var(--ink-65); }
 .kz .cs-note .cs-body { margin-top: 1.25rem; }
 .kz .cs-note--data ul { margin-top: 1.25rem; border-top: 1px solid var(--ink-20); }
@@ -1049,7 +1061,7 @@ html:has(.kz) body {
   text-underline-offset: .22em;
 }
 
-/* ---------- phones: the seam becomes a rule on each item ---------- */
+/* ---------- phones: one column; in the hero, the seam becomes a rule on each line ---------- */
 @media (max-width: 1023px) {
   .kz .top {
     grid-template-columns: 1fr auto auto auto;
@@ -1102,8 +1114,18 @@ html:has(.kz) body {
   }
   .kz .act { margin-top: 2rem; }
 
-  .kz .us, .kz .do, .kz .work, .kz .contact, .kz .start { padding: 5rem var(--pad); }
+  .kz .start { padding: 5rem var(--pad); }
   .kz .say { margin-inline: 0; font-size: 2.75rem; line-height: 1.04; text-align: left; padding-block: 0; }
+
+  /* below the hero: one column */
+  .kz .sec { padding: 3rem var(--pad); }
+  .kz .wrap { grid-template-columns: minmax(0, 1fr); column-gap: 0; }
+  .kz .wrap > *,
+  .kz .us-head, .kz .pair, .kz .contact-head, .kz .form,
+  .kz .cs-intro, .kz .cs-live, .kz .cs-steps ol,
+  .kz .cs-note, .kz .cs-notes--two .cs-note, .kz .cs-notes--two .cs-note--data { grid-column: 1 / -1; }
+  .kz .sec-h { margin-top: .875rem; font-size: 2.125rem; }
+  .kz .more { margin-top: 1.75rem; }
 
   /* item rules: Ashan brass, Jordan cyan, both = split */
   .kz .rule-a, .kz .rule-j, .kz .rule-both { position: relative; padding-left: 1.125rem; }
@@ -1120,57 +1142,36 @@ html:has(.kz) body {
   .kz .rule-both::before { bottom: 50%; }
   .kz .rule-both::after { top: 50%; background: var(--jordan); }
 
-  .kz .pair { grid-template-columns: 1fr; row-gap: 3.5rem; margin-top: 3rem; }
-  .kz .person, .kz .person--a, .kz .person--j { width: 100%; justify-self: stretch; text-align: left; }
-  .kz .person--a .person-line { margin-left: 0; }
-  .kz .person--a .frame-name { right: auto; left: 1rem; }
-  .kz .person--j .frame-name { left: 1rem; }
-  .kz .frame-name { bottom: 1rem; }
-  .kz .frame-initial { font-size: 15rem; }
-  .kz .person-line { margin-top: 1.25rem; font-size: 1.125rem; }
+  .kz .where { margin-top: 1.5rem; font-size: 1.375rem; }
+  .kz .promises { margin-top: 1.25rem; }
+  .kz .promises li { padding-block: .75rem; font-size: 1.25rem; }
+  .kz .pair { column-gap: 1rem; margin-top: 2rem; }
+  .kz .frame-initial { font-size: 8.5rem; }
+  .kz .frame-name { left: .75rem; bottom: .75rem; }
+  .kz .person-line { margin-top: .875rem; font-size: 1rem; line-height: 1.42; }
 
-  .kz .where { margin: 3.5rem 0 0; padding: 0; font-size: 1.625rem; text-align: left; }
-  .kz .promises { justify-items: stretch; row-gap: 1.75rem; margin-top: 3rem; }
-  .kz .promises li { width: auto; font-size: 1.875rem; line-height: 1.1; text-align: left; }
+  .kz .do-grid { grid-template-columns: minmax(0, 1fr); gap: 1.75rem; margin-top: 1.25rem; }
+  .kz .svc-card { padding-top: 1.25rem; }
+  .kz .svc-card-title { font-size: 2rem; }
+  .kz .svc-card-text { margin-top: .75rem; font-size: 1.0625rem; }
+  .kz .svc-card-credit { margin-top: 1rem; }
 
-  .kz .svc { grid-template-columns: 1fr; padding-block: 0; margin-top: 3.5rem; }
-  .kz .svc:first-of-type { margin-top: 0; }
-  .kz .svc-title, .kz .svc--both .svc-title, .kz .svc--j .svc-title { grid-column: 1; justify-self: start; width: auto; padding-inline: 0; font-size: 3.25rem; text-align: left; }
-  .kz .svc-text, .kz .svc--both .svc-text, .kz .svc--j .svc-text { grid-column: 1; justify-self: start; width: auto; padding-inline: 0; margin-top: 1rem; font-size: 1.125rem; text-align: left; }
-  .kz .credit { display: flex; flex-wrap: wrap; gap: .5rem 1rem; margin-top: 1.25rem; }
-  .kz .tag { position: static; translate: none; order: -1; padding: 0; }
-
-  .kz .proj { justify-items: stretch; padding-block: 0; margin-top: 4rem; }
-  .kz .proj:first-of-type { margin-top: 0; }
-  .kz .proj-media { width: 100%; aspect-ratio: 4 / 5; }
-  .kz .proj-body { width: auto; margin-top: 1.25rem; padding: 0; text-align: left; }
+  .kz .work-grid { grid-template-columns: minmax(0, 1fr); gap: 2.25rem; margin-top: 1.25rem; }
+  .kz .proj-media { aspect-ratio: 4 / 5; }
   /* Only bites on a still taller than 4:5: show it from just below the top. */
   .kz .proj-media img { object-position: 50% 12%; }
-  .kz .proj--type { padding-block: 0; }
-  .kz .proj--type .proj-body { margin-top: 1.25rem; }
-  .kz .proj-name, .kz .proj-name--big { font-size: 2.75rem; }
-  .kz .proj-line { margin-inline: 0; font-size: 1.125rem; }
+  .kz .proj-body { margin-top: 1rem; }
+  .kz .proj-name { font-size: 1.75rem; }
+  .kz .proj-line { margin-top: .625rem; }
 
-  .kz .more { margin: 3rem 0 0; padding: 0; }
-
-  .kz .contact-lede { margin: 1.25rem 0 0; padding: 0; text-align: left; font-size: 1.125rem; }
-  .kz .form { margin-top: 3rem; }
-  .kz .fields { grid-template-columns: 1fr; row-gap: 2rem; }
-  .kz .field, .kz .field:nth-child(odd), .kz .field:nth-child(even) { width: 100%; justify-self: stretch; }
-  .kz .whom { margin-top: 3.5rem; }
-  .kz .whom legend { text-align: left; }
-  .kz .whom legend span { padding: 0; }
-  .kz .whom-row { grid-template-columns: 1fr; row-gap: 1rem; padding-top: 1.25rem; }
-  .kz .whom-opt, .kz .whom-a, .kz .whom-j, .kz .whom-e {
-    grid-column: 1;
-    justify-self: stretch;
-    padding: .25rem 0 .25rem 1.125rem;
-    font-size: 3.75rem;
-  }
-  .kz .whom-e { display: flex; align-items: baseline; gap: .75rem; justify-items: start; }
-  .kz .whom-e .label { margin-top: 0; }
-  .kz .send-row { justify-items: start; margin-top: 2.5rem; }
-  .kz .form-status, .kz .or { padding: 0; text-align: left; }
+  .kz .contact-lede { margin-top: 1rem; font-size: 1.0625rem; }
+  .kz .form { margin-top: 2rem; }
+  .kz .fields { grid-template-columns: minmax(0, 1fr); row-gap: 1.5rem; }
+  .kz .field, .kz .field--msg { grid-column: 1; grid-row: auto; }
+  .kz .whom { margin-top: 2.25rem; }
+  .kz .whom-row { column-gap: 1.25rem; padding-top: 1rem; }
+  .kz .whom-opt { font-size: 1.875rem; }
+  .kz .send-row { margin-top: 2rem; }
 
   .kz .foot { grid-template-columns: 1fr; row-gap: .75rem; padding-block: 2rem 2.5rem; }
   .kz .foot-r { justify-self: start; text-align: left; }
@@ -1192,24 +1193,26 @@ html:has(.kz) body {
   .kz .start-note { margin-top: 3rem; padding: 0; font-size: 1.5rem; line-height: 1.2; text-align: left; }
   .kz .start .act { justify-self: start; margin-top: 2rem; }
 
-  .kz .work--page { padding-top: 0; }
-  .kz .page-end { justify-items: start; padding: 0 var(--pad) 5rem; }
+  .kz .work--page { padding: 2.5rem var(--pad) 4rem; }
+  .kz .page-end { margin-top: 3rem; }
 
-  .kz .cs-head { justify-items: start; padding: 3.5rem var(--pad) 4rem; text-align: left; }
+  .kz .cs-head { padding: 3rem var(--pad) 3.5rem; }
   .kz .cs-title { margin-top: 1.25rem; font-size: 2.5rem; }
   .kz .cs-sub { margin-top: 1.25rem; font-size: 1.375rem; }
-  .kz .cs-facts { flex-wrap: wrap; justify-content: start; gap: 1.25rem 2.5rem; margin-top: 2rem; }
+  .kz .cs-facts { flex-wrap: wrap; gap: 1.25rem 2.5rem; margin-top: 2rem; }
   .kz .cs-facts dd { font-size: 1.125rem; }
   .kz .cs-caps { grid-template-columns: 1fr; margin-top: 2.5rem; }
-  .kz .cs-caps li { padding: 1.125rem 0; font-size: 1.125rem; }
+  .kz .cs-caps li, .kz .cs-caps li + li { padding: 1.125rem 0; font-size: 1.125rem; }
   .kz .cs-caps li + li { border-left: 0; border-top: 1px solid var(--ink-20); }
+  .kz .cs-live { margin-top: 2.5rem; }
   .kz .cs-shot { margin-top: 2.5rem; }
-  .kz .cs-steps, .kz .cs-notes { padding: 4.5rem var(--pad); }
-  .kz .cs-steps ol { row-gap: 4rem; }
+  .kz .cs-fig { margin-top: 2rem; }
+  .kz .cs-steps, .kz .cs-notes { padding: 3.5rem var(--pad); }
+  .kz .cs-steps ol { row-gap: 3.5rem; }
   .kz .cs-step-h { margin-top: 1.125rem; font-size: 2rem; }
   .kz .cs-body { margin-top: 1.125rem; font-size: 1.125rem; }
   .kz .cs-figure-n { font-size: 4rem; }
-  .kz .cs-notes, .kz .cs-notes--two { grid-template-columns: 1fr; row-gap: 3.5rem; }
+  .kz .cs-note--data { margin-top: 3rem; }
 
   .kz .read { padding: 3.5rem var(--pad) 5rem; }
   .kz .read-title { font-size: 2.75rem; }

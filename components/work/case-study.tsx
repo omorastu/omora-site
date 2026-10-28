@@ -1,7 +1,9 @@
 import Image from "next/image";
-import type { CaseShot, CaseStep, CaseStudy } from "@/lib/case-studies";
+import type { CaseFigure, CaseShot, CaseStep, CaseStudy } from "@/lib/case-studies";
 import { Page } from "@/components/kozmoz/page";
 import { Contact } from "@/components/kozmoz/contact";
+import { ProjectScreen } from "@/components/kozmoz/work";
+import { mediaOnDisk, onDisk } from "@/lib/work-media";
 import { cn } from "@/lib/utils";
 
 /**
@@ -9,67 +11,89 @@ import { cn } from "@/lib/utils";
  * lib/case-studies. app/work/[slug] renders every study through it, so a new
  * study is a data file, not a page.
  *
- * In the home page's frame (components/kozmoz/page.tsx) and type, but set as
- * a reading page: no seam, and the long text in one left-aligned column.
+ * In the home page's frame (components/kozmoz/page.tsx), type and grid, set
+ * as a reading page: the long text in one left-aligned column.
  *
  * What a study leads with is Capabilities — three lines on what the thing
  * does. The one figure it can carry, `resultNumber`, is optional and only
  * prints when it has a value: a page that cannot publish the client's numbers
  * is better off making a plain claim about the work than dressing an empty
  * metric up as one. Screenshots work the same way: a shot prints only once it
- * has media, and nothing stands in for one meanwhile.
+ * has media, and nothing stands in for one meanwhile. A study can lead with
+ * its project's live card instead (`live`); where its screens show made-up
+ * data, every one of them is labelled so (`demo`).
  */
 export function CaseStudyPage({ study }: { study: CaseStudy }) {
   const steps = [study.problem, study.build, study.result];
   const resultNumber = study.resultNumber?.value.trim() ? study.resultNumber : undefined;
+  const live = study.live && mediaOnDisk(study.name, study.live.media).media;
 
   return (
     // The header's Contact link stays on the page: the study ends in its own form.
     <Page local={["#contact"]}>
       <header className="cs-head">
-        <p className="cs-eyebrow label">{study.eyebrow}</p>
-        <h1 className="cs-title">{study.title}</h1>
-        <p className="cs-sub">{study.subhead}</p>
+        <div className="wrap">
+          <div className="cs-intro">
+            <p className="cs-eyebrow label">{study.eyebrow}</p>
+            <h1 className="cs-title">{study.title}</h1>
+            <p className="cs-sub">{study.subhead}</p>
 
-        <dl className="cs-facts">
-          <div>
-            <dt className="label">Client</dt>
-            <dd>{study.clientType}</dd>
+            <dl className="cs-facts">
+              <div>
+                <dt className="label">Client</dt>
+                <dd>{study.clientType}</dd>
+              </div>
+              <div>
+                <dt className="label">Status</dt>
+                <dd>{study.status}</dd>
+              </div>
+            </dl>
           </div>
-          <div>
-            <dt className="label">Status</dt>
-            <dd>{study.status}</dd>
-          </div>
-        </dl>
 
-        <Capabilities items={study.capabilities} />
+          <Capabilities items={study.capabilities} />
 
-        <Shot shot={study.hero} priority />
+          {live && study.live ? (
+            <figure className="cs-live">
+              <ProjectScreen
+                media={live}
+                sizes="(max-width: 1023px) 100vw, (min-width: 1921px) 1330px, 70vw"
+              />
+              <Caption demo={study.demo}>{study.live.caption}</Caption>
+            </figure>
+          ) : (
+            <Shot shot={study.hero} priority />
+          )}
+        </div>
       </header>
 
       {/* ── Problem → Build → Result ─────────────────────────────────── */}
       <section className="cs-steps" aria-label="The problem, the build and the result">
-        <ol>
-          {steps.map((step, i) => (
-            <Step
-              key={step.kind}
-              step={step}
-              index={i}
-              figure={step === study.result ? resultNumber : undefined}
-            />
-          ))}
-        </ol>
+        <div className="wrap">
+          <ol>
+            {steps.map((step, i) => (
+              <Step
+                key={step.kind}
+                step={step}
+                index={i}
+                figure={step === study.result ? resultNumber : undefined}
+                demo={study.demo}
+              />
+            ))}
+          </ol>
+        </div>
       </section>
 
       {/* ── How we approached it, and how sensitive data is handled ──── */}
       <section className={cn("cs-notes", study.compliance && "cs-notes--two")}>
-        <div className="cs-note">
-          <h2 className="label">{study.approach.heading}</h2>
-          <p className="cs-body">{study.approach.body}</p>
+        <div className="wrap">
+          <div className="cs-note">
+            <h2 className="label">{study.approach.heading}</h2>
+            <p className="cs-body">{study.approach.body}</p>
+          </div>
+          {study.compliance && (
+            <ComplianceBlock heading={study.compliance.heading} lines={study.compliance.lines} />
+          )}
         </div>
-        {study.compliance && (
-          <ComplianceBlock heading={study.compliance.heading} lines={study.compliance.lines} />
-        )}
       </section>
 
       {/* ── Closing ──────────────────────────────────────────────────────
@@ -82,6 +106,15 @@ export function CaseStudyPage({ study }: { study: CaseStudy }) {
         source={`omora.studio/work/${study.slug}`}
       />
     </Page>
+  );
+}
+
+/** A screen's caption, led by the study's demo label when it has one. */
+function Caption({ demo, children }: { demo?: string; children: React.ReactNode }) {
+  return (
+    <figcaption className="cs-caption">
+      {demo && <span className="cs-demo label">{demo}</span>} {children}
+    </figcaption>
   );
 }
 
@@ -110,11 +143,13 @@ function Step({
   step,
   index,
   figure,
+  demo,
 }: {
   step: CaseStep;
   index: number;
   /** The result number, on the result step only, and only when it's set. */
   figure?: { value: string; label: string };
+  demo?: string;
 }) {
   return (
     <li className="cs-step">
@@ -132,6 +167,9 @@ function Step({
       )}
 
       <Shot shot={step.shot} />
+      {step.figures
+        ?.filter((f) => onDisk(f.src))
+        .map((f) => <Figure key={f.src} figure={f} demo={demo} />)}
     </li>
   );
 }
@@ -154,6 +192,24 @@ function ComplianceBlock({ heading, lines }: { heading: string; lines: string[] 
         ))}
       </ul>
     </div>
+  );
+}
+
+/** A still under a step, with its caption. */
+function Figure({ figure: f, demo }: { figure: CaseFigure; demo?: string }) {
+  return (
+    <figure className="cs-fig">
+      <div className="cs-fig-frame">
+        <Image
+          src={f.src}
+          alt={f.alt}
+          width={f.width}
+          height={f.height}
+          sizes="(max-width: 1023px) 100vw, (min-width: 1921px) 1060px, 55vw"
+        />
+      </div>
+      <Caption demo={demo}>{f.caption}</Caption>
+    </figure>
   );
 }
 
