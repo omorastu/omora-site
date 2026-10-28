@@ -7,8 +7,9 @@ import { cormorantItalic } from "@/components/intro/font";
 import "@/components/intro/intro.css";
 
 /**
- * The intro: a white card with the KOZMOZ wordmark, its definition and the
- * tagline, over the home page, on a visitor's first page load of the session.
+ * The intro: a white card with the wordmark, its definition (when there is
+ * one, see DEFINITION) and the tagline, over the home page, on a visitor's
+ * first page load of the session.
  *
  *   0–1s     the wordmark, then the definition, then the tagline fade in (CSS)
  *   1–3s     hold; with a mouse, the pointer stirs the letters like smoke
@@ -40,6 +41,15 @@ const FAILSAFE = 6500;
 const ENTERED = 1000;
 
 const KEY = "kz-intro";
+
+/**
+ * The dictionary line under the wordmark. It was written for the Kozmoz name
+ * ("from the Greek kosmos"); with that rename on hold the wordmark reads
+ * OMORA, so the line stays out until there is an entry for the name in use.
+ * The Kozmoz one, to restore with the rename:
+ *   kozmoz · <i>noun</i> · from the Greek <i>kosmos</i>, order and beauty
+ */
+const DEFINITION: React.ReactNode = null;
 
 /**
  * Runs as the overlay is parsed, before the first paint. Shows the overlay
@@ -100,9 +110,11 @@ export function Intro() {
       <div className="kz-intro-inner">
         <Wordmark className="kz-intro-mark" data-glyphs="" />
         <span className="kz-intro-rule" data-hairline="" />
-        <p className="kz-intro-def" data-glyphs="">
-          kozmoz · <i>noun</i> · from the Greek <i>kosmos</i>, order and beauty
-        </p>
+        {DEFINITION && (
+          <p className="kz-intro-def" data-glyphs="">
+            {DEFINITION}
+          </p>
+        )}
         <p className="kz-intro-tag" data-glyphs="">
           When everything works the way it should, and looks the way it should.
         </p>

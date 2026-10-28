@@ -6,7 +6,7 @@ import { Closing } from "@/components/site/closing";
 import { ServiceCard } from "@/components/site/service-card";
 
 export const metadata: Metadata = {
-  title: "Services — Kozmoz",
+  title: "Services — Omora",
   description:
     "AI receptionists, websites, booking systems and sales intelligence. Four things, built properly.",
 };

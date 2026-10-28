@@ -4,7 +4,7 @@ import { Wordmark } from "@/components/wordmark";
  * Footer, per docs/layout.md: the wordmark on the left; Instagram, Terms and
  * Privacy on the right.
  *
- * INSTAGRAM is unset until the Kozmoz handle is final — the label prints
+ * INSTAGRAM is unset until the Omora handle is final — the label prints
  * unlinked meanwhile rather than pointing at someone's personal account.
  */
 const INSTAGRAM: string | undefined = undefined;

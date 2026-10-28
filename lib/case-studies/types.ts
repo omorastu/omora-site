@@ -32,7 +32,7 @@ export type CaseStep = {
 export type CaseStudy = {
   /** URL slug. The page is served at /work/<slug>. */
   slug: string;
-  /** The project's name, for the page title: "<name> — Kozmoz". */
+  /** The project's name, for the page title: "<name> — Omora". */
   name: string;
   /** Meta description. */
   description: string;

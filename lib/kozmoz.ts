@@ -1,20 +1,20 @@
 /**
- * Copy and data for the Kozmoz home page — the "Names on the door" design,
+ * Copy and data for the Omora home page — the "Names on the door" design,
  * rebuilt from the live preview at omora-a.vercel.app.
  *
  * Same rule as lib/home.ts: everything a non-developer might want to change
  * lives here rather than inside the components. Copy is the preview's, word
- * for word, apart from the studio name.
+ * for word, except Work, which has grown since (see `projects`).
  *
  * The page is built around two people. Anything that belongs to one of them
  * carries their key ("a" or "j") and sits on their side of the seam; anything
- * shared is "both" and crosses it.
+ * shared is "both" and crosses it. Work is all shared, so projects carry no key.
  */
 
 export type Who = "a" | "j";
 
 export const brand = {
-  name: "Kozmoz",
+  name: "Omora",
   /** The two rings — Ashan's brass, Jordan's cyan. The page's two inks come from it. */
   mark: "/m/brand/mark-192.png",
   email: "studio.omora@gmail.com",
@@ -125,20 +125,27 @@ export type ProjectMedia = {
   desktop: Still;
   /** Portrait crop at 4:5, shown under 1024px. */
   mobile: Still;
-  /** Muted loop that fades in over the still once it plays. Phones get the -m cut. */
-  loop?: { desktop: string; mobile: string };
+  /**
+   * Muted loop that fades in over the still once it plays. Phones get the -m
+   * cut; a project without one keeps its still on phones.
+   */
+  loop?: { desktop: string; mobile?: string };
 };
 
+/**
+ * One piece of shared work. Every project is laid out the same way and
+ * credits no one: it is the studio's work, not one person's.
+ */
 export type Project = {
   name: string;
   place: string;
   status: string;
   line: string;
-  /** "j" sits on Jordan's side of the seam; "both" is centred across it. */
-  hands: "both" | "j";
   /** Unset: the project is set as type only, its name printed large. */
   media?: ProjectMedia;
   link?: { href: string; label: string };
+  /** Not ready to show. Every component that reads `projects` skips these. */
+  hidden?: boolean;
 };
 
 export const projects: Project[] = [
@@ -147,7 +154,6 @@ export const projects: Project[] = [
     place: "Napa",
     status: "Live",
     line: "A vineyard labor company. New site and drone film from the vineyards they work.",
-    hands: "j",
     media: {
       alt: "The Pearls Farm Labor homepage, opening on a vineyard seen from the air.",
       desktop: { src: "/m/work/pearls-d-poster.jpg", width: 960, height: 600 },
@@ -161,7 +167,6 @@ export const projects: Project[] = [
     place: "Danville & Vallejo",
     status: "In progress",
     line: "A two-office dental practice. New site and a team shoot.",
-    hands: "both",
     media: {
       alt: "The Galvan Dental Care homepage in progress: the practice name on yellow beside photos of the team.",
       desktop: { src: "/m/work/galvan-d-poster.jpg", width: 2880, height: 1800 },
@@ -169,11 +174,35 @@ export const projects: Project[] = [
     },
   },
   {
+    name: "Numen Ventures",
+    place: "Silicon Valley",
+    status: "Live",
+    line: "A venture studio and seed fund for startups entering the US. A new site, plus Pitch Score: founders upload a pitch deck and get it scored against what US investors look for.",
+    media: {
+      alt: "The Numen Ventures homepage: “Helping Companies Build, Grow and Scale in the US Market” in white on near-black, under “Bridging global startups to Silicon Valley” in orange, with the studio’s track record in figures beneath, starting at 10 years of experience.",
+      desktop: { src: "/m/work/numen-d-poster.jpg", width: 1280, height: 800 },
+      mobile: { src: "/m/work/numen-m-poster.jpg", width: 800, height: 1000 },
+    },
+    link: { href: "https://www.numenventures.co", label: "numenventures.co" },
+  },
+  {
+    name: "Cubic Ship",
+    place: "15 counters in 8 states",
+    status: "Live",
+    line: "An independent operator of DHL Express counters. A site in 18 languages, so customers can ship home in their own.",
+    media: {
+      alt: "The Cubic Ship homepage: “From your screen to our counter.” above three steps, start online, bring your items, confirm and ship, with only the first drawn in orange so far.",
+      desktop: { src: "/m/work/cubic-d-poster.jpg", width: 1280, height: 800 },
+      mobile: { src: "/m/work/cubic-m-poster.jpg", width: 720, height: 900 },
+      loop: { desktop: "/m/work/cubic-d.mp4", mobile: "/m/work/cubic-m.mp4" },
+    },
+    link: { href: "https://cubicship.com", label: "cubicship.com" },
+  },
+  {
     name: "The Sticker Smith",
     place: "Hayward",
     status: "Live",
     line: "A custom sticker print shop. A site where customers set up their own order.",
-    hands: "j",
     media: {
       alt: "The Sticker Smith homepage, with die-cut stickers under the headline.",
       desktop: { src: "/m/work/sticker-d-poster.jpg", width: 1280, height: 800 },
@@ -187,7 +216,14 @@ export const projects: Project[] = [
     place: "Orthodontic practice",
     status: "In testing with the practice",
     line: "Records the consult, then drafts the doctor’s letter and the patient’s take-home letter from it.",
-    hands: "both",
+  },
+  {
+    name: "Estética de Génesis",
+    place: "TODO: place (city or area)",
+    status: "TODO: status (e.g. Live or In progress)",
+    line: "TODO: one line on the business, then what we made for them.",
+    link: { href: "TODO: https://… (full URL)", label: "TODO: domain as shown, e.g. example.com" },
+    hidden: true,
   },
 ];
 

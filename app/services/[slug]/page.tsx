@@ -27,10 +27,10 @@ export async function generateMetadata({
   if (!service) return {};
 
   return {
-    title: `${service.name} — Kozmoz`,
+    title: `${service.name} — Omora`,
     description: service.tagline,
     openGraph: {
-      title: `${service.name} — Kozmoz`,
+      title: `${service.name} — Omora`,
       description: service.tagline,
       url: `/services/${service.slug}`,
     },

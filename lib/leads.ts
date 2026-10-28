@@ -43,10 +43,27 @@ type DurableResult = { sink: string; ok: boolean; durable: boolean; error?: stri
 /** Crockford-ish alphabet: no I/L/O/U, so a ticket read aloud is unambiguous. */
 const ALPHABET = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
 
+/**
+ * Every prefix a lead reference has been issued under. New leads get OMR-.
+ * KZM- was issued briefly during the Kozmoz rename trial (on hold), so those
+ * references stay valid: anything that reads a reference must accept both.
+ */
+export const TICKET_PREFIXES = ["OMR", "KZM"] as const;
+
+/** True for a reference this site issued, under any prefix it has used. */
+export function isTicket(ref: string) {
+  const m = /^([A-Z]{3})-([0-9A-Z]{4})$/.exec(ref.trim().toUpperCase());
+  return (
+    !!m &&
+    (TICKET_PREFIXES as readonly string[]).includes(m[1]) &&
+    [...m[2]].every((c) => ALPHABET.includes(c))
+  );
+}
+
 export function makeTicket() {
   let out = "";
   for (let i = 0; i < 4; i++) out += ALPHABET[randomInt(ALPHABET.length)];
-  return `KZM-${out}`;
+  return `${TICKET_PREFIXES[0]}-${out}`;
 }
 
 export function newLead(input: Omit<Lead, "id" | "ticket" | "createdAt">): Lead {
@@ -80,7 +97,7 @@ async function toFile(lead: Lead): Promise<DurableResult> {
 async function toEmail(lead: Lead): Promise<DurableResult> {
   const apiKey = process.env.RESEND_API_KEY;
   const to = process.env.CONTACT_TO_EMAIL;
-  const from = process.env.CONTACT_FROM_EMAIL ?? "Kozmoz <onboarding@resend.dev>";
+  const from = process.env.CONTACT_FROM_EMAIL ?? "Omora <onboarding@resend.dev>";
 
   if (!apiKey || !to) {
     return {

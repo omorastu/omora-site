@@ -6,7 +6,7 @@ import "./globals.css";
 /*
  * The four families the inner pages run on, carried over from V1 — same
  * weights, same CSS variable names. The one change is the wordmark face: the
- * KOZMOZ mark is Cormorant Garamond 500 (see .wordmark in globals.css), and
+ * OMORA mark is Cormorant Garamond 500 (see .wordmark in globals.css), and
  * it is the only thing --font-logo sets. The home page loads its own two
  * faces on top (components/kozmoz/fonts.ts).
  *
@@ -54,7 +54,7 @@ const SITE = "https://omora.studio";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE),
-  title: "Kozmoz | Ashan & Jordan",
+  title: "Omora | Ashan & Jordan",
   description:
     "Two people who build websites, shoot the photo and video, and set up call answering and booking for local businesses. You talk to the people doing the work.",
   icons: {
@@ -66,16 +66,16 @@ export const metadata: Metadata = {
     apple: [{ url: "/apple-touch-icon.png", sizes: "180x180" }],
   },
   openGraph: {
-    title: "Kozmoz | Ashan & Jordan",
+    title: "Omora | Ashan & Jordan",
     description:
       "Two people who build websites, shoot the photo and video, and set up call answering and booking for local businesses. You talk to the people doing the work.",
     url: SITE,
-    siteName: "Kozmoz",
+    siteName: "Omora",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Kozmoz | Ashan & Jordan",
+    title: "Omora | Ashan & Jordan",
     description:
       "Two people who build websites, shoot the photo and video, and set up call answering and booking for local businesses. You talk to the people doing the work.",
   },

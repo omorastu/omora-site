@@ -1,5 +1,5 @@
 /* =====================================================================
-   KOZMOZ · home page · "Names on the door"
+   OMORA · home page · "Names on the door"
    Ported rule for rule from the live preview (omora-a.vercel.app:
    /hk/tokens.css + /brand.css). Four decisions, kept from the original:
    1. Concept: the door of a two-partner firm. Two names joined by an
@@ -9,7 +9,7 @@
       (taken from the mark). They colour names, initials and credit
       lines only. Nothing decorative.
    3. Fraunces (display, names ~3x a normal h1) + Hanken Grotesk (text,
-      wide-caps labels). The KOZMOZ wordmark is the one exception: it is
+      wide-caps labels). The OMORA wordmark is the one exception: it is
       Cormorant Garamond, set by .wordmark in app/globals.css.
    4. Photo direction: real screens of real projects, unframed, square,
       one hairline; portraits drop into the frames once they exist.
@@ -152,7 +152,7 @@ html:has(.kz) .skip-link { display: none; }
 
 .kz .skip {
   position: absolute; left: -9999px; top: .5rem; z-index: 300;
-  min-width: 11rem;                  /* covers the whole KOZMOZ lockup */
+  min-width: 11rem;                  /* covers the whole wordmark lockup */
   background: var(--ink); color: var(--paper); padding: .75rem 1rem;
 }
 .kz .skip:focus { left: var(--pad); }
@@ -494,16 +494,20 @@ html:has(.kz) .skip-link { display: none; }
   white-space: nowrap;
 }
 
-/* ---------- work ---------- */
+/* ---------- work ----------
+   Shared work, every card placed the same way: the screen centred across
+   the seam, the text centred under it on paper. (The preview put a project
+   on one person's side when it was theirs and credited it; Work no longer
+   credits anyone.) */
 .kz .proj {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  column-gap: var(--gap);
+  justify-items: center;
   padding-block: 3rem 6rem;
 }
 .kz .proj:first-of-type { padding-top: 0; }
 .kz .proj-media {
   position: relative;
+  width: min(100%, 68rem);
   aspect-ratio: 16 / 10;
   overflow: hidden;
   margin: 0;
@@ -521,12 +525,7 @@ html:has(.kz) .skip-link { display: none; }
 }
 .kz .proj-media video { opacity: 0; transition: opacity .5s var(--ease); }
 .kz .proj-media video.is-on { opacity: 1; }
-.kz .proj--j .proj-media { grid-column: 2; margin-right: calc(var(--pad) * -1); border-right: 0; }
-.kz .proj--j .proj-body { grid-column: 2; margin-top: 2.25rem; }
-.kz .proj--both .proj-media { grid-column: 1 / -1; justify-self: center; width: min(100%, 68rem); }
-.kz .proj--both .proj-body {
-  grid-column: 1 / -1;
-  justify-self: center;
+.kz .proj-body {
   width: fit-content;
   max-width: 44rem;
   margin-top: 2.25rem;
@@ -547,28 +546,12 @@ html:has(.kz) .skip-link { display: none; }
 .kz .proj-name--big { font-size: 8.5rem; }
 .kz .proj-meta { margin-top: 1.125rem; color: var(--ink-65); }
 .kz .proj-line {
-  margin-top: 1rem;
-  max-width: 30rem;
+  margin: 1rem auto 0;
+  max-width: 34rem;
   font-size: 1.25rem;
   line-height: 1.42;
 }
-.kz .proj--both .proj-line { margin-inline: auto; max-width: 34rem; }
-.kz .proj-credit {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: .5rem 1.5rem;
-  margin-top: 1.5rem;
-}
-.kz .pair-credit { justify-content: center; gap: .5rem; }
-.kz .who-credit {
-  display: inline-block;
-  font-family: var(--font-label);
-  font-size: max(.8125rem, 12px);
-  letter-spacing: .14em;
-  text-transform: uppercase;
-}
-.kz .amp-sm { font-family: var(--font-display); font-size: 1.25rem; font-weight: 300; }
+.kz .proj-site { margin-top: 1.5rem; }
 .kz .proj-link {
   font-weight: 500;
   text-decoration: underline;
@@ -723,7 +706,7 @@ html:has(.kz)::view-transition-new(root) { animation: none; mix-blend-mode: norm
 
 /* ---------- hover: credits and initials lean toward the seam ---------- */
 @media (hover: hover) and (prefers-reduced-motion: no-preference) {
-  .kz .credit-a, .kz .credit-j, .kz .who-credit, .kz .frame-initial, .kz .name, .kz .who {
+  .kz .credit-a, .kz .credit-j, .kz .frame-initial, .kz .name, .kz .who {
     transition: translate .55s var(--spring-soft), opacity .45s var(--ease);
   }
   .kz .credit-a:hover { translate: .5rem 0; }
@@ -734,9 +717,6 @@ html:has(.kz)::view-transition-new(root) { animation: none; mix-blend-mode: norm
   .kz .name--j:hover { translate: -.035em 0; }
   .kz .person--a:hover .frame-initial { translate: 1.25rem 0; }
   .kz .person--j:hover .frame-initial { translate: -1.25rem 0; }
-  .kz .proj:hover .who-credit.c-a { translate: .375rem 0; }
-  .kz .proj--j:hover .who-credit.c-j { translate: -.375rem 0; }
-  .kz .proj--both:hover .who-credit.c-j { translate: -.375rem 0; }
   .kz.vt .name, .kz.vt .who, .kz.vt .credit-a, .kz.vt .credit-j { transition: none; }
 }
 
@@ -849,19 +829,16 @@ html:has(.kz)::view-transition-new(root) { animation: none; mix-blend-mode: norm
   .kz .credit { display: flex; flex-wrap: wrap; gap: .5rem 1rem; margin-top: 1.25rem; }
   .kz .tag { position: static; translate: none; order: -1; padding: 0; }
 
-  .kz .proj { grid-template-columns: 1fr; padding-block: 0; margin-top: 4rem; }
+  .kz .proj { justify-items: stretch; padding-block: 0; margin-top: 4rem; }
   .kz .proj:first-of-type { margin-top: 0; }
-  .kz .proj-media,
-  .kz .proj--j .proj-media,
-  .kz .proj--both .proj-media { grid-column: 1; width: 100%; margin-right: 0; aspect-ratio: 4 / 5; border-right: 1px solid var(--ink-20); }
-  .kz .proj--j .proj-body,
-  .kz .proj--both .proj-body { grid-column: 1; justify-self: start; width: auto; margin-top: 1.25rem; padding: 0; text-align: left; }
-  .kz .proj--both .proj-media img { object-position: 50% 12%; }
+  .kz .proj-media { width: 100%; aspect-ratio: 4 / 5; }
+  .kz .proj-body { width: auto; margin-top: 1.25rem; padding: 0; text-align: left; }
+  /* Only bites on a still taller than 4:5 (Galvan's): show it from just below the top. */
+  .kz .proj-media img { object-position: 50% 12%; }
   .kz .proj--type { padding-block: 0; }
+  .kz .proj--type .proj-body { margin-top: 1.25rem; }
   .kz .proj-name, .kz .proj-name--big { font-size: 2.75rem; }
-  .kz .proj-line { font-size: 1.125rem; }
-  .kz .proj--both .proj-line { margin-inline: 0; }
-  .kz .pair-credit { justify-content: flex-start; }
+  .kz .proj-line { margin-inline: 0; font-size: 1.125rem; }
 
   .kz .contact-lede { margin: 1.25rem 0 0; padding: 0; text-align: left; font-size: 1.125rem; }
   .kz .form { margin-top: 3rem; }

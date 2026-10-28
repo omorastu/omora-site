@@ -1,4 +1,4 @@
-# Kozmoz — site
+# Omora — site
 
 Next.js 16 (App Router) · React 19 · Tailwind 3 · TypeScript
 
@@ -9,7 +9,7 @@ npm run build
 
 ## Home page — "Names on the door"
 
-`/` is the Kozmoz home page, rebuilt from the design preview at
+`/` is the Omora home page, rebuilt from the design preview at
 omora-a.vercel.app. Two names on the door, a seam down the middle, and
 everything on the side of whoever's hands it is in. One ink on paper; the two
 people's colours (brass, cyan) mark names and credits only.
@@ -20,7 +20,14 @@ people's colours (brass, cyan) mark names and credits only.
 | `components/kozmoz/` | one file per section, plus `hands.tsx` (the "pick a name" view, the names' entrance, the seam) |
 | `components/kozmoz/kozmoz.css` | every style on the page, ported rule for rule from the preview and scoped under `.kz` so none of it reaches the inner pages |
 | `lib/kozmoz.ts` | **all home page copy and data**: people, services, projects, contact |
-| `components/wordmark.tsx` | the KOZMOZ wordmark (Cormorant Garamond 500, caps, 0.42em), used on every page |
+| `components/wordmark.tsx` | the OMORA wordmark (Cormorant Garamond 500, caps, 0.42em), used on every page |
+
+Work is shared work: every project in `lib/kozmoz.ts` is laid out the same
+way and credits no one. Set `hidden: true` on a project to keep it off the
+page until it's ready.
+
+(The `kozmoz` folder and file names date from a paused rename to Kozmoz; the
+site is Omora.)
 
 The page scales as a poster: its root font size follows the viewport (a 1440
 frame on desktop, 375 under 1024px), so every `rem` in `kozmoz.css` scales

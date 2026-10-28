@@ -101,7 +101,7 @@ body {
 }
 
 @layer components {
-  /* The KOZMOZ wordmark (components/wordmark.tsx), on every page: Cormorant
+  /* The OMORA wordmark (components/wordmark.tsx), on every page: Cormorant
      Garamond 500, caps, 0.42em tracking. The negative right margin takes back
      the tracking after the last Z, so the mark's box ends where its ink does
      and it centres and aligns optically. Size is left to the caller. */

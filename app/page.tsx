@@ -12,7 +12,7 @@ import { fraunces, hanken } from "@/components/kozmoz/fonts";
 import "@/components/kozmoz/kozmoz.css";
 
 /**
- * The home page — Kozmoz, "Names on the door". Rebuilt from the live preview
+ * The home page — Omora, "Names on the door". Rebuilt from the live preview
  * at omora-a.vercel.app; styles in components/kozmoz/kozmoz.css, copy and
  * data in lib/kozmoz.ts.
  *

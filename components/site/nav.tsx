@@ -93,7 +93,7 @@ export function Nav({ contactHref = "/#contact" }: { contactHref?: string }) {
         aria-label="Main"
         className="mx-auto flex h-16 max-w-wrap items-center justify-between gap-6 px-6"
       >
-        {/* The KOZMOZ wordmark — the one place Cormorant Garamond is used.
+        {/* The OMORA wordmark — the one place Cormorant Garamond is used.
             No trailing dot: the letterspacing is what makes it read as a mark. */}
         <a
           href="/"

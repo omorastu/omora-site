@@ -84,7 +84,7 @@ export async function POST(req: Request) {
   // Honeypot: a real person never fills a field they can't see.
   if (str(body.website, 200)) {
     // Answer as though it worked, so a bot gets no signal to retry differently.
-    return NextResponse.json({ ok: true, ticket: "KZM-0000" });
+    return NextResponse.json({ ok: true, ticket: "OMR-0000" });
   }
 
   // Bots submit near-instantly. Unlike the honeypot this is a heuristic, not a

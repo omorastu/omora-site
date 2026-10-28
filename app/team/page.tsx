@@ -5,7 +5,7 @@ import { Closing } from "@/components/site/closing";
 import { Team } from "@/components/site/team";
 
 export const metadata: Metadata = {
-  title: "Team — Kozmoz",
+  title: "Team — Omora",
   description:
     "The people who actually build it. You talk to them directly, not to an account manager.",
 };

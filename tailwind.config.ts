@@ -57,7 +57,7 @@ const config: Config = {
         display: ["var(--font-display)", "system-ui", "sans-serif"],
         body: ["var(--font-inter)", "system-ui", "sans-serif"],
         mono: ["var(--font-mono)", "ui-monospace", "monospace"],
-        /* Wordmark only — the KOZMOZ lockup (.wordmark in globals.css). */
+        /* Wordmark only — the OMORA lockup (.wordmark in globals.css). */
         logo: ["var(--font-logo)", "serif"],
       },
       maxWidth: {

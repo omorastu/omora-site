@@ -6,8 +6,8 @@ import { LegalPage } from "../legal-layout";
 // legal pass once the business is taking deposits at volume.
 
 export const metadata: Metadata = {
-  title: "Terms — Kozmoz",
-  description: "How Kozmoz scopes, bills, and delivers work.",
+  title: "Terms — Omora",
+  description: "How Omora scopes, bills, and delivers work.",
 };
 
 export default function Terms() {
