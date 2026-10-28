@@ -1,74 +1,55 @@
 import type { Metadata } from "next";
-import { services } from "@/lib/content";
-import { Nav } from "@/components/site/nav";
-import { Footer } from "@/components/site/footer";
-import { Closing } from "@/components/site/closing";
-import { ServiceCard } from "@/components/site/service-card";
+import Link from "next/link";
+import { services, servicesPage } from "@/lib/kozmoz";
+import { Page } from "@/components/kozmoz/page";
+import { ServiceRow } from "@/components/kozmoz/services";
 
 export const metadata: Metadata = {
   title: "Services — Omora",
   description:
-    "AI receptionists, websites, booking systems and sales intelligence. Four things, built properly.",
+    "Websites, photo and video, getting found on Google, and the phones, booking and follow-up behind it, for local businesses around the Bay. What each one includes, and how a project starts.",
 };
 
 /**
- * /services — a flat grid of four equal cards.
- *
- * No hierarchy: no main offer, no numbered secondary list, no split between a
- * headline product and the rest. The four are peers and render through the same
- * card component the home page uses, so the two rows are identical apart from
- * where a card takes you.
- *
- * A server component — ServiceCard carries its own "use client", which is what
- * lets this file export metadata.
+ * /services — the home page's four services, each a section of its own
+ * (/services#websites, …) with what's included, then how a project starts.
+ * Copy in lib/kozmoz.ts.
  */
-export default function ServicesIndex() {
+export default function ServicesPage() {
+  const { start } = servicesPage;
+
   return (
-    <>
-      <Nav />
-      <main id="main" className="relative">
-        <section className="layer px-6 pb-[120px] pt-40 sm:pt-48">
-          <div className="mx-auto max-w-wrap">
-            <p className="plate">Services</p>
-            <h1 className="mt-4 max-w-[18ch] font-display text-[clamp(2.4rem,6vw,4.5rem)] font-bold leading-[0.98] tracking-tightest text-ink">
-              What we build.
-            </h1>
-            <p className="mt-6 max-w-prose text-pretty text-lg leading-relaxed text-muted">
-              Each one solves a specific way a business leaks time or money. Take
-              one on its own, or several — they&rsquo;re built to work together
-              and sold separately.
-            </p>
-          </div>
-        </section>
+    <Page seam>
+      <header className="page-head">
+        <h1 className="page-title label across">{servicesPage.title}</h1>
+      </header>
 
-        <div
-          data-light-zone
-          className="border-t border-[rgba(123,92,176,0.35)] bg-cream"
-        >
-          <section className="layer px-6 pb-[100px] pt-[100px] sm:pb-32">
-            <div className="mx-auto max-w-wrap">
-              {/* No header block here on purpose: the hero has already said what
-                  this page is, and a second heading between it and the cards
-                  only put a restatement in the way of the four things. */}
-              <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                {services.map((item, i) => (
-                  <ServiceCard
-                    key={item.slug}
-                    item={item}
-                    index={i}
-                    href={`/services/${item.slug}`}
-                  />
-                ))}
-              </ul>
-            </div>
-          </section>
-        </div>
+      <div className="do do--page">
+        {services.map((s) => (
+          <ServiceRow key={s.id} service={s} detail />
+        ))}
+      </div>
 
-        <Closing />
-      </main>
-      <Footer />
-
-      <div className="grain" aria-hidden="true" />
-    </>
+      <section className="start" id="how" aria-labelledby="how-h">
+        <h2 className="say across" id="how-h">
+          {start.title}
+        </h2>
+        <ol className="steps">
+          {start.steps.map((step, i) => (
+            <li key={step.title} className="step across rule-both">
+              <span className="step-n label" aria-hidden="true">
+                {i + 1}
+              </span>
+              <h3 className="step-title">{step.title}</h3>
+              <p className="step-text">{step.text}</p>
+            </li>
+          ))}
+        </ol>
+        <p className="start-note across">{start.note}</p>
+        <Link className="act" href={start.cta.href}>
+          {start.cta.label}
+        </Link>
+      </section>
+    </Page>
   );
 }

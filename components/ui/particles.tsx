@@ -2,6 +2,7 @@
 
 import React, {
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
   type ComponentPropsWithoutRef,
@@ -108,7 +109,6 @@ export const Particles: React.FC<ParticlesProps> = ({
   // field is drawn once and left static instead.
   const reduced = useReducedMotion()
   const reducedRef = useRef(reduced)
-  reducedRef.current = reduced
 
   useEffect(() => {
     if (canvasRef.current) {
@@ -315,9 +315,14 @@ export const Particles: React.FC<ParticlesProps> = ({
     rafID.current = window.requestAnimationFrame(animateRef.current)
   }
 
-  initCanvasRef.current = initCanvas
-  onMouseMoveRef.current = onMouseMove
-  animateRef.current = animate
+  // Kept current after every render. A layout effect, so it has run before
+  // the effects above first call through these refs.
+  useLayoutEffect(() => {
+    reducedRef.current = reduced
+    initCanvasRef.current = initCanvas
+    onMouseMoveRef.current = onMouseMove
+    animateRef.current = animate
+  })
 
   return (
     <div

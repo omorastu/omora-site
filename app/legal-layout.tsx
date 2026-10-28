@@ -1,9 +1,9 @@
-import { Nav } from "@/components/site/nav";
-import { Footer } from "@/components/site/footer";
+import { Page } from "@/components/kozmoz/page";
 
 /**
- * Shared shell for the two legal pages, so they inherit the v2 palette and
- * chrome without each one re-declaring it.
+ * Shared frame for the two legal pages, so they sit in the site's frame and
+ * type without each one re-declaring it: a reading page, one left-aligned
+ * column, no seam.
  */
 export function LegalPage({
   title,
@@ -15,28 +15,20 @@ export function LegalPage({
   sections: { heading: string; body: React.ReactNode }[];
 }) {
   return (
-    <>
-      <Nav />
-      <main id="main" className="layer mx-auto max-w-wrap px-6 pb-24 pt-32 sm:pt-40">
-        <p className="plate">Legal</p>
-        <h1 className="mt-3 font-display text-4xl font-bold tracking-tightest text-ink sm:text-5xl">
-          {title}
-        </h1>
-        <p className="mt-3 font-mono text-[11px] text-muted/60">Last updated {updated}</p>
-        <div className="rule mt-8 max-w-[8rem]" />
-
-        <div className="mt-12 max-w-prose space-y-10">
-          {sections.map((s) => (
-            <section key={s.heading}>
-              <h2 className="font-display text-xl font-semibold tracking-tight text-ink">
-                {s.heading}
-              </h2>
-              <div className="mt-3 text-pretty leading-relaxed text-muted">{s.body}</div>
-            </section>
-          ))}
-        </div>
-      </main>
-      <Footer />
-    </>
+    <Page>
+      <article className="read">
+        <header className="read-head">
+          <p className="label">Legal</p>
+          <h1 className="read-title">{title}</h1>
+          <p className="read-date label">Last updated {updated}</p>
+        </header>
+        {sections.map((s) => (
+          <section key={s.heading} className="read-part">
+            <h2>{s.heading}</h2>
+            <div className="read-body">{s.body}</div>
+          </section>
+        ))}
+      </article>
+    </Page>
   );
 }

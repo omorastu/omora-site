@@ -303,6 +303,7 @@ export function IntelPreview({ active, hot }: PreviewProps) {
  * It takes the same props as the others and ignores them: there is nothing to
  * animate, which also means nothing to gate on reduced motion.
  */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- takes the shared props, uses none
 export function StaticPreview(_: PreviewProps) {
   return (
     <div className="flex w-full items-center" aria-hidden="true">

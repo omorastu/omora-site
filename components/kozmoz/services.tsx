@@ -1,4 +1,5 @@
-import { people, services, type Service } from "@/lib/kozmoz";
+import Link from "next/link";
+import { people, services, servicesPage, type Service } from "@/lib/kozmoz";
 import { cn } from "@/lib/utils";
 
 /**
@@ -16,29 +17,45 @@ export function Services() {
         What we do
       </h2>
       {services.map((s) => (
-        <ServiceRow key={s.title} service={s} />
+        <ServiceRow key={s.id} service={s} />
       ))}
+      <p className="more across">
+        <Link href="/services">{servicesPage.more}</Link>
+      </p>
     </section>
   );
 }
 
-function ServiceRow({ service: s }: { service: Service }) {
-  // Shared lines cross the seam on paper; one person's lines dim with the other's view.
+/**
+ * One service. On /services (`detail`) it is a section of its own, under its
+ * id, with what's included listed between the text and the credit line.
+ */
+export function ServiceRow({ service: s, detail = false }: { service: Service; detail?: boolean }) {
   const hands = s.hands === "both" ? undefined : s.hands;
+  // Shared lines cross the seam on paper.
   const shared = !hands;
+  const Box = detail ? "section" : "article";
+  const Title = detail ? "h2" : "h3";
 
   return (
-    <article className={cn("svc", `svc--${s.hands}`, `rule-${s.hands}`)}>
-      <h3 className={cn("svc-title", shared && "across")} data-hands={hands}>
+    <Box
+      className={cn("svc", `svc--${s.hands}`, `rule-${s.hands}`, detail && "svc--detail")}
+      id={detail ? s.id : undefined}
+      aria-labelledby={detail ? `${s.id}-h` : undefined}
+    >
+      <Title className={cn("svc-title", shared && "across")} id={detail ? `${s.id}-h` : undefined}>
         {s.title}
-      </h3>
-      <p className={cn("svc-text", shared && "across")} data-hands={hands}>
-        {s.text}
-      </p>
+      </Title>
+      <p className={cn("svc-text", shared && "across")}>{s.text}</p>
+      {detail && (
+        <ul className={cn("incl", shared && "across")}>
+          {s.included.map((item) => (
+            <li key={item}>{item}</li>
+          ))}
+        </ul>
+      )}
       <p className="credit">
-        <span className="credit-a" data-hands="a">
-          {s.credit.a}
-        </span>
+        <span className="credit-a">{s.credit.a}</span>
         {hands ? (
           <span className="tag" aria-label={`${people[hands].name} leads`}>
             <b className={`c-${hands}`}>{people[hands].initial}</b>
@@ -48,10 +65,8 @@ function ServiceRow({ service: s }: { service: Service }) {
             <b className="c-a">{people.a.initial}</b>+<b className="c-j">{people.j.initial}</b>
           </span>
         )}
-        <span className="credit-j" data-hands="j">
-          {s.credit.j}
-        </span>
+        <span className="credit-j">{s.credit.j}</span>
       </p>
-    </article>
+    </Box>
   );
 }

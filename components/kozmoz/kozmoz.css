@@ -1,5 +1,5 @@
 /* =====================================================================
-   OMORA · home page · "Names on the door"
+   OMORA · the site · "Names on the door"
    Ported rule for rule from the live preview (omora-a.vercel.app:
    /hk/tokens.css + /brand.css). Four decisions, kept from the original:
    1. Concept: the door of a two-partner firm. Two names joined by an
@@ -14,13 +14,16 @@
    4. Photo direction: real screens of real projects, unframed, square,
       one hairline; portraits drop into the frames once they exist.
 
-   Scoping. Every rule hangs off .kz, the page root rendered by
-   components/kozmoz/hands.tsx, so none of this reaches the inner pages,
-   which still run on the dark V3 theme. Rules that have to sit on <html>
-   (the fluid root size, the paper behind overscroll) use html:has(.kz):
-   they apply exactly while this page is mounted, server render included.
-   Tokens are declared on both, so the page still renders correctly in a
-   browser without :has() — only the fluid root is lost there.
+   Scoping. Every rule hangs off .kz, the page root: the home page's is
+   rendered by components/kozmoz/hands.tsx, every other page's by
+   components/kozmoz/page.tsx. Rules that have to sit on <html> (the fluid
+   root size, the paper behind overscroll) use html:has(.kz): they apply
+   exactly while a page is mounted, server render included. Tokens are
+   declared on both, so a page still renders correctly in a browser without
+   :has() — only the fluid root is lost there.
+
+   The home page's sections come first; the other pages' own parts follow,
+   from "inner pages" down.
    ===================================================================== */
 
 /* ---------- tokens ---------- */
@@ -57,7 +60,6 @@ html:has(.kz),
   --pad: 2rem;                       /* page margin */
   --header-h: 4rem;
   --gap: 4rem;                       /* the space either side of the seam (2rem each) */
-  --dim: .4;                         /* "the rest" drops to ink-40 */
 
   /* Springs as linear() curves (sampled damped oscillator, see hands.tsx) */
   --spring-soft: linear(0, 0.0542, 0.181, 0.3384, 0.4982, 0.6435, 0.7657, 0.8619, 0.933, 0.9821, 1.0131, 1.0303, 1.0375, 1.038, 1.0346, 1.029, 1.0228, 1.0169, 1.0116, 1.0074, 1.0041, 1.0017, 1.0001, 0.9992, 1);
@@ -105,9 +107,6 @@ html:has(.kz) body {
   color: var(--ink);
 }
 
-/* The page brings its own skip link, set in the page's type. */
-html:has(.kz) .skip-link { display: none; }
-
 /* ---------- base ---------- */
 .kz {
   background: var(--paper);
@@ -122,8 +121,8 @@ html:has(.kz) .skip-link { display: none; }
 /* Tailwind's preflight greys every border; this page's borders are all ink. */
 .kz *, .kz *::before, .kz *::after { box-sizing: border-box; border-color: currentColor; }
 .kz img, .kz video, .kz svg, .kz picture { display: block; max-width: 100%; }
-.kz h1, .kz h2, .kz h3, .kz p, .kz figure, .kz ul { margin: 0; }
-.kz ul { padding: 0; list-style: none; }
+.kz h1, .kz h2, .kz h3, .kz p, .kz figure, .kz ul, .kz ol, .kz dl, .kz dd { margin: 0; }
+.kz ul, .kz ol { padding: 0; list-style: none; }
 .kz .sr-only { margin: -1px; }
 .kz a { color: inherit; text-decoration: none; }
 .kz button, .kz input, .kz textarea {
@@ -192,6 +191,8 @@ html:has(.kz) .skip-link { display: none; }
 .kz .brand .wordmark { font-size: 1.5rem; line-height: 1; }
 
 .kz .who {
+  display: inline-flex;
+  align-items: center;
   font-family: var(--font-display);
   font-size: 1.375rem;
   font-weight: 450;
@@ -270,6 +271,16 @@ html:has(.kz) .skip-link { display: none; }
 .kz .name { font: inherit; letter-spacing: inherit; line-height: inherit; }
 .kz .name--a { justify-self: end; color: var(--ashan-type); }
 .kz .name--j { justify-self: start; color: var(--jordan-type); }
+/* Picked, a name lights up in its own ink: a band of it laid under the
+   letters, run out from the seam. Nothing else on the page changes. */
+.kz .name {
+  background: linear-gradient(var(--lit), var(--lit)) no-repeat;
+  background-size: 0% .3em;
+  transition: background-size .6s var(--ease);
+}
+.kz .name--a { --lit: color-mix(in srgb, var(--ashan) 24%, transparent); background-position: right 0 bottom .04em; }
+.kz .name--j { --lit: color-mix(in srgb, var(--jordan) 24%, transparent); background-position: left 0 bottom .04em; }
+.kz .name[aria-pressed="true"] { background-size: 100% .3em; }
 .kz .name-amp {
   position: relative;
   z-index: 1;
@@ -283,6 +294,42 @@ html:has(.kz) .skip-link { display: none; }
   margin-top: 2.75rem;
   padding: .25rem .5rem;
   color: var(--ink-65);
+}
+/* The picked person's line: shut until a name is picked, then open under the
+   hint, on that person's side of the seam. Both lines hold the space, so
+   going from one name to the other moves nothing. */
+.kz .picked {
+  display: grid;
+  grid-template-rows: 0fr;
+  width: 100%;
+  transition: grid-template-rows .55s var(--ease);
+}
+.kz[data-view] .picked { grid-template-rows: 1fr; }
+.kz .picked-in {
+  min-height: 0;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: var(--gap);
+}
+.kz .picked-line {
+  grid-row: 1;
+  align-self: start;
+  max-width: 30rem;
+  margin-top: 1.75rem;
+  font-size: 1.25rem;
+  line-height: 1.42;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity .3s var(--ease), visibility 0s .3s;
+}
+.kz .picked-line--a { grid-column: 1; justify-self: end; text-align: right; }
+.kz .picked-line--j { grid-column: 2; justify-self: start; }
+.kz[data-view="a"] .picked-line--a,
+.kz[data-view="j"] .picked-line--j {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity .45s var(--ease) .1s, visibility 0s;
 }
 .kz .lede {
   margin-top: 1.5rem;
@@ -325,7 +372,7 @@ html:has(.kz) .skip-link { display: none; }
 }
 
 /* ---------- sections ---------- */
-.kz .us, .kz .do, .kz .work, .kz .contact {
+.kz .us, .kz .do, .kz .work, .kz .contact, .kz .start {
   border-top: 1px solid var(--ink-20);
   padding: 8rem var(--pad);
 }
@@ -498,7 +545,10 @@ html:has(.kz) .skip-link { display: none; }
    Shared work, every card placed the same way: the screen centred across
    the seam, the text centred under it on paper. (The preview put a project
    on one person's side when it was theirs and credited it; Work no longer
-   credits anyone.) */
+   credits anyone.) On desktop a card is 60rem wide — 960px in the 1440
+   frame — and narrower on a shorter window, so its screen and its text
+   always fit on one screen together (17.5rem: the header, the text under
+   the screen at its longest, and a little air). */
 .kz .proj {
   display: grid;
   justify-items: center;
@@ -507,7 +557,7 @@ html:has(.kz) .skip-link { display: none; }
 .kz .proj:first-of-type { padding-top: 0; }
 .kz .proj-media {
   position: relative;
-  width: min(100%, 68rem);
+  width: min(100%, clamp(36rem, (100svh - 17.5rem) * 1.6, 60rem));
   aspect-ratio: 16 / 10;
   overflow: hidden;
   margin: 0;
@@ -527,9 +577,9 @@ html:has(.kz) .skip-link { display: none; }
 .kz .proj-media video.is-on { opacity: 1; }
 .kz .proj-body {
   width: fit-content;
-  max-width: 44rem;
-  margin-top: 2.25rem;
-  padding: .5rem 1rem;
+  max-width: 60rem;
+  margin-top: 1.25rem;
+  padding: .25rem 1rem;
   text-align: center;
 }
 .kz .proj--type { padding-block: 4rem 2rem; }
@@ -537,26 +587,48 @@ html:has(.kz) .skip-link { display: none; }
 .kz .proj-name {
   font-family: var(--font-display);
   font-optical-sizing: auto;
-  font-size: 4.5rem;
+  font-size: 2.75rem;
   font-weight: 400;
   line-height: .95;
   letter-spacing: -.03em;
   font-variation-settings: "SOFT" 100, "WONK" 1;
 }
-.kz .proj-name--big { font-size: 8.5rem; }
-.kz .proj-meta { margin-top: 1.125rem; color: var(--ink-65); }
+.kz .proj-name--big { font-size: 6rem; }
+.kz .proj-meta { margin-top: .75rem; color: var(--ink-65); }
 .kz .proj-line {
-  margin: 1rem auto 0;
-  max-width: 34rem;
-  font-size: 1.25rem;
+  margin: .75rem auto 0;
+  max-width: 52rem;
+  font-size: 1.125rem;
   line-height: 1.42;
+  text-wrap: balance;
 }
-.kz .proj-site { margin-top: 1.5rem; }
+.kz .proj-site { margin-top: .75rem; }
 .kz .proj-link {
   font-weight: 500;
   text-decoration: underline;
   text-decoration-thickness: 1px;
   text-underline-offset: .22em;
+}
+
+/* The way on from a home section to its own page: small, on the seam. */
+.kz .more {
+  width: fit-content;
+  margin: 1.5rem auto 0;
+  padding: 0 .75rem;
+  font-family: var(--font-label);
+  font-weight: 600;
+  font-size: max(.8125rem, 12px);
+  letter-spacing: .14em;
+  line-height: 1.3;
+  text-transform: uppercase;
+}
+.kz .more a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: .3em;
 }
 
 /* ---------- contact ---------- */
@@ -689,15 +761,8 @@ html:has(.kz) .skip-link { display: none; }
 .kz .foot-r { justify-self: end; text-align: right; }
 .kz .foot-r a { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: .22em; }
 
-/* ---------- whose hands ---------- */
-.kz [data-hands] { transition: opacity .45s var(--ease); }
-.kz[data-view="a"] [data-hands="j"],
-.kz[data-view="j"] [data-hands="a"] { opacity: var(--dim); }
-.kz.vt [data-hands] { transition: none; }
-html:has(.kz)::view-transition-old(root),
-html:has(.kz)::view-transition-new(root) { animation: none; mix-blend-mode: normal; }
-
-/* Entrance: the names wait for hands.tsx, which springs them in and adds
+/* ---------- the names' entrance ----------
+   Entrance: the names wait for hands.tsx, which springs them in and adds
    .is-in. If the script never gets that far they show anyway after 2.5s;
    with scripting off the page's <noscript> shows them at once. */
 .kz:not(.is-in) .name { opacity: 0; animation: kz-names-fallback .45s var(--ease) 2.5s forwards; }
@@ -706,18 +771,17 @@ html:has(.kz)::view-transition-new(root) { animation: none; mix-blend-mode: norm
 
 /* ---------- hover: credits and initials lean toward the seam ---------- */
 @media (hover: hover) and (prefers-reduced-motion: no-preference) {
-  .kz .credit-a, .kz .credit-j, .kz .frame-initial, .kz .name, .kz .who {
-    transition: translate .55s var(--spring-soft), opacity .45s var(--ease);
-  }
+  .kz .credit-a, .kz .credit-j, .kz .frame-initial, .kz .who { transition: translate .55s var(--spring-soft); }
+  .kz .name { transition: translate .55s var(--spring-soft), background-size .6s var(--ease); }
   .kz .credit-a:hover { translate: .5rem 0; }
   .kz .credit-j:hover { translate: -.5rem 0; }
-  .kz .who--a:hover { translate: .25rem 0; }
-  .kz .who--j:hover { translate: -.25rem 0; }
+  /* Only the home page's names are buttons; elsewhere they're just names. */
+  .kz button.who--a:hover { translate: .25rem 0; }
+  .kz button.who--j:hover { translate: -.25rem 0; }
   .kz .name--a:hover { translate: .035em 0; }
   .kz .name--j:hover { translate: -.035em 0; }
   .kz .person--a:hover .frame-initial { translate: 1.25rem 0; }
   .kz .person--j:hover .frame-initial { translate: -1.25rem 0; }
-  .kz.vt .name, .kz.vt .who, .kz.vt .credit-a, .kz.vt .credit-j { transition: none; }
 }
 
 /* ---------- scroll: the seam draws, people and work come in from their side ---------- */
@@ -746,6 +810,246 @@ html:has(.kz)::view-transition-new(root) { animation: none; mix-blend-mode: norm
 @keyframes kz-slide-a { from { translate: -5rem 0; } to { translate: 0 0; } }
 @keyframes kz-slide-j { from { translate: 5rem 0; } to { translate: 0 0; } }
 @keyframes kz-open-both { from { clip-path: inset(0 16% 0 16%); } to { clip-path: inset(0 0 0 0); } }
+
+/* =====================================================================
+   inner pages — /services, /work, the case studies, legal, not found.
+   Same frame as the home page (components/kozmoz/page.tsx); /services and
+   /work run the seam too, the reading pages go without.
+   ===================================================================== */
+
+/* A page's title, named the way the home page names things: a label on the seam. */
+.kz .page-head { display: grid; justify-items: center; padding: 6rem var(--pad) 4rem; }
+.kz .page-title { padding: .25rem .5rem; }
+
+/* ---------- /services ---------- */
+.kz .do--page { border-top: 0; padding: 0 var(--pad) 3rem; }
+.kz .svc--detail { padding-block: 5rem; }
+/* What's included: a ruled list between the text and the credit line. */
+.kz .incl {
+  width: min(100%, 40rem);
+  margin-top: 2.5rem;
+  border-top: 1px solid var(--ink-20);
+}
+.kz .incl li {
+  padding: .875rem 1rem;
+  border-bottom: 1px solid var(--ink-20);
+  font-size: 1.25rem;
+  line-height: 1.35;
+  text-align: center;
+  text-wrap: balance;
+}
+.kz .svc--both .incl { grid-column: 1 / -1; justify-self: center; }
+.kz .svc--j .incl { grid-column: 2; justify-self: start; width: min(100%, 34rem); }
+.kz .svc--j .incl li { padding-inline: 0; text-align: left; }
+
+/* How it starts: three steps across the seam, the note, the one action. */
+.kz .start { display: grid; justify-items: center; }
+.kz .steps {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  column-gap: var(--gap);
+  width: min(100%, 76rem);
+  margin-top: 5rem;
+}
+.kz .step {
+  display: grid;
+  justify-items: center;
+  align-content: start;
+  padding: 1rem 1.5rem;
+  text-align: center;
+}
+.kz .step-n { color: var(--ink-65); }
+.kz .step-title {
+  margin-top: 1rem;
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  font-size: 2.5rem;
+  font-weight: 400;
+  line-height: 1.02;
+  letter-spacing: -.025em;
+  text-wrap: balance;
+  font-variation-settings: "SOFT" 100, "WONK" 0;
+}
+.kz .step-text {
+  margin-top: .875rem;
+  max-width: 20rem;
+  font-size: 1.25rem;
+  line-height: 1.42;
+}
+.kz .start-note {
+  max-width: 46rem;
+  margin-top: 5rem;
+  padding: .5rem 1rem;
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  font-size: 2.125rem;
+  font-weight: 350;
+  line-height: 1.16;
+  text-align: center;
+  text-wrap: balance;
+  font-variation-settings: "SOFT" 50, "WONK" 0;
+}
+.kz .start .act { margin-top: 3rem; }
+
+/* ---------- /work ---------- */
+.kz .work--page { border-top: 0; padding-top: 0; }
+.kz .page-end { display: grid; justify-items: center; padding: 0 var(--pad) 8rem; }
+.kz .page-end .act { margin-top: 0; }
+
+/* ---------- case study (/work/<slug>) ----------
+   A reading page: the head centred like the home page's lines, the long
+   text in one left-aligned column. */
+.kz .cs-head {
+  display: grid;
+  justify-items: center;
+  padding: 7rem var(--pad) 6rem;
+  text-align: center;
+}
+.kz .cs-eyebrow { color: var(--ink-65); }
+.kz .cs-title {
+  max-width: 64rem;
+  margin-top: 2rem;
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  font-size: 4.25rem;
+  font-weight: 380;
+  line-height: 1.04;
+  letter-spacing: -.028em;
+  text-wrap: balance;
+  font-variation-settings: "SOFT" 100, "WONK" 0;
+}
+.kz .cs-sub {
+  max-width: 46rem;
+  margin-top: 2rem;
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  font-size: 1.75rem;
+  font-weight: 350;
+  line-height: 1.25;
+  text-wrap: balance;
+  font-variation-settings: "SOFT" 50, "WONK" 0;
+}
+.kz .cs-facts { display: flex; justify-content: center; gap: 4rem; margin-top: 3rem; }
+.kz .cs-facts dt { color: var(--ink-65); }
+.kz .cs-facts dd { margin-top: .5rem; font-size: 1.25rem; line-height: 1.3; }
+.kz .cs-caps {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  width: min(100%, 72rem);
+  margin-top: 4.5rem;
+  border-block: 1px solid var(--ink-20);
+}
+.kz .cs-caps li {
+  padding: 1.75rem 2rem;
+  font-size: 1.25rem;
+  line-height: 1.42;
+  text-align: left;
+  text-wrap: pretty;
+}
+.kz .cs-caps li + li { border-left: 1px solid var(--ink-20); }
+.kz .cs-shot {
+  position: relative;
+  width: min(100%, 60rem);
+  aspect-ratio: 16 / 10;
+  margin-top: 4rem;
+  overflow: hidden;
+  background: var(--frame);
+  border: 1px solid var(--ink-20);
+}
+.kz .cs-shot img, .kz .cs-shot video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.kz .cs-step .cs-shot { width: 100%; margin-top: 2.5rem; }
+
+.kz .cs-steps, .kz .cs-notes { border-top: 1px solid var(--ink-20); padding: 7rem var(--pad); }
+.kz .cs-steps ol { display: grid; row-gap: 6rem; width: min(100%, 46rem); margin-inline: auto; }
+.kz .cs-step-n {
+  display: flex;
+  gap: .875rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--ink);
+  color: var(--ink-65);
+}
+.kz .cs-step-n span { color: var(--ink); }
+.kz .cs-step-h {
+  margin-top: 1.5rem;
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  font-size: 2.75rem;
+  font-weight: 400;
+  line-height: 1.06;
+  letter-spacing: -.025em;
+  text-wrap: balance;
+  font-variation-settings: "SOFT" 100, "WONK" 0;
+}
+.kz .cs-body { margin-top: 1.5rem; font-size: 1.25rem; line-height: 1.55; text-wrap: pretty; }
+.kz .cs-figure { margin-top: 2.5rem; }
+.kz .cs-figure-n {
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  font-size: 6rem;
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: -.03em;
+}
+.kz .cs-figure .label { margin-top: .75rem; color: var(--ink-65); }
+
+.kz .cs-notes { display: grid; justify-content: center; grid-template-columns: min(100%, 46rem); }
+.kz .cs-notes--two { grid-template-columns: minmax(0, 40rem) minmax(0, 30rem); column-gap: 6rem; }
+.kz .cs-note h2 { color: var(--ink-65); }
+.kz .cs-note .cs-body { margin-top: 1.25rem; }
+.kz .cs-note--data ul { margin-top: 1.25rem; border-top: 1px solid var(--ink-20); }
+.kz .cs-note--data li {
+  padding-block: 1rem;
+  border-bottom: 1px solid var(--ink-20);
+  font-size: 1.0625rem;
+  line-height: 1.5;
+  text-wrap: pretty;
+}
+
+/* ---------- reading pages: legal, not found ---------- */
+.kz .read {
+  max-width: calc(46rem + 2 * var(--pad));
+  margin-inline: auto;
+  padding: 7rem var(--pad) 8rem;
+}
+.kz .read-head > .label:first-child { color: var(--ink-65); }
+.kz .read-title {
+  margin-top: 1.25rem;
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  font-size: 4.75rem;
+  font-weight: 380;
+  line-height: 1.02;
+  letter-spacing: -.028em;
+  text-wrap: balance;
+  font-variation-settings: "SOFT" 100, "WONK" 0;
+}
+.kz .read-date { margin-top: 1.5rem; color: var(--ink-65); }
+.kz .read-part { margin-top: 3.5rem; padding-top: 1.5rem; border-top: 1px solid var(--ink-20); }
+.kz .read-part h2 {
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  font-size: 2rem;
+  font-weight: 400;
+  line-height: 1.1;
+  letter-spacing: -.02em;
+  font-variation-settings: "SOFT" 100, "WONK" 0;
+}
+.kz .read-body { margin-top: 1rem; font-size: 1.25rem; line-height: 1.55; text-wrap: pretty; }
+.kz .read--short .read-body { margin-top: 2.5rem; }
+/* Links set in the page bodies themselves carry V3's colour classes; one ink here. */
+.kz .read-body a {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: currentColor;
+  text-decoration-thickness: 1px;
+  text-underline-offset: .22em;
+}
 
 /* ---------- phones: the seam becomes a rule on each item ---------- */
 @media (max-width: 1023px) {
@@ -778,10 +1082,19 @@ html:has(.kz)::view-transition-new(root) { animation: none; mix-blend-mode: norm
     font-size: 6.25rem;
     line-height: .92;
   }
-  .kz .name--a { justify-self: start; }
+  .kz .name--a { justify-self: start; background-position: left 0 bottom .04em; }
   .kz .name-amp { justify-self: center; padding-inline: 0; font-size: .8em; line-height: .9; }
-  .kz .name--j { justify-self: end; }
+  .kz .name--j { justify-self: end; background-position: right 0 bottom .04em; }
   .kz .hint { margin-top: 2.25rem; padding: 0; }
+  .kz .picked-in { grid-template-columns: 1fr; }
+  .kz .picked-line, .kz .picked-line--a, .kz .picked-line--j {
+    grid-area: 1 / 1;
+    justify-self: stretch;
+    max-width: none;
+    margin-top: 1.25rem;
+    font-size: 1.125rem;
+    text-align: left;
+  }
   .kz .lede {
     margin-top: 1.25rem;
     padding-block: 0;
@@ -791,7 +1104,7 @@ html:has(.kz)::view-transition-new(root) { animation: none; mix-blend-mode: norm
   }
   .kz .act { margin-top: 2rem; }
 
-  .kz .us, .kz .do, .kz .work, .kz .contact { padding: 5rem var(--pad); }
+  .kz .us, .kz .do, .kz .work, .kz .contact, .kz .start { padding: 5rem var(--pad); }
   .kz .say { margin-inline: 0; font-size: 2.75rem; line-height: 1.04; text-align: left; padding-block: 0; }
 
   /* item rules: Ashan brass, Jordan cyan, both = split */
@@ -840,6 +1153,8 @@ html:has(.kz)::view-transition-new(root) { animation: none; mix-blend-mode: norm
   .kz .proj-name, .kz .proj-name--big { font-size: 2.75rem; }
   .kz .proj-line { margin-inline: 0; font-size: 1.125rem; }
 
+  .kz .more { margin: 3rem 0 0; padding: 0; }
+
   .kz .contact-lede { margin: 1.25rem 0 0; padding: 0; text-align: left; font-size: 1.125rem; }
   .kz .form { margin-top: 3rem; }
   .kz .fields { grid-template-columns: 1fr; row-gap: 2rem; }
@@ -861,6 +1176,48 @@ html:has(.kz)::view-transition-new(root) { animation: none; mix-blend-mode: norm
 
   .kz .foot { grid-template-columns: 1fr; row-gap: .75rem; padding-block: 2rem 2.5rem; }
   .kz .foot-r { justify-self: start; text-align: left; }
+
+  /* inner pages */
+  .kz .page-head { justify-items: start; padding: 3rem var(--pad) 2.5rem; }
+  .kz .page-title { padding: 0; }
+
+  .kz .do--page { padding: 0 var(--pad) 1rem; }
+  .kz .svc--detail { padding-block: 0; margin-top: 4.5rem; }
+  .kz .incl, .kz .svc--both .incl, .kz .svc--j .incl { grid-column: 1; justify-self: stretch; width: auto; margin-top: 1.5rem; }
+  .kz .incl li, .kz .svc--j .incl li { padding: .75rem 0; font-size: 1.0625rem; text-align: left; text-wrap: pretty; }
+
+  .kz .start { justify-items: stretch; }
+  .kz .steps { grid-template-columns: 1fr; row-gap: 2.25rem; width: auto; margin-top: 2.5rem; }
+  .kz .step { justify-items: start; padding-block: 0; padding-right: 0; text-align: left; }
+  .kz .step-title { margin-top: .5rem; font-size: 2rem; }
+  .kz .step-text { max-width: none; margin-top: .625rem; font-size: 1.125rem; }
+  .kz .start-note { margin-top: 3rem; padding: 0; font-size: 1.5rem; line-height: 1.2; text-align: left; }
+  .kz .start .act { justify-self: start; margin-top: 2rem; }
+
+  .kz .work--page { padding-top: 0; }
+  .kz .page-end { justify-items: start; padding: 0 var(--pad) 5rem; }
+
+  .kz .cs-head { justify-items: start; padding: 3.5rem var(--pad) 4rem; text-align: left; }
+  .kz .cs-title { margin-top: 1.25rem; font-size: 2.5rem; }
+  .kz .cs-sub { margin-top: 1.25rem; font-size: 1.375rem; }
+  .kz .cs-facts { flex-wrap: wrap; justify-content: start; gap: 1.25rem 2.5rem; margin-top: 2rem; }
+  .kz .cs-facts dd { font-size: 1.125rem; }
+  .kz .cs-caps { grid-template-columns: 1fr; margin-top: 2.5rem; }
+  .kz .cs-caps li { padding: 1.125rem 0; font-size: 1.125rem; }
+  .kz .cs-caps li + li { border-left: 0; border-top: 1px solid var(--ink-20); }
+  .kz .cs-shot { margin-top: 2.5rem; }
+  .kz .cs-steps, .kz .cs-notes { padding: 4.5rem var(--pad); }
+  .kz .cs-steps ol { row-gap: 4rem; }
+  .kz .cs-step-h { margin-top: 1.125rem; font-size: 2rem; }
+  .kz .cs-body { margin-top: 1.125rem; font-size: 1.125rem; }
+  .kz .cs-figure-n { font-size: 4rem; }
+  .kz .cs-notes, .kz .cs-notes--two { grid-template-columns: 1fr; row-gap: 3.5rem; }
+
+  .kz .read { padding: 3.5rem var(--pad) 5rem; }
+  .kz .read-title { font-size: 2.75rem; }
+  .kz .read-part { margin-top: 2.5rem; }
+  .kz .read-part h2 { font-size: 1.625rem; }
+  .kz .read-body { font-size: 1.0625rem; }
 }
 
 /* ---------- reduced motion: everything still, everything visible ---------- */
@@ -868,6 +1225,7 @@ html:has(.kz)::view-transition-new(root) { animation: none; mix-blend-mode: norm
   html:has(.kz) { scroll-behavior: auto; }
   .kz:not(.is-in) .name,
   .kz:not(.is-in) .name-amp { opacity: 1; animation: none; }
-  .kz [data-hands], .kz .top, .kz .act, .kz .whom-opt, .kz .proj-media video { transition: none; }
+  .kz .top, .kz .act, .kz .whom-opt, .kz .proj-media video,
+  .kz .name, .kz .picked, .kz .picked-line { transition: none; }
   .kz .proj-media video { display: none; }
 }

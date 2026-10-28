@@ -1,6 +1,9 @@
 /**
  * Every piece of delivered work, in one place.
  *
+ * NOTE: superseded. The live site's projects are `projects` in lib/kozmoz.ts;
+ * only the archived V1 site (app/_v1, not routed) still reads this file.
+ *
  * This is the single project dataset. The home page's Recent Work strip and the
  * proof strip on each service page both read from it — previously the home
  * strip had its own separate list in lib/content.ts, which meant a project
@@ -90,19 +93,6 @@ export const projects: Project[] = [
       "Built to catch the after-hours calls that currently hit voicemail.",
     home: true,
     services: ["ai-receptionist"],
-  },
-  {
-    name: "Estetica de Genesis",
-    category: "Site rebuild",
-    detail:
-      "A rebuild of a beauty studio's site around booking, on a stack the owner can update herself.",
-    status: "in-progress",
-    intent:
-      "Replacing a slow, hard-to-edit site with one that puts booking first.",
-    home: true,
-    // Genuinely both: the rebuild is the site, and booking is what it was
-    // rebuilt around.
-    services: ["websites", "booking-systems"],
   },
   {
     name: "Restaurant booking",
@@ -245,10 +235,6 @@ export const projects: Project[] = [
     services: [],
   },
 ];
-
-/* ── Testimonials moved to lib/testimonials.ts ────────────────────────
-   They're their own dataset now, with attribution fields projects don't have.
-   Same tagging rule applies — see testimonialsForService() there. */
 
 /* ── Queries ──────────────────────────────────────────────────────────── */
 

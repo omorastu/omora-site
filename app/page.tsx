@@ -1,6 +1,6 @@
-import type { Viewport } from "next";
 import { Hands } from "@/components/kozmoz/hands";
 import { Header } from "@/components/kozmoz/header";
+import { Seam } from "@/components/kozmoz/seam";
 import { Hero } from "@/components/kozmoz/hero";
 import { Us } from "@/components/kozmoz/us";
 import { Services } from "@/components/kozmoz/services";
@@ -16,17 +16,10 @@ import "@/components/kozmoz/kozmoz.css";
  * at omora-a.vercel.app; styles in components/kozmoz/kozmoz.css, copy and
  * data in lib/kozmoz.ts.
  *
- * Sections run hero, us, what we do, work, contact. Unlike the inner pages
- * (still V3, dark), this page is one ink on paper, so it sets its own
- * browser chrome colour.
- *
- * The V3 home sections are still in components/home/, unused here.
+ * Sections run hero, us, what we do, work, contact. The other pages share its
+ * header, footer and type through components/kozmoz/page.tsx; this one builds
+ * its own frame, because its root is also the "pick a name" toggle.
  */
-
-export const viewport: Viewport = {
-  themeColor: "#F4F1EA",
-  colorScheme: "light",
-};
 
 export default function Home() {
   return (
@@ -36,9 +29,9 @@ export default function Home() {
         <a className="skip label" href="#main">
           Skip to content
         </a>
-        <Header />
+        <Header home />
         <main id="main">
-          <div className="seam" aria-hidden="true" />
+          <Seam />
           <Hero />
           <Us />
           <Services />

@@ -1,45 +1,72 @@
 import { getImageProps } from "next/image";
-import { projects, type Project, type ProjectMedia } from "@/lib/kozmoz";
+import Link from "next/link";
+import {
+  homeWorkCount,
+  projects,
+  workPage,
+  type Project,
+  type ProjectMedia,
+} from "@/lib/kozmoz";
 import { WorkVideo } from "@/components/kozmoz/work-video";
 import { cn } from "@/lib/utils";
 
 /**
  * Work: the studio's shared work, every project placed the same way — its
  * screen centred across the seam, its text centred beneath. No one's name is
- * on any of it, so nothing here dims when a name is picked in the hero. A
- * project with no media is set as type only, its name printed large; hidden
- * projects are skipped.
+ * on any of it. A project with no media is set as type only, its name printed
+ * large; hidden projects are skipped, here and on /work.
  */
+
+/** Every project ready to show, in order. */
+export const shownProjects = () => projects.filter((p) => !p.hidden);
+
+/** The home page's Work: the first `homeWorkCount` projects, then the way to the rest. */
 export function Work() {
   return (
     <section className="work" id="work" aria-labelledby="work-h">
       <h2 className="sr-only" id="work-h">
         Work
       </h2>
-      {projects
-        .filter((p) => !p.hidden)
+      {shownProjects()
+        .slice(0, homeWorkCount)
         .map((p) => (
           <ProjectCard key={p.name} project={p} />
         ))}
+      <p className="more across">
+        <Link href="/work">{workPage.more}</Link>
+      </p>
     </section>
   );
 }
 
-function ProjectCard({ project: p }: { project: Project }) {
+/** One project. `heading` is h2 on /work, where the page title is the h1. */
+export function ProjectCard({
+  project: p,
+  heading: Heading = "h3",
+}: {
+  project: Project;
+  heading?: "h2" | "h3";
+}) {
   return (
     <article className={cn("proj", !p.media && "proj--type", "rule-both")}>
       {p.media && <ProjectScreen media={p.media} />}
       <div className="proj-body across">
-        <h3 className={cn("proj-name", !p.media && "proj-name--big")}>{p.name}</h3>
+        <Heading className={cn("proj-name", !p.media && "proj-name--big")}>{p.name}</Heading>
         <p className="proj-meta label">
           {p.place} <span aria-hidden="true">·</span> {p.status}
         </p>
         <p className="proj-line">{p.line}</p>
         {p.link && (
           <p className="proj-site">
-            <a className="proj-link" href={p.link.href} target="_blank" rel="noopener">
-              {p.link.label}
-            </a>
+            {p.link.href.startsWith("/") ? (
+              <Link className="proj-link" href={p.link.href}>
+                {p.link.label}
+              </Link>
+            ) : (
+              <a className="proj-link" href={p.link.href} target="_blank" rel="noopener">
+                {p.link.label}
+              </a>
+            )}
           </p>
         )}
       </div>
@@ -50,10 +77,11 @@ function ProjectCard({ project: p }: { project: Project }) {
 /**
  * The project's screen: the 16:10 desktop still from 1024px up, the 4:5
  * portrait one below it, and the loop over either once it plays. On desktop
- * it opens out from the seam as it scrolls in.
+ * it opens out from the seam as it scrolls in. Desktop shows it at 60rem,
+ * two thirds of the frame (and 1280px once the root stops growing at 1920).
  */
 function ProjectScreen({ media: m }: { media: ProjectMedia }) {
-  const sizes = "(max-width: 1023px) 100vw, 76vw";
+  const sizes = "(max-width: 1023px) 100vw, (min-width: 1921px) 1280px, 67vw";
   const common = { alt: m.alt, sizes };
   const {
     props: { srcSet: mobile },
@@ -64,7 +92,7 @@ function ProjectScreen({ media: m }: { media: ProjectMedia }) {
     <figure className="proj-media open-both">
       <picture>
         <source media="(max-width: 1023px)" srcSet={mobile} sizes={sizes} />
-        <img {...img} />
+        <img {...img} alt={m.alt} />
       </picture>
       {m.loop && <WorkVideo desktop={m.loop.desktop} mobile={m.loop.mobile} />}
     </figure>

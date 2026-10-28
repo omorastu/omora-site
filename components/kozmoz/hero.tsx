@@ -1,9 +1,11 @@
-import { hero, people } from "@/lib/kozmoz";
+import { hero, people, type Who } from "@/lib/kozmoz";
 import { HandsStatus, WhoButton } from "@/components/kozmoz/hands";
+import { cn } from "@/lib/utils";
 
 /**
- * The names on the door. Each name is a button: pick one to see what that
- * person does across the page. `id="top"` is where the wordmark links.
+ * The names on the door. Each name is a button: pick one and it lights up in
+ * its own ink while that person's line opens under the hint, on their side of
+ * the seam. `id="top"` is where the wordmark links.
  */
 export function Hero() {
   return (
@@ -20,6 +22,15 @@ export function Hero() {
       <p className="hint label across" id="hands-hint">
         {hero.hint}
       </p>
+      <div className="picked">
+        <div className="picked-in">
+          {(["a", "j"] as Who[]).map((who) => (
+            <p key={who} className={cn("picked-line", `picked-line--${who}`, `rule-${who}`)}>
+              <b className={`c-${who}`}>{people[who].name}.</b> {people[who].line}
+            </p>
+          ))}
+        </div>
+      </div>
       <p className="lede across">{hero.lede}</p>
       <a className="act" href={hero.cta.href}>
         {hero.cta.label}

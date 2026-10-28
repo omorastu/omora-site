@@ -2,68 +2,32 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --bg: #0D0908;
-  --raised: #181110;
-  --line: #2C211E;
-  --ink: #F3EBDE;
-  --muted: #A99A8B;
-  --violet: #C18CFF;
-  --violet-deep: #8B4FE6;
-  --violet-dim: #43266E;
-  --blue: #7FA0C4;
-  --blue-dim: #3E5570;
-}
+/*
+ * Site-wide basics only. Every page's look lives in
+ * components/kozmoz/kozmoz.css, under its .kz root; this file just makes sure
+ * nothing renders before or outside that root in anything but the same ink
+ * on the same paper.
+ */
 
 * {
   box-sizing: border-box;
 }
 
 html {
-  scroll-behavior: smooth;
-  /* dark UA widgets (scrollbars, form controls) to match the ground */
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 body {
-  background-color: var(--bg);
-  color: var(--ink);
+  margin: 0;
+  background-color: #F4F1EA;
+  color: #16130F;
   -webkit-font-smoothing: antialiased;
-  text-rendering: optimizeLegibility;
-}
-
-/* Page-wide grain. Its main job is breaking up banding in the two dark↔light
-   gradient bands, which show it badly at full width on wide screens.
-   
-   Note on stacking: this replaces the old body::before layer, which sat at
-   z-0 and was therefore painted over by any section that has its own
-   background — including the whole cream middle. A single fixed layer cannot
-   be both above section backgrounds and below section text, so this sits above
-   both, under the nav. At 3% it is imperceptible over copy. */
-.grain {
-  position: fixed;
-  inset: 0;
-  z-index: 30;
-  pointer-events: none;
-  opacity: 0.03;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-}
-
-::selection {
-  background: var(--violet);
-  color: var(--bg);
-}
-
-:focus-visible {
-  outline: 2px solid var(--blue);
-  outline-offset: 3px;
-  border-radius: 2px;
 }
 
 /* ── Reduced motion ─────────────────────────────────────────────────────
-   Global kill-switch. Components that run rAF loops (particles) or JS
-   animation (motion) additionally check the media query in JS — CSS alone
-   can't stop a canvas. See useReducedMotion in components/motion.tsx. */
+   Global kill-switch. Anything running JS motion (the intro's smoke, the
+   names' entrance, the work loops) also checks the media query in JS — CSS
+   alone can't stop a canvas. */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -75,145 +39,16 @@ body {
   }
 }
 
-/* Waveform bars in the AI-receptionist preview. Declared globally because the
-   bars set `animation` inline (each needs its own delay and duration). */
-@keyframes wave {
-  from {
-    transform: scaleY(0.25);
-  }
-  to {
-    transform: scaleY(1);
-  }
-}
-
-/* Hero entrance. Base state is opacity:0 with the animation filling forwards,
-   so the reduced-motion override (duration ~0) lands on the finished state
-   instantly rather than leaving content invisible. */
-@keyframes rise {
-  from {
-    opacity: 0;
-    transform: translateY(16px);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
-
 @layer components {
   /* The OMORA wordmark (components/wordmark.tsx), on every page: Cormorant
      Garamond 500, caps, 0.42em tracking. The negative right margin takes back
-     the tracking after the last Z, so the mark's box ends where its ink does
-     and it centres and aligns optically. Size is left to the caller. */
+     the tracking after the last letter, so the mark's box ends where its ink
+     does and it centres and aligns optically. Size is left to the caller. */
   .wordmark {
     font-family: var(--font-logo), serif;
     font-weight: 500;
     text-transform: uppercase;
     letter-spacing: 0.42em;
     margin-right: -0.42em;
-  }
-
-  .rise {
-    opacity: 0;
-    animation: rise 0.9s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-  }
-
-  /* Engraved violet label — the utility voice of the page. Used for section
-     eyebrows, form field labels and data readouts, never for reading copy.
-     Set in `violet` rather than `violet-deep`: at 11px, violet-deep only
-     reaches 3.6:1 on the bg brown, and this class labels form fields. */
-  .plate {
-    @apply font-mono text-[11px] uppercase tracking-[0.22em] text-violet;
-  }
-
-  /* Light-section counterpart of .plate. */
-  .plate-light {
-    @apply font-mono text-[11px] uppercase tracking-[0.22em] text-violet-ink;
-  }
-
-  /* Status plate for work still in the shop. Unlike the two above it carries a
-     fill, so an in-progress card is separable from a shipped one at a glance
-     rather than only on close reading. Blue per the palette rule — this is the
-     running thing, not the built thing. The trailing padding compensates for
-     the letter-spacing on the final character. */
-  .plate-progress {
-    @apply inline-block rounded bg-blue-soft py-0.5 pl-2 pr-[calc(0.5rem-0.22em)]
-           font-mono text-[11px] uppercase tracking-[0.22em] text-blue-ink;
-  }
-
-  /* Shipped-work counterpart of .plate-progress: a violet fill, because a
-     finished build is the built thing. Same shape so the two sit side by side
-     in the work section and differ only in colour. */
-  .plate-live {
-    @apply inline-block rounded bg-violet-dim py-0.5 pl-2 pr-[calc(0.5rem-0.22em)]
-           font-mono text-[11px] uppercase tracking-[0.22em] text-ink;
-  }
-
-  /* Empty media slot. Rendered wherever an image or video is expected and
-     none has been supplied yet, so the page can be reviewed with its real
-     proportions before a single asset exists. Dashed and hatched on purpose:
-     it must read as "nothing here yet", never as a broken image. */
-  .slot {
-    @apply flex items-center justify-center rounded-lg border border-dashed border-violet/40 bg-raised text-center;
-    background-image: repeating-linear-gradient(
-      135deg,
-      rgba(193,140,255, 0.06) 0 12px,
-      transparent 12px 24px
-    );
-  }
-
-  /* Light-section counterpart of .slot. */
-  .slot-light {
-    @apply flex items-center justify-center rounded-lg border border-dashed border-cream-line bg-cream-raised text-center;
-    background-image: repeating-linear-gradient(
-      135deg,
-      rgba(107,50,196, 0.05) 0 12px,
-      transparent 12px 24px
-    );
-  }
-
-  /* Hairline rule in violet, fading at both ends so it reads as milled metal
-     rather than a border. */
-  .rule {
-    height: 1px;
-    background: linear-gradient(
-      90deg,
-      transparent,
-      rgba(193,140,255, 0.35) 15%,
-      rgba(193,140,255, 0.35) 85%,
-      transparent
-    );
-  }
-
-  /* Light-section counterpart of .rule. */
-  .rule-light {
-    height: 1px;
-    background: linear-gradient(
-      90deg,
-      transparent,
-      #ded4c3 15%,
-      #ded4c3 85%,
-      transparent
-    );
-  }
-
-  .panel {
-    @apply rounded-xl border border-line bg-raised/70;
-  }
-}
-
-@layer utilities {
-  /* Content sits above the grain layer. */
-  .layer {
-    position: relative;
-    z-index: 1;
-  }
-
-  .text-balance {
-    text-wrap: balance;
-  }
-
-  .text-pretty {
-    text-wrap: pretty;
   }
 }

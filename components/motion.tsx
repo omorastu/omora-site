@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { cn } from "@/lib/utils";
 
 /**
@@ -12,19 +12,21 @@ import { cn } from "@/lib/utils";
  *
  * Starts `false` so SSR and first client paint agree, then corrects on mount.
  */
+const REDUCED = "(prefers-reduced-motion: reduce)";
+
 export function useReducedMotion() {
-  const [reduced, setReduced] = useState(false);
-
-  useEffect(() => {
-    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
-    setReduced(mq.matches);
-    const onChange = (e: MediaQueryListEvent) => setReduced(e.matches);
-    mq.addEventListener("change", onChange);
-    return () => mq.removeEventListener("change", onChange);
-  }, []);
-
-  return reduced;
+  return useSyncExternalStore(
+    (onChange) => {
+      const mq = window.matchMedia(REDUCED);
+      mq.addEventListener("change", onChange);
+      return () => mq.removeEventListener("change", onChange);
+    },
+    () => window.matchMedia(REDUCED).matches,
+    () => false
+  );
 }
+
+const noSubscribe = () => () => {};
 
 /**
  * Fires once when the element scrolls into view. Used to start card previews
@@ -36,16 +38,16 @@ export function useInView<T extends HTMLElement>(
   const { threshold = 0.25, rootMargin = "0px 0px -10% 0px", once = true } = options;
   const ref = useRef<T | null>(null);
   const [inView, setInView] = useState(false);
+  // No IntersectionObserver (or a very old browser): show everything.
+  const noObserver = useSyncExternalStore(
+    noSubscribe,
+    () => typeof IntersectionObserver === "undefined",
+    () => false
+  );
 
   useEffect(() => {
     const el = ref.current;
-    if (!el) return;
-
-    // No IntersectionObserver (or a very old browser): show everything.
-    if (typeof IntersectionObserver === "undefined") {
-      setInView(true);
-      return;
-    }
+    if (!el || typeof IntersectionObserver === "undefined") return;
 
     const io = new IntersectionObserver(
       ([entry]) => {
@@ -63,7 +65,7 @@ export function useInView<T extends HTMLElement>(
     return () => io.disconnect();
   }, [threshold, rootMargin, once]);
 
-  return { ref, inView };
+  return { ref, inView: inView || noObserver };
 }
 
 /**

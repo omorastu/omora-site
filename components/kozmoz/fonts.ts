@@ -1,10 +1,9 @@
 import { Fraunces, Hanken_Grotesk } from "next/font/google";
 
 /*
- * The home page's two faces, loaded here rather than in app/layout.tsx so the
- * inner pages, which still set V3's type, don't download them. The page root
- * carries both variables; kozmoz.css reads them as --font-display and
- * --font-text.
+ * The site's two faces. Every page's root carries both variables (the home
+ * page's in app/page.tsx, every other page's in components/kozmoz/page.tsx);
+ * kozmoz.css reads them as --font-display and --font-text.
  *
  * Fraunces is loaded variable with its SOFT, WONK and opsz axes: the design
  * leans on all three (soft, wonky names; optical sizes from the 11px labels'

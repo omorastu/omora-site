@@ -1,20 +1,19 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
-import { flushSync } from "react-dom";
 import { people, type Who } from "@/lib/kozmoz";
 import { cn } from "@/lib/utils";
 
 /**
- * Whose hands: the page root and the "pick a name" toggle.
+ * Whose hands: the home page root and the "pick a name" toggle.
  *
- * Picking a name dims everything that isn't that person's (kozmoz.css keys
- * the dimming off data-view on this root); picking it again shows both. The
- * change runs as a view transition that opens from the chosen person's side
- * of the page, or from the seam when going back to both.
+ * Picking a name highlights that person and nothing else: their name lights
+ * up in their own ink and their line opens under the hero's hint (kozmoz.css
+ * keys both off data-view on this root). Nothing else on the page dims or
+ * changes. Picking the same name again closes it; picking the other switches
+ * straight across.
  *
- * The root also runs the two pieces of motion that span sections: the names'
- * entrance in the hero, and the seam's starting length.
+ * The root also runs the names' entrance in the hero.
  */
 
 type View = Who | "";
@@ -56,8 +55,6 @@ export function Hands({ className, children }: { className?: string; children: R
   const viewRef = useRef<View>("");
   const [view, setView] = useState<View>("");
   const [status, setStatus] = useState("");
-  // .vt: a view transition is swapping the page; per-element fades step aside.
-  const [vt, setVt] = useState(false);
   // .is-in: the names have been handed to their entrance and may show.
   const [isIn, setIsIn] = useState(false);
 
@@ -70,31 +67,7 @@ export function Hands({ className, children }: { className?: string; children: R
   }, []);
 
   const choose = useCallback(
-    (who: Who) => {
-      const next = viewRef.current === who ? "" : who;
-      if (reducedMotion() || typeof document.startViewTransition !== "function") {
-        apply(next);
-        return;
-      }
-      flushSync(() => setVt(true));
-      const transition = document.startViewTransition(() => flushSync(() => apply(next)));
-      transition.ready
-        .then(() => {
-          // The new state opens from the chosen person's side; "both" opens from the seam.
-          const from =
-            next === "a" ? "inset(0 100% 0 0)" : next === "j" ? "inset(0 0 0 100%)" : "inset(0 50% 0 50%)";
-          document.documentElement.animate(
-            { clipPath: [from, "inset(0 0 0 0)"] },
-            {
-              duration: 700,
-              easing: "cubic-bezier(.31, .13, .11, 1)",
-              pseudoElement: "::view-transition-new(root)",
-            }
-          );
-        })
-        .catch(() => {});
-      transition.finished.finally(() => setVt(false));
-    },
+    (who: Who) => apply(viewRef.current === who ? "" : who),
     [apply]
   );
 
@@ -158,33 +131,11 @@ export function Hands({ className, children }: { className?: string; children: R
     };
   }, []);
 
-  /* The seam's drawn tip sits ~3/4 down the screen at the top of the page. */
-  useEffect(() => {
-    const main = root.current?.querySelector<HTMLElement>("main");
-    const seam = main?.querySelector<HTMLElement>(".seam");
-    if (!main || !seam) return;
-
-    const seamStart = () => {
-      const top = main.getBoundingClientRect().top + scrollY;
-      const from = (innerHeight * 0.74 - top) / main.offsetHeight;
-      seam.style.setProperty("--seam-from", Math.max(0.02, Math.min(1, from)).toFixed(4));
-    };
-
-    seamStart();
-    const ro = "ResizeObserver" in window ? new ResizeObserver(seamStart) : null;
-    ro?.observe(main);
-    addEventListener("resize", seamStart);
-    return () => {
-      ro?.disconnect();
-      removeEventListener("resize", seamStart);
-    };
-  }, []);
-
   return (
     <HandsContext.Provider value={{ view, choose, status }}>
       <div
         ref={root}
-        className={cn("kz", className, isIn && "is-in", vt && "vt")}
+        className={cn("kz", className, isIn && "is-in")}
         data-view={view || undefined}
       >
         {children}
@@ -195,7 +146,7 @@ export function Hands({ className, children }: { className?: string; children: R
 
 /**
  * One of the name buttons — the big ones in the hero and the small ones in
- * the header. Pressed while that person's view is on.
+ * the header. Pressed while that person is picked.
  */
 export function WhoButton({
   who,
@@ -212,7 +163,6 @@ export function WhoButton({
       className={className}
       type="button"
       data-who={who}
-      data-hands={who}
       aria-pressed={view === who}
       aria-describedby="hands-hint"
       onClick={() => choose(who)}
@@ -222,7 +172,7 @@ export function WhoButton({
   );
 }
 
-/** Announces the view change to screen readers; the dimming itself is visual only. */
+/** Announces the pick to screen readers; the highlight itself is visual only. */
 export function HandsStatus() {
   const { status } = useHands();
   return (

@@ -2,9 +2,9 @@
  * The shape of one case study — everything the template in
  * components/work/case-study.tsx needs to render a /work/<slug> page.
  *
- * Same rule as lib/home.ts: the copy lives in the data file, not in the JSX.
- * Screenshots stay unset until the client signs them off, and render as dashed
- * slots meanwhile.
+ * Same rule as lib/kozmoz.ts: the copy lives in the data file, not in the JSX.
+ * Screenshots stay unset until the client signs them off, and print nothing
+ * meanwhile.
  */
 
 import type { MediaAsset } from "@/lib/media";

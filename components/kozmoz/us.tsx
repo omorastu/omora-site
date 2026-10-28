@@ -43,7 +43,7 @@ export function Us() {
 function PersonCard({ who }: { who: Who }) {
   const p = people[who];
   return (
-    <article className={cn("person", `person--${who}`, `rule-${who}`)} data-hands={who}>
+    <article className={cn("person", `person--${who}`, `rule-${who}`)}>
       <div className={cn("frame", `slide-${who}`, p.photo && "has-photo")}>
         {p.photo && (
           <Image src={p.photo} alt={p.name} fill sizes="(max-width: 1023px) 100vw, 27rem" />

@@ -1,12 +1,11 @@
 /**
  * A piece of media the layout has a slot for.
  *
- * Every image and video slot on the home page takes one of these, or nothing.
- * Nothing is the current state of almost all of them — the reel, the service
- * screenshots, the portraits, the team video. A slot with no asset renders as
- * a dashed placeholder at the right proportions (see components/home/media-slot)
- * rather than a stock photo or a mocked-up screen, so the page is reviewable
- * before the shoot and nothing on it implies an asset that doesn't exist.
+ * A case study's screenshot slots take one of these, or nothing (as do the
+ * V3 service records in lib/content.ts, which no page renders any more). A
+ * slot with no asset prints nothing (components/work/case-study.tsx) rather
+ * than a stock photo or a mocked-up screen, so nothing on a page implies an
+ * asset that doesn't exist.
  *
  * Images live in /public and are referenced by path. To fill a slot, drop the
  * file in and set the field:
