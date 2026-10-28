@@ -28,18 +28,21 @@ export function Services() {
 
 /**
  * One service. On /services (`detail`) it is a section of its own, under its
- * id, with what's included listed between the text and the credit line.
+ * id, with what's included listed between the text and the credit line, and
+ * every service is centred across the seam — Jordan's too; its credit line
+ * still says whose it is.
  */
 export function ServiceRow({ service: s, detail = false }: { service: Service; detail?: boolean }) {
   const hands = s.hands === "both" ? undefined : s.hands;
-  // Shared lines cross the seam on paper.
-  const shared = !hands;
+  const place = detail ? "both" : s.hands;
+  // Centred lines cross the seam on paper.
+  const shared = place === "both";
   const Box = detail ? "section" : "article";
   const Title = detail ? "h2" : "h3";
 
   return (
     <Box
-      className={cn("svc", `svc--${s.hands}`, `rule-${s.hands}`, detail && "svc--detail")}
+      className={cn("svc", `svc--${place}`, `rule-${s.hands}`, detail && "svc--detail")}
       id={detail ? s.id : undefined}
       aria-labelledby={detail ? `${s.id}-h` : undefined}
     >

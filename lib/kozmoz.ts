@@ -87,7 +87,10 @@ export type Service = {
   text: string;
   /** What comes with it, listed under the text on /services. */
   included: string[];
-  /** "both" centres the service across the seam; "j" puts it on Jordan's side. */
+  /**
+   * "both" centres the service across the seam; "j" puts it on Jordan's side
+   * on the home page (/services centres every one) and credits it to Jordan.
+   */
   hands: "both" | Who;
   /** Each person's part, printed on their side of the credit line. */
   credit: Record<Who, string>;
@@ -200,7 +203,7 @@ export const projects: Project[] = [
     media: {
       alt: "The Galvan Dental Care homepage in progress: the practice name on yellow beside photos of the team.",
       desktop: { src: "/m/work/galvan-d-poster.jpg", width: 2880, height: 1800 },
-      mobile: { src: "/m/work/galvan-m-poster.jpg", width: 780, height: 1688 },
+      mobile: { src: "/m/work/galvan-m-poster.jpg", width: 780, height: 975 },
     },
   },
   {
@@ -209,9 +212,9 @@ export const projects: Project[] = [
     status: "Live",
     line: "A venture studio and seed fund for startups entering the US. A new site, plus Pitch Score: founders upload a pitch deck and get it scored against what US investors look for.",
     media: {
-      alt: "The Numen Ventures homepage: “Helping Companies Build, Grow and Scale in the US Market” in white on near-black, under “Bridging global startups to Silicon Valley” in orange, with the studio’s track record in figures beneath, starting at 10 years of experience.",
-      desktop: { src: "/m/work/numen-d-poster.jpg", width: 1280, height: 800 },
-      mobile: { src: "/m/work/numen-m-poster.jpg", width: 800, height: 1000 },
+      alt: "The Numen Ventures homepage: “Helping Companies Build, Grow and Scale in the US Market” in white on near-black, under “Bridging global startups to Silicon Valley” in orange.",
+      desktop: { src: "/m/work/numen-d-poster.jpg", width: 2336, height: 1460 },
+      mobile: { src: "/m/work/numen-m-poster.jpg", width: 768, height: 960 },
     },
     link: { href: "https://www.numenventures.co", label: "numenventures.co" },
   },
@@ -221,10 +224,11 @@ export const projects: Project[] = [
     status: "Live",
     line: "An independent operator of DHL Express counters. A site in 18 languages, so customers can ship home in their own.",
     media: {
-      alt: "The Cubic Ship homepage: “From your screen to our counter.” above three steps, start online, bring your items, confirm and ship, with only the first drawn in orange so far.",
+      alt: "The Cubic Ship homepage: “From your screen to our counter.” above the steps from starting online to shipping, with only the first, start online, drawn in orange so far.",
       desktop: { src: "/m/work/cubic-d-poster.jpg", width: 1280, height: 800 },
-      mobile: { src: "/m/work/cubic-m-poster.jpg", width: 720, height: 900 },
-      loop: { desktop: "/m/work/cubic-d.mp4", mobile: "/m/work/cubic-m.mp4" },
+      mobile: { src: "/m/work/cubic-m-poster.jpg", width: 800, height: 1000 },
+      // Phones keep the still: it's framed on the headline, which the loop isn't.
+      loop: { desktop: "/m/work/cubic-d.mp4" },
     },
     link: { href: "https://cubicship.com", label: "cubicship.com" },
   },
@@ -265,7 +269,7 @@ export const homeWorkCount = 3;
 
 export const contact = {
   title: "Tell us what’s going on.",
-  lede: "One of us writes back with what we’d do about it and what it costs. No sales rep, no pitch deck.",
+  lede: "One of us writes back to set up a 30-minute call. No sales rep, no pitch deck.",
   fields: {
     name: "Your name",
     business: "Business",

@@ -839,8 +839,6 @@ html:has(.kz) body {
   text-wrap: balance;
 }
 .kz .svc--both .incl { grid-column: 1 / -1; justify-self: center; }
-.kz .svc--j .incl { grid-column: 2; justify-self: start; width: min(100%, 34rem); }
-.kz .svc--j .incl li { padding-inline: 0; text-align: left; }
 
 /* How it starts: three steps across the seam, the note, the one action. */
 .kz .start { display: grid; justify-items: center; }
@@ -1146,7 +1144,7 @@ html:has(.kz) body {
   .kz .proj:first-of-type { margin-top: 0; }
   .kz .proj-media { width: 100%; aspect-ratio: 4 / 5; }
   .kz .proj-body { width: auto; margin-top: 1.25rem; padding: 0; text-align: left; }
-  /* Only bites on a still taller than 4:5 (Galvan's): show it from just below the top. */
+  /* Only bites on a still taller than 4:5: show it from just below the top. */
   .kz .proj-media img { object-position: 50% 12%; }
   .kz .proj--type { padding-block: 0; }
   .kz .proj--type .proj-body { margin-top: 1.25rem; }

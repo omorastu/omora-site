@@ -12,7 +12,9 @@
   z-index: 1000;
   display: none;
   overflow: hidden;
-  background: #fff;
+  /* The site's paper, so the intro clears into the page with no shift. smoke.ts
+     reads this back for the canvas surface, so it's set in this one place. */
+  background: var(--paper, #F4F1EA);
   color: #000;
   cursor: default;
   user-select: none;

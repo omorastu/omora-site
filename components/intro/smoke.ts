@@ -1,5 +1,5 @@
 /**
- * The intro's smoke: a Canvas 2D picture of the overlay — white surface,
+ * The intro's smoke: a Canvas 2D picture of the overlay — paper surface,
  * letters, hairline — that the pointer can stir and that then breaks into
  * soft particles which blur, rise and fade away.
  *
@@ -149,6 +149,12 @@ export function createSmoke(
   ctx.textBaseline = "alphabetic";
   ctx.textAlign = "left";
 
+  // The surface is painted in the overlay's own ground from intro.css, read
+  // here, before the canvas takes over and that ground turns transparent.
+  const ground = getComputedStyle(root).backgroundColor.match(/[\d.]+/g)?.map(Number) ?? [];
+  const surfaceRgb = ground.length >= 3 && (ground[3] ?? 1) > 0 ? ground.slice(0, 3).join(",") : "244,241,234";
+  const surface = `rgb(${surfaceRgb})`;
+
   const glyphs = measureGlyphs(root, box, ctx);
   const line = measureLine(root, box);
   const bits: Bit[] = [...glyphs, ...line];
@@ -163,7 +169,7 @@ export function createSmoke(
     [0.78, 0.05],
     [1, 0],
   ]);
-  const mist = dab("255,255,255", 128, [
+  const mist = dab(surfaceRgb, 128, [
     [0, 1],
     [0.55, 0.9],
     [1, 0],
@@ -294,7 +300,7 @@ export function createSmoke(
     stepBits(dt, time);
     stepMotes(dt, time);
     ctx!.clearRect(0, 0, W, H);
-    ctx!.fillStyle = "#fff";
+    ctx!.fillStyle = surface;
     ctx!.fillRect(0, 0, W, H);
     drawMotes(smooth(0, 600, now - liveAt));
     drawInk(ctx!);
@@ -323,7 +329,7 @@ export function createSmoke(
     const under = 1 - smooth(0.05, 0.5, s);
     if (under > 0) {
       c.globalAlpha = under;
-      c.fillStyle = "#fff";
+      c.fillStyle = surface;
       c.fillRect(0, 0, W, H);
     }
 
@@ -411,7 +417,7 @@ export function createSmoke(
   /** Draw the overlay as it stands and put the canvas in front of the DOM, in one go. */
   function takeOver() {
     ctx!.clearRect(0, 0, W, H);
-    ctx!.fillStyle = "#fff";
+    ctx!.fillStyle = surface;
     ctx!.fillRect(0, 0, W, H);
     drawInk(ctx!);
     root.dataset.mode = "canvas";
@@ -490,7 +496,7 @@ export function createSmoke(
       for (const p of specks) p.r *= grow;
     }
 
-    // The white surface as overlapping mist, thinnest at the bottom first.
+    // The surface as overlapping mist, thinnest at the bottom first.
     const g = Math.max(light ? 58 : 52, Math.sqrt((W * H) / (light ? 160 : 320)));
     for (let y = g / 2; y < H + g; y += g) {
       for (let x = g / 2; x < W + g; x += g) {
