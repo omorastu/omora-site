@@ -6,7 +6,8 @@
  * The letters are drawn one by one, and the logo whole, at the positions the
  * browser laid them out at (measured from the DOM), so the moment the canvas
  * takes over from the real page is invisible. Stirred, the logo moves as
- * narrow upright strips; breaking up, its particles keep its golds.
+ * narrow upright strips; breaking up, its particles keep its golds (unless
+ * the intro has taken the logo off whole, to fly it to the header).
  * Particle counts are capped by screen size, there is one
  * requestAnimationFrame loop, and destroy() frees everything.
  */
@@ -16,8 +17,11 @@ export type Smoke = {
   interactive(): boolean;
   /** Pointer position in viewport px, or null when it leaves. */
   pointer(x: number | null, y?: number): void;
-  /** Break into particles over `ms`, then call `done`. */
-  dissolve(ms: number, done: () => void): void;
+  /**
+   * Break into particles over `ms`, then call `done`. With `pictures` false
+   * the logo is left out, for the caller to carry off whole.
+   */
+  dissolve(ms: number, done: () => void, opts?: { pictures?: boolean }): void;
   destroy(): void;
 };
 
@@ -274,11 +278,14 @@ export function createSmoke(
 
   /* ── Drawing the overlay itself ─────────────────────────────────────── */
 
+  /** Whether the logo is still the canvas's to draw (dissolve() can hand it off). */
+  let withPictures = true;
+
   function drawInk(c: CanvasRenderingContext2D) {
     // The logo: whole while nothing has moved it (exactly as the page drew
     // it), else strip by strip, each a hair wider so no gap opens between.
     c.imageSmoothingQuality = "high";
-    pictures!.forEach((p, i) => {
+    if (withPictures) pictures!.forEach((p, i) => {
       const raster = rasters[i];
       c.globalAlpha = p.alpha;
       if (p.strips.every((s) => Math.abs(s.dx) + Math.abs(s.dy) < 0.05)) {
@@ -540,7 +547,7 @@ export function createSmoke(
       y0 = Math.min(y0, s.y - 8);
       y1 = Math.max(y1, s.y + 8);
     }
-    for (const s of strips) {
+    for (const s of withPictures ? strips : []) {
       x0 = Math.min(x0, s.x + s.dx - 8);
       x1 = Math.max(x1, s.x + s.dx + s.w + 8);
       y0 = Math.min(y0, s.y + s.dy - 8);
@@ -652,8 +659,9 @@ export function createSmoke(
       P.on = true;
     },
 
-    dissolve(ms, done) {
+    dissolve(ms, done, opts) {
       if (mode === "dissolve") return;
+      if (opts?.pictures === false) withPictures = false;
       if (mode === "idle") takeOver();
       buildParticles();
       dissolveMs = ms;

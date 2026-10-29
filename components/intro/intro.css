@@ -22,7 +22,7 @@
   -webkit-tap-highlight-color: transparent;
   /* If the page's script never takes over (a failed bundle, a crash), the
      overlay still gets out of the way on its own. data-live cancels this. */
-  animation: kz-intro-fallback .6s ease 3.4s forwards;
+  animation: kz-intro-fallback .6s ease 4.4s forwards;
 }
 .kz-intro[data-live] { animation: none; }
 @keyframes kz-intro-fallback { to { opacity: 0; visibility: hidden; } }
@@ -53,10 +53,10 @@
 }
 
 /* The logo: gold lettering on a transparent ground, its box held at the
-   file's proportions (842×172) by its width and height attributes. */
+   file's proportions (962×172, letters spaced wider) by its width and height attributes. */
 .kz-intro-logo {
   display: block;
-  width: min(560px, 80vw);
+  width: min(640px, 86vw);
   max-width: 100%;
   height: auto;
 }
@@ -69,17 +69,17 @@
   background: #000;
 }
 
-/* The one line under the logo, held to its width so it reads as its
-   caption: about 19px on a laptop, 16.5px on a phone. */
+/* The one line under the logo: about 27px on a laptop, 21px on a phone,
+   no more than about 32 characters to a line. */
 .kz-intro-def {
-  max-width: min(560px, 100%);
+  max-width: min(32ch, 100%);
   margin: 0;
   text-wrap: balance;
   font-family: var(--font-logo), serif;
   font-weight: 500;
-  font-size: clamp(16.5px, 13px + .42vw, 20px);
-  line-height: 1.45;
-  letter-spacing: .02em;
+  font-size: clamp(21px, 17px + .7vw, 27px);
+  line-height: 1.35;
+  letter-spacing: .01em;
 }
 .kz-intro-def i {
   font-family: var(--font-intro-italic), var(--font-logo), serif;
@@ -99,6 +99,25 @@
 @keyframes kz-intro-rule {
   from { opacity: 0; transform: scaleX(0); }
   to { opacity: 1; transform: none; }
+}
+
+/* The logo's flight to the header (intro.tsx): the logo's copy and the
+   wordmark's, one over the other, moved and scaled together. */
+.kz-intro-flyer {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 2;
+  transform-origin: 0 0;
+  pointer-events: none;
+  will-change: transform;
+}
+.kz-intro-flyer > * {
+  position: absolute;
+  left: 0;
+  top: 0;
+  max-width: none;
+  white-space: nowrap;
 }
 
 /* Reduced motion: everything is simply there; the exit is a plain fade. */

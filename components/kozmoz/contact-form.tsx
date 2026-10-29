@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { track } from "@vercel/analytics";
-import { brand, contact, people } from "@/lib/kozmoz";
+import { brand, contact } from "@/lib/kozmoz";
 import { cn } from "@/lib/utils";
 
 /**
@@ -11,8 +11,8 @@ import { cn } from "@/lib/utils";
  * It posts to the same /api/lead backend as V3's home form, so it gets the
  * same honeypot, submit-timing check, rate limit and never-silently-drop
  * guarantee, and reports the same analytics event. The second field goes as
- * `contact`; the API decides whether it's an email or a phone number. "Who
- * should get back to you?" goes as `who` and is filed with the lead.
+ * `contact`; the API decides whether it's an email or a phone number. Under
+ * the fields, a line says who writes back: both of us.
  *
  * Browser validation runs first (the fields the API requires are marked
  * required); anything the API still rejects comes back per field, prints
@@ -110,35 +110,7 @@ export function ContactForm({
         />
       </div>
 
-      <fieldset className="whom">
-        <legend className="label">
-          <span>{contact.whom}</span>
-        </legend>
-        <div className="whom-row">
-          <input className="sr-only" type="radio" name="who" id="who-a" value={people.a.name} />
-          <label className="whom-opt whom-a" htmlFor="who-a">
-            {people.a.name}
-          </label>
-          <input
-            className="sr-only"
-            type="radio"
-            name="who"
-            id="who-e"
-            value={contact.either}
-            defaultChecked
-          />
-          <label className="whom-opt whom-e" htmlFor="who-e">
-            <span className="whom-amp" aria-hidden="true">
-              &amp;
-            </span>
-            <span className="label">{contact.either}</span>
-          </label>
-          <input className="sr-only" type="radio" name="who" id="who-j" value={people.j.name} />
-          <label className="whom-opt whom-j" htmlFor="who-j">
-            {people.j.name}
-          </label>
-        </div>
-      </fieldset>
+      <p className="reply-note">{contact.reply}</p>
 
       {/* Honeypot. Hidden from people and from screen readers; bots fill it. */}
       <div aria-hidden="true" className="absolute left-[-9999px] top-0 h-px w-px overflow-hidden">

@@ -7,13 +7,19 @@ import { cn } from "@/lib/utils";
 /**
  * Whose hands: the home page root and the "pick a name" toggle.
  *
- * Picking a name highlights that person and nothing else: their name lights
- * up in their own ink and their line opens under the hero's hint (kozmoz.css
- * keys both off data-view on this root). Nothing else on the page dims or
- * changes. Picking the same name again closes it; picking the other switches
- * straight across.
+ * Picking a name highlights that person and nothing else: a band of gold
+ * lights under their name and their line opens under the hero's hint
+ * (kozmoz.css keys both off data-view on this root). Nothing else on the page
+ * dims or changes. Picking the same name again closes it; picking the other
+ * switches straight across.
  *
- * The root also runs the names' entrance in the hero.
+ * The root also runs the hero's entrance, once the intro has cleared or, with
+ * no intro, as soon as the fonts are in: the gold ampersand drops into place,
+ * a gold pen writes "Ashan Fernando" and then "Jordan Lopez" left to right,
+ * the letters inking in right behind its nib, and the lede rises in under
+ * them, all inside about two seconds. The names are on the page from the
+ * start; the entrance only reveals them, so nothing moves. Under reduced
+ * motion everything is simply there.
  */
 
 type View = Who | "";
@@ -29,7 +35,16 @@ function useHands() {
 }
 
 const reducedMotion = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-const phone = () => window.matchMedia("(max-width: 1023px)").matches;
+
+/** The entrance's steps, in ms. (The ampersand's drop, about 350ms, is its spring's.) */
+const WRITE_AT = 300;
+const WRITE_MS = 500;
+const WRITE_GAP = 70;
+const RISE_MS = 400;
+/** A quick start, a steady stroke, a light lift off the end. */
+const WRITE_EASE = "cubic-bezier(.42, .1, .45, 1)";
+/** If the intro never says it has cleared, start anyway. */
+const INTRO_WAIT = 9000;
 
 /**
  * A damped spring sampled into a CSS linear() easing.
@@ -71,66 +86,111 @@ export function Hands({ className, children }: { className?: string; children: R
     [apply]
   );
 
-  /* Entrance: the names spring to the seam, then the & settles. */
+  /* Entrance: the ampersand drops, the pen writes the names, the lede rises. */
   useEffect(() => {
     const el = root.current;
     if (!el) return;
     let cancelled = false;
+    let wait = 0;
 
     const entrance = () => {
       if (cancelled) return;
+      const hero = el.querySelector<HTMLElement>(".hero");
       const a = el.querySelector<HTMLElement>(".name--a");
       const j = el.querySelector<HTMLElement>(".name--j");
       const amp = el.querySelector<HTMLElement>(".name-amp");
-      const seam = el.querySelector<HTMLElement>(".seam");
-      if (!a || !j || !amp || reducedMotion() || typeof a.animate !== "function") {
+      const nib = el.querySelector<HTMLElement>(".nib");
+      if (!hero || !a || !j || !amp || !nib || reducedMotion() || typeof a.animate !== "function") {
         setIsIn(true);
         return;
       }
-      const s = spring(0.58, 13);
-      const settle = spring(0.5, 15);
-      const fade: KeyframeAnimationOptions = { duration: 320, easing: "linear", fill: "backwards" };
 
-      if (!phone()) {
-        // Each name starts out in its own half, never past the page margin.
-        // Same travel for both, never into the band where the panel's edge
-        // fades (kozmoz.css, --feather).
-        const ra = a.getBoundingClientRect();
-        const rj = j.getBoundingClientRect();
-        const panel = el.querySelector(".panel")?.getBoundingClientRect() ?? { left: 0, right: innerWidth, width: innerWidth };
-        const clear = (parseFloat(getComputedStyle(el).getPropertyValue("--feather")) || 0) + 8;
-        const d = Math.max(0, Math.min(ra.left - panel.left - clear, panel.right - clear - rj.right, panel.width * 0.1));
-        const move = { duration: s.duration, easing: s.easing, fill: "backwards" } as const;
-        a.animate({ transform: [`translateX(${-d}px)`, "none"] }, move);
-        j.animate({ transform: [`translateX(${d}px)`, "none"] }, move);
-        a.animate({ opacity: [0, 1] }, fade);
-        j.animate({ opacity: [0, 1] }, fade);
-        seam?.animate(
-          { scale: ["1 0", "1 1"] },
-          { duration: 900, easing: "cubic-bezier(.65, 0, .35, 1)", fill: "backwards" }
+      // The ampersand, a short drop with a slight overshoot. The seam (desktop) draws down meanwhile.
+      const drop = spring(0.62, 25);
+      amp.animate(
+        { transform: ["translateY(-.32em)", "none"] },
+        { duration: drop.duration, easing: drop.easing, fill: "backwards" }
+      );
+      amp.animate({ opacity: [0, 1] }, { duration: 140, easing: "linear", fill: "backwards" });
+      el.querySelector(".seam")?.animate(
+        { scale: ["1 0", "1 1"] },
+        { duration: 900, easing: "cubic-bezier(.65, 0, .35, 1)", fill: "backwards" }
+      );
+
+      // Each name written in, left to right: the button's clip opens behind
+      // the nib, which rides the clip's edge along the first name's line.
+      // Measured by layout (offsets from the hero), not by the screen, which
+      // the panel's own lift is still moving.
+      const write = (name: HTMLElement, at: number) => {
+        const first = name.querySelector<HTMLElement>(".name-first") ?? name;
+        const size = parseFloat(getComputedStyle(name).fontSize);
+        const w = name.offsetWidth;
+        // Room for ink past the box: the J's hook on the left, tails above and below.
+        const side = Math.ceil(size * 0.08);
+        const tall = Math.ceil(size * 0.3);
+        const timing = { duration: WRITE_MS, delay: at, easing: WRITE_EASE };
+        name.animate(
+          { clipPath: [`inset(-${tall}px ${w + side}px -${tall}px -${side}px)`, `inset(-${tall}px -${side}px -${tall}px -${side}px)`] },
+          { ...timing, fill: "backwards" }
         );
-        amp.animate(
-          { transform: ["translateY(-.3em) rotate(-16deg)", "none"] },
-          { duration: settle.duration, easing: settle.easing, delay: 360, fill: "backwards" }
+        const x0 = name.offsetLeft - side;
+        const x1 = name.offsetLeft + w + side;
+        const y = first.offsetTop + first.offsetHeight * 0.62;
+        nib.animate(
+          [
+            { transform: `translate(${x0}px, ${y}px)`, opacity: 0 },
+            { opacity: 1, offset: 0.06 },
+            { opacity: 1, offset: 0.86 },
+            { transform: `translate(${x1}px, ${y}px)`, opacity: 0 },
+          ],
+          timing
         );
-        amp.animate({ opacity: [0, 1] }, { ...fade, delay: 360 });
-      } else {
-        // Phones: a short rise, no sideways travel.
-        [a, amp, j].forEach((n, i) => {
-          n.animate(
-            { transform: ["translateY(1.25rem)", "none"] },
-            { duration: s.duration, easing: s.easing, delay: i * 90, fill: "backwards" }
-          );
-          n.animate({ opacity: [0, 1] }, { ...fade, delay: i * 90 });
-        });
-      }
+        // The hand's own small rise and fall as it writes.
+        const bob = size * 0.035;
+        nib.firstElementChild?.animate(
+          { translate: ["0 0", `0 ${-bob}px`, `0 ${bob * 0.7}px`, `0 ${-bob * 0.5}px`, "0 0"] },
+          { duration: WRITE_MS, delay: at, easing: "linear" }
+        );
+      };
+      write(a, WRITE_AT);
+      write(j, WRITE_AT + WRITE_MS + WRITE_GAP);
+
+      // Then the lines under them rise in, quick, with no long settle. The
+      // hint and the lede sit on paper that breaks the seam: their letters
+      // fade in, not the paper, or the seam would show through it.
+      const riseAt = WRITE_AT + 2 * WRITE_MS + 2 * WRITE_GAP;
+      const lines = [hero.querySelector(".hint"), hero.querySelector(".lede"), hero.querySelector(":scope > .act")];
+      lines.forEach((line, i) => {
+        if (!line) return;
+        const rise = { duration: RISE_MS, delay: riseAt + (i === 2 ? 60 : 0), easing: "cubic-bezier(.2, .7, .3, 1)", fill: "backwards" } as const;
+        line.animate({ transform: ["translateY(.875rem)", "none"] }, rise);
+        if (line.classList.contains("across")) line.animate({ color: ["transparent", getComputedStyle(line).color] }, rise);
+        else line.animate({ opacity: [0, 1] }, rise);
+      });
       setIsIn(true);
     };
 
-    const fontsReady = document.fonts?.ready ?? Promise.resolve();
-    Promise.race([fontsReady, new Promise((r) => setTimeout(r, 900))]).then(entrance);
+    const begin = () => {
+      const fontsReady = document.fonts?.ready ?? Promise.resolve();
+      Promise.race([fontsReady, new Promise((r) => setTimeout(r, 900))]).then(entrance);
+    };
+
+    // With the intro up, wait for it to clear (components/intro/intro.tsx).
+    const intro = window.__kzIntro;
+    const go = () => {
+      removeEventListener("kz:intro-clear", go);
+      clearTimeout(wait);
+      begin();
+    };
+    if (intro?.show && !intro.done && !intro.clear) {
+      addEventListener("kz:intro-clear", go);
+      wait = window.setTimeout(go, INTRO_WAIT);
+    } else begin();
+
     return () => {
       cancelled = true;
+      removeEventListener("kz:intro-clear", go);
+      clearTimeout(wait);
     };
   }, []);
 

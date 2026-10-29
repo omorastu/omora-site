@@ -1,7 +1,10 @@
 import Link from "next/link";
 import { sectionLabel, services, servicesPage, type Service } from "@/lib/kozmoz";
 
-/** What we do: the four services two by two, then the way to /services. */
+/**
+ * What we do: the four services two by two, each card the way to its own
+ * page (/services/<slug>), then the way to /services.
+ */
 export function Services() {
   return (
     <section className="do sec" id="do" aria-labelledby="do-h">
@@ -13,8 +16,10 @@ export function Services() {
         </h2>
         <div className="do-grid">
           {services.map((s) => (
-            <article key={s.id} className="svc-card">
-              <h3 className="svc-card-title">{s.title}</h3>
+            <article key={s.slug} className="svc-card card-link">
+              <h3 className="svc-card-title">
+                <Link href={`/services/${s.slug}`}>{s.title}</Link>
+              </h3>
               <p className="svc-card-text">{s.text}</p>
             </article>
           ))}
@@ -28,17 +33,18 @@ export function Services() {
 }
 
 /**
- * One service on /services, a section of its own under its id, on the home
- * page's grid: the title and the text on the left, what's included as a
- * ruled list on the right.
+ * One service on /services, a section of its own under its slug, on the home
+ * page's grid: the title and the text on the left over a preview of the work,
+ * what's included as a ruled list on the right. The whole row is the way to
+ * the service's page.
  */
 export function ServiceRow({ service: s }: { service: Service }) {
   return (
-    <section className="svc sec" id={s.id} aria-labelledby={`${s.id}-h`}>
+    <section className="svc sec card-link" id={s.slug} aria-labelledby={`${s.slug}-h`}>
       <div className="wrap">
         <div className="svc-head">
-          <h2 className="sec-h svc-title" id={`${s.id}-h`}>
-            {s.title}
+          <h2 className="sec-h svc-title" id={`${s.slug}-h`}>
+            <Link href={`/services/${s.slug}`}>{s.title}</Link>
           </h2>
           <p className="svc-text">{s.text}</p>
         </div>
@@ -47,6 +53,8 @@ export function ServiceRow({ service: s }: { service: Service }) {
             <li key={item}>{item}</li>
           ))}
         </ul>
+        {/* TODO: a preview of this service's work goes here once there's work to show. */}
+        <div className="svc-preview placeholder" aria-hidden="true" />
       </div>
     </section>
   );

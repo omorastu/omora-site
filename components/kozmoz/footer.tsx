@@ -11,11 +11,10 @@ export function Footer() {
   return (
     <footer className="foot">
       <p className="foot-l">
-        <Image src={brand.mark} alt="" width={192} height={192} /> <Wordmark />
+        <Image src={brand.mark} alt="" width={192} height={192} /> <Wordmark className="gold" />
       </p>
       <p className="foot-c">
-        <span className="c-a">{people.a.name}</span> &amp;{" "}
-        <span className="c-j">{people.j.name}</span>
+        <b>{people.a.name}</b> <span className="gold">&amp;</span> <b>{people.j.name}</b>
       </p>
       <p className="foot-r">
         {brand.where} <span aria-hidden="true">·</span>{" "}

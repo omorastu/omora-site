@@ -13,12 +13,16 @@ import "@/components/intro/intro.css";
  * session.
  *
  *   0–1s     the logo, then the rule and the definition fade in (CSS)
- *   1–3s     hold; with a mouse, the pointer stirs the logo and letters like smoke
- *   3–4.5s   it evaporates: the surface, logo and letters break into soft
- *            particles that blur, rise and fade, revealing the page
+ *   1–4s     hold; with a mouse, the pointer stirs the logo and letters like smoke
+ *   4–5.5s   it evaporates: the surface and letters break into soft particles
+ *            that blur, rise and fade, revealing the page, while the logo
+ *            shrinks and flies (0.6s) to the header's wordmark, turning into
+ *            it on the way, and stays there until the overlay has gone
  *
  * A click, tap, key or scroll starts the evaporation early. Under reduced
- * motion it holds still and then simply fades out over 0.6s.
+ * motion it holds still and then simply fades out over 0.6s, with no flight.
+ * Once the page shows through, it tells the home page's hero to come in
+ * ("kz:intro-clear", components/kozmoz/hands.tsx).
  *
  * The decision to show it is made by a tiny inline script during the first
  * paint, from sessionStorage and the referrer, so a returning or internal
@@ -30,14 +34,18 @@ import "@/components/intro/intro.css";
  */
 
 /** Timeline, in ms from the first paint. */
-const HOLD_END = 3000;
+const HOLD_END = 4000;
 const DISSOLVE = 1500;
-const REDUCED_HOLD_END = 2400;
+const REDUCED_HOLD_END = 3400;
 const FADE = 600;
+/** The logo's flight to the header, from the start of the dissolve. */
+const FLIGHT = 600;
+/** How far into the dissolve the page counts as showing through, for the hero to start. */
+const CLEAR_AFTER = 700;
 /** From here intro.css's fallback owns the exit (keep in step with intro.css). */
-const FALLBACK_AT = 3400;
+const FALLBACK_AT = 4400;
 /** If nothing else has, the overlay goes at this point regardless. */
-const FAILSAFE = 6500;
+const FAILSAFE = 7500;
 /** Mouse stirring takes over from the DOM once the text has finished fading in. */
 const ENTERED = 1000;
 
@@ -50,17 +58,20 @@ const DEFINITION: React.ReactNode = (
   </>
 );
 
-/** The logo file's own size, so its box is reserved before it loads. */
-const LOGO = { src: "/m/brand/elorro-logo.png", width: 842, height: 172 };
+/** The logo file's own size, so its box is reserved before it loads, and where its letters sit in it. */
+const LOGO = { src: "/m/brand/elorro-logo.png", width: 962, height: 172, ink: { left: 9, right: 946 } };
 
 /**
  * Runs as the overlay is parsed, before the first paint. Shows the overlay
  * (by adding a style rule — it touches nothing React renders) only on the
  * session's first load, and not when arriving from another page of the site.
+ * The same rule holds back the hero's own fallback (kozmoz.css, --kz-wait)
+ * until the overlay's has run, so the hero never shows under the intro.
  */
-const BOOT = `(function(){var show=false,q=/[?&]intro(=|&|$)/.test(location.search);try{var r=document.referrer,inside=false;try{inside=!!r&&new URL(r).origin===location.origin}catch(e){}var seen=sessionStorage.getItem("${KEY}");sessionStorage.setItem("${KEY}","1");show=!seen&&!inside}catch(e){}show=show||q;window.__kzIntro={show:show,t0:performance.now()};if(show){var s=document.createElement("style");s.textContent="html .kz-intro{display:block}";document.head.appendChild(s)}})();`;
+const BOOT = `(function(){var show=false,q=/[?&]intro(=|&|$)/.test(location.search);try{var r=document.referrer,inside=false;try{inside=!!r&&new URL(r).origin===location.origin}catch(e){}var seen=sessionStorage.getItem("${KEY}");sessionStorage.setItem("${KEY}","1");show=!seen&&!inside}catch(e){}show=show||q;window.__kzIntro={show:show,t0:performance.now()};if(show){var s=document.createElement("style");s.textContent="html .kz-intro{display:block}html{--kz-wait:5s}";document.head.appendChild(s)}})();`;
 
-type Boot = { show: boolean; t0: number; done?: boolean };
+/** Set by the boot script; `clear` once the page shows through, `done` once the overlay has gone. */
+type Boot = { show: boolean; t0: number; clear?: boolean; done?: boolean };
 
 declare global {
   interface Window {
@@ -115,7 +126,7 @@ export function Intro() {
           src={LOGO.src}
           width={LOGO.width}
           height={LOGO.height}
-          sizes="min(560px, 80vw)"
+          sizes="min(640px, 86vw)"
           alt=""
           loading="eager"
           fetchPriority="high"
@@ -153,6 +164,8 @@ function play(el: HTMLDivElement, cv: HTMLCanvasElement, boot: Boot, finish: () 
 
   let smoke: Smoke | null = null;
   let fading: Animation | null = null;
+  /** Stops the logo's flight and takes its copy away. */
+  let landing: (() => void) | null = null;
   let leaving = false;
   let ended = false;
 
@@ -161,6 +174,8 @@ function play(el: HTMLDivElement, cv: HTMLCanvasElement, boot: Boot, finish: () 
     timers.length = 0;
     offs.forEach((off) => off());
     offs.length = 0;
+    landing?.();
+    landing = null;
     smoke?.destroy();
     smoke = null;
     fading?.cancel();
@@ -170,10 +185,18 @@ function play(el: HTMLDivElement, cv: HTMLCanvasElement, boot: Boot, finish: () 
     delete el.dataset.leaving;
   }
 
+  /** The page shows through: the hero can come in. */
+  function clear() {
+    if (boot.clear) return;
+    boot.clear = true;
+    window.dispatchEvent(new Event("kz:intro-clear"));
+  }
+
   function end() {
     if (ended) return;
     ended = true;
     cleanup();
+    clear();
     finish();
   }
 
@@ -218,13 +241,20 @@ function play(el: HTMLDivElement, cv: HTMLCanvasElement, boot: Boot, finish: () 
     if (leaving) return;
     leaving = true;
     release(cause);
-    if (reduced) return fade();
+    if (reduced) return clear(), fade();
     const s = getSmoke();
-    if (!s) return fade();
+    if (!s) return clear(), fade();
     try {
-      s.dissolve(DISSOLVE, end);
+      // The logo flies to the header, if the wordmark's there to land on;
+      // otherwise it breaks up with the rest.
+      landing = fly(el);
+      s.dissolve(DISSOLVE, end, { pictures: !landing });
+      later(CLEAR_AFTER, clear);
     } catch {
+      landing?.();
+      landing = null;
       delete el.dataset.mode;
+      clear();
       fade();
     }
   }
@@ -266,4 +296,87 @@ function play(el: HTMLDivElement, cv: HTMLCanvasElement, boot: Boot, finish: () 
   });
 
   return cleanup;
+}
+
+const smooth = (a: number, b: number, v: number) => {
+  const t = Math.min(1, Math.max(0, (v - a) / (b - a)));
+  return t * t * (3 - 2 * t);
+};
+
+/** The wordmark's look, as the header sets it, for its copy outside the page's styles. */
+const WORDMARK_STYLE = [
+  "font-family",
+  "font-size",
+  "font-weight",
+  "font-style",
+  "letter-spacing",
+  "line-height",
+  "text-transform",
+  "color",
+  "background-image",
+  "-webkit-background-clip",
+  "background-clip",
+  "-webkit-text-fill-color",
+];
+
+/**
+ * The logo's flight: over FLIGHT ms (easing out) it shrinks and moves onto
+ * the header's wordmark, crossfading on the way into a copy of it, which then
+ * stays exactly over the wordmark (following it, should the page move) until
+ * the overlay has gone. Returns what stops it, or null if there's no wordmark
+ * in view to land on.
+ */
+function fly(el: HTMLElement): (() => void) | null {
+  const logo = el.querySelector<HTMLImageElement>(".kz-intro-logo");
+  const target = document.querySelector<HTMLElement>(".top .brand .wordmark");
+  if (!logo?.complete || !logo.naturalWidth || !target) return null;
+  const from = logo.getBoundingClientRect();
+  const to = target.getBoundingClientRect();
+  if (!from.width || !to.width || to.bottom <= 0 || to.top >= innerHeight) return null;
+
+  const css = getComputedStyle(target);
+  const word = document.createElement("span");
+  word.textContent = target.textContent;
+  for (const prop of WORDMARK_STYLE) word.style.setProperty(prop, css.getPropertyValue(prop));
+  word.style.opacity = "0";
+
+  // Landed, the logo's letters cover the wordmark's: its run, less the
+  // tracking after the last letter, centred on its line.
+  const k = (to.width - (parseFloat(css.letterSpacing) || 0)) / (LOGO.ink.right - LOGO.ink.left);
+  const pic = logo.cloneNode() as HTMLImageElement;
+  pic.removeAttribute("class");
+  const pw = LOGO.width * k;
+  const ph = LOGO.height * k;
+  const px = -LOGO.ink.left * k;
+  const py = (to.height - ph) / 2;
+  Object.assign(pic.style, { left: `${px}px`, top: `${py}px`, width: `${pw}px`, height: `${ph}px` });
+
+  const flyer = document.createElement("div");
+  flyer.className = "kz-intro-flyer";
+  Object.assign(flyer.style, { width: `${to.width}px`, height: `${to.height}px` });
+  flyer.append(pic, word);
+
+  // Taking off, the logo's copy sits exactly on the logo.
+  const s0 = from.width / pw;
+  const x0 = from.left - px * s0;
+  const y0 = from.top - py * s0;
+  const t0 = performance.now();
+  let raf = 0;
+  const frame = (now: number) => {
+    const t = Math.min(1, (now - t0) / FLIGHT);
+    const p = 1 - (1 - t) ** 4;
+    const at = target.getBoundingClientRect();
+    const s = Math.exp(Math.log(s0) * (1 - p));
+    flyer.style.transform = `translate(${x0 + (at.left - x0) * p}px, ${y0 + (at.top - y0) * p}px) scale(${s})`;
+    pic.style.opacity = String(1 - smooth(0.2, 0.65, t));
+    word.style.opacity = String(smooth(0.3, 0.75, t));
+    raf = requestAnimationFrame(frame);
+  };
+  frame(t0);
+  el.append(flyer);
+
+  return () => {
+    cancelAnimationFrame(raf);
+    flyer.remove();
+  };
 }

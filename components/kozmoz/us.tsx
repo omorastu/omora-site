@@ -38,9 +38,9 @@ export function Us() {
 /**
  * A portrait frame and a line. Until the person's photo is in public/ (its
  * path is `photo` in lib/kozmoz.ts: public/m/us/ashan.jpg, jordan.jpg) the
- * frame is a plate with their initial in their own ink; once it's there, the
- * photo fills the frame, the initial steps back and the name plate gets a
- * paper ground to sit on.
+ * frame is a plate with their initial; once it's there, the photo fills the
+ * frame, the initial steps back and the name plate gets a paper ground to
+ * sit on.
  */
 function PersonCard({ who }: { who: Who }) {
   const p = people[who];
@@ -55,7 +55,7 @@ function PersonCard({ who }: { who: Who }) {
         <span className="frame-name label">{p.name}</span>
       </div>
       <p className="person-line">
-        <b className={`c-${who}`}>{p.name}.</b> {p.line}
+        <b>{p.name}.</b> {p.line}
       </p>
     </article>
   );

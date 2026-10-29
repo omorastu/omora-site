@@ -6,10 +6,11 @@
    1. Concept: the door of a two-partner firm. Two names joined by an
       ampersand, a seam down the middle between them. The seam runs the
       hero only; below it the page is one left-aligned editorial grid
-      ("below the hero"), and the two people's inks say whose part is whose.
-   2. One ink on one paper. Second and third inks = the two people
-      (taken from the mark). They colour names and initials only.
-      Nothing decorative.
+      ("below the hero").
+   2. Black, gold and the paper. The ink is black; the gold is the logo's,
+      kept for a few things: the wordmark and the two rings, the
+      ampersand between the names, the picked name and the send button.
+      The two people share both. Nothing decorative.
    3. Cormorant Garamond, the wordmark's family, for every heading and
       display line (names ~3x a normal h1), in 500 and 600 + Hanken
       Grotesk for everything else (text, wide-caps labels, fields, buttons).
@@ -19,8 +20,7 @@
       panel, inset from the screen's edges, rounded, its edge dissolving
       into the white on a wide, soft, neutral shadow, over a few soft
       shapes of pearl and silver that barely drift (components/kozmoz/
-      panel.tsx, art.tsx). The page itself stays one ink on one paper,
-      and the only gold anywhere is the wordmark.
+      panel.tsx, art.tsx).
 
    Scoping. Every rule hangs off .kz, the page root: the home page's is
    rendered by components/kozmoz/hands.tsx, every other page's by
@@ -51,8 +51,9 @@ html:has(.kz),
   --panel-r: 20px;
   --feather: 16px;
   --panel-shadow:
-    0 0 80px -20px rgb(28 28 30 / .1),
-    0 32px 120px -24px rgb(28 28 30 / .07);
+    0 0 80px -20px rgb(28 28 30 / .2),
+    0 32px 120px -24px rgb(28 28 30 / .14),
+    0 48px 260px 0 rgb(28 28 30 / .07);
 
   /* The frosted white behind it (components/kozmoz/art.tsx draws these): a
      near-white ground with pearl, pale silver and warm grey shapes. */
@@ -66,25 +67,22 @@ html:has(.kz),
   --accent: #F4F1EA;                 /* selection = paper on ink */
   --ink-20: color-mix(in srgb, var(--ink) 20%, transparent);
 
-  /* The two people. -type = large text (>=3:1), -text = small text (>=4.5:1). */
-  --ashan: #9C6F1F;                  /* mark brass: rules, initials, big names */
-  --ashan-type: #9C6F1F;             /* 3.96:1 on paper */
-  --ashan-text: #8A611A;             /* 4.89:1 */
-  --jordan: #12AEDB;                 /* mark cyan: rules only (2.3:1, never text) */
-  --jordan-type: #0E7FA3;            /* 4.06:1 */
-  --jordan-text: #0A6F8F;            /* 5.05:1 */
-
   --ink-65: color-mix(in srgb, var(--ink) 65%, var(--paper));  /* 5.6:1 secondary text */
   --ink-50: color-mix(in srgb, var(--ink) 50%, var(--paper));  /* 3.4:1 large, unchosen */
   --frame: color-mix(in srgb, var(--ink) 6%, var(--paper));
   --plate: color-mix(in srgb, var(--ink) 8%, var(--paper));  /* a portrait frame waiting for its photo */
 
-  /* The logo's gold (public/m/brand/elorro-logo.png), for the wordmark only:
-     its mid tone, and a lighter and a deeper one for the fall down the
-     letters, kept dark enough to read on paper (3.2:1 at the middle). */
+  /* The logo's gold (public/m/brand/elorro-logo.png): its mid tone, and a
+     lighter and a deeper one for the fall down the letters, kept dark
+     enough to read on paper (3.2:1 at the middle, for large type). Small
+     gold text takes the deep tone alone (4.95:1); the send button runs
+     from the mid tone to deeper still, under paper text (4.95:1 at the
+     middle, where the text is). */
   --gold: #A8802F;
   --gold-hi: #BE9645;
   --gold-lo: #876122;
+  --gold-text: var(--gold-lo);
+  --gold-button: linear-gradient(180deg, #A07A2E, var(--gold-lo) 50%, #72531B);
 
   /* --font-logo (Cormorant Garamond) comes from next/font on <html>
      (app/layout.tsx), --font-hanken on .kz itself (components/kozmoz/fonts.ts). */
@@ -112,8 +110,9 @@ html:has(.kz),
     --panel-r: 14px;
     --feather: 9px;
     --panel-shadow:
-      0 0 40px -10px rgb(28 28 30 / .1),
-      0 16px 60px -12px rgb(28 28 30 / .07);
+      0 0 40px -10px rgb(28 28 30 / .2),
+      0 16px 60px -12px rgb(28 28 30 / .14),
+      0 24px 130px 0 rgb(28 28 30 / .07);
   }
 }
 
@@ -194,8 +193,18 @@ html:has(.kz) body {
   text-transform: uppercase;
 }
 
-.kz .c-a { color: var(--ashan-text); font-weight: 600; }
-.kz .c-j { color: var(--jordan-text); font-weight: 600; }
+/* Gold type: the wordmark, the ampersands. A light-to-deep fall down the
+   letters (they fill about the middle half of the text's box), or the
+   solid mid tone where text can't take a background. */
+.kz .gold { color: var(--gold); }
+@supports (-webkit-background-clip: text) or (background-clip: text) {
+  .kz .gold {
+    background: linear-gradient(180deg, var(--gold-hi) 26%, var(--gold) 52%, var(--gold-lo) 78%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+}
 
 .kz .skip {
   position: absolute; left: -9999px; top: .5rem; z-index: 300;
@@ -306,13 +315,15 @@ html:has(.kz) body {
 }
 
 /* ---------- cursor: the two rings ----------
-   With a mouse or trackpad, the pointer is the mark: the brass ring and the
-   cyan one, overlapping, 22px, its hotspot between them; each ring has a
-   pale halo so it shows on any ground. Links and buttons keep the hand,
-   text fields the text bar. Touch screens never see it. */
+   With a mouse or trackpad, the pointer is the mark: the two gold rings,
+   linked as in the logo (the left over the right at the top, under it at
+   the bottom), 22px, its hotspot between them; each ring has a pale halo
+   so it shows on any ground and the two read apart where they cross. Links
+   and buttons keep the hand, text fields the text bar. Touch screens never
+   see it. */
 @media (pointer: fine) {
   html:has(.kz) {
-    cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='22' viewBox='0 0 22 22'%3E%3Cg fill='none'%3E%3Ccircle cx='7.7' cy='11' r='5.7' stroke='%23fff' stroke-opacity='.8' stroke-width='3.8'/%3E%3Ccircle cx='14.3' cy='11' r='5.7' stroke='%23fff' stroke-opacity='.8' stroke-width='3.8'/%3E%3Ccircle cx='7.7' cy='11' r='5.7' stroke='%239C6F1F' stroke-width='2'/%3E%3Ccircle cx='14.3' cy='11' r='5.7' stroke='%2312AEDB' stroke-width='2'/%3E%3C/g%3E%3C/svg%3E") 11 11, auto;
+    cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='22' viewBox='0 0 22 22'%3E%3Cdefs%3E%3CclipPath id='t'%3E%3Crect x='8' y='3' width='6' height='6'/%3E%3C/clipPath%3E%3C/defs%3E%3Cg fill='none'%3E%3Ccircle cx='7.7' cy='11' r='5.7' stroke='%23fff' stroke-opacity='.8' stroke-width='3.8'/%3E%3Ccircle cx='7.7' cy='11' r='5.7' stroke='%23A8802F' stroke-width='2'/%3E%3Ccircle cx='14.3' cy='11' r='5.7' stroke='%23fff' stroke-opacity='.8' stroke-width='3.8'/%3E%3Ccircle cx='14.3' cy='11' r='5.7' stroke='%23A8802F' stroke-width='2'/%3E%3Cg clip-path='url(%23t)'%3E%3Ccircle cx='7.7' cy='11' r='5.7' stroke='%23fff' stroke-opacity='.8' stroke-width='3.8'/%3E%3Ccircle cx='7.7' cy='11' r='5.7' stroke='%23A8802F' stroke-width='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E") 11 11, auto;
   }
   .kz a[href], .kz button, .kz label, .kz summary, .kz select, .kz [role="button"] { cursor: pointer; }
   .kz input:not([type="radio"], [type="checkbox"], [type="submit"], [type="button"]), .kz textarea { cursor: text; }
@@ -325,7 +336,14 @@ html:has(.kz) body {
   background: var(--paper);
 }
 
-/* ---------- header: the door plate ---------- */
+/* ---------- header: the door plate ----------
+   At the top of the page, the gold wordmark and the links on the paper.
+   Once the names on the door have gone under it (header.tsx adds
+   .is-dark), it turns black: the two names fade in on the seam, the
+   wordmark and the ampersand stay gold, and everything else turns paper.
+   The black is a layer of its own, rounded at the top like the panel's
+   corners, over the header's paper, so nothing scrolling under it ever
+   shows at those corners. */
 .kz .top {
   position: sticky;
   top: 0;
@@ -337,8 +355,22 @@ html:has(.kz) body {
   padding-inline: var(--pad);
   background: var(--paper);
   border-bottom: 1px solid var(--ink-20);
-  transition: transform .45s var(--ease);
+  color: var(--ink);
+  transition: transform .45s var(--ease), color .25s ease, border-color .25s ease;
 }
+.kz .top::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 -1px;
+  z-index: -1;
+  background: var(--ink);
+  border-radius: var(--panel-r) var(--panel-r) 0 0;
+  opacity: 0;
+  transition: opacity .25s ease;
+  pointer-events: none;
+}
+.kz .top.is-dark { color: var(--paper); border-bottom-color: transparent; }
+.kz .top.is-dark::before { opacity: 1; }
 /* min-height: the old Fraunces lockup's line box (1.375rem × 1.45), so the
    header rows stand where they did; it only bites at tablet widths. */
 .kz .brand {
@@ -352,28 +384,18 @@ html:has(.kz) body {
 .kz .brand img { width: 2.15rem; height: auto; }
 .kz .brand .wordmark { font-size: 1.725rem; line-height: 1; }
 
-/* The wordmark, here and in the footer, in the logo's gold: a light-to-deep
-   fall down the caps (they fill about the middle half of the text's box),
-   or the solid mid tone where text can't take a background. Set a weight
-   up from the plain wordmark's 500 and a little tighter, so the thin gold
-   holds together at this size. Nothing else on the site is gold. */
+/* The wordmark, here and in the footer, in the logo's gold (.gold): set a
+   weight up from the plain wordmark's 500 and a little tighter, so the
+   thin gold holds together at this size. */
 .kz .brand .wordmark,
 .kz .foot-l .wordmark {
-  color: var(--gold);
   font-weight: 600;
   letter-spacing: .36em;
   margin-right: -.36em;
 }
-@supports (-webkit-background-clip: text) or (background-clip: text) {
-  .kz .brand .wordmark,
-  .kz .foot-l .wordmark {
-    background: linear-gradient(180deg, var(--gold-hi) 26%, var(--gold) 52%, var(--gold-lo) 78%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-  }
-}
 
+/* The names, on the seam, only while the header is black. Hidden, they
+   leave the tab order and the accessibility tree too. */
 .kz .who {
   display: inline-flex;
   align-items: center;
@@ -384,14 +406,27 @@ html:has(.kz) body {
   min-height: 44px;
   padding-inline: .25rem;
 }
-.kz .who--a { grid-area: 1 / 1; justify-self: end; color: var(--ashan-text); }
-.kz .who--j { grid-area: 1 / 3; justify-self: start; color: var(--jordan-text); }
+.kz .who--a { grid-area: 1 / 1; justify-self: end; }
+.kz .who--j { grid-area: 1 / 3; justify-self: start; }
 .kz .top-amp {
   grid-area: 1 / 2;
   padding-inline: .5rem;
   font-family: var(--font-display);
   font-size: 1.5rem;
   font-weight: 500;
+  line-height: 1;
+}
+.kz .top .who,
+.kz .top .top-amp {
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity .25s ease, visibility 0s .25s, translate .55s var(--spring-soft);
+}
+.kz .top.is-dark .who,
+.kz .top.is-dark .top-amp {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity .25s ease, visibility 0s, translate .55s var(--spring-soft);
 }
 .kz .who[aria-pressed="true"] {
   text-decoration: underline;
@@ -450,16 +485,17 @@ html:has(.kz) body {
   line-height: .9;
   letter-spacing: -.02em;
 }
-.kz .name { font: inherit; letter-spacing: inherit; line-height: inherit; }
-.kz .name--a { justify-self: end; color: var(--ashan-type); }
-.kz .name--j { justify-self: start; color: var(--jordan-type); }
+.kz .name { font: inherit; letter-spacing: inherit; line-height: inherit; color: var(--ink); }
+.kz .name--a { justify-self: end; }
+.kz .name--j { justify-self: start; }
 .kz .name-first { display: block; }
-/* The last name, under the first and in its ink: the lede's size, in the
-   display face's bold. It's set right, and margin-right lines its last
-   letter's ink up with the first name's: each line's box runs past its ink
-   by the last letter's right side bearing (n in 500 .0173em, o in 700
-   .032em, z in 700 .026em, measured from the fonts) and, on the first
-   name, its tracking. */
+/* The last name, under the first: the lede's size, in the display face's
+   bold. Mirrored across the seam: Fernando starts where Ashan starts,
+   Lopez ends where Jordan ends, ink on ink. The margins make up for each
+   line's side bearings (measured from the fonts, at their own sizes): A in
+   500 -.0047em (its foot reaches past its box), F in 700 .031em on the
+   left; n in 500 .0173em (plus the first name's tracking) and z in 700
+   .026em on the right. */
 /* margin-top: close under the first name, but clear of its picked band
    (which ends .04 of the names' size above the line's foot) by about a
    third of the last name's size. */
@@ -471,23 +507,27 @@ html:has(.kz) body {
   font-weight: 700;
   line-height: 1;
   letter-spacing: 0;
-  text-align: right;
-  --rsb: .032em;
-  margin-right: calc(var(--names-size) * (.0173 + -.02) - var(--rsb));
 }
-.kz .name--j .name-last { --rsb: .026em; }
-/* Picked, a name lights up in its own ink: a band of it laid under the
-   first name, run out from the seam. Nothing else on the page changes. */
+.kz .name--a .name-last {
+  text-align: left;
+  margin-left: calc(var(--names-size) * -.0047 - .031em);
+}
+.kz .name--j .name-last {
+  text-align: right;
+  margin-right: calc(var(--names-size) * (.0173 + -.02) - .026em);
+}
+/* Picked, a name lights up: a band of gold laid under the first name, run
+   out from the seam. Nothing else on the page changes. */
 .kz .name-first {
   background: linear-gradient(var(--lit), var(--lit)) no-repeat;
   background-size: 0% .3em;
   transition: background-size .6s var(--ease);
+  --lit: color-mix(in srgb, var(--gold) 26%, transparent);
 }
-.kz .name--a { --lit: color-mix(in srgb, var(--ashan) 24%, transparent); }
-.kz .name--j { --lit: color-mix(in srgb, var(--jordan) 24%, transparent); }
 .kz .name--a .name-first { background-position: right 0 bottom .04em; }
 .kz .name--j .name-first { background-position: left 0 bottom .04em; }
 .kz .name[aria-pressed="true"] .name-first { background-size: 100% .3em; }
+/* The ampersand, in gold, on a patch of paper so the seam breaks around it. */
 .kz .name-amp {
   position: relative;
   z-index: 1;
@@ -495,8 +535,32 @@ html:has(.kz) body {
   padding-inline: .16em;
   background: var(--paper);
   font-weight: 500;
-  color: var(--ink);
 }
+.kz .name-amp .gold { display: inline-block; }
+/* The pen that writes the names in (hands.tsx moves it). A point on the
+   hero: the nib hangs from it, tip down, held at a writing slant. */
+.kz .nib {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 2;
+  width: 0;
+  height: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+.kz .nib svg {
+  position: absolute;
+  left: -.6rem;
+  bottom: 0;
+  width: 1.2rem;
+  max-width: none;
+  height: auto;
+  overflow: visible;
+  transform-origin: 50% 100%;
+  rotate: 38deg;
+}
+.kz .nib-cut { fill: var(--paper); stroke: var(--paper); }
 .kz .hint {
   margin-top: 2.75rem;
   padding: .25rem .5rem;
@@ -531,6 +595,7 @@ html:has(.kz) body {
   transition: opacity .3s var(--ease), visibility 0s .3s;
 }
 .kz .picked-line--a { grid-column: 1; justify-self: end; text-align: right; }
+.kz .picked-name { color: var(--gold-text); font-weight: 600; }
 .kz .picked-line--j { grid-column: 2; justify-self: start; }
 .kz[data-view="a"] .picked-line--a,
 .kz[data-view="j"] .picked-line--j {
@@ -649,8 +714,8 @@ html:has(.kz) body {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   column-gap: 2rem;
 }
-/* A plate a shade under the paper, one hairline round it, the initial in
-   the person's ink; their photo fills the same frame once it's in public/
+/* A plate a shade under the paper, one hairline round it, the initial;
+   their photo fills the same frame once it's in public/
    (components/kozmoz/us.tsx). */
 .kz .frame {
   position: relative;
@@ -673,8 +738,6 @@ html:has(.kz) body {
   font-weight: 500;
   line-height: 1;
 }
-.kz .person--a .frame-initial { color: var(--ashan-type); }
-.kz .person--j .frame-initial { color: var(--jordan-type); }
 .kz .frame-name {
   position: absolute;
   z-index: 1;
@@ -689,9 +752,11 @@ html:has(.kz) body {
   line-height: 1.45;
   text-wrap: pretty;
 }
+.kz .person-line b { font-weight: 600; }
 
 /* ---------- what we do ----------
-   The home page's four, two by two: the title and a line under it. */
+   The home page's four, two by two: the title and a line under it, each
+   card the way to its service's page. */
 .kz .do-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -713,6 +778,23 @@ html:has(.kz) body {
   font-size: max(1.125rem, 15px);
   line-height: 1.45;
   text-wrap: pretty;
+}
+/* A card that is one link: the title's, stretched over the whole card.
+   Pointed at, the title underlines. */
+.kz .card-link { position: relative; }
+.kz .card-link h2 a::after,
+.kz .card-link h3 a::after { content: ""; position: absolute; inset: 0; z-index: 1; }
+.kz .card-link h2 a,
+.kz .card-link h3 a {
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  text-decoration-thickness: .04em;
+  text-underline-offset: .14em;
+  transition: text-decoration-color .25s ease;
+}
+@media (hover: hover) {
+  .kz .card-link:hover h2 a,
+  .kz .card-link:hover h3 a { text-decoration-color: currentColor; }
 }
 
 /* ---------- work ----------
@@ -823,42 +905,15 @@ html:has(.kz) body {
 .kz .field [aria-invalid="true"] { border-bottom-width: 2px; padding-bottom: calc(.625rem - 1px); }
 .kz .field-error { font-size: max(.875rem, 13px); line-height: 1.3; }
 
-.kz .whom { margin: 2.5rem 0 0; padding: 0; border: 0; min-width: 0; }
-.kz .whom legend { float: left; width: 100%; padding: 0; color: var(--ink-65); }
-.kz .whom-row {
-  clear: both;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  column-gap: 2rem;
-  row-gap: .5rem;
-  padding-top: .75rem;
-}
-.kz .whom-opt {
+/* Who writes back, under the fields. */
+.kz .reply-note {
+  margin-top: 2.25rem;
   font-family: var(--font-display);
-  font-size: 3.375rem;
+  font-size: 1.5rem;
   font-weight: 500;
-  line-height: 1;
-  letter-spacing: -.015em;
-  color: var(--ink-50);
-  cursor: pointer;
-  text-decoration-thickness: .035em;
-  text-underline-offset: .14em;
-  transition: color .35s var(--ease);
+  line-height: 1.25;
+  text-wrap: pretty;
 }
-.kz .whom-e { display: inline-flex; align-items: baseline; gap: .625rem; }
-.kz .whom-e .label { letter-spacing: .14em; font-size: max(.75rem, 11px); }
-.kz .whom-amp { font-weight: 500; }
-/* Either (default) = both names in their colours; one name = that name only. */
-.kz .whom-row:has(#who-a:checked) .whom-a,
-.kz .whom-row:has(#who-e:checked) .whom-a { color: var(--ashan-type); }
-.kz .whom-row:has(#who-j:checked) .whom-j,
-.kz .whom-row:has(#who-e:checked) .whom-j { color: var(--jordan-type); }
-.kz .whom-row:has(#who-e:checked) .whom-e { color: var(--ink); }
-.kz #who-a:checked + .whom-a,
-.kz #who-j:checked + .whom-j { text-decoration-line: underline; }
-.kz #who-e:checked + .whom-e .label { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: .3em; }
-.kz .whom input:focus-visible + .whom-opt { outline: 1px solid var(--ink); outline-offset: .25rem; }
 
 /* The button and the email beside it; what the form says back, under both. */
 .kz .send-row {
@@ -866,9 +921,11 @@ html:has(.kz) body {
   flex-wrap: wrap;
   align-items: center;
   gap: 1rem 1.75rem;
-  margin-top: 2.5rem;
+  margin-top: 1.75rem;
 }
 .kz .send-row .act { margin-top: 0; }
+/* The send button is the one gold button. */
+.kz .send-row .act { background: var(--gold-lo); background-image: var(--gold-button); color: var(--paper); }
 .kz .form-status { order: 1; flex-basis: 100%; max-width: var(--measure); }
 .kz .form-status:empty { display: none; }
 .kz .or a { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: .22em; }
@@ -889,21 +946,26 @@ html:has(.kz) body {
 .kz .foot-l img { width: 1.725rem; height: auto; }
 .kz .foot-l .wordmark { font-size: 1.4375rem; line-height: 1; }
 .kz .foot-c { font-family: var(--font-display); font-size: 1.25rem; font-weight: 500; }
-.kz .foot-c .c-a, .kz .foot-c .c-j { font-weight: 600; }
+.kz .foot-c b { font-weight: 600; }
 .kz .foot-r { justify-self: end; text-align: right; }
 .kz .foot-r a { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: .22em; }
 
-/* ---------- the names' entrance ----------
-   Entrance: the names wait for hands.tsx, which springs them in and adds
-   .is-in. If the script never gets that far they show anyway after 2.5s;
-   with scripting off the page's <noscript> shows them at once. */
-.kz:not(.is-in) .name { opacity: 0; animation: kz-names-fallback .45s var(--ease) 2.5s forwards; }
-.kz:not(.is-in) .name-amp { opacity: 0; animation: kz-names-fallback 0s 2.5s forwards; }
-@keyframes kz-names-fallback { from { opacity: 0; } to { opacity: 1; } }
+/* ---------- the hero's entrance ----------
+   The ampersand, the names and the lines under them wait for hands.tsx,
+   which brings them in (the ampersand drops, the pen writes each name, the
+   lede rises) and adds .is-in. They hold their places meanwhile, so
+   nothing moves when they appear. If the script never gets that far they
+   show anyway after 2.5s (later while the intro is up: intro.tsx sets
+   --kz-wait); with scripting off the page's <noscript> shows them at once. */
+.kz:not(.is-in) :is(.name, .name-amp, .hero .hint, .lede, .hero > .act) {
+  opacity: 0;
+  animation: kz-hero-fallback .45s var(--ease) var(--kz-wait, 2.5s) forwards;
+}
+@keyframes kz-hero-fallback { from { opacity: 0; } to { opacity: 1; } }
 
 /* ---------- hover: names and initials lean toward the seam ---------- */
 @media (hover: hover) and (prefers-reduced-motion: no-preference) {
-  .kz .frame-initial, .kz .who { transition: translate .55s var(--spring-soft); }
+  .kz .frame-initial { transition: translate .55s var(--spring-soft); }
   .kz .name { transition: translate .55s var(--spring-soft); }
   /* Only the home page's names are buttons; elsewhere they're just names. */
   .kz button.who--a:hover { translate: .25rem 0; }
@@ -954,9 +1016,10 @@ html:has(.kz) body {
 .kz .page-top { padding: 4rem var(--pad) 2rem; }
 
 /* ---------- /services ----------
-   Each service a section: the title and text on the left, what's included
-   as a ruled list on the right. Then how a project starts. */
-.kz .svc-head { grid-column: 1 / span 5; }
+   Each service a section, and the way to its page: the title and text on
+   the left over a preview of its work, what's included as a ruled list on
+   the right. Then how a project starts. */
+.kz .svc-head { grid-column: 1 / span 5; grid-row: 1; }
 .kz .svc-title { margin-top: 0; }
 .kz .svc-text {
   max-width: var(--measure);
@@ -965,7 +1028,11 @@ html:has(.kz) body {
   line-height: 1.45;
   text-wrap: pretty;
 }
-.kz .incl { grid-column: 7 / -1; border-top: 1px solid var(--ink-20); }
+.kz .incl { grid-column: 7 / -1; grid-row: 1 / span 2; border-top: 1px solid var(--ink-20); }
+/* Where a service's work will show, once there is some: for now a plain
+   plate (.placeholder) the shape of a Work card's screen. */
+.kz .svc-preview { grid-column: 1 / span 5; grid-row: 2; margin-top: 2rem; aspect-ratio: 16 / 10; }
+.kz .placeholder { background: var(--frame); border: 1px solid var(--ink-20); }
 .kz .incl li {
   padding-block: .875rem;
   border-bottom: 1px solid var(--ink-20);
@@ -1134,6 +1201,21 @@ html:has(.kz) body {
   text-wrap: pretty;
 }
 
+/* ---------- a service's page (/services/<slug>) ----------
+   The case study's head and steps (above), with what's included in place
+   of its capabilities, one across for each (three or four), "What we do"
+   over the steps, and a slot for the work: two plates where its cards
+   will go, the Work grid's shape. */
+.kz .svc-caps { grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); }
+.kz .svc-steps-label { margin-bottom: 2.5rem; }
+.kz .svc-work-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 2rem;
+  margin-top: 2rem;
+}
+.kz .svc-work-grid .placeholder { aspect-ratio: 16 / 10; }
+
 /* ---------- reading pages: legal, not found ---------- */
 .kz .read {
   max-width: calc(46rem + 2 * var(--pad));
@@ -1170,7 +1252,7 @@ html:has(.kz) body {
   text-underline-offset: .22em;
 }
 
-/* ---------- phones: one column; in the hero, the seam becomes a rule on each line ---------- */
+/* ---------- phones: one column; in the hero, the seam becomes a rule beside the picked line ---------- */
 @media (max-width: 1023px) {
   .kz .top {
     grid-template-columns: 1fr auto auto auto;
@@ -1202,6 +1284,7 @@ html:has(.kz) body {
     line-height: .92;
   }
   .kz .name-last { font-size: 1.6875rem; }
+  .kz .nib svg { left: -.45rem; width: .9rem; }
   .kz .name--a { justify-self: start; }
   .kz .name--a .name-first { background-position: left 0 bottom .04em; }
   .kz .name-amp { justify-self: center; padding-inline: 0; font-size: .8em; line-height: .9; }
@@ -1230,26 +1313,23 @@ html:has(.kz) body {
   .kz .sec { padding: 3rem var(--pad); }
   .kz .wrap { grid-template-columns: minmax(0, 1fr); column-gap: 0; }
   .kz .wrap > *,
-  .kz .us-head, .kz .pair, .kz .contact-head, .kz .form, .kz .svc-head, .kz .incl,
+  .kz .us-head, .kz .pair, .kz .contact-head, .kz .form, .kz .svc-head, .kz .incl, .kz .svc-preview,
   .kz .cs-intro, .kz .cs-live, .kz .cs-steps ol,
   .kz .cs-note, .kz .cs-notes--two .cs-note, .kz .cs-notes--two .cs-note--data { grid-column: 1 / -1; }
   .kz .sec-h { margin-top: .875rem; font-size: 2.375rem; }
   .kz .more { margin-top: 1.75rem; }
 
-  /* item rules: Ashan brass, Jordan cyan, both = split */
-  .kz .rule-a, .kz .rule-j, .kz .rule-both { position: relative; padding-left: 1.125rem; }
-  .kz .rule-a::before, .kz .rule-j::before, .kz .rule-both::before, .kz .rule-both::after {
+  /* The picked line, a gold rule beside it. */
+  .kz .picked-line { position: relative; padding-left: 1.125rem; }
+  .kz .picked-line::before {
     content: "";
     position: absolute;
     left: 0;
     top: 0;
     bottom: 0;
     width: 3px;
-    background: var(--ashan);
+    background: var(--gold);
   }
-  .kz .rule-j::before { background: var(--jordan); }
-  .kz .rule-both::before { bottom: 50%; }
-  .kz .rule-both::after { top: 50%; background: var(--jordan); }
 
   .kz .where { margin-top: 1.5rem; font-size: 1.5rem; }
   .kz .promises { margin-top: 1.25rem; }
@@ -1276,10 +1356,8 @@ html:has(.kz) body {
   .kz .form { margin-top: 2rem; }
   .kz .fields { grid-template-columns: minmax(0, 1fr); row-gap: 1.5rem; }
   .kz .field, .kz .field--msg { grid-column: 1; grid-row: auto; }
-  .kz .whom { margin-top: 2.25rem; }
-  .kz .whom-row { column-gap: 1.25rem; padding-top: 1rem; }
-  .kz .whom-opt { font-size: 2.125rem; }
-  .kz .send-row { margin-top: 2rem; }
+  .kz .reply-note { margin-top: 2rem; font-size: 1.375rem; }
+  .kz .send-row { margin-top: 1.5rem; }
 
   .kz .foot { grid-template-columns: 1fr; row-gap: .75rem; padding-block: 2rem 2.5rem; }
   .kz .foot-r { justify-self: start; text-align: left; }
@@ -1288,7 +1366,9 @@ html:has(.kz) body {
   .kz .page-top { padding: 2.5rem var(--pad) 1.25rem; }
 
   .kz .svc-text { margin-top: .875rem; font-size: 1.0625rem; }
-  .kz .incl { margin-top: 1.75rem; }
+  .kz .incl { grid-row: auto; margin-top: 1.75rem; }
+  .kz .svc-head, .kz .svc-preview { grid-row: auto; }
+  .kz .svc-preview { margin-top: 1.75rem; }
   .kz .incl li { padding-block: .75rem; font-size: 1.375rem; }
 
   .kz .steps { grid-template-columns: minmax(0, 1fr); row-gap: 1.75rem; margin-top: 1.5rem; }
@@ -1305,7 +1385,7 @@ html:has(.kz) body {
   .kz .cs-sub { margin-top: 1.25rem; font-size: 1.5rem; }
   .kz .cs-facts { flex-wrap: wrap; gap: 1.25rem 2.5rem; margin-top: 2rem; }
   .kz .cs-facts dd { font-size: 1.125rem; }
-  .kz .cs-caps { grid-template-columns: 1fr; margin-top: 2.5rem; }
+  .kz .cs-caps, .kz .svc-caps { grid-template-columns: 1fr; grid-auto-flow: row; margin-top: 2.5rem; }
   .kz .cs-caps li, .kz .cs-caps li + li { padding: 1.125rem 0; font-size: 1.125rem; }
   .kz .cs-caps li + li { border-left: 0; border-top: 1px solid var(--ink-20); }
   .kz .cs-live { margin-top: 2.5rem; }
@@ -1317,6 +1397,9 @@ html:has(.kz) body {
   .kz .cs-body { margin-top: 1.125rem; font-size: 1.125rem; }
   .kz .cs-figure-n { font-size: 4.5rem; }
   .kz .cs-note--data { margin-top: 3rem; }
+  .kz .svc-steps-label { margin-bottom: 1.75rem; }
+  .kz .svc-work-grid { grid-template-columns: minmax(0, 1fr); gap: 1.25rem; margin-top: 1.25rem; }
+  .kz .svc-work-grid .placeholder { aspect-ratio: 4 / 5; }
 
   .kz .read { padding: 3.5rem var(--pad) 5rem; }
   .kz .read-title { font-size: 3rem; }
@@ -1328,10 +1411,9 @@ html:has(.kz) body {
 /* ---------- reduced motion: everything still, everything visible ---------- */
 @media (prefers-reduced-motion: reduce) {
   html:has(.kz) { scroll-behavior: auto; }
-  .kz:not(.is-in) .name,
-  .kz:not(.is-in) .name-amp { opacity: 1; animation: none; }
-  .kz .top, .kz .act, .kz .whom-opt, .kz .proj-media video,
-  .kz .name, .kz .name-first, .kz .picked, .kz .picked-line { transition: none; }
+  .kz:not(.is-in) :is(.name, .name-amp, .hero .hint, .lede, .hero > .act) { opacity: 1; animation: none; }
+  .kz .top, .kz .top::before, .kz .top .who, .kz .top .top-amp, .kz .act, .kz .proj-media video,
+  .kz .name, .kz .name-first, .kz .picked, .kz .picked-line, .kz .card-link a { transition: none; }
   .kz .proj-media video { display: none; }
   .kz .art-fields { display: none; }
 }

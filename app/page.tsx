@@ -42,10 +42,10 @@ export default function Home() {
           </main>
           <Footer />
 
-          {/* With scripting off nothing will run the names' entrance, so show them now. */}
+          {/* With scripting off nothing will run the hero's entrance, so show it all now. */}
           <noscript>
             <style>
-              {".kz:not(.is-in) .name, .kz:not(.is-in) .name-amp { opacity: 1; animation: none; }"}
+              {".kz:not(.is-in) :is(.name, .name-amp, .hero .hint, .lede, .hero > .act) { opacity: 1; animation: none; }"}
             </style>
           </noscript>
         </Panel>

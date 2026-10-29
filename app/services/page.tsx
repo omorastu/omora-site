@@ -7,13 +7,14 @@ import { ServiceRow } from "@/components/kozmoz/services";
 export const metadata: Metadata = {
   title: "Services — Elorro",
   description:
-    "Websites, photo and video, getting found on Google, and the phones, booking and follow-up behind it, for local businesses around the Bay. What each one includes, and how a project starts.",
+    "Websites and getting found on Google and in AI search, photo and video, phones, booking and follow-up, and custom tools, for local businesses around the Bay. What each one includes, and how a project starts.",
 };
 
 /**
  * /services — the home page's four services, each a section of its own
- * (/services#websites, …) with what's included, then how a project starts.
- * On the home page's grid, below a title as /work has. Copy in lib/kozmoz.ts.
+ * (/services#<slug>) with what's included and the way to its own page, then
+ * how a project starts. On the home page's grid, below a title as /work has.
+ * Copy in lib/kozmoz.ts.
  */
 export default function ServicesPage() {
   const { start } = servicesPage;
@@ -27,7 +28,7 @@ export default function ServicesPage() {
       </div>
 
       {services.map((s) => (
-        <ServiceRow key={s.id} service={s} />
+        <ServiceRow key={s.slug} service={s} />
       ))}
 
       <section className="start sec" id="how" aria-labelledby="how-h">

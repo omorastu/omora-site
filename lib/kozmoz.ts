@@ -9,14 +9,14 @@
  *
  * The page is built around two people. Anything that belongs to one of them
  * carries their key ("a" or "j") and sits on their side of the seam; anything
- * shared is "both" and crosses it. Work is all shared, so projects carry no key.
+ * shared crosses it. Work is all shared, so projects carry no key.
  */
 
 export type Who = "a" | "j";
 
 export const brand = {
   name: "Elorro",
-  /** The two rings — Ashan's brass, Jordan's cyan. The page's two inks come from it. */
+  /** The two rings, both in the logo's gold. */
   mark: "/m/brand/mark-192.png",
   email: "studio.omora@gmail.com",
   where: "Bay Area",
@@ -90,57 +90,171 @@ export const us = {
 
 /* ── What we do ───────────────────────────────────────────────────────── */
 
+export type ServiceStep = { kind: string; heading: string; body: string };
+
 export type Service = {
-  /** Its section on /services, e.g. /services#websites. */
-  id: string;
+  /** Its page, /services/<slug>, and its section on /services (/services#<slug>). */
+  slug: string;
   title: string;
+  /** One plain line: on its card, on /services, and under its page's title. */
   text: string;
   /** What comes with it, listed beside the text on /services. */
   included: string[];
+  /** Its own page, /services/<slug>, laid out like a case study. */
+  page: {
+    /** For search results and link previews. */
+    description: string;
+    /** A few lines under the title. */
+    intro: string;
+    /** How we do it, in order: the page's "What we do". */
+    steps: ServiceStep[];
+  };
 };
 
 export const services: Service[] = [
   {
-    id: "websites",
-    title: "Websites.",
-    text: "The site itself, made so the people who find you can call, book or buy. You own it.",
+    slug: "websites-and-getting-found",
+    title: "Websites & getting found.",
+    text: "The site itself, and the work that gets it found on Google and in AI search like ChatGPT, so people can call, book or buy.",
     included: [
-      "Designed around how your customers call, book or buy",
-      "Fast on phones, on your own domain",
-      "Kept up every month, not handed off and forgotten",
+      "Designed around how your customers call, book or buy, on your own domain",
+      "Search done properly: your Google listing, local SEO and the pages behind them",
+      "Set up to show up in AI search, when people ask ChatGPT who to call",
+      "Kept up every month, with what it brings in tracked",
     ],
+    page: {
+      description:
+        "A website built around how your customers call, book or buy, and the work that gets it found: on Google, on the map and in AI search like ChatGPT.",
+      intro:
+        "People find a local business three ways now: a Google search, the map, or asking an AI like ChatGPT. We build the site and do the work behind it so you show up in all three, and so whoever finds you can call, book or buy without hunting for how.",
+      steps: [
+        {
+          kind: "The site",
+          heading: "A site built around how your customers call, book or buy.",
+          body: "We start from what people come to you for and what they do next, and design the pages around that. Fast on phones, on your own domain, and yours: the site, the domain and the data are in your name from day one.",
+        },
+        {
+          kind: "Google",
+          heading: "Showing up on Google and on the map.",
+          body: "Your Google listing set up and kept current: hours, photos, services, replies to reviews. On the site, local search done properly: a clear page for each thing you do and each place you do it, so Google knows when to show you.",
+        },
+        {
+          kind: "AI search",
+          heading: "Showing up when people ask ChatGPT.",
+          body: "More people now ask an AI who to call. Its answers come from what the web says about you, so we make sure your site says plainly what you do, where and for whom, and that your listings everywhere else agree with it.",
+        },
+        {
+          kind: "Found, called, booked",
+          heading: "From the search to the booking, with nothing in the way.",
+          body: "Being found only counts once it turns into a call or a booking. Tap to call and book sit where people look for them, and every call and form is tracked, so you can see where each customer came from.",
+        },
+        {
+          kind: "Every month",
+          heading: "Kept up, not handed off and forgotten.",
+          body: "We stay on it every month: new pages and photos as the business changes, search checked and tuned, and what came in, and from where, where you can see it.",
+        },
+      ],
+    },
   },
   {
-    id: "photo-video",
+    slug: "photo-and-video",
     title: "Photo & video.",
-    text: "Your place, your people and your product, shot on location and cut for your site and your posts.",
+    text: "Your place, your people and your work, shot on location and cut for your site, Google and your posts.",
     included: [
       "We come to you for the shoot",
       "Photos and short video cut for your site, Google and Instagram",
       "New content every month, so your pages don’t go stale",
     ],
+    page: {
+      description:
+        "Photos and short video of your place, your people and your work, shot on location and cut for your site, Google and Instagram.",
+      intro:
+        "Real photos of your place and your people do more than stock ever will. We come to you, shoot, and cut it for everywhere it’s going.",
+      steps: [
+        {
+          kind: "The shoot",
+          heading: "We come to you.",
+          body: "A plan first, so the day goes quickly: what we need, where and who. Then we shoot on location, around how your business runs, not the other way round.",
+        },
+        {
+          kind: "The cut",
+          heading: "Cut for everywhere it’s going.",
+          body: "Photos and short video sized and cut for your site, your Google listing and your posts, and new content every month so nothing goes stale.",
+        },
+      ],
+    },
   },
   {
-    id: "getting-found",
-    title: "Getting found.",
-    text: "Google, local search and ads, set up and tracked so you can see what each one brings in.",
-    included: [
-      "Your Google listing set up and kept current: hours, photos, review replies",
-      "Local search done properly on the site itself",
-      "Ads when they make sense, with what each one brings in tracked",
-    ],
-  },
-  {
-    id: "phones-booking",
+    slug: "phones-booking-follow-up",
     title: "Phones, booking & follow-up.",
-    text: "A line that answers when you can’t, booking that fills the calendar, and follow-up that goes out without anyone having to remember.",
+    text: "A line that answers when you can’t, booking that fills the calendar, and follow-up that goes out on its own.",
     included: [
       "A line that answers when you can’t and books the appointment",
       "Booking tied into how you already schedule",
-      "Follow-up texts that go out on their own, plus custom tools for how you work",
+      "Reminders and follow-up texts that go out without anyone having to remember",
     ],
+    page: {
+      description:
+        "A phone line that answers when you can’t, booking tied into how you already schedule, and follow-up that goes out on its own.",
+      intro:
+        "A missed call or a forgotten follow-up is a customer you already did the work to get. We set up what catches them, around how you already work.",
+      steps: [
+        {
+          kind: "Answering",
+          heading: "A line that answers when you can’t.",
+          body: "When you’re with a customer or closed for the day, calls still get answered: questions handled, details taken, and the appointment booked or passed to you.",
+        },
+        {
+          kind: "Booking",
+          heading: "Booking that fills the calendar.",
+          body: "Online booking tied into how you already schedule, so nothing gets booked twice and nobody has to copy anything across.",
+        },
+        {
+          kind: "Follow-up",
+          heading: "Follow-up that goes out on its own.",
+          body: "A reminder before the visit, a thank-you and a review request after, and a nudge for anyone who went quiet. Written in your voice, and sent without anyone having to remember.",
+        },
+      ],
+    },
+  },
+  {
+    slug: "custom-tools",
+    title: "Custom tools.",
+    text: "When the problem is particular to your business, we build the tool for it, around how you already work.",
+    included: [
+      "Built for one problem in your business, not a generic app",
+      "Fits the tools and records you already use",
+      "Tested with your team before anyone relies on it",
+      "Looked after once it’s live, and changed as you change",
+    ],
+    page: {
+      description:
+        "Tools built for one business’s problem: made around the tools and records you already use, tested with your team, and looked after once they’re live.",
+      intro:
+        "Some problems no app off the shelf will solve, because they’re particular to how you work. For those, we build the tool ourselves.",
+      steps: [
+        {
+          kind: "The problem",
+          heading: "We start with what eats your week.",
+          body: "We sit with you and the people doing the work, and find the one job that costs the most time or goes wrong most often.",
+        },
+        {
+          kind: "The build",
+          heading: "A tool built for that, and only that.",
+          body: "Made around the tools and records you already use, and tested with your team on real work before anyone relies on it.",
+        },
+        {
+          kind: "After launch",
+          heading: "It keeps working as you change.",
+          body: "We look after it once it’s live, fix what needs fixing, and change it as your business does.",
+        },
+      ],
+    },
   },
 ];
+
+/** The service at /services/<slug>, or undefined if there isn't one. */
+export const serviceFor = (slug: string) => services.find((s) => s.slug === slug);
 
 /* ── Work ─────────────────────────────────────────────────────────────── */
 
@@ -333,7 +447,12 @@ export const contact = {
     contact: "Email or phone",
     message: "What’s going on",
   },
-  whom: "Who should get back to you?",
+  /** Under the fields, where the form once asked who should write back. */
+  reply: `${people.a.name} and ${people.j.name} will get back to you soon.`,
+  /**
+   * The form no longer asks, or sends `who`; /api/lead still accepts one
+   * (either name, or this) from anything that does, and reads it from here.
+   */
   either: "Either",
   submit: "Send it",
   sending: "Sending…",
