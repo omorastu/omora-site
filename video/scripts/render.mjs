@@ -44,7 +44,7 @@ const PROJECTS = {
         extras: [
           { file: "clinical-summary.jpg", frame: 230, size: [1920, 1200] },
           { file: "clinical-doctor-letter.jpg", frame: 337, size: [1920, 1200] },
-          { file: "clinical-follow-ups.jpg", frame: 580, size: [1920, 1200] },
+          { file: "clinical-follow-ups.jpg", frame: 640, size: [1920, 1200] },
         ],
       },
       phone: { id: "ClinicalPhone", prefix: "clinical-m", hd: [720, 900], sd: [544, 680], poster: [544, 680], still: [1080, 1350] },

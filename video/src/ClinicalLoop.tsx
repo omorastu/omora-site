@@ -12,8 +12,9 @@ import { Clock, DemoBanner, PhoneHeader, RESET, Scale, Sidebar } from "./clinica
  * app, filmed in close-up. The recording (timer and level meter running),
  * the summary filling in line by line, the referring dentist's letter and
  * then the family's take-home letter drafting, and the follow-up list with
- * one case picked and its message drafting; then a fade back into frame 0,
- * so the loop has no seam.
+ * one case picked and its message drafting, which then holds, finished, for
+ * four seconds as the last beat; then a fade back into frame 0, so the loop
+ * has no seam.
  *
  * Not a recording. The real app talks to a live backend with real patient
  * data, so this is a replica built from its source (layout, Tailwind
@@ -37,7 +38,7 @@ loadGeistMono("normal", { weights: ["400", "500"], subsets: ["latin"] });
 export type Size = "desktop" | "phone";
 
 export const FPS = 30;
-export const FRAMES = 630; // 21s
+export const FRAMES = 728; // 24.3s
 
 export const FRAME_SIZE: Record<Size, { width: number; height: number }> = {
   desktop: { width: 2160, height: 1350 },
@@ -87,8 +88,8 @@ const T = {
   point: 488, // the pointer reaches Zz-Maya's row
   pick: 496, // and picks it
   dialog: [504, 512],
-  draftStream: [514, 556],
-  end: [596, FRAMES - 1], // back into frame 0
+  draftStream: [514, 574],
+  end: [694, FRAMES - 1], // back into frame 0, once the finished message has held for 4s
 };
 
 /**
@@ -97,7 +98,7 @@ const T = {
  * screens, so the case study never shows one twice.
  */
 export const STILL_FRAME = 436; // the family letter
-export const EXTRA_FRAMES = { summary: 230, doctorLetter: 337, followUps: 580 };
+export const EXTRA_FRAMES = { summary: 230, doctorLetter: 337, followUps: 640 };
 
 const ease = Easing.bezier(0.65, 0, 0.35, 1);
 /** For following a draft down as it arrives: steadier through the middle. */

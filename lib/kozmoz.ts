@@ -233,6 +233,14 @@ export const projects: Project[] = [
     link: { href: "https://pearlsfarminc.com", label: "pearlsfarminc.com" },
   },
   {
+    name: "Clinical Scribe",
+    place: "Orthodontic practice",
+    status: "In testing with the practice",
+    line: "Records the consult, then drafts the doctor’s letter and the patient’s take-home letter from it.",
+    media: clinicalScribeMedia,
+    link: { href: "/work/clinical-scribe", label: "Read the case study" },
+  },
+  {
     name: "Numen Ventures",
     place: "Bay Area",
     status: "Live",
@@ -254,14 +262,6 @@ export const projects: Project[] = [
       },
     },
     link: { href: "https://www.numenventures.co", label: "numenventures.co" },
-  },
-  {
-    name: "Clinical Scribe",
-    place: "Orthodontic practice",
-    status: "In testing with the practice",
-    line: "Records the consult, then drafts the doctor’s letter and the patient’s take-home letter from it.",
-    media: clinicalScribeMedia,
-    link: { href: "/work/clinical-scribe", label: "Read the case study" },
   },
   {
     name: "Cubic Ship",

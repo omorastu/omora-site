@@ -4,15 +4,15 @@ import { Analytics } from "@vercel/analytics/react";
 import "./globals.css";
 
 /*
- * Every page runs on the home page's two faces, which its frame loads
- * (components/kozmoz/fonts.ts). The one face loaded here is the wordmark's:
- * the OMORA mark is Cormorant Garamond 500 (see .wordmark in globals.css),
- * and it is the only thing --font-logo sets.
+ * The display face, loaded once for every page: Cormorant Garamond, the
+ * wordmark's family (.wordmark in globals.css, 500) and every heading's
+ * (kozmoz.css points --font-display here; 500 and 600). The text face,
+ * Hanken Grotesk, comes with each page's frame (components/kozmoz/fonts.ts).
  */
 const cormorantGaramond = Cormorant_Garamond({
   subsets: ["latin"],
   variable: "--font-logo",
-  weight: ["500"],
+  weight: ["500", "600"],
   display: "swap",
 });
 
@@ -47,9 +47,10 @@ export const metadata: Metadata = {
   },
 };
 
-// One ink on paper, every page: the browser chrome matches the paper.
+// Every page floats on gold (kozmoz.css, "the gold and the panel"): the
+// browser chrome matches the gold at the top of the screen.
 export const viewport: Viewport = {
-  themeColor: "#F4F1EA",
+  themeColor: "#DDBD82",
   colorScheme: "light",
 };
 

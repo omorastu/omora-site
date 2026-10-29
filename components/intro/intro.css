@@ -52,10 +52,13 @@
   text-align: center;
 }
 
-/* .wordmark (app/globals.css) sets the face, weight, caps and tracking. */
-.kz-intro-mark {
-  font-size: clamp(34px, 9vw, 132px);
-  line-height: 1;
+/* The logo: gold lettering on a transparent ground, its box held at the
+   file's proportions (842×172) by its width and height attributes. */
+.kz-intro-logo {
+  display: block;
+  width: min(560px, 80vw);
+  max-width: 100%;
+  height: auto;
 }
 
 .kz-intro-rule {
@@ -66,8 +69,11 @@
   background: #000;
 }
 
+/* Held to the logo's width, so it reads as the logo's caption. */
 .kz-intro-def {
+  max-width: min(560px, 100%);
   margin: 0;
+  text-wrap: balance;
   font-family: var(--font-logo), serif;
   font-weight: 500;
   font-size: clamp(13px, 1.1vw, 17px);
@@ -90,9 +96,9 @@
   text-wrap: balance;
 }
 
-/* Entrance: wordmark, then the definition (and its rule), then the tagline,
+/* Entrance: the logo, then the definition (and its rule), then the tagline,
    all inside the first second. */
-.kz-intro-mark { animation: kz-intro-in .5s cubic-bezier(.2, .6, .2, 1) both; }
+.kz-intro-logo { animation: kz-intro-in .5s cubic-bezier(.2, .6, .2, 1) both; }
 .kz-intro-rule { animation: kz-intro-rule .5s cubic-bezier(.2, .6, .2, 1) .25s both; }
 .kz-intro-def { animation: kz-intro-in .42s cubic-bezier(.2, .6, .2, 1) .3s both; }
 .kz-intro-tag { animation: kz-intro-in .45s cubic-bezier(.2, .6, .2, 1) .55s both; }
@@ -108,5 +114,5 @@
 
 /* Reduced motion: everything is simply there; the exit is a plain fade. */
 @media (prefers-reduced-motion: reduce) {
-  .kz-intro-mark, .kz-intro-rule, .kz-intro-def, .kz-intro-tag { animation: none; }
+  .kz-intro-logo, .kz-intro-rule, .kz-intro-def, .kz-intro-tag { animation: none; }
 }

@@ -1,12 +1,14 @@
 /**
  * The intro's smoke: a Canvas 2D picture of the overlay — paper surface,
- * letters, hairline — that the pointer can stir and that then breaks into
- * soft particles which blur, rise and fade away.
+ * logo, letters, hairline — that the pointer can stir and that then breaks
+ * into soft particles which blur, rise and fade away.
  *
- * The letters are drawn one by one at the positions the browser laid them out
- * at (measured from the DOM), so the moment the canvas takes over from the
- * real text is invisible. Particle counts are capped by screen size, there is
- * one requestAnimationFrame loop, and destroy() frees everything.
+ * The letters are drawn one by one, and the logo whole, at the positions the
+ * browser laid them out at (measured from the DOM), so the moment the canvas
+ * takes over from the real page is invisible. Stirred, the logo moves as
+ * narrow upright strips; breaking up, its particles keep its golds.
+ * Particle counts are capped by screen size, there is one
+ * requestAnimationFrame loop, and destroy() frees everything.
  */
 
 export type Smoke = {
@@ -19,10 +21,13 @@ export type Smoke = {
   destroy(): void;
 };
 
-/** Anything the pointer can push around: a letter, or a piece of the hairline. */
+/** Anything the pointer can push around: a letter, a piece of the hairline, or a strip of the logo. */
 type Bit = { cx: number; cy: number; dx: number; dy: number; vx: number; vy: number };
 type Glyph = Bit & { ch: string; font: string; x: number; base: number; top: number; w: number; h: number; alpha: number };
 type Segment = Bit & { x: number; y: number; w: number; h: number; alpha: number };
+/** A strip of a picture: where it's drawn, and its slice of the picture (sx, from the picture's left, in CSS px). */
+type Strip = Segment & { sx: number };
+type Picture = { img: HTMLImageElement; x: number; y: number; w: number; h: number; alpha: number; strips: Strip[] };
 type Mote = { x: number; y: number; vx: number; vy: number; r: number; a: number };
 type Puff = {
   x: number;
@@ -34,6 +39,8 @@ type Puff = {
   delay: number;
   life: number;
   seed: number;
+  /** Which dab it's stamped with (DABS): ink, or one of the logo's golds. */
+  tone: number;
 };
 
 const clamp01 = (v: number) => (v < 0 ? 0 : v > 1 ? 1 : v);
@@ -113,6 +120,40 @@ function measureGlyphs(root: HTMLElement, box: DOMRect, ctx: CanvasRenderingCont
   return out;
 }
 
+/**
+ * Every [data-picture] image, cut into upright strips so the pointer can
+ * bend it. Null while any of them hasn't loaded: the canvas would draw a gap.
+ */
+function measurePictures(root: HTMLElement, box: DOMRect): Picture[] | null {
+  const out: Picture[] = [];
+  for (const img of root.querySelectorAll<HTMLImageElement>("img[data-picture]")) {
+    if (!img.complete || !img.naturalWidth) return null;
+    const r = img.getBoundingClientRect();
+    if (!r.width || !r.height) continue;
+    const alpha = Number(getComputedStyle(img).opacity) || 0;
+    const x = r.left - box.left;
+    const y = r.top - box.top;
+    const n = Math.max(8, Math.round(r.width / 20));
+    const w = r.width / n;
+    const strips = Array.from({ length: n }, (_, i): Strip => ({
+      x: x + i * w,
+      y,
+      w,
+      h: r.height,
+      sx: i * w,
+      alpha,
+      cx: x + i * w + w / 2,
+      cy: y + r.height / 2,
+      dx: 0,
+      dy: 0,
+      vx: 0,
+      vy: 0,
+    }));
+    out.push({ img, x, y, w: r.width, h: r.height, alpha, strips });
+  }
+  return out;
+}
+
 /** The hairline, cut into short pieces so the pointer can bend it. */
 function measureLine(root: HTMLElement, box: DOMRect) {
   const el = root.querySelector<HTMLElement>("[data-hairline]");
@@ -139,6 +180,8 @@ export function createSmoke(
   const W = box.width;
   const H = box.height;
   if (!W || !H) return null;
+  const pictures = measurePictures(root, box);
+  if (!pictures) return null;
 
   // Phones and touch screens get the lighter budget.
   const light = !fine || W < 700;
@@ -157,23 +200,45 @@ export function createSmoke(
 
   const glyphs = measureGlyphs(root, box, ctx);
   const line = measureLine(root, box);
-  const bits: Bit[] = [...glyphs, ...line];
+  const strips = pictures.flatMap((p) => p.strips);
+  const bits: Bit[] = [...glyphs, ...line, ...strips];
+  // Each picture drawn once at its size on screen, to cut the strips from. (An
+  // image picked from a srcset reports its size on the page, not its file's,
+  // so slicing the image itself would cut in the wrong places.)
+  const rasters = pictures.map((p) => {
+    const c = document.createElement("canvas");
+    c.width = Math.max(1, Math.round(p.w * dpr));
+    c.height = Math.max(1, Math.round(p.h * dpr));
+    const g = c.getContext("2d")!;
+    g.imageSmoothingQuality = "high";
+    g.drawImage(p.img, 0, 0, c.width, c.height);
+    return c;
+  });
   // Readiness probes: each font with its primary family only — next/font's
   // local() fallback face never loads, so checking the full list never passes.
   const probes = [...new Set(glyphs.map((g) => g.font.replace(/,.*$/, "")))];
 
-  const ink = dab("0,0,0", 32, [
+  const inkStops: [number, number][] = [
     [0, 1],
     [0.22, 0.62],
     [0.5, 0.22],
     [0.78, 0.05],
     [1, 0],
-  ]);
+  ];
+  const ink = dab("0,0,0", 32, inkStops);
   const mist = dab(surfaceRgb, 128, [
     [0, 1],
     [0.55, 0.9],
     [1, 0],
   ]);
+  // The particles' dabs: ink for the letters; the logo's deep, mid and light golds for it.
+  const DABS = [ink, ...["137,97,36", "203,154,62", "239,213,138"].map((rgb) => dab(rgb, 32, inkStops))];
+  /** The dab for a sampled pixel: a gold by its lightness where the pixel is warm, else ink. */
+  const toneOf = (r: number, g: number, b: number) => {
+    if (r - b < 40) return 0;
+    const l = 0.3 * r + 0.59 * g + 0.11 * b;
+    return l < 120 ? 1 : l < 185 ? 2 : 3;
+  };
 
   /* ── The pointer and its field ─────────────────────────────────────── */
 
@@ -210,6 +275,31 @@ export function createSmoke(
   /* ── Drawing the overlay itself ─────────────────────────────────────── */
 
   function drawInk(c: CanvasRenderingContext2D) {
+    // The logo: whole while nothing has moved it (exactly as the page drew
+    // it), else strip by strip, each a hair wider so no gap opens between.
+    c.imageSmoothingQuality = "high";
+    pictures!.forEach((p, i) => {
+      const raster = rasters[i];
+      c.globalAlpha = p.alpha;
+      if (p.strips.every((s) => Math.abs(s.dx) + Math.abs(s.dy) < 0.05)) {
+        c.drawImage(raster, p.x, p.y, p.w, p.h);
+        return;
+      }
+      const k = raster.width / p.w;
+      for (const s of p.strips) {
+        const tilt = s.dx * 0.002;
+        const w = Math.min(s.w + 0.6, p.w - s.sx);
+        if (Math.abs(tilt) < 0.002) {
+          c.drawImage(raster, s.sx * k, 0, w * k, raster.height, s.x + s.dx, s.y + s.dy, w, s.h);
+        } else {
+          c.save();
+          c.translate(s.cx + s.dx, s.cy + s.dy);
+          c.rotate(tilt);
+          c.drawImage(raster, s.sx * k, 0, w * k, raster.height, s.x - s.cx, s.y - s.cy, w, s.h);
+          c.restore();
+        }
+      }
+    });
     c.fillStyle = "#000";
     for (const s of line) {
       c.globalAlpha = s.alpha;
@@ -379,7 +469,7 @@ export function createSmoke(
       }
       const r = p.r * (1 + 5 * life);
       c.globalAlpha = (appear * p.a * 0.85 * (1 - life) * (1 - life * 0.4)) / (1 + 2.2 * life);
-      c.drawImage(ink, x - r, y - r, r * 2, r * 2);
+      c.drawImage(DABS[p.tone], x - r, y - r, r * 2, r * 2);
     }
     c.globalAlpha = 1;
   }
@@ -426,7 +516,7 @@ export function createSmoke(
   /* ── Breaking the overlay into particles ────────────────────────────── */
 
   function buildParticles() {
-    // The letters and line as they stand, crisp, for the hand-over.
+    // The logo, letters and line as they stand, crisp, for the hand-over.
     crisp = document.createElement("canvas");
     crisp.width = canvas.width;
     crisp.height = canvas.height;
@@ -450,6 +540,12 @@ export function createSmoke(
       y0 = Math.min(y0, s.y - 8);
       y1 = Math.max(y1, s.y + 8);
     }
+    for (const s of strips) {
+      x0 = Math.min(x0, s.x + s.dx - 8);
+      x1 = Math.max(x1, s.x + s.dx + s.w + 8);
+      y0 = Math.min(y0, s.y + s.dy - 8);
+      y1 = Math.max(y1, s.y + s.dy + s.h + 8);
+    }
     x0 = Math.max(0, Math.floor(x0));
     y0 = Math.max(0, Math.floor(y0));
     x1 = Math.min(W, Math.ceil(x1));
@@ -467,7 +563,8 @@ export function createSmoke(
           const ix = px(x) - px(x0);
           const iy = px(y) - px(y0);
           if (ix >= bw || iy >= bh) continue;
-          const a = data[(iy * bw + ix) * 4 + 3];
+          const i = (iy * bw + ix) * 4;
+          const a = data[i + 3];
           if (a < 70) continue;
           found.push({
             x,
@@ -479,6 +576,7 @@ export function createSmoke(
             delay: 0.02 + Math.random() * 0.28 + 0.1 * (x / W),
             life: rand(0.7, 1.0),
             seed: rand(0, 6.28),
+            tone: toneOf(data[i], data[i + 1], data[i + 2]),
           });
         }
       }
@@ -513,6 +611,7 @@ export function createSmoke(
           delay: clamp01(0.06 + 0.36 * (1 - py / H) + 0.26 * noise) * 0.62,
           life: rand(0.7, 0.85),
           seed: rand(0, 6.28),
+          tone: 0,
         });
       }
     }
@@ -520,7 +619,7 @@ export function createSmoke(
 
   return {
     interactive() {
-      if (mode !== "idle" || !glyphs.length) return mode === "live";
+      if (mode !== "idle" || !bits.length) return mode === "live";
       // Only once the real faces are in, or the hand-over would visibly swap fonts.
       try {
         if (!probes.every((f) => document.fonts?.check(f) ?? true)) return false;
@@ -571,7 +670,8 @@ export function createSmoke(
       canvas.width = canvas.height = 0;
       if (crisp) crisp.width = crisp.height = 0;
       crisp = null;
-      ink.width = ink.height = mist.width = mist.height = 0;
+      for (const d of [...DABS, ...rasters]) d.width = d.height = 0;
+      mist.width = mist.height = 0;
       specks = [];
       puffs = [];
       motes.length = 0;

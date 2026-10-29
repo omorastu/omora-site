@@ -1,19 +1,19 @@
 "use client";
 
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
-import { Wordmark } from "@/components/wordmark";
+import Image from "next/image";
 import { createSmoke, type Smoke } from "@/components/intro/smoke";
 import { cormorantItalic } from "@/components/intro/font";
 import "@/components/intro/intro.css";
 
 /**
- * The intro: a white card with the wordmark, its definition (when there is
- * one, see DEFINITION) and the tagline, over the home page, on a visitor's
- * first page load of the session.
+ * The intro: a paper card with the Elorro logo (the gold lettering with its
+ * runners, public/m/brand/elorro-logo.png), the name's definition and the
+ * tagline, over the home page, on a visitor's first page load of the session.
  *
- *   0–1s     the wordmark, then the definition, then the tagline fade in (CSS)
- *   1–3s     hold; with a mouse, the pointer stirs the letters like smoke
- *   3–4.5s   it evaporates: the surface and letters break into soft
+ *   0–1s     the logo, then the definition, then the tagline fade in (CSS)
+ *   1–3s     hold; with a mouse, the pointer stirs the logo and letters like smoke
+ *   3–4.5s   it evaporates: the surface, logo and letters break into soft
  *            particles that blur, rise and fade, revealing the page
  *
  * A click, tap, key or scroll starts the evaporation early. Under reduced
@@ -42,14 +42,15 @@ const ENTERED = 1000;
 
 const KEY = "kz-intro";
 
-/**
- * The dictionary line under the wordmark. It was written for the Kozmoz name
- * ("from the Greek kosmos"); with that rename on hold the wordmark reads
- * OMORA, so the line stays out until there is an entry for the name in use.
- * The Kozmoz one, to restore with the rename:
- *   kozmoz · <i>noun</i> · from the Greek <i>kosmos</i>, order and beauty
- */
-const DEFINITION: React.ReactNode = null;
+/** The dictionary line under the logo: the name, its part of speech, what it means. */
+const DEFINITION: React.ReactNode = (
+  <>
+    elorro · <i>noun</i> · two people who listen first, then build what adds real value to your business.
+  </>
+);
+
+/** The logo file's own size, so its box is reserved before it loads. */
+const LOGO = { src: "/m/brand/elorro-logo.png", width: 842, height: 172 };
 
 /**
  * Runs as the overlay is parsed, before the first paint. Shows the overlay
@@ -108,7 +109,17 @@ export function Intro() {
       {firstRender && <script dangerouslySetInnerHTML={{ __html: BOOT }} />}
       <canvas ref={canvas} className="kz-intro-canvas" />
       <div className="kz-intro-inner">
-        <Wordmark className="kz-intro-mark" data-glyphs="" />
+        <Image
+          className="kz-intro-logo"
+          src={LOGO.src}
+          width={LOGO.width}
+          height={LOGO.height}
+          sizes="min(560px, 80vw)"
+          alt=""
+          loading="eager"
+          fetchPriority="high"
+          data-picture=""
+        />
         <span className="kz-intro-rule" data-hairline="" />
         {DEFINITION && (
           <p className="kz-intro-def" data-glyphs="">
@@ -233,11 +244,12 @@ function play(el: HTMLDivElement, cv: HTMLCanvasElement, boot: Boot, finish: () 
   });
   on(el, "wheel", () => leave("wheel"), { passive: true });
 
-  // With a mouse, the pointer stirs the letters once they have faded in.
+  // With a mouse, the pointer stirs the logo and letters once they have faded in.
   if (mouse && !reduced) {
     let at: [number, number] | null = null;
     const stir = () => {
-      // Measured too early, the letters' positions would be the fallback font's.
+      // Measured too early, the letters' positions would be the fallback font's
+      // (and until the logo has loaded, createSmoke declines).
       if (leaving || !at || document.fonts?.status === "loading") return;
       if (getSmoke()?.interactive()) smoke!.pointer(at[0], at[1]);
     };

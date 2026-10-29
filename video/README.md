@@ -33,7 +33,7 @@ What `render` writes into `public/m/work/` for each project (`numen-…`,
 | `<name>-d-still.jpg`, `<name>-m-still.jpg` | 1920×1200, 1080×1350 | the clearest frame, for visitors with reduced motion on |
 
 All H.264 (High, yuv420p), 30 fps, no audio, index first (Numen 18 s,
-Clinical Scribe 21 s). Each
+Clinical Scribe 24.3 s). Each
 composition is drawn larger than any file made from it (its master: 2160×1350
 on desktop, 1170×1462 on the phone) and rendered once near-lossless; every file
 is a lanczos downscale of that master, encoded at the lowest CRF that keeps it
@@ -76,8 +76,9 @@ The Clinical Scribe card (`ClinicalDesktop`, `ClinicalPhone`): one consult
 going through the app, filmed in close-up — the recording with its timer and
 level meter running, the summary filling in line by line, the referring
 dentist's letter and then the family's take-home letter typing themselves
-out, then the follow-up list with one case picked and its message drafting —
-fading back into frame 0.
+out, then the follow-up list with one case picked and its message drafting.
+The finished message holds for four seconds, the loop's last beat, before it
+fades back into frame 0.
 
 The close-up is what makes it readable at card size. The app is laid out in
 a narrow window (840 CSS px with its sidebar; 360 on the phone), where each
