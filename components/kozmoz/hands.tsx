@@ -93,11 +93,13 @@ export function Hands({ className, children }: { className?: string; children: R
 
       if (!phone()) {
         // Each name starts out in its own half, never past the page margin.
-        // Same travel for both, never past the panel's edge (it clips there).
+        // Same travel for both, never into the band where the panel's edge
+        // fades (kozmoz.css, --feather).
         const ra = a.getBoundingClientRect();
         const rj = j.getBoundingClientRect();
         const panel = el.querySelector(".panel")?.getBoundingClientRect() ?? { left: 0, right: innerWidth, width: innerWidth };
-        const d = Math.max(0, Math.min(ra.left - panel.left - 8, panel.right - 8 - rj.right, panel.width * 0.1));
+        const clear = (parseFloat(getComputedStyle(el).getPropertyValue("--feather")) || 0) + 8;
+        const d = Math.max(0, Math.min(ra.left - panel.left - clear, panel.right - clear - rj.right, panel.width * 0.1));
         const move = { duration: s.duration, easing: s.easing, fill: "backwards" } as const;
         a.animate({ transform: [`translateX(${-d}px)`, "none"] }, move);
         j.animate({ transform: [`translateX(${d}px)`, "none"] }, move);

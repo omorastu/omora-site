@@ -18,7 +18,7 @@ import "@/components/kozmoz/kozmoz.css";
  *
  * Sections run hero, us, what we do, work, contact: the hero across the seam,
  * the rest on one left-aligned grid below it, all on the paper panel over
- * the gold. The other pages share its panel, header, footer and type through
+ * the frosted white. The other pages share its panel, header, footer and type through
  * components/kozmoz/page.tsx; this one builds its own frame, because its
  * root is also the "pick a name" toggle.
  */

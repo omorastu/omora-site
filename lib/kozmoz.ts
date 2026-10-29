@@ -26,6 +26,8 @@ export const brand = {
 
 export type Person = {
   name: string;
+  /** Set under the first name in the hero, and only there. */
+  last: string;
   initial: string;
   /** What they do, after their name. */
   line: string;
@@ -40,12 +42,14 @@ export type Person = {
 export const people: Record<Who, Person> = {
   a: {
     name: "Ashan",
+    last: "Fernando",
     initial: "A",
     photo: "/m/us/ashan.jpg",
     line: "Decides how it looks and how it should feel to use. Plans the shoot and the posts. Then tries to break the site before your customers can.",
   },
   j: {
     name: "Jordan",
+    last: "Lopez",
     initial: "J",
     photo: "/m/us/jordan.jpg",
     line: "Builds it: the site, the booking, the phone answering and the follow-up behind it. Shoots the photos and video.",
@@ -93,11 +97,6 @@ export type Service = {
   text: string;
   /** What comes with it, listed beside the text on /services. */
   included: string[];
-  /**
-   * Each person's part, "Ashan <verb>" and "Jordan <verb>", printed as one
-   * line in the two inks.
-   */
-  credit: Record<Who, string>;
 };
 
 export const services: Service[] = [
@@ -110,7 +109,6 @@ export const services: Service[] = [
       "Fast on phones, on your own domain",
       "Kept up every month, not handed off and forgotten",
     ],
-    credit: { a: "Ashan designs", j: "Jordan builds" },
   },
   {
     id: "photo-video",
@@ -121,7 +119,6 @@ export const services: Service[] = [
       "Photos and short video cut for your site, Google and Instagram",
       "New content every month, so your pages don’t go stale",
     ],
-    credit: { a: "Ashan plans", j: "Jordan shoots" },
   },
   {
     id: "getting-found",
@@ -132,7 +129,6 @@ export const services: Service[] = [
       "Local search done properly on the site itself",
       "Ads when they make sense, with what each one brings in tracked",
     ],
-    credit: { a: "Ashan writes", j: "Jordan sets up" },
   },
   {
     id: "phones-booking",
@@ -143,7 +139,6 @@ export const services: Service[] = [
       "Booking tied into how you already schedule",
       "Follow-up texts that go out on their own, plus custom tools for how you work",
     ],
-    credit: { a: "Ashan tests", j: "Jordan builds" },
   },
 ];
 

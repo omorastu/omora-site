@@ -69,39 +69,28 @@
   background: #000;
 }
 
-/* Held to the logo's width, so it reads as the logo's caption. */
+/* The one line under the logo, held to its width so it reads as its
+   caption: about 19px on a laptop, 16.5px on a phone. */
 .kz-intro-def {
   max-width: min(560px, 100%);
   margin: 0;
   text-wrap: balance;
   font-family: var(--font-logo), serif;
   font-weight: 500;
-  font-size: clamp(13px, 1.1vw, 17px);
-  line-height: 1.4;
-  letter-spacing: .03em;
+  font-size: clamp(16.5px, 13px + .42vw, 20px);
+  line-height: 1.45;
+  letter-spacing: .02em;
 }
 .kz-intro-def i {
   font-family: var(--font-intro-italic), var(--font-logo), serif;
   font-style: italic;
 }
 
-.kz-intro-tag {
-  max-width: min(20em, 100%);
-  margin: clamp(26px, 3.4vw, 54px) 0 0;
-  font-family: var(--font-intro-italic), var(--font-logo), serif;
-  font-style: italic;
-  font-weight: 500;
-  font-size: clamp(24px, 3.2vw, 50px);
-  line-height: 1.16;
-  text-wrap: balance;
-}
-
-/* Entrance: the logo, then the definition (and its rule), then the tagline,
-   all inside the first second. */
+/* Entrance: the logo, then the rule and the definition, all inside the
+   first second. */
 .kz-intro-logo { animation: kz-intro-in .5s cubic-bezier(.2, .6, .2, 1) both; }
 .kz-intro-rule { animation: kz-intro-rule .5s cubic-bezier(.2, .6, .2, 1) .25s both; }
 .kz-intro-def { animation: kz-intro-in .42s cubic-bezier(.2, .6, .2, 1) .3s both; }
-.kz-intro-tag { animation: kz-intro-in .45s cubic-bezier(.2, .6, .2, 1) .55s both; }
 
 @keyframes kz-intro-in {
   from { opacity: 0; filter: blur(4px); }
@@ -114,5 +103,5 @@
 
 /* Reduced motion: everything is simply there; the exit is a plain fade. */
 @media (prefers-reduced-motion: reduce) {
-  .kz-intro-logo, .kz-intro-rule, .kz-intro-def, .kz-intro-tag { animation: none; }
+  .kz-intro-logo, .kz-intro-rule, .kz-intro-def { animation: none; }
 }

@@ -8,10 +8,11 @@ import "@/components/intro/intro.css";
 
 /**
  * The intro: a paper card with the Elorro logo (the gold lettering with its
- * runners, public/m/brand/elorro-logo.png), the name's definition and the
- * tagline, over the home page, on a visitor's first page load of the session.
+ * runners, public/m/brand/elorro-logo.png) and, under it, the name's
+ * definition, over the home page, on a visitor's first page load of the
+ * session.
  *
- *   0–1s     the logo, then the definition, then the tagline fade in (CSS)
+ *   0–1s     the logo, then the rule and the definition fade in (CSS)
  *   1–3s     hold; with a mouse, the pointer stirs the logo and letters like smoke
  *   3–4.5s   it evaporates: the surface, logo and letters break into soft
  *            particles that blur, rise and fade, revealing the page
@@ -121,14 +122,10 @@ export function Intro() {
           data-picture=""
         />
         <span className="kz-intro-rule" data-hairline="" />
-        {DEFINITION && (
-          <p className="kz-intro-def" data-glyphs="">
-            {DEFINITION}
-          </p>
-        )}
-        <p className="kz-intro-tag" data-glyphs="">
-          When everything works the way it should, and looks the way it should.
+        <p className="kz-intro-def" data-glyphs="">
+          {DEFINITION}
         </p>
+        {/* The old tagline, out for now: "When everything works the way it should, and looks the way it should." */}
       </div>
     </div>
   );

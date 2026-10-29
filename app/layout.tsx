@@ -47,10 +47,10 @@ export const metadata: Metadata = {
   },
 };
 
-// Every page floats on gold (kozmoz.css, "the gold and the panel"): the
-// browser chrome matches the gold at the top of the screen.
+// Every page floats on frosted white (kozmoz.css, "the white and the
+// panel"): the browser chrome matches its near-white ground.
 export const viewport: Viewport = {
-  themeColor: "#DDBD82",
+  themeColor: "#FAFAF9",
   colorScheme: "light",
 };
 
