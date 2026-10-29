@@ -6,32 +6,43 @@
    scripting off, or if that script fails, there is no overlay at all.
    ===================================================================== */
 
+/* The burn's front, as a share of the definition's width (animated below). */
+@property --kz-burn {
+  syntax: "<percentage>";
+  inherits: true;
+  initial-value: 120%;
+}
+
 .kz-intro {
+  --night: #0C0A08;
+  /* The logo's golds, as they read on the black: light, mid and deep. */
+  --gilt-hi: #F3DA96;
+  --gilt: #D6AA4E;
+  --gilt-lo: #9A6C28;
   position: fixed;
   inset: 0;
   z-index: 1000;
   display: none;
   overflow: hidden;
-  /* The site's paper, so the intro clears into the page with no shift. smoke.ts
-     reads this back for the canvas surface, so it's set in this one place. */
-  background: var(--paper, #F4F1EA);
-  color: #000;
   cursor: default;
   user-select: none;
   -webkit-user-select: none;
   -webkit-tap-highlight-color: transparent;
   /* If the page's script never takes over (a failed bundle, a crash), the
      overlay still gets out of the way on its own. data-live cancels this. */
-  animation: kz-intro-fallback .6s ease 4.4s forwards;
+  animation: kz-intro-fallback .6s ease 4.2s forwards;
 }
 .kz-intro[data-live] { animation: none; }
 @keyframes kz-intro-fallback { to { opacity: 0; visibility: hidden; } }
-
-/* Once the canvas has drawn the overlay, the canvas is the overlay. */
-.kz-intro[data-mode="canvas"] { background: transparent; }
-.kz-intro[data-mode="canvas"] .kz-intro-inner { visibility: hidden; }
 .kz-intro[data-leaving] { pointer-events: none; }
 
+/* The black, and the canvas the mouse stirs the logo on (smoke.ts). On the
+   way out, intro.tsx opens a soft-edged hole in it from the middle. */
+.kz-intro-ground {
+  position: absolute;
+  inset: 0;
+  background: var(--night);
+}
 .kz-intro-canvas {
   position: absolute;
   inset: 0;
@@ -40,6 +51,9 @@
   height: 100%;
 }
 .kz-intro[data-mode="canvas"] .kz-intro-canvas { display: block; }
+/* The canvas draws the logo while it's stirred; then its copy flies it off. */
+.kz-intro[data-mode="canvas"] .kz-intro-logo,
+.kz-intro[data-flying] .kz-intro-logo { visibility: hidden; }
 
 .kz-intro-inner {
   position: absolute;
@@ -66,12 +80,14 @@
   width: clamp(56px, 7vw, 104px);
   height: 1px;
   margin: clamp(22px, 2.6vw, 38px) 0;
-  background: #000;
+  background: linear-gradient(90deg, var(--gilt-lo), var(--gilt-hi) 50%, var(--gilt-lo));
 }
 
 /* The one line under the logo: about 27px on a laptop, 21px on a phone,
-   no more than about 32 characters to a line. */
+   no more than about 32 characters to a line. Set twice, one over the
+   other: the cut, and the ember of the burn. */
 .kz-intro-def {
+  position: relative;
   max-width: min(32ch, 100%);
   margin: 0;
   text-wrap: balance;
@@ -85,21 +101,75 @@
   font-family: var(--font-intro-italic), var(--font-logo), serif;
   font-style: italic;
 }
+.kz-intro-cut,
+.kz-intro-ember { display: block; }
 
-/* Entrance: the logo, then the rule and the definition, all inside the
-   first second. */
-.kz-intro-logo { animation: kz-intro-in .5s cubic-bezier(.2, .6, .2, 1) both; }
-.kz-intro-rule { animation: kz-intro-rule .5s cubic-bezier(.2, .6, .2, 1) .25s both; }
-.kz-intro-def { animation: kz-intro-in .42s cubic-bezier(.2, .6, .2, 1) .3s both; }
-
-@keyframes kz-intro-in {
-  from { opacity: 0; filter: blur(4px); }
-  to { opacity: 1; filter: none; }
+/* Cut into the stone and filled with gold: the logo's golds falling down
+   each line (the gradient repeats every line), and the cut's shadow and
+   lit edge (the #kz-engrave filter, intro.tsx). Revealed up to the burn's
+   front. */
+.kz-intro-cut {
+  color: var(--gilt);
+  -webkit-mask-image: linear-gradient(100deg, #000 calc(var(--kz-burn) - 2%), transparent calc(var(--kz-burn) + 1%));
+  mask-image: linear-gradient(100deg, #000 calc(var(--kz-burn) - 2%), transparent calc(var(--kz-burn) + 1%));
 }
+@supports (-webkit-background-clip: text) or (background-clip: text) {
+  .kz-intro-cut {
+    background: linear-gradient(180deg, var(--gilt-hi) 32%, var(--gilt) 56%, var(--gilt-lo) 88%) 0 0 / 100% 1.35em repeat-y;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: url(#kz-engrave);
+  }
+}
+/* The burn's edge: the same letters white-hot at the front, cooling to
+   orange behind it, glowing, laid over the cut only along a band at the
+   front; and a soft warm glow on the stone around the front itself, there
+   only while it moves. */
+.kz-intro-ember {
+  position: absolute;
+  inset: 0;
+  color: #FFF1C8;
+  text-shadow: 0 0 .05em #FFD58A, 0 0 .22em rgb(255 150 50 / .95), 0 0 .6em rgb(255 100 20 / .6), 0 0 1.2em rgb(255 80 10 / .3);
+  -webkit-mask-image: linear-gradient(100deg, transparent calc(var(--kz-burn) - 18%), rgb(0 0 0 / .35) calc(var(--kz-burn) - 8%), #000 calc(var(--kz-burn) - .5%), transparent calc(var(--kz-burn) + 1.5%));
+  mask-image: linear-gradient(100deg, transparent calc(var(--kz-burn) - 18%), rgb(0 0 0 / .35) calc(var(--kz-burn) - 8%), #000 calc(var(--kz-burn) - .5%), transparent calc(var(--kz-burn) + 1.5%));
+}
+
+.kz-intro-def::after {
+  content: "";
+  position: absolute;
+  inset: -30% -6%;
+  background: radial-gradient(ellipse 2.4em 46% at var(--kz-burn) 50%, rgb(255 132 40 / .16), rgb(255 110 30 / .05) 55%, transparent);
+  mix-blend-mode: screen;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Entrance: a moment of black, the logo (0.6s), the rule, then the burn
+   (1.2s). The front starts and ends clear of the text, ember and all. */
+.kz-intro-logo { animation: kz-intro-in .6s cubic-bezier(.25, .6, .3, 1) .15s both; }
+.kz-intro-rule { animation: kz-intro-rule .5s cubic-bezier(.2, .6, .2, 1) .55s both; }
+.kz-intro-def { animation: kz-intro-burn 1.2s cubic-bezier(.45, .1, .55, .9) .75s both; }
+.kz-intro-def::after { animation: kz-intro-glow 1.2s linear .75s both; }
+
+@keyframes kz-intro-in { from { opacity: 0; } }
 @keyframes kz-intro-rule {
   from { opacity: 0; transform: scaleX(0); }
   to { opacity: 1; transform: none; }
 }
+@keyframes kz-intro-burn {
+  from { --kz-burn: -4%; }
+  to { --kz-burn: 120%; }
+}
+@keyframes kz-intro-glow {
+  0%, 100% { opacity: 0; }
+  12%, 72% { opacity: 1; }
+}
+/* The header's wordmark, held back while the logo is on its way to it (intro.tsx's boot rule). */
+@keyframes kz-intro-word { from, to { opacity: 0; } }
+
+/* The cut's filter, kept out of the layout. */
+.kz-intro-filters { position: absolute; width: 0; height: 0; overflow: hidden; }
 
 /* The logo's flight to the header (intro.tsx): the logo's copy and the
    wordmark's, one over the other, moved and scaled together. */
@@ -120,7 +190,9 @@
   white-space: nowrap;
 }
 
-/* Reduced motion: everything is simply there; the exit is a plain fade. */
+/* Reduced motion: the logo and the definition are simply there, cut and
+   settled; the exit is a plain fade. */
 @media (prefers-reduced-motion: reduce) {
-  .kz-intro-logo, .kz-intro-rule, .kz-intro-def { animation: none; }
+  .kz-intro-logo, .kz-intro-rule, .kz-intro-def, .kz-intro-def::after { animation: none; }
+  .kz-intro-def { --kz-burn: 120%; }
 }

@@ -47,10 +47,10 @@ export const metadata: Metadata = {
   },
 };
 
-// Every page floats on frosted white (kozmoz.css, "the white and the
-// panel"): the browser chrome matches its near-white ground.
+// The browser chrome matches the paper every page is set on (kozmoz.css).
+// The home page's intro darkens it while it shows (components/intro/intro.tsx).
 export const viewport: Viewport = {
-  themeColor: "#FAFAF9",
+  themeColor: "#F4F1EA",
   colorScheme: "light",
 };
 

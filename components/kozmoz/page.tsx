@@ -1,17 +1,15 @@
 import { Header } from "@/components/kozmoz/header";
 import { Footer } from "@/components/kozmoz/footer";
-import { Panel } from "@/components/kozmoz/panel";
 import { hanken } from "@/components/kozmoz/fonts";
 import { cn } from "@/lib/utils";
 import "@/components/kozmoz/kozmoz.css";
 
 /**
  * Every page but the home page, in the home page's frame: the same root,
- * type, header and footer, on the same panel over the white. The home page
- * builds its own (app/page.tsx), because its root is also the "pick a name"
- * toggle. The seam is the home
- * page's hero's alone. `local` lists the header links whose sections are on
- * this page itself (see Header).
+ * type, header and footer, on the same paper. The home page builds its own
+ * (app/page.tsx), because its root is also the "pick a name" toggle. The
+ * seam is the home page's hero's alone. `local` lists the menu's section
+ * links whose sections are on this page itself (see Header).
  */
 export function Page({
   local,
@@ -27,11 +25,9 @@ export function Page({
       <a className="skip label" href="#main">
         Skip to content
       </a>
-      <Panel>
-        <Header local={local} />
-        <main id="main">{children}</main>
-        <Footer />
-      </Panel>
+      <Header local={local} />
+      <main id="main">{children}</main>
+      <Footer />
     </div>
   );
 }

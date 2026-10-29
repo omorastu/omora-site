@@ -56,14 +56,27 @@ export const people: Record<Who, Person> = {
   },
 };
 
-/* ── Header ───────────────────────────────────────────────────────────── */
+/* ── Header and menu ──────────────────────────────────────────────────── */
 
+/** The home page's sections, large in the menu. */
 export const nav = [
   { href: "#us", label: "Us" },
   { href: "#do", label: "What we do" },
   { href: "#work", label: "Work" },
   { href: "#contact", label: "Contact" },
 ];
+
+export const menu = {
+  /** The header's button, and the menu's own name for screen readers. */
+  label: "Menu",
+  close: "Close",
+  /** The pages of their own, under the sections. */
+  pagesLabel: "Pages",
+  pages: [
+    { href: "/services", label: "All services" },
+    { href: "/work", label: "All work" },
+  ],
+};
 
 /** A home section's label, over it on the page: its name in the header. */
 export const sectionLabel = (href: string) => nav.find((n) => n.href === href)?.label;

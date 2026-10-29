@@ -10,6 +10,7 @@ import {
 } from "@/lib/kozmoz";
 import { mediaOnDisk } from "@/lib/work-media";
 import { WorkVideo } from "@/components/kozmoz/work-video";
+import { WorkPin } from "@/components/kozmoz/work-pin";
 import { cn } from "@/lib/utils";
 
 /**
@@ -24,16 +25,21 @@ export const shownProjects = () => projects.filter((p) => !p.hidden);
 
 /**
  * The home page's Work: the first `homeWorkCount` projects, then the way to
- * the rest. On phones they're one row to swipe through instead of a column.
+ * the rest. On phones they're one row instead of a column, pinned to the
+ * screen while the scroll moves it along (WorkPin), or, under reduced
+ * motion, to swipe through.
  */
 export function Work() {
+  const shown = shownProjects().slice(0, homeWorkCount);
   return (
     <section className="work sec" id="work" aria-labelledby="work-h">
       <div className="wrap">
-        <h2 className="sec-label label" id="work-h">
-          {workPage.title}
-        </h2>
-        <WorkGrid projects={shownProjects().slice(0, homeWorkCount)} swipe />
+        <WorkPin count={shown.length}>
+          <h2 className="sec-label label" id="work-h">
+            {workPage.title}
+          </h2>
+          <WorkGrid projects={shown} swipe />
+        </WorkPin>
         <p className="more">
           <Link href="/work">{workPage.more}</Link>
         </p>

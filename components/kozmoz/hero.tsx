@@ -8,9 +8,10 @@ import { cn } from "@/lib/utils";
  * The names on the door, in black, joined by a gold ampersand. Each name is a
  * button: pick one and a band of gold lights under it while that person's
  * line opens under the hint, on their side of the seam. The last name sits
- * under the first, mirrored across the seam (Fernando flush with the start
- * of Ashan, Lopez with the end of Jordan), and belongs to the same button;
- * the light stays on the first name. The pen writes the names in as the page
+ * under the first, centred in its half of the hero (Fernando between the
+ * left edge and the seam, Lopez between the seam and the right edge; on
+ * phones, where the names stack, mirrored under the first names), and
+ * belongs to the same button; the light stays on the first name. The pen writes the names in as the page
  * opens (hands.tsx). The seam runs the hero's length and stops with it.
  * `id="top"` is where the wordmark links.
  */

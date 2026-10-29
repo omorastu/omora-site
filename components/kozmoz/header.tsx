@@ -3,28 +3,32 @@
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { brand, nav, people, type Who } from "@/lib/kozmoz";
+import { brand, menu, people, type Who } from "@/lib/kozmoz";
 import { Wordmark } from "@/components/wordmark";
 import { WhoButton } from "@/components/kozmoz/hands";
+import { Menu } from "@/components/kozmoz/menu";
 import { cn } from "@/lib/utils";
 
 /**
- * The door plate: the wordmark on the left, the section links on the right.
- * Once the page's first heading has gone under it (the names on the door, on
- * the home page) it turns black and the two names fade in on the seam
- * (kozmoz.css, "header"); back above it, it's paper again. On phones it
- * drops to two rows and steps out of the way on the way down, returning the
- * moment you scroll back up.
+ * The door plate: the rings and the wordmark on the left, the menu button
+ * on the right; the links are in the menu (menu.tsx). Once the page's first
+ * heading has gone under it (the names on the door, on the home page) it
+ * turns black and the two names fade in on the seam (kozmoz.css, "header");
+ * back above it, it's paper again. On phones the names come in as their
+ * initials, in the wordmark's place, and the header steps out of the way on
+ * the way down, returning the moment you scroll back up.
  *
- * On the home page the names are the "pick a name" buttons and the links are
- * its own sections. Every other page sets `home` false: the names are just
- * names, and the links lead back to the home page's sections ("#us" becomes
- * "/#us") — except any listed in `local`, which that page has itself.
+ * On the home page the names are the "pick a name" buttons and the menu's
+ * section links are its own sections. Every other page sets `home` false:
+ * the names are just names, and the links lead back to the home page's
+ * sections ("#us" becomes "/#us") — except any listed in `local`, which that
+ * page has itself.
  */
 export function Header({ home = false, local = [] }: { home?: boolean; local?: string[] }) {
   const ref = useRef<HTMLElement>(null);
   const [hidden, setHidden] = useState(false);
   const [dark, setDark] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
     const small = window.matchMedia("(max-width: 1023px)");
@@ -53,46 +57,65 @@ export function Header({ home = false, local = [] }: { home?: boolean; local?: s
     };
   }, []);
 
-  const name = (who: Who) =>
-    home ? (
+  // The name, and its initial for phones (where the name is left to screen readers).
+  const name = (who: Who) => {
+    const label = (
+      <>
+        <span className="who-name">{people[who].name}</span>
+        <span className="who-initial" aria-hidden="true">
+          {people[who].initial}
+        </span>
+      </>
+    );
+    return home ? (
       <WhoButton who={who} className={`who who--${who}`}>
-        {people[who].name}
+        {label}
       </WhoButton>
     ) : (
-      <span className={`who who--${who}`}>{people[who].name}</span>
+      <span className={`who who--${who}`}>{label}</span>
     );
+  };
 
   return (
-    <header ref={ref} className={cn("top", hidden && "is-hidden", dark && "is-dark")}>
-      {home ? (
-        <a className="brand" href="#top">
-          <Image src={brand.mark} alt="" width={192} height={192} priority />
-          <Wordmark className="gold" />
-        </a>
-      ) : (
-        <Link className="brand" href="/">
-          <Image src={brand.mark} alt="" width={192} height={192} priority />
-          <Wordmark className="gold" />
-        </Link>
-      )}
-      {name("a")}
-      <span className="top-amp gold" aria-hidden="true">
-        &amp;
-      </span>
-      {name("j")}
-      <nav className="nav" aria-label="Sections">
-        {nav.map((l) =>
-          home || local.includes(l.href) ? (
-            <a key={l.href} href={l.href}>
-              {l.label}
-            </a>
-          ) : (
-            <Link key={l.href} href={`/${l.href}`}>
-              {l.label}
-            </Link>
-          )
+    <>
+      <header ref={ref} className={cn("top", hidden && "is-hidden", dark && "is-dark")}>
+        {home ? (
+          <a className="brand" href="#top">
+            <Image src={brand.mark} alt="" width={192} height={192} priority />
+            <Wordmark className="gold" />
+          </a>
+        ) : (
+          <Link className="brand" href="/">
+            <Image src={brand.mark} alt="" width={192} height={192} priority />
+            <Wordmark className="gold" />
+          </Link>
         )}
-      </nav>
-    </header>
+        {name("a")}
+        <span className="top-amp gold" aria-hidden="true">
+          &amp;
+        </span>
+        {name("j")}
+        <button
+          type="button"
+          className="menu-btn"
+          aria-label={menu.label}
+          aria-haspopup="dialog"
+          aria-expanded={menuOpen}
+          aria-controls="menu"
+          onClick={() => setMenuOpen(true)}
+        >
+          <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true">
+            <path d="M3 6.5h18M3 12h18M3 17.5h18" />
+          </svg>
+        </button>
+      </header>
+      <Menu
+        id="menu"
+        open={menuOpen}
+        home={home}
+        local={local}
+        onClose={() => setMenuOpen(false)}
+      />
+    </>
   );
 }

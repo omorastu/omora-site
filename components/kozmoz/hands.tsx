@@ -119,8 +119,7 @@ export function Hands({ className, children }: { className?: string; children: R
 
       // Each name written in, left to right: the button's clip opens behind
       // the nib, which rides the clip's edge along the first name's line.
-      // Measured by layout (offsets from the hero), not by the screen, which
-      // the panel's own lift is still moving.
+      // Placed by layout (offsets from the hero).
       const write = (name: HTMLElement, at: number) => {
         const first = name.querySelector<HTMLElement>(".name-first") ?? name;
         const size = parseFloat(getComputedStyle(name).fontSize);
@@ -128,13 +127,21 @@ export function Hands({ className, children }: { className?: string; children: R
         // Room for ink past the box: the J's hook on the left, tails above and below.
         const side = Math.ceil(size * 0.08);
         const tall = Math.ceil(size * 0.3);
+        // The stroke runs from `from` to `to` (px from the button's left
+        // edge): its own width, and the last name's too where that's
+        // centred out past it, in its half of the hero.
+        const last = name.querySelector(".name-last");
+        const box = name.getBoundingClientRect();
+        const ink = last ? textBox(last) : null;
+        const from = Math.min(0, ink ? ink.left - box.left : 0) - side;
+        const to = Math.max(w, ink ? ink.right - box.left : w) + side;
         const timing = { duration: WRITE_MS, delay: at, easing: WRITE_EASE };
         name.animate(
-          { clipPath: [`inset(-${tall}px ${w + side}px -${tall}px -${side}px)`, `inset(-${tall}px -${side}px -${tall}px -${side}px)`] },
+          { clipPath: [`inset(-${tall}px ${w - from}px -${tall}px ${from}px)`, `inset(-${tall}px ${w - to}px -${tall}px ${from}px)`] },
           { ...timing, fill: "backwards" }
         );
-        const x0 = name.offsetLeft - side;
-        const x1 = name.offsetLeft + w + side;
+        const x0 = name.offsetLeft + from;
+        const x1 = name.offsetLeft + to;
         const y = first.offsetTop + first.offsetHeight * 0.62;
         nib.animate(
           [
@@ -160,10 +167,12 @@ export function Hands({ className, children }: { className?: string; children: R
       // fade in, not the paper, or the seam would show through it.
       const riseAt = WRITE_AT + 2 * WRITE_MS + 2 * WRITE_GAP;
       const lines = [hero.querySelector(".hint"), hero.querySelector(".lede"), hero.querySelector(":scope > .act")];
+      // Whole pixels, so a line's paper waits with crisp edges, not a faint seam of its own.
+      const lift = Math.round(parseFloat(getComputedStyle(document.documentElement).fontSize) * 0.875);
       lines.forEach((line, i) => {
         if (!line) return;
         const rise = { duration: RISE_MS, delay: riseAt + (i === 2 ? 60 : 0), easing: "cubic-bezier(.2, .7, .3, 1)", fill: "backwards" } as const;
-        line.animate({ transform: ["translateY(.875rem)", "none"] }, rise);
+        line.animate({ transform: [`translateY(${lift}px)`, "none"] }, rise);
         if (line.classList.contains("across")) line.animate({ color: ["transparent", getComputedStyle(line).color] }, rise);
         else line.animate({ opacity: [0, 1] }, rise);
       });
@@ -205,6 +214,15 @@ export function Hands({ className, children }: { className?: string; children: R
       </div>
     </HandsContext.Provider>
   );
+}
+
+/** Where an element's text runs, on screen: its glyphs' boxes, not the element's. */
+function textBox(el: Element) {
+  const range = document.createRange();
+  range.selectNodeContents(el);
+  const r = range.getBoundingClientRect();
+  range.detach();
+  return r.width ? r : null;
 }
 
 /**

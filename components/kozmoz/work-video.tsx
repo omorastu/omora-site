@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
 
 /**
  * A project's muted loop, laid over its still. Nothing downloads until the
@@ -14,7 +14,14 @@ import { useEffect, useRef, useState } from "react";
  * cut when it has one, 2G gets the still alone. At most two loops download at
  * once across the page; the rest wait their turn. A loop that stalls for more
  * than 3 seconds gives way to its still for the rest of the visit.
+ *
+ * Inside a PlayGate (the home page's pinned row on phones, work-pin.tsx) a
+ * loop also waits for the gate: in view but held back, it stays on its still.
  */
+
+/** Which of the loops in view may play; without one, all of them. */
+export type PlayGate = { plays(el: Element): boolean; subscribe(fn: () => void): () => void };
+export const PlayGateContext = createContext<PlayGate | null>(null);
 
 type Cuts = { desktop?: string; mobile?: string; desktopSd?: string; mobileSd?: string };
 type Connection = { saveData?: boolean; effectiveType?: string; downlink?: number };
@@ -58,6 +65,7 @@ function takeSlot(start: () => void) {
 export function WorkVideo({ desktop, mobile, desktopSd, mobileSd }: Cuts) {
   const ref = useRef<HTMLVideoElement>(null);
   const [playing, setPlaying] = useState(false);
+  const gate = useContext(PlayGateContext);
 
   useEffect(() => {
     const v = ref.current;
@@ -124,13 +132,16 @@ export function WorkVideo({ desktop, mobile, desktopSd, mobileSd }: Cuts) {
     const sync = () => {
       const src = want();
       if (!src || gaveUp) return unload();
-      if (!inView) {
+      // In view, but the gate holds it back: back to its still until let through.
+      const held = inView && !!gate && !gate.plays(v);
+      if (!inView || held) {
         calm();
         // In line for a slot: step out of it until the card is back.
         if (!v.dataset.loaded) return letGo();
         // Half loaded: stop the download and free the slot (the cache keeps what came in).
         if (!ready) return unload();
         if (!v.paused) v.pause();
+        if (held) setPlaying(false);
         return;
       }
       if (v.dataset.loaded === src) return play();
@@ -173,7 +184,9 @@ export function WorkVideo({ desktop, mobile, desktopSd, mobileSd }: Cuts) {
     );
     io.observe(v);
     small.addEventListener("change", sync);
+    const unsubscribe = gate?.subscribe(sync);
     return () => {
+      unsubscribe?.();
       io.disconnect();
       small.removeEventListener("change", sync);
       v.removeEventListener("playing", onPlaying);
@@ -184,7 +197,7 @@ export function WorkVideo({ desktop, mobile, desktopSd, mobileSd }: Cuts) {
       calm();
       letGo();
     };
-  }, [desktop, mobile, desktopSd, mobileSd]);
+  }, [desktop, mobile, desktopSd, mobileSd, gate]);
 
   return (
     <video
