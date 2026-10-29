@@ -1,6 +1,5 @@
 import Link from "next/link";
-import { people, sectionLabel, services, servicesPage, type Service } from "@/lib/kozmoz";
-import { cn } from "@/lib/utils";
+import { sectionLabel, services, servicesPage, type Service } from "@/lib/kozmoz";
 
 /**
  * What we do: the four services two by two, each with its credit line saying
@@ -20,9 +19,7 @@ export function Services() {
             <article key={s.id} className="svc-card">
               <h3 className="svc-card-title">{s.title}</h3>
               <p className="svc-card-text">{s.text}</p>
-              <p className="svc-card-credit label">
-                <span className="c-a">{s.credit.a}</span>, <span className="c-j">{s.credit.j}</span>
-              </p>
+              <Credit service={s} className="svc-card-credit" />
             </article>
           ))}
         </div>
@@ -34,44 +31,37 @@ export function Services() {
   );
 }
 
+/** Who does which part, as one line in the two inks. */
+function Credit({ service: s, className }: { service: Service; className: string }) {
+  return (
+    <p className={`${className} label`}>
+      <span className="c-a">{s.credit.a}</span>, <span className="c-j">{s.credit.j}</span>
+    </p>
+  );
+}
+
 /**
- * One service on /services: a section of its own, under its id, centred
- * across the seam, with what's included listed between the text and the
- * credit line. The credit line splits the work along the seam — Ashan's part
- * on the left, Jordan's on the right — with a tag on the seam itself saying
- * whose it is.
+ * One service on /services, a section of its own under its id, on the home
+ * page's grid: the title, the text and the credit line on the left, what's
+ * included as a ruled list on the right.
  */
 export function ServiceRow({ service: s }: { service: Service }) {
-  const hands = s.hands === "both" ? undefined : s.hands;
-
   return (
-    <section
-      className={cn("svc", "svc--both", `rule-${s.hands}`, "svc--detail")}
-      id={s.id}
-      aria-labelledby={`${s.id}-h`}
-    >
-      <h2 className="svc-title across" id={`${s.id}-h`}>
-        {s.title}
-      </h2>
-      <p className="svc-text across">{s.text}</p>
-      <ul className="incl across">
-        {s.included.map((item) => (
-          <li key={item}>{item}</li>
-        ))}
-      </ul>
-      <p className="credit">
-        <span className="credit-a">{s.credit.a}</span>
-        {hands ? (
-          <span className="tag" aria-label={`${people[hands].name} leads`}>
-            <b className={`c-${hands}`}>{people[hands].initial}</b>
-          </span>
-        ) : (
-          <span className="tag" aria-label={`${people.a.name} and ${people.j.name}`}>
-            <b className="c-a">{people.a.initial}</b>+<b className="c-j">{people.j.initial}</b>
-          </span>
-        )}
-        <span className="credit-j">{s.credit.j}</span>
-      </p>
+    <section className="svc sec" id={s.id} aria-labelledby={`${s.id}-h`}>
+      <div className="wrap">
+        <div className="svc-head">
+          <h2 className="sec-h svc-title" id={`${s.id}-h`}>
+            {s.title}
+          </h2>
+          <p className="svc-text">{s.text}</p>
+          <Credit service={s} className="svc-credit" />
+        </div>
+        <ul className="incl">
+          {s.included.map((item) => (
+            <li key={item}>{item}</li>
+          ))}
+        </ul>
+      </div>
     </section>
   );
 }

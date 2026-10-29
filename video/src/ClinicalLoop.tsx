@@ -1,27 +1,34 @@
 import { loadFont as loadGeist } from "@remotion/google-fonts/Geist";
 import { loadFont as loadGeistMono } from "@remotion/google-fonts/GeistMono";
-import type { ReactNode } from "react";
-import { AbsoluteFill, Easing, useCurrentFrame } from "remotion";
+import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
+import { AbsoluteFill, continueRender, delayRender, Easing, useCurrentFrame } from "remotion";
 import { DENTIST_LETTER, DRAFT, FAMILY_LETTER, RECORD, type NavKey } from "./clinical/data";
-import { DraftDialog, FollowUpsScreen, ProcessingScreen, RecordScreen, SummaryScreen, type Tab } from "./clinical/screens";
-import { Viewport } from "./clinical/tw";
+import { DraftDialog, FollowUpsScreen, RecordScreen, SUMMARY_LINES, SummaryScreen, type Tab } from "./clinical/screens";
+import { COLORS, Viewport } from "./clinical/tw";
 import { Clock, DemoBanner, PhoneHeader, RESET, Scale, Sidebar } from "./clinical/ui";
 
 /**
  * The Clinical Scribe live card: one invented consult going through the
- * app — recording, the summary appearing, the referring dentist's letter
- * and the family's take-home letter drafting, then the follow-up list and
- * the message it suggests — and a fade back into frame 0, so the loop has
- * no seam.
+ * app, filmed in close-up. The recording (timer and level meter running),
+ * the summary filling in line by line, the referring dentist's letter and
+ * then the family's take-home letter drafting, and the follow-up list with
+ * one case picked and its message drafting; then a fade back into frame 0,
+ * so the loop has no seam.
  *
  * Not a recording. The real app talks to a live backend with real patient
  * data, so this is a replica built from its source (layout, Tailwind
  * classes, labels, states; see src/clinical/) and filled with invented
  * data from src/clinical/data.ts, the only place on-screen text comes from.
  *
- * Laid out in the app's own CSS px (1440 or 390 wide) and drawn at 1.5x and
- * 3x, as NumenLoop's captures are; scripts/render.mjs scales the finished
- * frames down to each file's size.
+ * The camera. On the site a card is about 584px wide, so a whole 1440px app
+ * screen in it is text a few pixels high. So the app is laid out in a narrow
+ * window (VIEW: 840 CSS px with its sidebar, 360 on the phone), where every
+ * panel is one column, and the camera frames that column: on desktop about
+ * 2.4× closer than the whole 1440px screen, on the phone the panel edge to
+ * edge. It moves between panels on eased keyframes (CAMERA), finding each
+ * one by its `cam` mark in the laid-out page, so the framing follows the
+ * layout if the wording changes. The demo banner is pinned to the frame
+ * above it.
  */
 
 loadGeist("normal", { weights: ["400", "500", "600"], subsets: ["latin"] });
@@ -30,151 +37,242 @@ loadGeistMono("normal", { weights: ["400", "500"], subsets: ["latin"] });
 export type Size = "desktop" | "phone";
 
 export const FPS = 30;
-export const FRAMES = 540; // 18s
+export const FRAMES = 630; // 21s
 
 export const FRAME_SIZE: Record<Size, { width: number; height: number }> = {
   desktop: { width: 2160, height: 1350 },
   phone: { width: 1170, height: 1462 },
 };
 
-/** The app's viewport in CSS px, and frame px per CSS px. */
-const VIEW: Record<Size, { width: number; scale: number }> = {
-  desktop: { width: 1440, scale: 1.5 },
-  phone: { width: 390, scale: 3 },
+/**
+ * The app's window (CSS px), and the width of its page column there (the
+ * window less the sidebar's 208 and the page's padding).
+ */
+const VIEW: Record<Size, { width: number; column: number }> = {
+  desktop: { width: 840, column: 584 },
+  phone: { width: 360, column: 328 },
 };
 
 /**
- * The beats, in frames. Both sizes share them; only the phone scrolls
- * (its 487px-tall view shows a slice of each page), see PHONE_SCROLL.
+ * The demo banner, pinned across the top of the frame: its scale in frame px
+ * per CSS px, and the lines it takes at that scale (one on desktop, two on
+ * the phone, as in the app). The camera's view is the frame below it.
  */
+const BANNER: Record<Size, { scale: number; lines: number }> = {
+  desktop: { scale: 3.5, lines: 1 },
+  phone: { scale: 3, lines: 2 },
+};
+/** The banner's height in frame px: py-1.5 and text-xs's 16px lines. */
+const bannerHeight = (size: Size) => (12 + 16 * BANNER[size].lines) * BANNER[size].scale;
+
+/** CSS px of page ground the camera keeps either side of a panel. */
+const PAD = 10;
+/** Tall enough for the longest page, so nothing the camera visits is cut off. */
+const WORLD_HEIGHT = 2400;
+
+/** Frame px per CSS px with a panel framed edge to edge, as the dialog is drawn. */
+const closeUp = (size: Size) => FRAME_SIZE[size].width / (VIEW[size].column + 2 * PAD);
+
+/** The beats, in frames. Both sizes share them. */
 const T = {
-  flag: 24, // "Flag a moment" pressed; the marker lands 4 frames later
-  stop: 52, // Stop pressed
-  processing: [54, 66], // into the processing steps
-  stepAt: (k: number) => 68 + k * 5, // step k is done (k = 0..5)
-  summary: [100, 114], // into the summary
-  revealAt: (i: number) => 114 + i * 6, // part i of the summary starts appearing
-  reveal: 10, // frames each part takes
-  dentist: [226, 234], // tab switch to the referring dentist letter
-  dentistStream: [236, 288],
-  family: [306, 314], // tab switch to the family letter
-  familyStream: [316, 364],
-  followUps: [374, 390], // into follow-ups
-  scroll: [400, 426], // down to the recommendation (desktop) or the new row (phone)
-  press: 442, // "Draft this message" pressed
-  dialog: [446, 454],
-  draftStream: [456, 480],
-  end: [495, FRAMES - 1], // back into frame 0
-  // Desktop camera: zoomed on the record and processing screens, easing
-  // out as the summary comes in and back in during the dip to frame 0.
-  zoomOut: [98, 124],
-  zoomIn: [506, 536],
+  stop: 80, // Stop pressed
+  summary: [86, 100], // into the summary
+  revealAt: (line: number) => 104 + line * 7, // line i of the summary starts appearing
+  reveal: 10, // frames each line takes
+  dentist: [234, 242], // tab switch to the referring dentist letter
+  dentistStream: [244, 306],
+  family: [340, 348], // tab switch to the family letter
+  familyStream: [350, 410],
+  followUps: [438, 452], // into follow-ups
+  point: 488, // the pointer reaches Zz-Maya's row
+  pick: 496, // and picks it
+  dialog: [504, 512],
+  draftStream: [514, 556],
+  end: [596, FRAMES - 1], // back into frame 0
 };
 
 /**
  * Frames the reduced-motion still and the case-study extras are taken
- * from, each with both sizes at rest and nothing half-drawn.
+ * from, each at rest with nothing half-drawn. They are four different
+ * screens, so the case study never shows one twice.
  */
-export const STILL_FRAME = 214; // the summary complete, the letters' tabs beside it
-export const EXTRA_FRAMES = { summary: 214, doctorLetter: 298, followUps: 436 };
+export const STILL_FRAME = 436; // the family letter
+export const EXTRA_FRAMES = { summary: 230, doctorLetter: 337, followUps: 580 };
 
 const ease = Easing.bezier(0.65, 0, 0.35, 1);
+/** For following a draft down as it arrives: steadier through the middle. */
+const glide = Easing.bezier(0.45, 0, 0.55, 1);
 const clamp01 = (x: number) => Math.max(0, Math.min(1, x));
 const progress = (frame: number, [a, b]: number[]) => clamp01((frame - a) / (b - a));
-
-/** Eased keyframes: [frame, value] pairs, held before the first and after the last. */
-function track(frame: number, keys: [number, number][]): number {
-  if (frame <= keys[0][0]) return keys[0][1];
-  for (let i = 1; i < keys.length; i++) {
-    const [f0, v0] = keys[i - 1];
-    const [f1, v1] = keys[i];
-    if (frame <= f1) return v0 + (v1 - v0) * ease(clamp01((frame - f0) / (f1 - f0)));
-  }
-  return keys[keys.length - 1][1];
-}
 
 /** Characters of a draft that have arrived by a frame. */
 const chars = (frame: number, window: number[], text: string) => Math.round(progress(frame, window) * text.length);
 
+/* -------------------------------------------------------------------------
+ * The camera
+ * ---------------------------------------------------------------------- */
+
+type Rect = { x: number; y: number; w: number; h: number };
+
 /**
- * Where the phone's page sits (its scrollTop, CSS px) in each scene. The
- * desktop view shows each page whole, so only follow-ups moves there.
+ * What the camera frames: the panel(s) marked `id` (several are framed
+ * together), the panel's width plus PAD across, and the panel's top,
+ * middle or bottom against the frame's. `zoom` goes closer than that.
  */
-const PHONE_SCROLL = {
-  record: 0,
-  // Follow the summary down as it appears, then come back up to the tabs
-  // (the letters beside the summary), which is where the still is taken.
-  summary: (f: number) =>
-    track(f, [
-      [T.revealAt(1), 0],
-      [T.revealAt(8) + 10, 560],
-      [T.revealAt(8) + 16, 560],
-      [T.revealAt(8) + 38, 96],
-    ]),
-  // Tabs in view for the switch, then follow the draft down as it grows;
-  // the first letter goes back up to the tabs for the next switch.
-  letter: (f: number, stream: number[], end: number, back: boolean) =>
-    track(f, [
-      [stream[0] + 10, 96],
-      [stream[1] + 4, end],
-      ...(back
-        ? ([
-            [stream[1] + 8, end],
-            [stream[1] + 18, 96],
-          ] as [number, number][])
-        : []),
-    ]),
-  // The list's top, then down to the consult that just joined it.
-  followUps: (f: number) => track(f, [[T.scroll[0], 0], [T.scroll[1], 962]]),
+type Shot = { id: string | string[]; align: "top" | "center" | "bottom"; zoom?: number };
+type Key = [frame: number, shot: Shot, curve?: (x: number) => number];
+
+const SHOT = {
+  record: { id: ["rec-head", "rec"], align: "top" },
+  summaryTop: { id: "sum-head", align: "top" },
+  summaryEnd: { id: "sum-card", align: "bottom" },
+  dentistEnd: { id: "letter-dentist", align: "bottom" },
+  familyEnd: { id: "letter-family", align: "bottom" },
+  followUpsTop: { id: "fu-head", align: "top" },
+  maya: { id: "row-maya", align: "center" },
+} satisfies Record<string, Shot>;
+
+/**
+ * The camera's path: a shot at each frame, eased between (`curve`, for the
+ * move that ends at that key). Every move between pages happens inside
+ * that page change, while both are on screen to be found.
+ */
+const CAMERA: Key[] = [
+  [0, SHOT.record],
+  [T.summary[0], SHOT.record],
+  [T.summary[1], SHOT.summaryTop],
+  [T.revealAt(1), SHOT.summaryTop],
+  [T.revealAt(SUMMARY_LINES - 2) + T.reveal, SHOT.summaryEnd, glide], // down with the lines as they appear
+  [T.revealAt(SUMMARY_LINES - 2) + T.reveal + 10, SHOT.summaryEnd],
+  [T.dentist[0] - 8, SHOT.summaryTop], // back up to the tabs: the whole summary at rest
+  [T.dentistStream[0] + 6, SHOT.summaryTop],
+  [T.dentistStream[1], SHOT.dentistEnd, glide], // down with the letter as it drafts
+  [T.dentistStream[1] + 8, SHOT.dentistEnd],
+  [T.family[0] - 6, SHOT.summaryTop], // back up: the dentist letter at rest
+  [T.familyStream[0] + 6, SHOT.summaryTop],
+  [T.familyStream[1], SHOT.familyEnd, glide],
+  [T.familyStream[1] + 6, SHOT.familyEnd],
+  [T.followUps[0] - 4, SHOT.summaryTop], // back up: the family letter at rest
+  [T.followUps[0], SHOT.summaryTop],
+  [T.followUps[1], SHOT.followUpsTop],
+  [T.followUps[1] + 10, SHOT.followUpsTop],
+  [T.point - 2, SHOT.maya], // down the list to the case about to be picked
+  [T.end[0], SHOT.maya],
+  [FRAMES - 1, SHOT.record], // home to frame 0's shot
+];
+
+/** Where a marked panel (or several, together) sits in the page, in CSS px. */
+function rectOf(world: HTMLElement, id: string | string[]): Rect {
+  const o = world.getBoundingClientRect();
+  const k = o.width / world.offsetWidth; // the page's current scale on screen
+  const rects = [id].flat().map((name) => {
+    const el = world.querySelector(`[data-cam="${name}"]`);
+    if (!el) throw new Error(`Clinical camera: nothing marked "${name}" on screen`);
+    return el.getBoundingClientRect();
+  });
+  const left = Math.min(...rects.map((r) => r.left));
+  const top = Math.min(...rects.map((r) => r.top));
+  const right = Math.max(...rects.map((r) => r.right));
+  const bottom = Math.max(...rects.map((r) => r.bottom));
+  return { x: (left - o.left) / k, y: (top - o.top) / k, w: (right - left) / k, h: (bottom - top) / k };
+}
+
+/** The part of the page a shot shows, in CSS px, for a frame `aspect` (height / width). */
+function viewOf(shot: Shot, r: Rect, aspect: number): Rect {
+  const w = (r.w + 2 * PAD) / (shot.zoom ?? 1);
+  const h = w * aspect;
+  const x = r.x + r.w / 2 - w / 2;
+  const y = shot.align === "top" ? r.y - PAD : shot.align === "bottom" ? r.y + r.h + PAD - h : r.y + r.h / 2 - h / 2;
+  return { x, y, w, h };
+}
+
+/** The camera's view at a frame. Scale eases evenly (in log), position linearly. */
+function cameraAt(frame: number, find: (id: string | string[]) => Rect, aspect: number): Rect {
+  let i = 0;
+  while (i + 1 < CAMERA.length && frame >= CAMERA[i + 1][0]) i++;
+  const [f0, a] = CAMERA[i];
+  const at = (shot: Shot) => viewOf(shot, find(shot.id), aspect);
+  if (i + 1 === CAMERA.length) return at(a);
+  const [f1, b, curve = ease] = CAMERA[i + 1];
+  const k = curve(clamp01((frame - f0) / (f1 - f0)));
+  if (k === 0 || a === b) return at(a);
+  const [va, vb] = [at(a), at(b)];
+  const w = Math.exp(Math.log(va.w) + (Math.log(vb.w) - Math.log(va.w)) * k);
+  const cx = va.x + va.w / 2 + (vb.x + vb.w / 2 - va.x - va.w / 2) * k;
+  const cy = va.y + va.h / 2 + (vb.y + vb.h / 2 - va.y - va.h / 2) * k;
+  return { x: cx - w / 2, y: cy - (w * aspect) / 2, w, h: w * aspect };
+}
+
+/**
+ * The page (`children`, laid out at the app's window width) seen through the
+ * camera. It is aimed after layout, from where the marked panels actually
+ * are, and only once the fonts have loaded, so the text it frames is the
+ * text in the video.
+ */
+const Camera: React.FC<{ size: Size; frame: number; children: ReactNode; overlay?: ReactNode }> = ({ size, frame, children, overlay }) => {
+  const world = useRef<HTMLDivElement>(null);
+  const aim = useRef(() => {});
+  const fontsReady = useRef(false);
+  const [handle] = useState(() => delayRender("Clinical camera: waiting for fonts"));
+
+  useLayoutEffect(() => {
+    // The view's size comes from the frame's, not from layout: the frame
+    // isn't sized yet when this first runs. The page has a fixed width, so
+    // where its panels sit is already known.
+    const width = FRAME_SIZE[size].width;
+    const height = FRAME_SIZE[size].height - bannerHeight(size);
+    aim.current = () => {
+      const w = world.current;
+      if (!w) return;
+      const v = cameraAt(frame, (id) => rectOf(w, id), height / width);
+      const s = width / v.w;
+      // Whole frame pixels, so text is as sharp in motion as at rest.
+      w.style.transform = `translate(${Math.round(-v.x * s)}px, ${Math.round(-v.y * s)}px) scale(${s})`;
+    };
+    aim.current();
+    if (!fontsReady.current) {
+      document.fonts.ready.then(() => {
+        aim.current();
+        if (!fontsReady.current) {
+          fontsReady.current = true;
+          continueRender(handle);
+        }
+      });
+    }
+  }, [frame, handle, size]);
+
+  const top = bannerHeight(size);
+  return (
+    <div style={{ position: "absolute", left: 0, top, right: 0, bottom: 0, overflow: "hidden", background: COLORS["zinc-50"] }}>
+      <div
+        ref={world}
+        style={{
+          position: "absolute",
+          left: 0,
+          top: 0,
+          width: VIEW[size].width,
+          height: WORLD_HEIGHT,
+          display: "flex",
+          flexDirection: size === "desktop" ? "row" : "column",
+          transformOrigin: "0 0",
+        }}
+      >
+        {children}
+      </div>
+      {overlay}
+    </div>
+  );
 };
 
-/** How far down the desktop's follow-ups page goes, to bring the recommendation into view. */
-const DESKTOP_FOLLOW_UPS_SCROLL = 390;
-
-/**
- * The desktop camera on the record and processing screens.
- *
- * At 1440x900 those pages fill only the top third of the frame, which left
- * the poster (frame 0) mostly empty grey. So the area under the banner is
- * scaled by 1.5 around the content column: the column (cards at x 400-1248,
- * centre 824) lands centred in the frame, the sidebar falls off the left,
- * and the block sits a little above the middle of the space under the
- * banner. The banner itself is never scaled.
- */
-const ZOOM = { z: 1.5, centreX: 824, offsetY: 112 };
-
-/** How zoomed the desktop camera is, 0 (1:1) → 1 (ZOOM). */
-function zoomAt(frame: number): number {
-  if (frame < T.zoomOut[1]) return 1 - ease(progress(frame, T.zoomOut));
-  if (frame < T.zoomIn[0]) return 0;
-  return ease(progress(frame, T.zoomIn));
-}
-
-type Camera = { z: number; x: number; y: number };
-
-/**
- * The transform for a zoom amount. Horizontally it is a plain zoom about one
- * point, so nothing drifts. It only moves the page down (to centre it) once
- * the zoom has pushed the sidebar out of frame, so the space that opens
- * above the page is only ever the page's own grey. Offsets are snapped to
- * whole master pixels, as the scrolling is.
- */
-function cameraAt(e: number, scale: number): Camera {
-  if (e <= 0) return { z: 1, x: 0, y: 0 };
-  const z = 1 + (ZOOM.z - 1) * e;
-  const x = (VIEW.desktop.width / 2 - ZOOM.z * ZOOM.centreX) * e;
-  const late = clamp01((e - 0.55) / 0.45);
-  const y = ZOOM.offsetY * late * late * (3 - 2 * late);
-  const snap = (v: number) => Math.round(v * scale) / scale;
-  return { z, x: snap(x), y: snap(y) };
-}
+/* -------------------------------------------------------------------------
+ * The scenes
+ * ---------------------------------------------------------------------- */
 
 type Scene = {
   key: string;
   nav: NavKey | null;
   node: ReactNode;
-  scroll: number;
-  /** A dialog over the frame, drawn at a visibility (its own fade times the page's). */
+  /** A dialog over the view, drawn at a visibility (its own fade times the page's). */
   overlay?: (visible: number) => ReactNode;
   t: number;
 };
@@ -185,35 +283,18 @@ type TabSwitch = { from: Tab; outgoing: number; incoming: number };
 /** The scene at a frame. `t` is the loop clock in seconds. */
 function sceneAt(size: Size, frame: number, name: string, tabSwitch?: TabSwitch): Scene {
   const t = frame / FPS;
-  const phone = size === "phone";
   switch (name) {
-    case "record": {
-      const markers = [RECORD.firstMarker, ...(frame >= T.flag + 4 ? [RECORD.startSeconds + Math.floor((T.flag + 4) / FPS)] : [])];
+    case "record":
       return {
         key: "record",
         nav: "record",
         t,
-        scroll: PHONE_SCROLL.record,
-        node: (
-          <RecordScreen
-            seconds={RECORD.startSeconds + Math.floor(frame / FPS)}
-            markers={markers}
-            flagPressed={frame >= T.flag && frame < T.flag + 4}
-            stopPressed={frame >= T.stop && frame < T.stop + 4}
-          />
-        ),
+        node: <RecordScreen seconds={RECORD.startSeconds + Math.floor(frame / FPS)} stopPressed={frame >= T.stop && frame < T.stop + 4} />,
       };
-    }
-    case "processing": {
-      let done = 0;
-      while (done < RECORD.steps.length && frame >= T.stepAt(done)) done++;
-      return { key: "processing", nav: "record", t, scroll: 0, node: <ProcessingScreen stepsDone={done} /> };
-    }
     case "summary":
     case "dentist":
     case "family": {
       const tab = name as Tab;
-      const shown = (i: number) => (frame - T.revealAt(i)) / T.reveal;
       const stream = tab === "dentist" ? T.dentistStream : T.familyStream;
       const body = tab === "dentist" ? DENTIST_LETTER.body : FAMILY_LETTER.body;
       const letterChars = tab === "summary" ? 0 : chars(frame, stream, body);
@@ -221,15 +302,10 @@ function sceneAt(size: Size, frame: number, name: string, tabSwitch?: TabSwitch)
         key: "summaryPage",
         nav: null,
         t,
-        scroll: !phone
-          ? 0
-          : tab === "summary"
-            ? PHONE_SCROLL.summary(frame)
-            : PHONE_SCROLL.letter(frame, stream, tab === "dentist" ? 470 : 520, tab === "dentist"),
         node: (
           <SummaryScreen
             tab={tab}
-            shown={shown}
+            shown={(line) => (frame - T.revealAt(line)) / T.reveal}
             letterChars={letterChars}
             drafting={tab !== "summary" && letterChars < body.length}
             opacity={tabSwitch?.incoming ?? 1}
@@ -239,18 +315,23 @@ function sceneAt(size: Size, frame: number, name: string, tabSwitch?: TabSwitch)
       };
     }
     case "followUps": {
-      const scroll = phone
-        ? PHONE_SCROLL.followUps(frame)
-        : track(frame, [[T.scroll[0], 0], [T.scroll[1], DESKTOP_FOLLOW_UPS_SCROLL]]);
       const open = progress(frame, T.dialog);
       return {
         key: "followUps",
         nav: "followups",
         t,
-        scroll,
-        node: <FollowUpsScreen draftPressed={!phone && frame >= T.press && frame < T.press + 4} />,
+        node: <FollowUpsScreen pointed={frame >= T.point && frame < T.pick + 6} picked={frame >= T.pick} />,
         overlay:
-          open > 0 ? (visible) => <DraftDialog chars={chars(frame, T.draftStream, DRAFT.body)} visible={ease(open) * visible} /> : undefined,
+          open > 0
+            ? (visible) => (
+                <DraftDialog
+                  chars={chars(frame, T.draftStream, DRAFT.body)}
+                  visible={ease(open) * visible}
+                  zoom={closeUp(size)}
+                  width={VIEW[size].column + 2 * PAD - 32}
+                />
+              )
+            : undefined,
       };
     }
   }
@@ -265,7 +346,6 @@ function sceneAt(size: Size, frame: number, name: string, tabSwitch?: TabSwitch)
  */
 const ORDER: { name: string; fade: number[]; kind: "page" | "tab" }[] = [
   { name: "record", fade: [0, 0], kind: "page" },
-  { name: "processing", fade: T.processing, kind: "page" },
   { name: "summary", fade: T.summary, kind: "page" },
   { name: "dentist", fade: T.dentist, kind: "tab" },
   { name: "family", fade: T.family, kind: "tab" },
@@ -278,7 +358,11 @@ const dipIn = (k: number, split = 0.6) => ease(clamp01((k - (1 - split)) / split
 
 type Content = { scene: Scene; opacity: number };
 
-/** What the page area shows at a frame: one scene's content, or two during a dip. */
+/**
+ * What the page area holds at a frame: one scene's content, or two during a
+ * page change. Both stay laid out for the whole change, even while one is
+ * invisible, so the camera can find its way from one to the other.
+ */
 function contentsAt(size: Size, frame: number): Content[] {
   let i = 0;
   while (i + 1 < ORDER.length && frame >= ORDER[i + 1].fade[0]) i++;
@@ -296,8 +380,8 @@ function contentsAt(size: Size, frame: number): Content[] {
   } else {
     contents = [{ scene: sceneAt(size, frame, current.name), opacity: 1 }];
   }
-  // The last 1.5s: the page dips back to frame 0's screen, its clock
-  // running up to the moment the loop restarts, so frame 539 leads into 0.
+  // The last second: the page dips back to frame 0's screen, its clock
+  // running up to the moment the loop restarts, so the last frame leads into 0.
   if (frame >= T.end[0]) {
     const e = progress(frame, T.end);
     contents = [
@@ -305,104 +389,54 @@ function contentsAt(size: Size, frame: number): Content[] {
       { scene: sceneAt(size, frame - FRAMES, "record"), opacity: dipIn(e, 0.65) },
     ];
   }
-  return contents.filter((c) => c.opacity > 0);
+  return contents;
 }
 
-/** One frame of the app: banner, navigation, the page content(s) under it, any dialog. */
-const AppFrame: React.FC<{ size: Size; contents: Content[]; camera: Camera }> = ({ size, contents, camera }) => {
-  const { width, scale } = VIEW[size];
-  const height = FRAME_SIZE[size].height / scale;
+/** One frame: the pinned banner, then the app (navigation and page content) through the camera, then any dialog. */
+const AppFrame: React.FC<{ size: Size; frame: number; contents: Content[] }> = ({ size, frame, contents }) => {
   // The navigation follows whichever page is more in view.
   const nav = contents.reduce((a, b) => (b.opacity > a.opacity ? b : a)).scene.nav;
   const page = (
-    <div style={{ position: "relative", flex: 1, minWidth: 0, overflow: "hidden", background: "oklch(98.5% 0 none)" }}>
+    <div style={{ position: "relative", flex: 1, minWidth: 0, background: COLORS["zinc-50"] }}>
       {contents.map(({ scene, opacity }, index) => (
         <Clock.Provider key={`${scene.key}-${index}`} value={scene.t}>
-          <div
-            style={{
-              position: "absolute",
-              left: 0,
-              right: 0,
-              top: 0,
-              opacity,
-              // Whole frame pixels, so text is sharp in motion as at rest.
-              transform: `translateY(${-Math.round(scene.scroll * scale) / scale}px)`,
-            }}
-          >
-            {scene.node}
-          </div>
+          <div style={{ position: "absolute", left: 0, right: 0, top: 0, opacity }}>{scene.node}</div>
         </Clock.Provider>
       ))}
     </div>
   );
+  // No opacity wrapper on the dialog: it would cut the scrim's backdrop blur off from the page.
+  const overlay = contents.map(({ scene, opacity }, index) =>
+    scene.overlay ? (
+      <Clock.Provider key={`overlay-${index}`} value={scene.t}>
+        {scene.overlay(opacity)}
+      </Clock.Provider>
+    ) : null
+  );
   return (
-    <div
-      className="cs"
-      style={{
-        position: "absolute",
-        left: 0,
-        top: 0,
-        width,
-        height,
-        transform: `scale(${scale})`,
-        transformOrigin: "0 0",
-        display: "flex",
-        flexDirection: "column",
-        overflow: "hidden",
-      }}
-    >
-      {/* Pinned, and above any dialog's scrim, so every frame carries the demo label. */}
-      <div style={{ position: "relative", zIndex: 40 }}>
-        <DemoBanner />
-      </div>
-      {size === "desktop" ? (
-        // The camera moves everything under the banner; where it uncovers
-        // the space above the page, that space is the page's own grey.
-        <div style={{ position: "relative", flex: 1, minHeight: 0, overflow: "hidden", background: "oklch(98.5% 0 none)" }}>
-          <div
-            style={{
-              position: "absolute",
-              inset: 0,
-              display: "flex",
-              transformOrigin: "0 0",
-              transform: camera.z === 1 ? undefined : `translate(${camera.x}px, ${camera.y}px) scale(${camera.z})`,
-            }}
-          >
-            <Sidebar active={nav} />
-            {page}
-          </div>
+    <div className="cs" style={{ position: "absolute", inset: 0, overflow: "hidden" }}>
+      {/* Pinned to the frame, so every frame carries the demo label. */}
+      <div style={{ position: "absolute", left: 0, right: 0, top: 0, height: bannerHeight(size), overflow: "hidden", zIndex: 40 }}>
+        <div style={{ zoom: BANNER[size].scale }}>
+          <DemoBanner />
         </div>
-      ) : (
-        <>
-          <PhoneHeader active={nav} />
-          {page}
-        </>
-      )}
-      {/* No opacity wrapper here: it would cut the scrim's backdrop blur off from the page. */}
-      {contents.map(({ scene, opacity }, index) =>
-        scene.overlay ? (
-          <Clock.Provider key={`overlay-${index}`} value={scene.t}>
-            {scene.overlay(opacity)}
-          </Clock.Provider>
-        ) : null
-      )}
+      </div>
+      <Camera size={size} frame={frame} overlay={overlay}>
+        {size === "desktop" ? <Sidebar active={nav} /> : <PhoneHeader active={nav} />}
+        {page}
+      </Camera>
     </div>
   );
 };
 
 export const ClinicalLoop: React.FC<{ size: Size }> = ({ size }) => {
   const frame = useCurrentFrame();
-  const { width, scale } = VIEW[size];
   return (
-    <Viewport.Provider value={width}>
-      <Scale.Provider value={scale}>
+    <Viewport.Provider value={VIEW[size].width}>
+      <Scale.Provider value={closeUp(size)}>
         <AbsoluteFill style={{ background: "#fff" }}>
           <style>{RESET}</style>
-          <AppFrame
-            size={size}
-            contents={contentsAt(size, frame)}
-            camera={size === "desktop" ? cameraAt(zoomAt(frame), scale) : { z: 1, x: 0, y: 0 }}
-          />
+          <AppFrame size={size} frame={frame} contents={contentsAt(size, frame)} />
         </AbsoluteFill>
       </Scale.Provider>
     </Viewport.Provider>

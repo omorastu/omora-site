@@ -22,7 +22,10 @@ import { cn } from "@/lib/utils";
 /** Every project ready to show, in order. */
 export const shownProjects = () => projects.filter((p) => !p.hidden);
 
-/** The home page's Work: the first `homeWorkCount` projects, then the way to the rest. */
+/**
+ * The home page's Work: the first `homeWorkCount` projects, then the way to
+ * the rest. On phones they're one row to swipe through instead of a column.
+ */
 export function Work() {
   return (
     <section className="work sec" id="work" aria-labelledby="work-h">
@@ -30,7 +33,7 @@ export function Work() {
         <h2 className="sec-label label" id="work-h">
           {workPage.title}
         </h2>
-        <WorkGrid projects={shownProjects().slice(0, homeWorkCount)} />
+        <WorkGrid projects={shownProjects().slice(0, homeWorkCount)} swipe />
         <p className="more">
           <Link href="/work">{workPage.more}</Link>
         </p>
@@ -39,22 +42,29 @@ export function Work() {
   );
 }
 
-/** The cards, two across. `heading` is h2 on /work, where the page title is the h1. */
-export function WorkGrid({ projects, heading = "h3" }: { projects: Project[]; heading?: "h2" | "h3" }) {
+/**
+ * The cards, two across. `heading` is h2 on /work, where the page title is
+ * the h1. `swipe` makes them one row under 768px, each card 85% of the screen.
+ */
+export function WorkGrid({ projects, heading = "h3", swipe = false }: { projects: Project[]; heading?: "h2" | "h3"; swipe?: boolean }) {
+  const sizes = swipe ? `(max-width: 767px) 85vw, ${CARD_SIZES}` : CARD_SIZES;
   return (
-    <div className="work-grid">
+    <div className={cn("work-grid", swipe && "work-grid--swipe")}>
       {projects.map((p) => (
-        <ProjectCard key={p.name} project={p} heading={heading} />
+        <ProjectCard key={p.name} project={p} heading={heading} sizes={sizes} />
       ))}
     </div>
   );
 }
 
-function ProjectCard({ project: p, heading: Heading }: { project: Project; heading: "h2" | "h3" }) {
+/** A card's screen in the grid: the whole width on phones, a column of two above. */
+const CARD_SIZES = "(max-width: 1023px) 100vw, (min-width: 1921px) 780px, 41vw";
+
+function ProjectCard({ project: p, heading: Heading, sizes }: { project: Project; heading: "h2" | "h3"; sizes: string }) {
   const { media } = mediaOnDisk(p.name, p.media);
   return (
     <article className="proj">
-      {media && <ProjectScreen media={media} />}
+      {media && <ProjectScreen media={media} sizes={sizes} />}
       <div className="proj-body">
         <Heading className="proj-name">{p.name}</Heading>
         <p className="proj-meta label">
@@ -88,7 +98,7 @@ function ProjectCard({ project: p, heading: Heading }: { project: Project; headi
  */
 export function ProjectScreen({
   media: m,
-  sizes = "(max-width: 1023px) 100vw, (min-width: 1921px) 780px, 41vw",
+  sizes = CARD_SIZES,
   className,
 }: {
   media: ProjectMedia;

@@ -81,19 +81,8 @@ export const RECORD = {
   flag: "Flag a moment",
   momentsHint: "Drop a marker when something worth finding later is said.",
   marker: "Marker",
-  /** A marker already dropped, and the one dropped during the loop. */
+  /** A marker already dropped. */
   firstMarker: 6 * 60 + 48,
-  processingSubtitle: "Processing the recording",
-  processing: "Processing",
-  /** lib/demo/data.ts PROCESSING_STEPS, verbatim. */
-  steps: [
-    "Transcribing audio",
-    "Reading exam sheet",
-    "Extracting fields",
-    "Checking against exam sheet",
-    "Drafting summary and letters",
-    "Finding follow-up reason",
-  ],
 };
 
 /* -------------------------------------------------------------------------
@@ -282,24 +271,6 @@ export const FOLLOW_UPS = {
       nextStep: SUMMARY.nextStep.value,
     },
   ],
-  panel: {
-    meta: [`Consult ${CONSULT_DATE} · with ${PATIENT.guardian} · `, "summary & letters"],
-    close: "close",
-    summary: "Consult summary",
-    fields: [
-      { label: "Chief complaint", value: SUMMARY.chiefComplaint.value },
-      { label: "Plan", value: SUMMARY.plan.value },
-      { label: "Fee and financing", value: SUMMARY.financial.value },
-      { label: "Outcome", value: SUMMARY.outcome.value },
-    ],
-    objectionTitle: "The objection, in their words",
-    objection: "“I'd want to go over the numbers with her dad before we sign anything.”",
-    timelineTitle: "Contact timeline",
-    timeline: [
-      { date: CONSULT_DATE, kind: "consult", text: "New patient consult; did not start." },
-      { date: CONSULT_DATE, kind: "letter", text: "Family letter given at the desk." },
-    ],
-  },
 };
 
 /** The Dialog "Draft this message" opens (recommendation.tsx). */

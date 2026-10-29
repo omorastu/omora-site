@@ -15,7 +15,7 @@ import { B, FONT_BODY } from "./tw";
 /** Seconds on the loop's clock; negative while the end fades back into frame 0. */
 export const Clock = createContext(0);
 
-/** Frame px per CSS px (1.5 or 3), for snapping offsets to whole frame pixels. */
+/** Frame px per CSS px at the camera's usual distance, for snapping offsets to whole frame pixels. */
 export const Scale = createContext(1.5);
 
 /** A CSS px offset rounded to whole frame pixels, so text never lands between them. */
@@ -24,7 +24,14 @@ export const useSnap = () => {
   return (px: number) => Math.round(px * scale) / scale;
 };
 
-export type Pass = { s?: CSSProperties; spaceAfter?: number };
+/**
+ * What a component passes on to its box: extra style, the gap a `space-y-*`
+ * parent sets, and `cam`, the name the camera finds it by (data-cam).
+ */
+export type Pass = { s?: CSSProperties; spaceAfter?: number; cam?: string };
+
+/** The data-cam attribute for a box the camera frames. */
+export const camMark = (cam?: string) => (cam ? { "data-cam": cam } : undefined);
 
 /** CSS ease-in-out, as `cubic-bezier(0.42, 0, 0.58, 1)`. */
 function bezier(x1: number, y1: number, x2: number, y2: number) {
@@ -160,8 +167,9 @@ export const PageHeader: React.FC<{ title: ReactNode; subtitle?: ReactNode; acti
   actions,
   s,
   spaceAfter,
+  cam,
 }) => (
-  <B as="header" c="flex flex-wrap items-center justify-between gap-3" s={s} spaceAfter={spaceAfter}>
+  <B as="header" c="flex flex-wrap items-center justify-between gap-3" s={s} spaceAfter={spaceAfter} p={camMark(cam)}>
     <B c="min-w-0">
       <B as="h1" c="text-base font-semibold text-zinc-900">
         {title}
@@ -189,8 +197,9 @@ export const Card: React.FC<{ children: ReactNode; className?: string; tone?: ke
   tone = "neutral",
   s,
   spaceAfter,
+  cam,
 }) => (
-  <B as="section" c={`rounded-lg p-4 ring-1 ${TONES[tone]} ${className}`} s={s} spaceAfter={spaceAfter}>
+  <B as="section" c={`rounded-lg p-4 ring-1 ${TONES[tone]} ${className}`} s={s} spaceAfter={spaceAfter} p={camMark(cam)}>
     {children}
   </B>
 );

@@ -1,48 +1,22 @@
 import React, { useContext, type ReactNode } from "react";
-import {
-  DENTIST_LETTER,
-  DRAFT,
-  FAMILY_LETTER,
-  FOLLOW_UPS,
-  LETTER_UI,
-  PATIENT,
-  RECOMMENDATION,
-  RECORD,
-  SUMMARY,
-  SUMMARY_PAGE,
-} from "./data";
+import { DENTIST_LETTER, DRAFT, FAMILY_LETTER, FOLLOW_UPS, LETTER_UI, PATIENT, RECOMMENDATION, RECORD, SUMMARY, SUMMARY_PAGE } from "./data";
 import { B } from "./tw";
-import {
-  Button,
-  Card,
-  CardTitle,
-  Category,
-  CheckIcon,
-  Chip,
-  Clock,
-  easeInOut,
-  INPUT,
-  Muted,
-  Page,
-  PageHeader,
-  pulse,
-  Spinner,
-  useSnap,
-} from "./ui";
-import { Viewport } from "./tw";
+import { Button, Card, CardTitle, Category, Chip, Clock, easeInOut, INPUT, Muted, Page, PageHeader, pulse, Spinner, useSnap } from "./ui";
 
 /**
- * The five screens of the loop, each a mirror of the app's component for
+ * The four screens of the loop, each a mirror of the app's component for
  * that step, drawn from explicit state so a frame is a pure function of
  * where the loop is:
  *
- * - RecordScreen, ProcessingScreen: app/record/[consultId]/record-client.tsx
+ * - RecordScreen: app/record/[consultId]/record-client.tsx
  * - SummaryScreen (summary, both letters): app/consult/[id]/summary/summary-client.tsx
  * - RecommendationCard: app/_components/recommendation.tsx
  * - FollowUpsScreen, DraftDialog: app/follow-ups/follow-ups-client.tsx, ui.tsx Dialog
+ *
+ * The blocks the camera frames carry a `cam` name (data-cam): "rec",
+ * "sum-head", "sum-card", "letter-dentist", "letter-family", "fu-head" and
+ * "row-<key>". ClinicalLoop.tsx's CAMERA aims at them by those names.
  */
-
-const useWide = () => useContext(Viewport) >= 640;
 
 /** "MM:SS", as record-client.tsx's clock(). */
 export function clock(seconds: number): string {
@@ -52,19 +26,19 @@ export function clock(seconds: number): string {
 }
 
 /** Fades and lifts a block in as `k` goes 0 → 1, on whole frame pixels. */
-const Reveal: React.FC<{ k: number; children: ReactNode; spaceAfter?: number; lift?: number }> = ({ k, children, spaceAfter, lift = 6 }) => {
+function useReveal(k: number, lift = 6) {
   const snap = useSnap();
   const e = easeInOut(Math.max(0, Math.min(1, k)));
-  return (
-    <div style={{ opacity: e, transform: `translateY(${snap((1 - e) * lift)}px)`, marginBottom: spaceAfter }}>{children}</div>
-  );
-};
+  return { opacity: e, transform: `translateY(${snap((1 - e) * lift)}px)` };
+}
+
+const Reveal: React.FC<{ k: number; children: ReactNode; spaceAfter?: number }> = ({ k, children, spaceAfter }) => (
+  <div style={{ ...useReveal(k), marginBottom: spaceAfter }}>{children}</div>
+);
 
 /* -------------------------------------------------------------------------
  * Step 1: recording
  * ---------------------------------------------------------------------- */
-
-const recordTitle = `${PATIENT.name} · ${PATIENT.age}`;
 
 /** Sixteen bars, as record-client.tsx's LevelMeter, driven by the clock. */
 const LevelMeter: React.FC = () => {
@@ -124,17 +98,13 @@ const SheetThumb: React.FC = () => (
   </B>
 );
 
-export const RecordScreen: React.FC<{ seconds: number; markers: number[]; stopPressed?: boolean; flagPressed?: boolean }> = ({
-  seconds,
-  markers,
-  stopPressed = false,
-  flagPressed = false,
-}) => {
+export const RecordScreen: React.FC<{ seconds: number; stopPressed?: boolean }> = ({ seconds, stopPressed = false }) => {
   const t = useContext(Clock);
   return (
     <Page>
       <PageHeader
-        title={recordTitle}
+        cam="rec-head"
+        title={`${PATIENT.name} · ${PATIENT.age}`}
         subtitle={RECORD.subtitle}
         actions={
           <B as="span" c="inline-flex items-center gap-2 text-xs font-medium text-rose-700">
@@ -144,7 +114,7 @@ export const RecordScreen: React.FC<{ seconds: number; markers: number[]; stopPr
         }
       />
 
-      <Card>
+      <Card cam="rec">
         <B c="flex flex-wrap items-center justify-between gap-6">
           <B as="p" c="text-5xl font-semibold text-zinc-900 tabular-nums">
             {clock(seconds)}
@@ -172,67 +142,18 @@ export const RecordScreen: React.FC<{ seconds: number; markers: number[]; stopPr
         </Card>
 
         <Card>
-          <CardTitle
-            right={
-              <Button variant="amber" pressed={flagPressed}>
-                {RECORD.flag}
-              </Button>
-            }
-          >
-            {RECORD.moments}
-          </CardTitle>
+          <CardTitle right={<Button variant="amber">{RECORD.flag}</Button>}>{RECORD.moments}</CardTitle>
           <Muted className="mt-0.5">{RECORD.momentsHint}</Muted>
           <B as="ul" c="mt-3 space-y-1 text-sm">
-            {markers.map((marker, index) => (
-              <B key={index} as="li" c="flex items-center gap-2">
-                <Category>{clock(marker)}</Category>
-                <B as="span" c="text-zinc-700">
-                  {`${RECORD.marker} ${index + 1}`}
-                </B>
+            <B as="li" c="flex items-center gap-2">
+              <Category>{clock(RECORD.firstMarker)}</Category>
+              <B as="span" c="text-zinc-700">
+                {`${RECORD.marker} 1`}
               </B>
-            ))}
+            </B>
           </B>
         </Card>
       </B>
-    </Page>
-  );
-};
-
-export const ProcessingScreen: React.FC<{ stepsDone: number }> = ({ stepsDone }) => {
-  const t = useContext(Clock);
-  return (
-    <Page>
-      <PageHeader title={recordTitle} subtitle={RECORD.processingSubtitle} />
-      <Card>
-        <CardTitle>{RECORD.processing}</CardTitle>
-        <B as="ol" c="mt-3 space-y-2">
-          {RECORD.steps.map((step, index) => {
-            const done = index < stepsDone;
-            const active = index === stepsDone;
-            return (
-              <B key={step} as="li" c="flex items-center gap-3 text-sm">
-                <B
-                  as="span"
-                  c={
-                    "flex h-5 w-5 shrink-0 items-center justify-center rounded-full ring-1 " +
-                    (done
-                      ? "bg-emerald-600 text-white ring-emerald-600"
-                      : active
-                        ? "bg-amber-100 ring-amber-300"
-                        : "bg-white ring-zinc-300")
-                  }
-                  s={active ? { opacity: pulse(t) } : undefined}
-                >
-                  {done && <CheckIcon />}
-                </B>
-                <B as="span" c={done ? "text-zinc-600" : active ? "font-medium text-zinc-900" : "text-zinc-600"}>
-                  {step}
-                </B>
-              </B>
-            );
-          })}
-        </B>
-      </Card>
     </Page>
   );
 };
@@ -243,8 +164,13 @@ export const ProcessingScreen: React.FC<{ stepsDone: number }> = ({ stepsDone })
 
 export type Tab = "summary" | "family" | "dentist";
 
-/** How far each part of the summary has appeared, 0 → 1, by index. */
-export type Shown = (index: number) => number;
+/**
+ * How far each line of the summary has appeared, 0 → 1, in order: the chief
+ * complaint, the five findings one by one, plan, alternatives, fee,
+ * objection, outcome, next step, then the recommendation card below.
+ */
+export type Shown = (line: number) => number;
+export const SUMMARY_LINES = 13;
 
 /** Cuts streamed text at a word boundary, the way a draft arrives. */
 export function streamed(text: string, chars: number): string {
@@ -257,6 +183,7 @@ export function streamed(text: string, chars: number): string {
 
 const SummaryHeader: React.FC<{ spaceAfter?: number }> = ({ spaceAfter }) => (
   <PageHeader
+    cam="sum-head"
     spaceAfter={spaceAfter}
     title={
       <>
@@ -307,8 +234,14 @@ const Field: React.FC<{ label: string; children: ReactNode; k: number; spaceAfte
   </Reveal>
 );
 
+const Finding: React.FC<{ k: number; children: ReactNode; spaceAfter?: number }> = ({ k, children, spaceAfter }) => (
+  <B as="li" spaceAfter={spaceAfter} s={useReveal(k, 4)}>
+    {children}
+  </B>
+);
+
 const SummaryCard: React.FC<{ shown: Shown; spaceAfter?: number }> = ({ shown, spaceAfter }) => (
-  <Card spaceAfter={spaceAfter}>
+  <Card cam="sum-card" spaceAfter={spaceAfter}>
     <CardTitle right={<Button variant="secondary">{SUMMARY_PAGE.copy}</Button>}>{SUMMARY.title}</CardTitle>
     <B as="dl" c="mt-3 space-y-3 text-sm">
       <Field label={SUMMARY.chiefComplaint.label} k={shown(0)}>
@@ -318,34 +251,34 @@ const SummaryCard: React.FC<{ shown: Shown; spaceAfter?: number }> = ({ shown, s
       </Field>
       <Field label={SUMMARY.findings.label} k={shown(1)}>
         <B as="ul" c="list-disc space-y-0.5 pl-5 text-zinc-800">
-          {SUMMARY.findings.value.map((f) => (
-            <B key={f} as="li">
+          {SUMMARY.findings.value.map((f, i) => (
+            <Finding key={f} k={shown(1 + i)}>
               {f}
-            </B>
+            </Finding>
           ))}
         </B>
       </Field>
-      <Field label={SUMMARY.plan.label} k={shown(2)}>
+      <Field label={SUMMARY.plan.label} k={shown(6)}>
         <B as="dd" c="text-zinc-800">
           {SUMMARY.plan.value}
         </B>
       </Field>
-      <Field label={SUMMARY.alternatives.label} k={shown(3)}>
+      <Field label={SUMMARY.alternatives.label} k={shown(7)}>
         <B as="dd" c="text-zinc-800">
           {SUMMARY.alternatives.value}
         </B>
       </Field>
-      <Field label={SUMMARY.financial.label} k={shown(4)}>
+      <Field label={SUMMARY.financial.label} k={shown(8)}>
         <B as="dd" c="text-zinc-800">
           {SUMMARY.financial.value}
         </B>
       </Field>
-      <Field label={SUMMARY.objection.label} k={shown(5)}>
+      <Field label={SUMMARY.objection.label} k={shown(9)}>
         <B as="dd" c="text-zinc-800">
           {SUMMARY.objection.value}
         </B>
       </Field>
-      <Field label={SUMMARY.outcome.label} k={shown(6)}>
+      <Field label={SUMMARY.outcome.label} k={shown(10)}>
         <B as="dd" c="text-zinc-800">
           {SUMMARY.outcome.value}
         </B>
@@ -358,7 +291,7 @@ const SummaryCard: React.FC<{ shown: Shown; spaceAfter?: number }> = ({ shown, s
           ))}
         </B>
       </Field>
-      <Field label={SUMMARY.nextStep.label} k={shown(7)}>
+      <Field label={SUMMARY.nextStep.label} k={shown(11)}>
         <B as="dd" c="text-zinc-800">
           {SUMMARY.nextStep.value}
         </B>
@@ -367,11 +300,8 @@ const SummaryCard: React.FC<{ shown: Shown; spaceAfter?: number }> = ({ shown, s
   </Card>
 );
 
-export const RecommendationCard: React.FC<{ compact?: boolean; pressed?: boolean; spaceAfter?: number }> = ({
-  compact = false,
-  pressed = false,
-  spaceAfter,
-}) => (
+/** recommendation.tsx's card, as the summary tab shows it under the summary. */
+const RecommendationCard: React.FC<{ spaceAfter?: number }> = ({ spaceAfter }) => (
   <Card spaceAfter={spaceAfter}>
     <CardTitle
       right={
@@ -392,14 +322,12 @@ export const RecommendationCard: React.FC<{ compact?: boolean; pressed?: boolean
         </B>
       ))}
     </B>
-    {!compact && (
-      <B c="mt-3">
-        <Category>{RECOMMENDATION.whyLabel}</Category>
-        <B as="p" c="text-sm text-zinc-700">
-          {RECOMMENDATION.why}
-        </B>
+    <B c="mt-3">
+      <Category>{RECOMMENDATION.whyLabel}</Category>
+      <B as="p" c="text-sm text-zinc-700">
+        {RECOMMENDATION.why}
       </B>
-    )}
+    </B>
     <B c="mt-3">
       <Category>{RECOMMENDATION.evidenceLabel}</Category>
       <B as="ul" c="mt-1 space-y-1">
@@ -416,19 +344,22 @@ export const RecommendationCard: React.FC<{ compact?: boolean; pressed?: boolean
       </B>
     </B>
     <B c="mt-3">
-      <Button variant="amber" pressed={pressed}>
-        {RECOMMENDATION.draftButton}
-      </Button>
+      <Button variant="amber">{RECOMMENDATION.draftButton}</Button>
     </B>
   </Card>
 );
 
-/** The letter tab: LetterEditor, with its text arriving as it is drafted. */
+/**
+ * The letter tab: LetterEditor, with its text arriving as it is drafted.
+ * The text still to come is laid out but invisible, so the box is its
+ * finished size from the start and the camera can follow the draft down it.
+ */
 const LetterEditor: React.FC<{ kind: "family" | "dentist"; chars: number; drafting: boolean }> = ({ kind, chars, drafting }) => {
   const letter = kind === "family" ? FAMILY_LETTER : DENTIST_LETTER;
   const lineHeight = 14 * 1.625;
+  const typed = streamed(letter.body, chars);
   return (
-    <Card>
+    <Card cam={`letter-${kind}`}>
       <CardTitle
         right={
           <B as="span" c="text-xs text-zinc-600">
@@ -451,7 +382,8 @@ const LetterEditor: React.FC<{ kind: "family" | "dentist"; chars: number; drafti
         c={`${INPUT} mt-3 font-serif text-sm leading-relaxed`}
         s={{ whiteSpace: "pre-wrap", overflowWrap: "break-word", minHeight: 8 * lineHeight + 12 + 2 }}
       >
-        {streamed(letter.body, chars)}
+        {typed}
+        <span style={{ color: "transparent" }}>{letter.body.slice(typed.length)}</span>
       </B>
       <B c="mt-3 flex flex-wrap items-center gap-2">
         <Button variant="secondary">{LETTER_UI.copy}</Button>
@@ -477,7 +409,7 @@ export const SummaryScreen: React.FC<{
     key === "summary" ? (
       <B c="space-y-6">
         <SummaryCard shown={complete ? () => 1 : shown} />
-        <Reveal k={complete ? 1 : shown(8)}>
+        <Reveal k={complete ? 1 : shown(12)}>
           <RecommendationCard />
         </Reveal>
       </B>
@@ -520,10 +452,16 @@ const Chevron: React.FC = () => (
   </svg>
 );
 
-const FollowUpRow: React.FC<{ row: Row; selected: boolean; compact: boolean; spaceAfter?: number }> = ({ row, selected, compact, spaceAfter }) => (
+/** One case. `pointed` is the hover:bg-zinc-50 the pointer gives it just before it's picked. */
+const FollowUpRow: React.FC<{ row: Row; selected: boolean; pointed: boolean; spaceAfter?: number }> = ({ row, selected, pointed, spaceAfter }) => (
   <B
-    c={"cursor-pointer rounded-lg bg-white p-4 ring-1 transition-colors " + (selected ? "ring-2 ring-zinc-900" : "ring-zinc-200")}
+    c={
+      "cursor-pointer rounded-lg p-4 ring-1 transition-colors " +
+      (pointed ? "bg-zinc-50 " : "bg-white ") +
+      (selected ? "ring-2 ring-zinc-900" : "ring-zinc-200")
+    }
     spaceAfter={spaceAfter}
+    p={{ "data-cam": `row-${row.key}` }}
   >
     <B c="flex items-start gap-4">
       <B c="min-w-0 flex-1">
@@ -547,7 +485,7 @@ const FollowUpRow: React.FC<{ row: Row; selected: boolean; compact: boolean; spa
             </Chip>
           ))}
         </B>
-        <B as="dl" c={`mt-2 grid gap-x-8 gap-y-1 text-xs ${compact ? "sm:grid-cols-2" : "sm:grid-cols-3"}`}>
+        <B as="dl" c="mt-2 grid gap-x-8 gap-y-1 text-xs sm:grid-cols-3">
           <div>
             <Category>{FOLLOW_UPS.followUp}</Category>
             <B as="dd" c="text-sm">
@@ -560,7 +498,7 @@ const FollowUpRow: React.FC<{ row: Row; selected: boolean; compact: boolean; spa
               {row.fee}
             </B>
           </div>
-          <B c={compact ? "sm:col-span-2" : "sm:col-span-3"}>
+          <B c="sm:col-span-3">
             <Category>{FOLLOW_UPS.nextStep}</Category>
             <B as="dd" c="text-sm text-zinc-800">
               {row.nextStep}
@@ -619,114 +557,43 @@ const Filters: React.FC<{ spaceAfter?: number }> = ({ spaceAfter }) => {
   );
 };
 
-const SidePanel: React.FC<{ draftPressed: boolean }> = ({ draftPressed }) => {
-  const p = FOLLOW_UPS.panel;
-  return (
-    <B as="aside" c="sticky top-6 w-[26rem] shrink-0 self-start rounded-lg border border-zinc-200 bg-white p-4">
-      <B c="flex items-baseline justify-between gap-4">
-        <div>
-          <B as="h2" c="text-base font-semibold text-zinc-900">
-            {PATIENT.name}
-            <B as="span" c="font-normal text-zinc-600">
-              {` · ${PATIENT.age}`}
-            </B>
-          </B>
-          <Muted>
-            {p.meta[0]}
-            <B as="a" c="underline underline-offset-2">
-              {p.meta[1]}
-            </B>
-          </Muted>
-        </div>
-        <Button variant="link">{p.close}</Button>
-      </B>
-
-      <B c="mt-4 space-y-4">
-        <Card>
-          <CardTitle>{p.summary}</CardTitle>
-          <B as="dl" c="mt-2 space-y-2 text-sm">
-            {p.fields.map((f) => (
-              <div key={f.label}>
-                <Category>{f.label}</Category>
-                <B as="dd" c="text-zinc-800">
-                  {f.value}
-                </B>
-              </div>
-            ))}
-          </B>
-        </Card>
-        <Card tone="amber">
-          <B as="h3" c="text-sm font-semibold text-amber-900">
-            {p.objectionTitle}
-          </B>
-          <B as="p" c="mt-1 text-sm text-zinc-800 italic">
-            {p.objection}
-          </B>
-        </Card>
-        <Card>
-          <CardTitle>{p.timelineTitle}</CardTitle>
-          <B as="ol" c="mt-2 space-y-1.5">
-            {p.timeline.map((event, index) => (
-              <B key={index} as="li" c="flex gap-3 text-sm">
-                <B as="span" c="w-24 shrink-0 text-xs text-zinc-600 tabular-nums">
-                  {event.date}
-                </B>
-                <B as="span" c="text-zinc-800">
-                  <B as="span" c="mr-1 text-[0.6875rem] tracking-wide text-zinc-600 uppercase">
-                    {event.kind}
-                  </B>
-                  {event.text}
-                </B>
-              </B>
-            ))}
-          </B>
-        </Card>
-        <RecommendationCard compact pressed={draftPressed} />
-      </B>
-    </B>
-  );
-};
-
 /**
- * Follow-ups with Zz-Maya's row open beside its panel. On a phone the app's
- * 26rem panel cannot fit beside the list, so the phone shows the list alone
- * and the draft opens over it.
+ * The follow-up list, with Zz-Maya's case being picked. In the app, picking
+ * a case opens a 26rem panel beside the list, which at this window width
+ * would leave the list a sliver; here the case's drafted message opens over
+ * the list instead (DraftDialog), as the app's own Dialog does.
  */
-export const FollowUpsScreen: React.FC<{ draftPressed: boolean }> = ({ draftPressed }) => {
-  const wide = useWide();
-  const selected = wide ? "maya" : null;
+export const FollowUpsScreen: React.FC<{ pointed: boolean; picked: boolean }> = ({ pointed, picked }) => {
   const groups = (["overdue", "today", "upcoming"] as const)
     .map((g) => ({ g, members: FOLLOW_UPS.rows.filter((r) => r.group === g) }))
     .filter((x) => x.members.length > 0);
   return (
     <Page wide>
-      <PageHeader title={FOLLOW_UPS.title} subtitle={FOLLOW_UPS.subtitle} />
+      <PageHeader cam="fu-head" title={FOLLOW_UPS.title} subtitle={FOLLOW_UPS.subtitle} />
       <Filters />
-      <B c="flex items-start gap-6">
-        <B c="min-w-0 flex-1 space-y-6">
-          {groups.map(({ g, members }) => (
-            <B key={g} as="section" c="space-y-2">
-              <B as="h2" c={`text-[0.6875rem] font-medium tracking-wide uppercase ${GROUP_TONE[g]}`}>
-                {`${FOLLOW_UPS.groups[g]} · ${members.length}`}
-              </B>
-              {members.map((row) => (
-                <FollowUpRow key={row.key} row={row} selected={selected === row.key} compact={selected !== null} />
-              ))}
+      <B c="min-w-0 space-y-6">
+        {groups.map(({ g, members }) => (
+          <B key={g} as="section" c="space-y-2">
+            <B as="h2" c={`text-[0.6875rem] font-medium tracking-wide uppercase ${GROUP_TONE[g]}`}>
+              {`${FOLLOW_UPS.groups[g]} · ${members.length}`}
             </B>
-          ))}
-        </B>
-        {selected && <SidePanel draftPressed={draftPressed} />}
+            {members.map((row) => (
+              <FollowUpRow key={row.key} row={row} selected={picked && row.key === "maya"} pointed={pointed && row.key === "maya"} />
+            ))}
+          </B>
+        ))}
       </B>
     </Page>
   );
 };
 
 /**
- * ui.tsx's Dialog with recommendation.tsx's draft in it, over the whole
- * frame. `visible` fades the scrim's tint and blur and the card together;
- * an opacity on a parent would stop the blur reaching the page behind.
+ * ui.tsx's Dialog with recommendation.tsx's draft in it, over the camera's
+ * view. `visible` fades the scrim's tint and blur and the card together; an
+ * opacity on a parent would stop the blur reaching the page behind. `zoom`
+ * and `width` size the card as the page under it is seen.
  */
-export const DraftDialog: React.FC<{ chars: number; visible: number }> = ({ chars, visible }) => (
+export const DraftDialog: React.FC<{ chars: number; visible: number; zoom: number; width: number }> = ({ chars, visible, zoom, width }) => (
   <B
     c="fixed inset-0 z-30 flex items-center justify-center bg-zinc-900/30 p-4 backdrop-blur-[2px] font-sans"
     s={{
@@ -734,7 +601,7 @@ export const DraftDialog: React.FC<{ chars: number; visible: number }> = ({ char
       backdropFilter: `blur(${2 * visible}px)`,
     }}
   >
-    <B c="w-full max-w-2xl rounded-lg bg-white p-4 shadow-xl ring-1 ring-zinc-200" s={{ opacity: visible }}>
+    <B c="w-full max-w-2xl rounded-lg bg-white p-4 shadow-xl ring-1 ring-zinc-200" s={{ opacity: visible, zoom, width }}>
       <B c="flex items-baseline justify-between gap-4">
         <B as="h2" c="text-sm font-semibold text-zinc-900">
           {DRAFT.title}
@@ -742,10 +609,7 @@ export const DraftDialog: React.FC<{ chars: number; visible: number }> = ({ char
         <Button variant="link">{DRAFT.close}</Button>
       </B>
       <B c="mt-3">
-        <B
-          c={`${INPUT} font-mono text-xs`}
-          s={{ whiteSpace: "pre-wrap", overflowWrap: "break-word", minHeight: 6 * 16 + 12 + 2 }}
-        >
+        <B c={`${INPUT} font-mono text-xs`} s={{ whiteSpace: "pre-wrap", overflowWrap: "break-word", minHeight: 6 * 16 + 12 + 2 }}>
           {streamed(DRAFT.body, chars)}
         </B>
         <B c="mt-3 flex items-center gap-2">

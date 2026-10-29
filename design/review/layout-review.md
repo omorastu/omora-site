@@ -1,88 +1,116 @@
 # Layout review
 
-Covers the editorial grid, the Work cards and Clinical Scribe. Screenshots are in `layout-review.pdf`: the homepage, /work and /work/clinical-scribe at 1440 and 390, plus a cover page of measured checks. All of it was captured from the dev server on port 3100.
+Covers this round's follow-up fixes:
+- the Clinical Scribe card re-filmed as close-ups;
+- the portrait plates in the "us" section;
+- /services on the grid;
+- the reduced-motion repeat on the case study;
+- the phone swipe row on the homepage;
+- Pearls re-made at 1280×800.
 
-## Homepage height
+Screenshots are in `layout-review.pdf`: the homepage, /services, /work and /work/clinical-scribe at 1440 and 390, plus a cover page of measured checks. All of it was captured from the dev server on port 3100, with reduced motion on so the pages are settled.
 
-The site's type scales with the window up to 1920px wide, so the same page is taller on a bigger screen. The old page's "about 12,400px" is what a 1920–2560px-wide window shows.
+## Page heights
 
-| Window | Before | After | Change |
+"Before" is where each page stood at the start of this round (the last review's numbers; /services measured from the previous commit).
+
+| Page | Window | Before | After |
 | --- | --- | --- | --- |
-| Desktop 1440×900 | 8,983 | 4,425 | 49% |
-| Desktop 1920×1080 | 11,546 | 5,674 | 49% |
-| Desktop 2560×1440 | 12,186 | 6,034 | 50% |
-| Phone 390×844 | 8,131 | 6,824 | 84% |
+| Homepage | Desktop 1440×900 | 4,425 | 4,425 |
+| Homepage | Phone 390×844 | 6,824 | 4,781 |
+| /services | Desktop 1440×900 | 3,765 | 2,393 |
+| /services | Phone 390×844 | 5,019 | 3,418 |
+| /work | Desktop 1440×900 | 2,190 | 2,190 |
+| /work | Phone 390×844 | 4,478 | 4,478 |
+| /work/clinical-scribe | Desktop 1440×900 | 5,716 | 5,716 |
+| /work/clinical-scribe | Phone 390×844 | 6,125 | 6,125 |
 
-The phone page is shorter, but by less than desktop:
-- **The hero:** it's unchanged, as asked, at about 820px including the header.
-- **Work:** its four 4:5 live cards stack in one column, about 2,600px together.
-- **What's left:** spacing was tightened, but the rest is content.
+- **Homepage on the phone:** the four Work cards are one swipe row now instead of a stack, which takes about 2,000px off. Desktop is unchanged.
+- **/services:** about a third shorter on both, because the 6.5rem centred titles and seam spacing are gone.
+- **/work and the case study:** the same heights. Their cards and stills kept their sizes; only what's in them changed.
 
-## Video files still missing
+## Clinical Scribe, filmed in close-up
 
-- **Cubic Ship:** `cubic-m.mp4`, `cubic-m-sd.mp4`. On phones the card shows its poster.
-- **Galvan Dental Care:** `galvan-d.mp4`, `galvan-d-sd.mp4`, `galvan-m.mp4`, `galvan-m-sd.mp4`. The card shows its posters.
+It's still a replica, not a recording, for the same reasons as before: the real app reaches production even in its synthetic mode. Nothing in `~/Projects/omora-clinical` was run; its source was read for layout only.
 
-Each card lists the full set of cuts in `lib/kozmoz.ts`. A listed file that isn't in `public/m/work/` is left out when the site builds, and the build log names it, so dropping the file in turns that cut on.
+**Why the card was an empty white box.** The old video showed the whole 1440px app screen, so in a 584px card the app's 14px text was about 6px high.
 
-What every other card has:
-- **Numen and Clinical Scribe:** the full set of cuts, plus their own reduced-motion stills.
-- **Pearls and Cubic:** SD cuts are new this round, made from their existing loops by `video/scripts/sd.mjs`.
-- **The Sticker Smith:** no SD cuts, on purpose. Its loops (388 KB and 325 KB) are already lighter than an SD cut may be.
-- **Reduced-motion images:** every project except Numen and Clinical Scribe uses its poster, which is already a frame of its loop.
+**What changed.** The app is now laid out in a narrow window: 840 CSS px with its sidebar on desktop, 360 on the phone. There each panel is a single column, and a camera frames that column.
+- **Desktop:** about 2.4× closer than the whole screen.
+- **Phone:** the panel edge to edge.
+- **Moves:** the camera eases between panels and follows each draft down as it arrives.
 
-## Clinical Scribe: a replica, not a recording
+**Scenes, in order (21 s):**
+1. The recording, with the timer running and the level meter moving.
+2. The summary filling in line by line.
+3. The doctor letter typing itself out.
+4. The patient take-home letter typing itself out.
+5. The follow-up list, with Zz-Maya's case picked and its message drafting over the list.
 
-Nothing in `~/Projects/omora-clinical` was run or recorded. The video is a replica built in `video/` from the app's source code. It uses the app's own layout, Tailwind classes, colours, Geist fonts, labels and demo banner, with made-up data.
+**Text size on the site.** At the card's display size the app's 14px body text shows at about:
+- 13.5px in a 584px desktop card (1440 window);
+- 18px at 1920;
+- 13–14px in a phone card.
 
-I couldn't guarantee the app would run fully on synthetic data:
-- **The consult flow calls production.** The routes it uses (status, generate, letters, audio) call `kickPipeline`, which invokes the production Lambda named in `.env` whatever `DATA_MODE` is set to.
-- **Drafting calls live Bedrock.** The summary and letters are drafted through live AWS Bedrock in both modes.
-- **The local `.env` points at production.** It holds the production database, PHI bucket and Cognito identifiers, so the app is one setting away from live.
-- **The demo patients aren't Zz- names.** The synthetic seed that `/today` and `/follow-ups` list uses names like any others.
-
-What the replica's data contains:
-- **People:** only invented ones, all Zz- names, for example Zz-Maya Example, Dr. Zz-Demo and Dr. Zz-Lee Sample.
-- **No personal data:** no dates of birth and no identifiers.
-- **The practice:** called "Demo Orthodontics", because the real practice is not named, by agreement.
-- **The banner:** the app's own demo banner is on every frame.
-
-How the frames were checked:
-- **The data file:** it is the only source of on-screen text, and it was read in full.
-- **The rendered frames:** every 10th frame of each composition was checked, and again for the desktop cut after its camera change.
-
-What the page shows:
-- **Under the intro:** the live card, captioned "Demo data".
-- **In "02 The build":** the three stills (summary, doctor letter, follow-ups), each captioned "Demo data".
-
-## Numen, re-rendered sharper
-
-- **Capture:** the desktop pages were captured at 1.5× as PNG.
-- **Phone capture:** it stays at 3×, because 1.5× of 390px is 585px, narrower than the 720px video.
-- **Scaling:** every tile lands 1:1 on the master. Each file is a lanczos downscale of the master, encoded at the lowest CRF that fits.
+**Same as before:**
+- **Data:** the same Zz- demo data from one file.
+- **Banner:** the app's demo banner, pinned across the top of every frame.
+- **Caps:** the same as Numen's.
 
 | File | Size | Limit | CRF |
 | --- | --- | --- | --- |
-| `numen-d.mp4` | 1.98 MB | 2 MB | 28.5 |
-| `numen-m.mp4` | 1.94 MB | 2 MB | 25.5 |
-| `numen-d-sd.mp4` | 870 KB | 900 KB | 31 |
-| `numen-m-sd.mp4` | 865 KB | 900 KB | 30.5 |
+| `clinical-d.mp4` | 1.98 MB | 2 MB | 25.5 |
+| `clinical-d-sd.mp4` | 880 KB | 900 KB | 27 |
+| `clinical-m.mp4` | 1.99 MB | 2 MB | 24.5 |
+| `clinical-m-sd.mp4` | 866 KB | 900 KB | 29 |
 
-The caps set those CRFs, so they can't go lower at these sizes. The text is still visibly cleaner than in the last render.
+**Stills.** The posters and stills are re-exported from the new render.
+- **Case study:** the summary, the doctor letter and the follow-up draft.
+- **Reduced-motion still:** the family letter. It's a frame the case study doesn't otherwise show, so with reduced motion on nothing repeats there (checked at both sizes, see the PDF's cover).
+
+**How the frames were checked:**
+- **The data file:** every word on screen comes from `video/src/clinical/data.ts`. This round only removed text from it, and it was re-read: only Zz- names, no dates of birth and no identifiers.
+- **The renders:** around 60 frames across both sizes were looked at during the render checks, including every poster and still.
+
+**Changes from the old flow:**
+- **The processing checklist is gone,** so the five scenes you asked for get the time.
+- **On a picked follow-up case,** the app opens a 26rem side panel. At this window width that would leave the list a sliver, so the drafted message opens over the list instead, using the app's own dialog.
+
+## Pearls, re-made at 1280×800
+
+`pearls-d.mp4` was 864×540, the size of an SD cut. There was no source file for it, so it was re-made from the live pearlsfarminc.com homepage (`video/scripts/pearls.mjs`).
+- **Capture:** the page was shot at 1440×900 and 1.5×.
+- **Frames:** each of the hero video's 534 frames was shown in turn in the video's place and the page captured.
+- **Encoding:** like the other loops, from a near-lossless master.
+
+| File | Size | Limit | CRF |
+| --- | --- | --- | --- |
+| `pearls-d.mp4` | 1.86 MB | 2 MB | 36 |
+| `pearls-d-sd.mp4` | 835 KB | 900 KB | 36 |
+
+- **Quality:** 18 seconds of detailed aerial footage at 1280×800 needs CRF 36 to stay under 2 MB, much higher than the screen recordings need. At card size it looks as good as the old 864×540 file, and the headline and navigation over it are noticeably sharper.
+- **Poster:** new, taken from the live site, whose buttons have moved since the old capture.
+- **Phone loop:** `pearls-m.mp4` is unchanged.
+
+## Video files still missing
+
+Unchanged from the last round. The build log names each one, and its card shows its poster.
+- **Cubic Ship:** `cubic-m.mp4`, `cubic-m-sd.mp4`.
+- **Galvan Dental Care:** `galvan-d.mp4`, `galvan-d-sd.mp4`, `galvan-m.mp4`, `galvan-m-sd.mp4`.
 
 ## Checks
 
 - **Lint, typecheck and build** all pass (`npx eslint .`, `npx tsc --noEmit`, `npm run build`).
-- **Text on lines:** none crosses a rule, border or the seam on any of the three pages at either size.
+- **Text on lines:** none crosses a rule or border on any of the four pages at either size.
 - **Centred text:** none below the hero.
-- **The seam:** it is only in the hero and ends where the hero does.
-- **Loop loading on /work, with motion on:**
-  - Normally, every card plays its HD cut.
-  - On 3G or Save-Data, the SD cut plays where there is one.
-  - On 2G, posters only.
+- **The seam:** only in the homepage hero. None on /services, /work or the case study.
+- **Homepage Work on the phone:** one row with scroll snap, each card 85% of the screen, and "See all work" under it. Desktop keeps the 2-across grid, and /work stays a stacked list on the phone.
+- **Portraits:** each frame is a plate a shade under the paper with a hairline border, and the letter is in the person's ink. Dropping a test image in at `public/m/us/ashan.jpg` showed it in Ashan's frame in place of the letter, with the name on a paper ground. The test file was removed afterwards.
 
 ## Not done, or worth a look
 
-- **/services** still has the old seam and centred layout. It wasn't in this brief, so I left it as it was (same height as before). It can move to the new grid in a later pass.
-- **Duplicate image under reduced motion:** the Clinical Scribe live card's reduced-motion still is the summary frame. That is also the first still in "02 The build", so visitors with reduced motion see that image twice on the case study.
-- **Galvan Dental Care** has no link (unchanged), so its card ends with its line.
+- **Phone zoom factor:** the phone video doesn't zoom 2–2.5×. It's already laid out at phone width, so 2× would cut every line in half. The camera fills the frame with the panel instead, which gives the readable sizes above.
+- **Portrait photos need a rebuild:** they're picked up when the site builds. After adding `ashan.jpg` and `jordan.jpg` to `public/m/us/`, rebuild and deploy. They should be 4:5, at least 800×1000.
+- **/services lost its A+J and J tags.** They sat on the seam, so they went with it. The credit lines say who does what, as on the homepage.
+- **Pearls phone loop:** still the older 544×680 cut.
+- **Stale images on a running dev server:** it keeps its own optimized copies of images for hours. After replacing an image under an existing name, clear `.next/dev/cache/images` or restart it. Production builds aren't affected. This round's review clears it before capturing.

@@ -30,21 +30,24 @@ export type Person = {
   /** What they do, after their name. */
   line: string;
   /**
-   * Portrait, e.g. "/m/people/ashan.jpg". Unset until the shoot: the frame
-   * shows the initial instead, at the portrait's proportions.
+   * Their portrait's place in public/. Until a file is there the frame shows
+   * the initial; add it (4:5, at least 800×1000) and rebuild, and the photo
+   * takes the initial's place.
    */
-  photo?: string;
+  photo: string;
 };
 
 export const people: Record<Who, Person> = {
   a: {
     name: "Ashan",
     initial: "A",
+    photo: "/m/us/ashan.jpg",
     line: "Decides how it looks and how it should feel to use. Plans the shoot and the posts. Then tries to break the site before your customers can.",
   },
   j: {
     name: "Jordan",
     initial: "J",
+    photo: "/m/us/jordan.jpg",
     line: "Builds it: the site, the booking, the phone answering and the follow-up behind it. Shoots the photos and video.",
   },
 };
@@ -88,16 +91,11 @@ export type Service = {
   id: string;
   title: string;
   text: string;
-  /** What comes with it, listed under the text on /services. */
+  /** What comes with it, listed beside the text on /services. */
   included: string[];
   /**
-   * Whose it is. On /services, where every service is centred across the
-   * seam, the tag on its credit line says so: "A+J" for "both", "J" for "j".
-   */
-  hands: "both" | Who;
-  /**
-   * Each person's part, "Ashan <verb>" and "Jordan <verb>": the home page
-   * prints them as one line, /services on either side of the seam.
+   * Each person's part, "Ashan <verb>" and "Jordan <verb>", printed as one
+   * line in the two inks.
    */
   credit: Record<Who, string>;
 };
@@ -112,7 +110,6 @@ export const services: Service[] = [
       "Fast on phones, on your own domain",
       "Kept up every month, not handed off and forgotten",
     ],
-    hands: "both",
     credit: { a: "Ashan designs", j: "Jordan builds" },
   },
   {
@@ -124,7 +121,6 @@ export const services: Service[] = [
       "Photos and short video cut for your site, Google and Instagram",
       "New content every month, so your pages don’t go stale",
     ],
-    hands: "both",
     credit: { a: "Ashan plans", j: "Jordan shoots" },
   },
   {
@@ -136,7 +132,6 @@ export const services: Service[] = [
       "Local search done properly on the site itself",
       "Ads when they make sense, with what each one brings in tracked",
     ],
-    hands: "both",
     credit: { a: "Ashan writes", j: "Jordan sets up" },
   },
   {
@@ -148,7 +143,6 @@ export const services: Service[] = [
       "Booking tied into how you already schedule",
       "Follow-up texts that go out on their own, plus custom tools for how you work",
     ],
-    hands: "j",
     credit: { a: "Ashan tests", j: "Jordan builds" },
   },
 ];
@@ -204,7 +198,7 @@ export type Project = {
  * video/ (see its README): the real app is never recorded.
  */
 export const clinicalScribeMedia: ProjectMedia = {
-  alt: "Clinical Scribe with made-up demo data: a consult being recorded, then its summary, the two letters and the follow-up messages drafting.",
+  alt: "Clinical Scribe with made-up demo data, close up: a consult being recorded, its summary filling in, the two letters drafting, then a follow-up case picked and its message drafted.",
   desktop: { src: "/m/work/clinical-d-poster.jpg", width: 960, height: 600 },
   mobile: { src: "/m/work/clinical-m-poster.jpg", width: 544, height: 680 },
   still: {

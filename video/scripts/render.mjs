@@ -31,7 +31,7 @@ const PROJECTS = {
   },
   clinical: {
     // A replica with invented data, so nothing to capture first.
-    stillFrame: 214, // src/ClinicalLoop.tsx STILL_FRAME: the summary, the letters' tabs beside it
+    stillFrame: 436, // src/ClinicalLoop.tsx STILL_FRAME: the family letter, so the case study's figures aren't repeated
     sizes: {
       desktop: {
         id: "ClinicalDesktop",
@@ -42,9 +42,9 @@ const PROJECTS = {
         still: [1920, 1200],
         // For the case study, each step complete and at rest (ClinicalLoop.tsx EXTRA_FRAMES).
         extras: [
-          { file: "clinical-summary.jpg", frame: 214, size: [1920, 1200] },
-          { file: "clinical-doctor-letter.jpg", frame: 298, size: [1920, 1200] },
-          { file: "clinical-follow-ups.jpg", frame: 436, size: [1920, 1200] },
+          { file: "clinical-summary.jpg", frame: 230, size: [1920, 1200] },
+          { file: "clinical-doctor-letter.jpg", frame: 337, size: [1920, 1200] },
+          { file: "clinical-follow-ups.jpg", frame: 580, size: [1920, 1200] },
         ],
       },
       phone: { id: "ClinicalPhone", prefix: "clinical-m", hd: [720, 900], sd: [544, 680], poster: [544, 680], still: [1080, 1350] },

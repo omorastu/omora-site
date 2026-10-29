@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { people, sectionLabel, us, type Who } from "@/lib/kozmoz";
+import { onDisk } from "@/lib/public-files";
 import { cn } from "@/lib/utils";
 
 /**
@@ -35,19 +36,19 @@ export function Us() {
 }
 
 /**
- * A portrait frame and a line. With no photo set — the state until the shoot —
- * the frame holds the person's initial at the portrait's proportions; set
- * `photo` in lib/kozmoz.ts and the photo fills it, the initial steps back and
- * the name plate gets a paper ground to sit on.
+ * A portrait frame and a line. Until the person's photo is in public/ (its
+ * path is `photo` in lib/kozmoz.ts: public/m/us/ashan.jpg, jordan.jpg) the
+ * frame is a plate with their initial in their own ink; once it's there, the
+ * photo fills the frame, the initial steps back and the name plate gets a
+ * paper ground to sit on.
  */
 function PersonCard({ who }: { who: Who }) {
   const p = people[who];
+  const photo = onDisk(p.photo);
   return (
     <article className={cn("person", `person--${who}`)}>
-      <div className={cn("frame", `slide-${who}`, p.photo && "has-photo")}>
-        {p.photo && (
-          <Image src={p.photo} alt={p.name} fill sizes="(max-width: 1023px) 50vw, 18rem" />
-        )}
+      <div className={cn("frame", `slide-${who}`, photo && "has-photo")}>
+        {photo && <Image src={p.photo} alt={p.name} fill sizes="(max-width: 1023px) 50vw, 18rem" />}
         <span className="frame-initial" aria-hidden="true">
           {p.initial}
         </span>

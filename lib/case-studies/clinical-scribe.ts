@@ -65,7 +65,7 @@ export const clinicalScribe: CaseStudy = {
         src: "/m/work/clinical-follow-ups.jpg",
         width: 1920,
         height: 1200,
-        alt: "Clinical Scribe with made-up demo data: suggested follow-up messages.",
+        alt: "Clinical Scribe with made-up demo data: a follow-up message drafted for a case that didn't start.",
         caption: "Follow-up messages to pick, edit and send when a patient doesn’t sign that day.",
       },
     ],

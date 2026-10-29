@@ -3,7 +3,8 @@ import type { CaseFigure, CaseShot, CaseStep, CaseStudy } from "@/lib/case-studi
 import { Page } from "@/components/kozmoz/page";
 import { Contact } from "@/components/kozmoz/contact";
 import { ProjectScreen } from "@/components/kozmoz/work";
-import { mediaOnDisk, onDisk } from "@/lib/work-media";
+import { onDisk } from "@/lib/public-files";
+import { mediaOnDisk } from "@/lib/work-media";
 import { cn } from "@/lib/utils";
 
 /**

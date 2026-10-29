@@ -50,6 +50,7 @@ html:has(.kz),
   --ink-65: color-mix(in srgb, var(--ink) 65%, var(--paper));  /* 5.6:1 secondary text */
   --ink-50: color-mix(in srgb, var(--ink) 50%, var(--paper));  /* 3.4:1 large, unchosen */
   --frame: color-mix(in srgb, var(--ink) 6%, var(--paper));
+  --plate: color-mix(in srgb, var(--ink) 8%, var(--paper));  /* a portrait frame waiting for its photo */
 
   /* --font-fraunces and --font-hanken come from next/font, on .kz itself
      (components/kozmoz/fonts.ts). */
@@ -421,23 +422,6 @@ html:has(.kz) body {
   text-underline-offset: .3em;
 }
 
-/* /services' big line, centred across its seam. */
-.kz .say {
-  width: fit-content;
-  max-width: 64rem;
-  margin-inline: auto;
-  padding-block: .5rem;
-  font-family: var(--font-display);
-  font-optical-sizing: auto;
-  font-size: 4.75rem;
-  font-weight: 380;
-  line-height: 1.02;
-  letter-spacing: -.028em;
-  text-align: center;
-  text-wrap: balance;
-  font-variation-settings: "SOFT" 100, "WONK" 0;
-}
-
 /* ---------- us ----------
    The line, where and the promises on the left; the two people on the right. */
 .kz .us-head { grid-column: 1 / span 5; }
@@ -469,13 +453,17 @@ html:has(.kz) body {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   column-gap: 2rem;
 }
+/* A plate a shade under the paper, one hairline round it, the initial in
+   the person's ink; their photo fills the same frame once it's in public/
+   (components/kozmoz/us.tsx). */
 .kz .frame {
   position: relative;
   aspect-ratio: 4 / 5;
   overflow: hidden;
   display: grid;
   place-items: center;
-  background: var(--frame);
+  background: var(--plate);
+  border: 1px solid var(--ink-20);
 }
 .kz .frame > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 .kz .frame.has-photo .frame-initial { visibility: hidden; }
@@ -562,6 +550,26 @@ html:has(.kz) body {
   object-position: 50% 0;
 }
 .kz .proj-media video { opacity: 0; transition: opacity .5s var(--ease); }
+/* The home page's grid on phones (under 768px): one row to swipe through,
+   each card 85% of the screen so the next one shows at the edge. (Two
+   classes, to win over the phone block's one-column grid further down.) */
+@media (max-width: 767px) {
+  .kz .work-grid.work-grid--swipe {
+    grid-template-columns: none;
+    grid-auto-flow: column;
+    grid-auto-columns: 85vw;
+    gap: 1rem;
+    margin-inline: calc(-1 * var(--pad));
+    padding-inline: var(--pad);
+    scroll-padding-inline: var(--pad);
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+  }
+  .kz .work-grid.work-grid--swipe::-webkit-scrollbar { display: none; }
+  .kz .work-grid--swipe > .proj { scroll-snap-align: start; }
+}
 .kz .proj-media video.is-on { opacity: 1; }
 .kz .proj-body { margin-top: 1.25rem; }
 .kz .proj-name {
@@ -705,12 +713,10 @@ html:has(.kz) body {
 .kz:not(.is-in) .name-amp { opacity: 0; animation: kz-names-fallback 0s 2.5s forwards; }
 @keyframes kz-names-fallback { from { opacity: 0; } to { opacity: 1; } }
 
-/* ---------- hover: credits and initials lean toward the seam ---------- */
+/* ---------- hover: names and initials lean toward the seam ---------- */
 @media (hover: hover) and (prefers-reduced-motion: no-preference) {
-  .kz .credit-a, .kz .credit-j, .kz .frame-initial, .kz .who { transition: translate .55s var(--spring-soft); }
+  .kz .frame-initial, .kz .who { transition: translate .55s var(--spring-soft); }
   .kz .name { transition: translate .55s var(--spring-soft), background-size .6s var(--ease); }
-  .kz .credit-a:hover { translate: .5rem 0; }
-  .kz .credit-j:hover { translate: -.5rem 0; }
   /* Only the home page's names are buttons; elsewhere they're just names. */
   .kz button.who--a:hover { translate: .25rem 0; }
   .kz button.who--j:hover { translate: -.25rem 0; }
@@ -750,147 +756,81 @@ html:has(.kz) body {
 
 /* =====================================================================
    inner pages — /services, /work, the case studies, legal, not found.
-   Same frame as the home page (components/kozmoz/page.tsx); /services and
-   /work run the seam too, the reading pages go without.
+   Same frame as the home page (components/kozmoz/page.tsx) and, for
+   /services, /work and the case studies, the same grid. The seam is the
+   home page's hero's alone.
    ===================================================================== */
 
-/* A page's title, named the way the home page names things: a label on the seam. */
-.kz .page-head { display: grid; justify-items: center; padding: 6rem var(--pad) 4rem; }
-.kz .page-title { padding: .25rem .5rem; }
+/* A page's title: a label over the first section, as the home page labels
+   its sections. */
+.kz .page-top { padding: 4rem var(--pad) 2rem; }
 
 /* ---------- /services ----------
-   Still laid out across the seam: each service centred on it, its credit
-   line split along it, the steps of how it starts across it. */
-.kz .svc {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  column-gap: var(--gap);
-  padding-block: 4.5rem;
+   Each service a section: the title, text and credit line on the left,
+   what's included as a ruled list on the right. Then how a project starts. */
+.kz .svc-head { grid-column: 1 / span 5; }
+.kz .svc-title { margin-top: 0; }
+.kz .svc-text {
+  max-width: var(--measure);
+  margin-top: 1.25rem;
+  font-size: max(1.125rem, 15px);
+  line-height: 1.45;
+  text-wrap: pretty;
 }
-.kz .svc:first-of-type { padding-top: 0; }
-.kz .svc-title {
+.kz .svc-credit { margin-top: 1.5rem; }
+.kz .incl { grid-column: 7 / -1; border-top: 1px solid var(--ink-20); }
+.kz .incl li {
+  padding-block: .875rem;
+  border-bottom: 1px solid var(--ink-20);
   font-family: var(--font-display);
   font-optical-sizing: auto;
-  font-size: 6.5rem;
-  font-weight: 400;
-  line-height: .94;
-  letter-spacing: -.034em;
-  font-variation-settings: "SOFT" 100, "WONK" 1;
-  text-wrap: balance;
-}
-.kz .svc-text {
-  margin-top: 1.75rem;
-  max-width: 34rem;
   font-size: 1.375rem;
-  line-height: 1.42;
-}
-.kz .svc--both .svc-title,
-.kz .svc--both .svc-text {
-  grid-column: 1 / -1;
-  justify-self: center;
-  width: fit-content;
-  padding-inline: 1rem;
-  text-align: center;
-}
-.kz .svc--both .svc-text { max-width: 36rem; }
-
-.kz .credit {
-  grid-column: 1 / -1;
-  position: relative;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  column-gap: var(--gap);
-  align-items: center;
-  margin-top: 2.25rem;
-  font-family: var(--font-label);
-  font-weight: 600;
-  font-size: max(.8125rem, 12px);
-  letter-spacing: .14em;
-  text-transform: uppercase;
-  line-height: 1.3;
-}
-.kz .credit-a, .kz .credit-j { display: inline-block; }
-.kz .credit-a { grid-column: 1; justify-self: end; color: var(--ashan-text); }
-.kz .credit-j { grid-column: 2; justify-self: start; color: var(--jordan-text); }
-.kz .tag {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  translate: -50% -50%;
-  z-index: 1;
-  padding: .3rem .4rem;
-  background: var(--paper);
-  letter-spacing: .04em;
-  white-space: nowrap;
+  font-weight: 380;
+  line-height: 1.2;
+  letter-spacing: -.01em;
+  text-wrap: pretty;
+  font-variation-settings: "SOFT" 100, "WONK" 0;
 }
 
-.kz .start { border-top: 1px solid var(--ink-20); padding: 8rem var(--pad); }
-.kz .do--page { border-top: 0; padding: 0 var(--pad) 3rem; }
-.kz .svc--detail { padding-block: 5rem; }
-/* What's included: a ruled list between the text and the credit line. */
-.kz .incl {
-  width: min(100%, 40rem);
-  margin-top: 2.5rem;
-  border-top: 1px solid var(--ink-20);
-}
-.kz .incl li {
-  padding: .875rem 1rem;
-  border-bottom: 1px solid var(--ink-20);
-  font-size: 1.25rem;
-  line-height: 1.35;
-  text-align: center;
-  text-wrap: balance;
-}
-.kz .svc--both .incl { grid-column: 1 / -1; justify-self: center; }
-
-/* How it starts: three steps across the seam, the note, the one action. */
-.kz .start { display: grid; justify-items: center; }
+.kz .start-h { margin-top: 0; }
 .kz .steps {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  column-gap: var(--gap);
-  width: min(100%, 76rem);
-  margin-top: 5rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  column-gap: 2rem;
+  margin-top: 2.5rem;
 }
-.kz .step {
-  display: grid;
-  justify-items: center;
-  align-content: start;
-  padding: 1rem 1.5rem;
-  text-align: center;
-}
+.kz .step { padding-top: 1.5rem; border-top: 1px solid var(--ink-20); }
 .kz .step-n { color: var(--ink-65); }
 .kz .step-title {
   margin-top: 1rem;
   font-family: var(--font-display);
   font-optical-sizing: auto;
-  font-size: 2.5rem;
+  font-size: 2rem;
   font-weight: 400;
-  line-height: 1.02;
+  line-height: 1.04;
   letter-spacing: -.025em;
   text-wrap: balance;
   font-variation-settings: "SOFT" 100, "WONK" 0;
 }
 .kz .step-text {
-  margin-top: .875rem;
-  max-width: 20rem;
-  font-size: 1.25rem;
-  line-height: 1.42;
+  max-width: var(--measure);
+  margin-top: .75rem;
+  font-size: max(1.125rem, 15px);
+  line-height: 1.45;
+  text-wrap: pretty;
 }
 .kz .start-note {
-  max-width: 46rem;
-  margin-top: 5rem;
-  padding: .5rem 1rem;
+  max-width: 40rem;
+  margin-top: 3.5rem;
   font-family: var(--font-display);
   font-optical-sizing: auto;
-  font-size: 2.125rem;
+  font-size: 1.625rem;
   font-weight: 350;
-  line-height: 1.16;
-  text-align: center;
-  text-wrap: balance;
+  line-height: 1.25;
+  text-wrap: pretty;
   font-variation-settings: "SOFT" 50, "WONK" 0;
 }
-.kz .start .act { margin-top: 3rem; }
+.kz .start-act .act { margin-top: 2rem; }
 
 /* ---------- /work ----------
    The home page's Work grid with every project, under the page's label. */
@@ -1114,14 +1054,11 @@ html:has(.kz) body {
   }
   .kz .act { margin-top: 2rem; }
 
-  .kz .start { padding: 5rem var(--pad); }
-  .kz .say { margin-inline: 0; font-size: 2.75rem; line-height: 1.04; text-align: left; padding-block: 0; }
-
   /* below the hero: one column */
   .kz .sec { padding: 3rem var(--pad); }
   .kz .wrap { grid-template-columns: minmax(0, 1fr); column-gap: 0; }
   .kz .wrap > *,
-  .kz .us-head, .kz .pair, .kz .contact-head, .kz .form,
+  .kz .us-head, .kz .pair, .kz .contact-head, .kz .form, .kz .svc-head, .kz .incl,
   .kz .cs-intro, .kz .cs-live, .kz .cs-steps ol,
   .kz .cs-note, .kz .cs-notes--two .cs-note, .kz .cs-notes--two .cs-note--data { grid-column: 1 / -1; }
   .kz .sec-h { margin-top: .875rem; font-size: 2.125rem; }
@@ -1177,21 +1114,18 @@ html:has(.kz) body {
   .kz .foot-r { justify-self: start; text-align: left; }
 
   /* inner pages */
-  .kz .page-head { justify-items: start; padding: 3rem var(--pad) 2.5rem; }
-  .kz .page-title { padding: 0; }
+  .kz .page-top { padding: 2.5rem var(--pad) 1.25rem; }
 
-  .kz .do--page { padding: 0 var(--pad) 1rem; }
-  .kz .svc--detail { padding-block: 0; margin-top: 4.5rem; }
-  .kz .incl, .kz .svc--both .incl, .kz .svc--j .incl { grid-column: 1; justify-self: stretch; width: auto; margin-top: 1.5rem; }
-  .kz .incl li, .kz .svc--j .incl li { padding: .75rem 0; font-size: 1.0625rem; text-align: left; text-wrap: pretty; }
+  .kz .svc-text { margin-top: .875rem; font-size: 1.0625rem; }
+  .kz .svc-credit { margin-top: 1rem; }
+  .kz .incl { margin-top: 1.75rem; }
+  .kz .incl li { padding-block: .75rem; font-size: 1.25rem; }
 
-  .kz .start { justify-items: stretch; }
-  .kz .steps { grid-template-columns: 1fr; row-gap: 2.25rem; width: auto; margin-top: 2.5rem; }
-  .kz .step { justify-items: start; padding-block: 0; padding-right: 0; text-align: left; }
-  .kz .step-title { margin-top: .5rem; font-size: 2rem; }
-  .kz .step-text { max-width: none; margin-top: .625rem; font-size: 1.125rem; }
-  .kz .start-note { margin-top: 3rem; padding: 0; font-size: 1.5rem; line-height: 1.2; text-align: left; }
-  .kz .start .act { justify-self: start; margin-top: 2rem; }
+  .kz .steps { grid-template-columns: minmax(0, 1fr); row-gap: 1.75rem; margin-top: 1.5rem; }
+  .kz .step { padding-top: 1.25rem; }
+  .kz .step-title { margin-top: .625rem; font-size: 1.75rem; }
+  .kz .step-text { margin-top: .625rem; font-size: 1.0625rem; }
+  .kz .start-note { margin-top: 2.5rem; font-size: 1.375rem; }
 
   .kz .work--page { padding: 2.5rem var(--pad) 4rem; }
   .kz .page-end { margin-top: 3rem; }

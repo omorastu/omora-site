@@ -1,6 +1,6 @@
-import fs from "node:fs";
 import path from "node:path";
 import type { ProjectMedia } from "@/lib/kozmoz";
+import { onDisk } from "@/lib/public-files";
 
 /**
  * What of a project's media is actually in public/, checked on the server as
@@ -9,9 +9,6 @@ import type { ProjectMedia } from "@/lib/kozmoz";
  * that place instead of asking for a file that isn't there; without both
  * stills the card has no screen at all. The build log names what's missing.
  */
-
-/** Whether a file under public/ (given by its URL path) is there. */
-export const onDisk = (src: string) => fs.existsSync(path.join(process.cwd(), "public", src));
 
 /** A project's media with anything missing left out, and the files that are. */
 export function mediaOnDisk(name: string, m?: ProjectMedia): { media?: ProjectMedia; missing: string[] } {
