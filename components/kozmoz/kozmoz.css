@@ -61,7 +61,10 @@ html:has(.kz),
   --gold-hi: #BE9645;
   --gold-lo: #876122;
   --gold-text: var(--gold-lo);
-  --gold-button: linear-gradient(180deg, #A07A2E, var(--gold-lo) 50%, #72531B);
+  /* The buttons' gold: the gold type's three golds (.gold), each 19% deeper,
+     falling from the top edge to the bottom, the mid gold reached just above
+     the capitals, so the paper on them reads clearly (4.6:1 or more). */
+  --gold-button: linear-gradient(180deg, #9A7A38, #886826 38%, #6D4F1C);
 
   /* --font-logo (Cormorant Garamond) comes from next/font on <html>
      (app/layout.tsx), --font-hanken on .kz itself (components/kozmoz/fonts.ts). */
@@ -546,7 +549,8 @@ html[data-menu] body { overflow: hidden; }
   text-wrap: balance;
 }
 
-/* The one action: solid ink, square. */
+/* The one action: gold, square, its capitals in the paper (the solid mid
+   gold where a gradient can't be drawn). Hovered or focused, a deeper gold. */
 .kz .act {
   position: relative;
   z-index: 1;
@@ -556,7 +560,8 @@ html[data-menu] body { overflow: hidden; }
   min-height: 3.25rem;
   margin-top: 2.25rem;
   padding: 1rem 1.75rem;
-  background: var(--ink);
+  background: var(--gold);
+  background-image: var(--gold-button);
   color: var(--paper);
   font-family: var(--font-label);
   font-weight: 600;
@@ -564,9 +569,14 @@ html[data-menu] body { overflow: hidden; }
   letter-spacing: .14em;
   line-height: 1;
   text-transform: uppercase;
-  transition: letter-spacing .6s var(--spring-soft);
+  white-space: nowrap;
+  transition: letter-spacing .6s var(--spring-soft), box-shadow .25s var(--ease);
 }
 .kz .act[aria-disabled="true"] { cursor: progress; }
+.kz .act:focus-visible { box-shadow: inset 0 0 0 100vmax rgb(32 20 4 / .16); }
+@media (hover: hover) {
+  .kz .act:hover:not([aria-disabled="true"]) { box-shadow: inset 0 0 0 100vmax rgb(32 20 4 / .16); }
+}
 @media (hover: hover) and (prefers-reduced-motion: no-preference) {
   .kz .act:hover:not([aria-disabled="true"]) { letter-spacing: .22em; }
 }
@@ -935,8 +945,6 @@ html[data-menu] body { overflow: hidden; }
   margin-top: 1.75rem;
 }
 .kz .send-row .act { margin-top: 0; }
-/* The send button is the one gold button. */
-.kz .send-row .act { background: var(--gold-lo); background-image: var(--gold-button); color: var(--paper); }
 .kz .form-status { order: 1; flex-basis: 100%; max-width: var(--measure); }
 .kz .form-status:empty { display: none; }
 .kz .or a { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: .22em; }

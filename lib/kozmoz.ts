@@ -86,7 +86,7 @@ export const sectionLabel = (href: string) => nav.find((n) => n.href === href)?.
 export const hero = {
   hint: "Pick a name to see what each of us does",
   lede: "We build the website, shoot the photos and video, and set up the phone answering and booking behind it, for local businesses around the Bay. The two of us do every project ourselves.",
-  cta: { label: "Tell us what’s going on", href: "#contact" },
+  cta: { label: "Book a call, let’s talk", href: "#contact" },
 };
 
 /* ── Us ───────────────────────────────────────────────────────────────── */
@@ -497,6 +497,6 @@ export const servicesPage = {
       { title: "The shoot and the build.", text: "The two of us, start to finish." },
     ],
     note: "There are no prices on this site. Every business is different, so your price comes in your plan, after the call.",
-    cta: { label: "Tell us what’s going on", href: "/#contact" },
+    cta: { label: "Book a call, let’s talk", href: "/#contact" },
   },
 };

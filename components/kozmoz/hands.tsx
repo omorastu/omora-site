@@ -19,7 +19,7 @@ import { cn } from "@/lib/utils";
  * write themselves in together, letter by letter, left to right, first name
  * then last, both in the same 1.8s, so they finish together; and as the
  * first of the last names starts to appear, the hint, the lede and the
- * button rise in together (0.6s) while the names finish. The names are on
+ * button rise in together (1s) while the names finish. The names are on
  * the page from the start; the entrance only
  * reveals them, so nothing moves. A scroll, click or key on the way, or an
  * intro cut short, goes straight to the finished hero. Under reduced motion
@@ -43,7 +43,9 @@ const reducedMotion = () => window.matchMedia("(prefers-reduced-motion: reduce)"
 /** The entrance's steps, in ms: the ampersand, both names together, the rest rising in. */
 const AMP_MS = 400;
 const WRITE_MS = 1800;
-const RISE_MS = 600;
+const RISE_MS = 1000;
+/** The rise: off gently, and a long, soft settle. */
+const RISE_EASE = "cubic-bezier(.3, .55, .25, 1)";
 /** Each letter, as a hand draws it: eased in, a steady stroke, eased off. */
 const LETTER_EASE = "cubic-bezier(.45, .05, .45, 1)";
 /** Across a name, the letters a little slower at its start and end, so it gathers and settles. */
@@ -135,7 +137,7 @@ export function Hands({ className, children }: { className?: string; children: R
       const lift = Math.round(parseFloat(getComputedStyle(document.documentElement).fontSize) * 0.875);
       for (const line of rest) {
         if (!line) continue;
-        const rise = { duration: RISE_MS, delay: riseAt, easing: "cubic-bezier(.2, .7, .3, 1)", fill: "backwards" } as const;
+        const rise = { duration: RISE_MS, delay: riseAt, easing: RISE_EASE, fill: "backwards" } as const;
         anims.push(line.animate({ transform: [`translateY(${lift}px)`, "none"] }, rise));
         if (line.classList.contains("across")) anims.push(line.animate({ color: ["transparent", getComputedStyle(line).color] }, rise));
         else anims.push(line.animate({ opacity: [0, 1] }, rise));
