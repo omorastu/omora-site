@@ -964,11 +964,11 @@ html[data-menu] body { overflow: hidden; }
 /* ---------- the hero's entrance ----------
    The ampersand, the names and the lines under them wait for hands.tsx,
    which brings them in (the ampersand, then both names writing themselves
-   in together, then the lines under them) and adds .is-in. They hold their
-   places meanwhile, so nothing moves when they appear. If the script never
-   gets that far they show anyway after 2.5s (later while the intro is up:
-   intro.tsx sets --kz-wait); with scripting off the page's <noscript> shows
-   them at once. */
+   in together, the lines under them rising in as the last names start) and
+   adds .is-in. They hold their places meanwhile, so nothing moves when they
+   appear. If the script never gets that far they show anyway after 2.5s
+   (later while the intro is up: intro.tsx sets --kz-wait); with scripting
+   off the page's <noscript> shows them at once. */
 .kz:not(.is-in) :is(.name, .name-amp, .hero .hint, .lede, .hero > .act) {
   opacity: 0;
   animation: kz-hero-fallback .45s var(--ease) var(--kz-wait, 2.5s) forwards;
