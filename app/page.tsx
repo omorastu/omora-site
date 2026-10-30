@@ -8,6 +8,7 @@ import { Work } from "@/components/kozmoz/work";
 import { Contact } from "@/components/kozmoz/contact";
 import { Footer } from "@/components/kozmoz/footer";
 import { Intro } from "@/components/intro/intro";
+import { ScrollDebug } from "@/components/kozmoz/scroll-debug";
 import { hanken } from "@/components/kozmoz/fonts";
 import "@/components/kozmoz/kozmoz.css";
 
@@ -26,6 +27,7 @@ import "@/components/kozmoz/kozmoz.css";
 export default function Home() {
   return (
     <>
+      <ScrollDebug />
       <Intro />
       <Hands className={hanken.variable}>
         <a className="skip label" href="#main">

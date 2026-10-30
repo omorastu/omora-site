@@ -118,6 +118,17 @@ export function WorkPin({ count, children }: { count: number; children: React.Re
     /** Where the row is, in cards, for where the page is. */
     const place = () => Math.min(last, Math.max(0, (pageY() - top()) / step()));
     const inside = () => pageY() > stop(0) - 2 && pageY() < stop(last) + 2;
+    /**
+     * The stage stuck to the top of the screen, as it shows (the pin's box
+     * running from above the screen's top to the stage's foot at least):
+     * only then does a swipe belong to the cards. Anywhere else, the top of
+     * the page above all, it's the page's own, whatever the stops add up to.
+     */
+    const held = () => {
+      const box = pin.getBoundingClientRect();
+      const at = stage.getBoundingClientRect();
+      return on() && inside() && box.height > at.height && Math.abs(at.top) < 2 && box.top < 2 && box.bottom > at.bottom - 2;
+    };
 
     const show = () => {
       if (!on()) {
@@ -140,7 +151,7 @@ export function WorkPin({ count, children }: { count: number; children: React.Re
       check();
       show();
       // Only while the row is held does a swipe need stopping from scrolling the page.
-      const want = on() && inside();
+      const want = held();
       if (want !== bound) {
         bound = want;
         if (want) addEventListener("touchmove", onMove, { passive: false });
@@ -267,7 +278,7 @@ export function WorkPin({ count, children }: { count: number; children: React.Re
         return;
       }
       const p = e.touches[0];
-      const ours = on() && (gliding > 0 || inside());
+      const ours = on() && (gliding > 0 || held());
       touch = { x: p.clientX, y: p.clientY, t: performance.now(), kind: ours ? (gliding ? "spent" : "open") : "page", nx: p.clientX, ny: p.clientY, moved: false };
     };
     /** Where the finger is, and whether it's a swipe yet (always; it never holds the page up). */
@@ -292,7 +303,8 @@ export function WorkPin({ count, children }: { count: number; children: React.Re
         const dir = (axis === "x" ? dx : dy) < 0 ? 1 : -1;
         const i = Math.round(place());
         // Off either end, up or down: that's the page's own scroll, as it would be anywhere.
-        if (axis === "y" && ((dir > 0 && i >= last) || (dir < 0 && i <= 0))) {
+        // So is any swipe the row can't place itself for (no card to move to).
+        if (!Number.isFinite(i) || (axis === "y" && ((dir > 0 && i >= last) || (dir < 0 && i <= 0)))) {
           touch.kind = "page";
           return;
         }
