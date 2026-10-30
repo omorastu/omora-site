@@ -809,32 +809,28 @@ html[data-menu] body { overflow: hidden; }
 /* ---------- work, pinned (phones) ----------
    Under 768px the home page's row is pinned (components/kozmoz/work-pin.tsx):
    once the section reaches the top of the screen, its stage sticks there
-   while the scroll moves the row sideways, one card to the middle at a
-   time, with a line beside the label for where you are; after the last
-   card it lets go. The pin is as tall as that takes: the stage, plus a --step of scroll
-   per card after the first and a short hold (--hold-end) after the last.
-   A scroll that ends near a card's stop settles on it (.work-snap). The
-   card is sized to fit the screen's height as well as its width. Under
-   reduced motion, or without scripting, the row stays a row to swipe; at
-   768px and up the pin and its stage step aside and the grid is the grid. */
+   and each swipe moves the row one card along, to the middle, with a line
+   beside the label for where you are; after the last card it lets go. The
+   pin is as tall as that takes: the stage, plus a --step of scroll per card
+   after the first, each card's stop. The card is sized to fit the screen's
+   height as well as its width. Under reduced motion, or without scripting,
+   the row stays a row to swipe; at 768px and up the pin and its stage step
+   aside and the grid is the grid. */
 .kz .work-pin,
 .kz .work-stage { display: contents; }
 .kz .work-stage > * { grid-column: 1 / -1; }
-.kz .work-progress,
-.kz .work-snap { display: none; }
+.kz .work-progress { display: none; }
 @media (max-width: 767px) and (prefers-reduced-motion: no-preference) and (scripting: enabled) {
-  html:has(.kz .work-pin) { scroll-snap-type: y proximity; }
   .kz .work.sec { padding-top: 0; }
   .kz .work-pin {
     --step: 70svh;
-    --hold-end: .35;
     /* 4:5, so the card's screen is 1.25× its width; about 17rem for the
        label and the card's text. */
     --card-w: min(85vw, calc((100svh - var(--header-h) - 17rem) * .8));
     --card-gap: 1rem;
     display: block;
     position: relative;
-    height: calc(100svh + (var(--cards) - 1 + var(--hold-end)) * var(--step));
+    height: calc(100svh + (var(--cards) - 1) * var(--step));
   }
   .kz .work-stage {
     position: sticky;
@@ -873,17 +869,6 @@ html[data-menu] body { overflow: hidden; }
     width: calc(100% / var(--cards));
     background: var(--ink);
     translate: calc(var(--x, 0) * 100%) 0;
-  }
-  /* Each card's stop, set down by the header's room (the page's
-     scroll-padding-top), so the page settles with the pin exactly there. */
-  .kz .work-snap {
-    display: block;
-    position: absolute;
-    left: 0;
-    top: calc(var(--i) * var(--step) + var(--header-h) + 1rem);
-    width: 1px;
-    height: 1px;
-    scroll-snap-align: start;
   }
 }
 .kz .proj-media video.is-on { opacity: 1; }

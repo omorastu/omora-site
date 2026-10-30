@@ -18,9 +18,8 @@ import { cn } from "@/lib/utils";
  * Lopez" write themselves in together at once, letter by letter, left to
  * right, first name then last, both in the same 1.8s, so they finish
  * together; once the second letter of each first name is in, the gold
- * ampersand drops into its place (0.45s); and as the first of the last names
- * starts to appear, the hint, the lede and the button rise in together (1s)
- * while the names finish. The names are on
+ * ampersand drops into its place (0.45s); and once it has landed, the hint,
+ * the lede and the button rise in together (1s) while the names finish. The names are on
  * the page from the start; the entrance only
  * reveals them, so nothing moves. A scroll, click or key on the way, or an
  * intro cut short, goes straight to the finished hero. Under reduced motion
@@ -109,9 +108,8 @@ export function Hands({ className, children }: { className?: string; children: R
       // Both names at once, letter by letter, first name then last: each
       // name's letters share the same time, however many there are. The
       // ampersand drops in once both first names have their second letter;
-      // the rest rises in as the first of the last names starts.
+      // the rest rises in once it has landed.
       let dropAt = 0;
-      let riseAt = WRITE_MS;
       for (const name of [a, j]) {
         const parts = [...name.querySelectorAll<HTMLElement>(".name-first, .name-last")]
           .map((line) => ({ line, edges: letterEdges(line) }))
@@ -122,7 +120,6 @@ export function Hands({ className, children }: { className?: string; children: R
           const times = edges.map((_, k) => pace((before + k) / count) * WRITE_MS);
           before += edges.length - 1;
           if (line.classList.contains("name-first")) dropAt = Math.max(dropAt, times[Math.min(2, times.length - 1)]);
-          if (line.classList.contains("name-last")) riseAt = Math.min(riseAt, times[0]);
           const writing = reveal(line, edges, times);
           anims.push(...writing.anims);
           undo.push(writing.undo);
@@ -134,9 +131,10 @@ export function Hands({ className, children }: { className?: string; children: R
       anims.push(amp.animate({ transform: ["translateY(-.2em)", "none"] }, { ...drop, easing: DROP_EASE }));
       anims.push(amp.animate({ opacity: [0, 1] }, { ...drop, duration: DROP_MS * 0.35, easing: "ease-out" }));
 
-      // The lines under them rise in together, the names still writing. The
-      // hint and the lede sit on paper that breaks the seam: their letters
-      // fade in, not the paper, or the seam would show through it.
+      // The lines under them rise in together as it lands, the names still
+      // writing. The hint and the lede sit on paper that breaks the seam:
+      // their letters fade in, not the paper, or the seam would show through it.
+      const riseAt = dropAt + DROP_MS;
       const rest = [hero.querySelector(".hint"), hero.querySelector(".lede"), hero.querySelector(":scope > .act")];
       // Whole pixels, so a line's paper waits with crisp edges, not a faint seam of its own.
       const lift = Math.round(parseFloat(getComputedStyle(document.documentElement).fontSize) * 0.875);

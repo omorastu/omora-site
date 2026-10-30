@@ -452,8 +452,8 @@ export const homeWorkCount = 4;
 /* ── Contact ──────────────────────────────────────────────────────────── */
 
 export const contact = {
-  title: "Tell us what’s going on.",
-  lede: "One of us writes back to set up a 30-minute call. No sales rep, no pitch deck.",
+  title: "Book a call, let’s talk.",
+  lede: "One of us writes back to set up a 30-minute call. Just us two and you.",
   fields: {
     name: "Your name",
     business: "Business",
