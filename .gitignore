@@ -11,3 +11,8 @@ node_modules/
 .vercel/
 .env*.local
 .DS_Store
+.env*
+
+# Claude Code hand-off notes, kept local
+design/review/cc-report.md
+design/review/next-prompt.md
