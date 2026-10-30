@@ -65,13 +65,47 @@
   text-align: center;
 }
 
-/* The logo: gold lettering on a transparent ground, its box held at the
-   file's proportions (962×172, letters spaced wider) by its width and height attributes. */
+/* The logo: polished gold lettering on a transparent ground, its box held at
+   the file's proportions (1695×287, the letters spaced wide) by its width
+   and height attributes. Its letters stand as tall as the old logo's did at
+   640px. */
+.kz-intro-mark {
+  position: relative;
+  display: block;
+  width: min(680px, 90vw);
+  max-width: 100%;
+}
 .kz-intro-logo {
   display: block;
-  width: min(640px, 86vw);
-  max-width: 100%;
+  width: 100%;
   height: auto;
+}
+
+/* The shine: a narrow, warm band of light, pale gold to near white at its
+   core, crossing the logo on a slant, left to right, cut to the gold itself
+   (the logo's own picture as its mask, set by intro.tsx once it's loaded).
+   Once as the logo comes in, then once more, fainter, during the hold;
+   gone by the time the black moves. */
+.kz-intro-shine {
+  position: absolute;
+  inset: 0;
+  visibility: hidden;
+  pointer-events: none;
+  background: linear-gradient(115deg, transparent 42%, rgb(232 190 110 / .3) 46%, rgb(255 232 180 / .8) 49%, rgb(255 249 234) 50%, rgb(255 232 180 / .8) 51%, rgb(232 190 110 / .3) 54%, transparent 58%) 100% 0 / 260% 100% no-repeat;
+  mix-blend-mode: screen;
+  -webkit-mask: var(--logo) 0 0 / 100% 100% no-repeat;
+  mask: var(--logo) 0 0 / 100% 100% no-repeat;
+  animation: kz-intro-shine 3.25s .85s both;
+}
+.kz-intro-shine[data-on] { visibility: visible; }
+.kz-intro[data-flying] .kz-intro-shine { display: none; }
+/* 0.85–1.75s the first sweep; 3.2–4.1s the second, fainter. */
+@keyframes kz-intro-shine {
+  0% { background-position: 100% 0; opacity: 1; animation-timing-function: cubic-bezier(.45, 0, .55, 1); }
+  27.7% { background-position: 0% 0; opacity: 1; }
+  27.8% { background-position: 100% 0; opacity: .55; }
+  72.3% { background-position: 100% 0; opacity: .55; animation-timing-function: cubic-bezier(.45, 0, .55, 1); }
+  100% { background-position: 0% 0; opacity: .55; }
 }
 
 .kz-intro-rule {
@@ -191,5 +225,6 @@
    settled; the exit is a plain fade. */
 @media (prefers-reduced-motion: reduce) {
   .kz-intro-logo, .kz-intro-rule, .kz-intro-def, .kz-intro-def::after { animation: none; }
+  .kz-intro-shine { display: none; }
   .kz-intro-def { --kz-burn: 120%; }
 }

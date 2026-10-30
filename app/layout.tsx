@@ -16,7 +16,13 @@ const cormorantGaramond = Cormorant_Garamond({
   display: "swap",
 });
 
-const SITE = "https://omora.studio";
+// Absolute base for link previews (og:image etc.). Uses the live Vercel URL
+// when deployed there; switch NEXT_PUBLIC_SITE_URL to the real domain later.
+const SITE =
+  process.env.NEXT_PUBLIC_SITE_URL ??
+  (process.env.VERCEL_PROJECT_PRODUCTION_URL
+    ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+    : "https://omora.studio");
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE),

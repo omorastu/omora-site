@@ -13,6 +13,8 @@ import "@/components/intro/intro.css";
  * glowing edge, and settles as gold cut into the stone.
  *
  *   0–0.75s    the logo fades in, then the gold rule draws (intro.css)
+ *   0.85s      a band of light sweeps across the gold, once (0.9s), and
+ *              once more, fainter, during the hold (from 3.2s)
  *   0.75–2s    the line burns in (intro.css); the hold runs to 4.2s, and
  *              with a mouse the pointer bends the logo a little (smoke.ts)
  *   4.2s       the line dims out (0.25s), then the black slides off to the
@@ -71,7 +73,7 @@ const DEFINITION: React.ReactNode = (
 );
 
 /** The logo file's own size, so its box is reserved before it loads, and where its letters sit in it. */
-const LOGO = { src: "/m/brand/elorro-logo.png", width: 962, height: 172, ink: { left: 9, right: 946 } };
+const LOGO = { src: "/m/brand/elorro-logo.png", width: 1695, height: 287, ink: { left: 24, right: 1670 } };
 
 /**
  * Runs as the overlay is parsed, before the first paint. Shows the overlay
@@ -141,17 +143,21 @@ export function Intro() {
         <canvas ref={canvas} className="kz-intro-canvas" />
       </div>
       <div className="kz-intro-inner">
-        <Image
-          className="kz-intro-logo"
-          src={LOGO.src}
-          width={LOGO.width}
-          height={LOGO.height}
-          sizes="min(640px, 86vw)"
-          alt=""
-          loading="eager"
-          fetchPriority="high"
-          data-picture=""
-        />
+        <span className="kz-intro-mark">
+          <Image
+            className="kz-intro-logo"
+            src={LOGO.src}
+            width={LOGO.width}
+            height={LOGO.height}
+            sizes="min(680px, 90vw)"
+            alt=""
+            loading="eager"
+            fetchPriority="high"
+            data-picture=""
+          />
+          {/* The shine: light across the gold, only where the gold is (intro.css). */}
+          <span className="kz-intro-shine" />
+        </span>
         <span className="kz-intro-rule" />
         {/* The line twice over: cut in gold, and the burn's glowing edge, laid on it. */}
         <p className="kz-intro-def">
@@ -269,6 +275,19 @@ function play(el: HTMLDivElement, cv: HTMLCanvasElement, boot: Boot, finish: () 
   boot.live = true;
   el.dataset.live = ""; // from here the script owns the exit, not the CSS fallback
   const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  // The shine is cut to the logo's own picture, the file the page already has: it shows once that's in.
+  const logo = el.querySelector<HTMLImageElement>(".kz-intro-logo");
+  const shine = el.querySelector<HTMLElement>(".kz-intro-shine");
+  if (logo && shine && !reduced) {
+    const arm = () => {
+      if (!logo.naturalWidth) return;
+      shine.style.setProperty("--logo", `url("${logo.currentSrc || logo.src}")`);
+      shine.dataset.on = "";
+    };
+    if (logo.complete) arm();
+    else on(logo, "load", arm, { once: true });
+  }
   const mouse = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
 
   const getSmoke = () => {
