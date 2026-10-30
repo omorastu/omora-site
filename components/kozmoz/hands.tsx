@@ -14,12 +14,13 @@ import { cn } from "@/lib/utils";
  * switches straight across.
  *
  * The root also runs the hero's entrance, once the intro's black has gone or,
- * with no intro, as soon as the fonts are in, one step at a time: the gold
- * ampersand comes up softly (0.4s); then "Ashan Fernando" and "Jordan Lopez"
- * write themselves in together, letter by letter, left to right, first name
- * then last, both in the same 1.8s, so they finish together; and as the
- * first of the last names starts to appear, the hint, the lede and the
- * button rise in together (1s) while the names finish. The names are on
+ * with no intro, as soon as the fonts are in: "Ashan Fernando" and "Jordan
+ * Lopez" write themselves in together at once, letter by letter, left to
+ * right, first name then last, both in the same 1.8s, so they finish
+ * together; once the second letter of each first name is in, the gold
+ * ampersand drops into its place (0.45s); and as the first of the last names
+ * starts to appear, the hint, the lede and the button rise in together (1s)
+ * while the names finish. The names are on
  * the page from the start; the entrance only
  * reveals them, so nothing moves. A scroll, click or key on the way, or an
  * intro cut short, goes straight to the finished hero. Under reduced motion
@@ -40,9 +41,11 @@ function useHands() {
 
 const reducedMotion = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-/** The entrance's steps, in ms: the ampersand, both names together, the rest rising in. */
-const AMP_MS = 400;
+/** The entrance's steps, in ms: both names together, the ampersand's drop, the rest rising in. */
 const WRITE_MS = 1800;
+const DROP_MS = 450;
+/** The drop: quick, then settling gently into place, a hair past it at most. */
+const DROP_EASE = "cubic-bezier(.2, 1.15, .35, 1)";
 const RISE_MS = 1000;
 /** The rise: off gently, and a long, soft settle. */
 const RISE_EASE = "cubic-bezier(.3, .55, .25, 1)";
@@ -97,22 +100,18 @@ export function Hands({ className, children }: { className?: string; children: R
       /** What the writing puts on the page, to take off again once it's done. */
       const undo: (() => void)[] = [];
 
-      // The ampersand first, softly. The seam (desktop) draws down meanwhile.
-      anims.push(
-        amp.animate(
-          { opacity: [0, 1], transform: ["scale(.97)", "none"] },
-          { duration: AMP_MS, easing: "cubic-bezier(.3, .1, .3, 1)", fill: "backwards" }
-        )
-      );
+      // The seam (desktop) draws down as the names start.
       const seam = el.querySelector(".seam");
       if (seam) {
         anims.push(seam.animate({ scale: ["1 0", "1 1"] }, { duration: 900, easing: "cubic-bezier(.65, 0, .35, 1)", fill: "backwards" }));
       }
 
-      // Then both names at once, letter by letter, first name then last:
-      // each name's letters share the same time, however many there are.
-      // The rest rises in as the first of the last names starts.
-      let riseAt = AMP_MS + WRITE_MS;
+      // Both names at once, letter by letter, first name then last: each
+      // name's letters share the same time, however many there are. The
+      // ampersand drops in once both first names have their second letter;
+      // the rest rises in as the first of the last names starts.
+      let dropAt = 0;
+      let riseAt = WRITE_MS;
       for (const name of [a, j]) {
         const parts = [...name.querySelectorAll<HTMLElement>(".name-first, .name-last")]
           .map((line) => ({ line, edges: letterEdges(line) }))
@@ -120,14 +119,20 @@ export function Hands({ className, children }: { className?: string; children: R
         const count = parts.reduce((n, part) => n + part.edges.length - 1, 0);
         let before = 0;
         for (const { line, edges } of parts) {
-          const times = edges.map((_, k) => AMP_MS + pace((before + k) / count) * WRITE_MS);
+          const times = edges.map((_, k) => pace((before + k) / count) * WRITE_MS);
           before += edges.length - 1;
+          if (line.classList.contains("name-first")) dropAt = Math.max(dropAt, times[Math.min(2, times.length - 1)]);
           if (line.classList.contains("name-last")) riseAt = Math.min(riseAt, times[0]);
           const writing = reveal(line, edges, times);
           anims.push(...writing.anims);
           undo.push(writing.undo);
         }
       }
+
+      // The ampersand, from a little above its place, into it.
+      const drop = { duration: DROP_MS, delay: dropAt, fill: "backwards" } as const;
+      anims.push(amp.animate({ transform: ["translateY(-.2em)", "none"] }, { ...drop, easing: DROP_EASE }));
+      anims.push(amp.animate({ opacity: [0, 1] }, { ...drop, duration: DROP_MS * 0.35, easing: "ease-out" }));
 
       // The lines under them rise in together, the names still writing. The
       // hint and the lede sit on paper that breaks the seam: their letters

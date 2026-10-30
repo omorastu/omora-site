@@ -10,9 +10,11 @@ import { useEffect, useRef } from "react";
  * (kozmoz.css, .gold), light near the rings and deep and faint at its tail.
  * Each position fades as it ages, so the thread shortens and goes within
  * FADE of the mouse stopping. On the paper it's laid in under the ink
- * (kozmoz.css multiplies it), so where it crosses letters they stay whole.
+ * (kozmoz.css multiplies it), so where it crosses letters they stay whole;
+ * where the ground is black (the intro, the header's bar once it has turned)
+ * it's laid on as it is, a quiet gold line.
  *
- * One fixed canvas over the page (and over the intro's black), drawn only
+ * Fixed canvases over the page (and over the intro's black), drawn only
  * while there's a thread to draw. With a mouse or trackpad only; never on
  * touch or under reduced motion; not while the menu is open or over a text
  * field.
@@ -35,12 +37,16 @@ const GOLDS = ["190 150 69", "168 128 47", "135 97 34"];
 type Point = { x: number; y: number; t: number };
 
 export function Trail() {
-  const ref = useRef<HTMLCanvasElement>(null);
+  const paperRef = useRef<HTMLCanvasElement>(null);
+  const nightRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
-    const canvas = ref.current;
-    const ctx = canvas?.getContext("2d");
-    if (!canvas || !ctx) return;
+    // The thread on the paper (multiplied), and again where the ground is
+    // black (laid on as it is): the header's bar, once it has turned black.
+    const canvases = [paperRef.current, nightRef.current].filter((c): c is HTMLCanvasElement => !!c);
+    const ctxs = canvases.map((c) => c.getContext("2d")).filter((c): c is CanvasRenderingContext2D => !!c);
+    if (ctxs.length !== 2) return;
+    const [paper, night] = ctxs;
     const fine = window.matchMedia("(pointer: fine)");
     const still = window.matchMedia("(prefers-reduced-motion: reduce)");
     const points: Point[] = [];
@@ -52,23 +58,35 @@ export function Trail() {
     const size = () => {
       const on = fine.matches && !still.matches;
       dpr = Math.min(window.devicePixelRatio || 1, 2);
-      canvas.width = on ? Math.round(innerWidth * dpr) : 0;
-      canvas.height = on ? Math.round(innerHeight * dpr) : 0;
+      for (const c of canvases) {
+        c.width = on ? Math.round(innerWidth * dpr) : 0;
+        c.height = on ? Math.round(innerHeight * dpr) : 0;
+      }
+    };
+    const clear = () => {
+      for (const ctx of ctxs) {
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+      }
     };
     const wipe = () => {
       points.length = 0;
-      ctx.setTransform(1, 0, 0, 1, 0, 0);
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      clear();
     };
     /** Not now: the menu is open, or the pointer is over a text field. */
     const off = () => blocked || document.documentElement.hasAttribute("data-menu");
+    /** The header's bar, while it's black. */
+    const dark = () => {
+      const top = document.querySelector<HTMLElement>(".kz .top.is-dark");
+      const r = top?.getBoundingClientRect();
+      return r && r.bottom > 0 ? r : null;
+    };
 
     function frame() {
       raf = 0;
       const now = performance.now();
       while (points.length && now - points[0].t > FADE) points.shift();
-      ctx!.setTransform(1, 0, 0, 1, 0, 0);
-      ctx!.clearRect(0, 0, canvas!.width, canvas!.height);
+      clear();
       if (off()) return wipe();
       if (points.length > 1) paint(now);
       if (points.length) raf = requestAnimationFrame(frame);
@@ -99,24 +117,35 @@ export function Trail() {
         left.push({ x: line[i].x + nx * w, y: line[i].y + ny * w, t: 0 });
         right.push({ x: line[i].x - nx * w, y: line[i].y - ny * w, t: 0 });
       }
+      const shape = new Path2D();
+      shape.moveTo(left[0].x, left[0].y);
+      for (const p of left) shape.lineTo(p.x, p.y);
+      for (let i = right.length - 1; i >= 0; i--) shape.lineTo(right[i].x, right[i].y);
+      shape.closePath();
       // It fades as a whole once the mouse stops, as its newest position ages.
-      const life = Math.max(0, 1 - (now - points[points.length - 1].t) / FADE);
-      const peak = PEAK * life;
-      const gold = ctx!.createLinearGradient(head.x, head.y, tail.x, tail.y);
-      const clear = Math.min(0.45, CLEAR / length);
-      gold.addColorStop(0, `rgb(${GOLDS[0]} / 0)`);
-      gold.addColorStop(clear, `rgb(${GOLDS[0]} / ${0.3 * peak})`);
-      gold.addColorStop(clear + (1 - clear) * 0.2, `rgb(${GOLDS[0]} / ${peak})`);
-      gold.addColorStop(clear + (1 - clear) * 0.55, `rgb(${GOLDS[1]} / ${0.55 * peak})`);
-      gold.addColorStop(1, `rgb(${GOLDS[2]} / 0)`);
-      ctx!.setTransform(dpr, 0, 0, dpr, 0, 0);
-      ctx!.beginPath();
-      ctx!.moveTo(left[0].x, left[0].y);
-      for (const p of left) ctx!.lineTo(p.x, p.y);
-      for (let i = right.length - 1; i >= 0; i--) ctx!.lineTo(right[i].x, right[i].y);
-      ctx!.closePath();
-      ctx!.fillStyle = gold;
-      ctx!.fill();
+      const peak = PEAK * Math.max(0, 1 - (now - points[points.length - 1].t) / FADE);
+      const lay = (ctx: CanvasRenderingContext2D, within?: DOMRect) => {
+        const gold = ctx.createLinearGradient(head.x, head.y, tail.x, tail.y);
+        const from = Math.min(0.45, CLEAR / length);
+        gold.addColorStop(0, `rgb(${GOLDS[0]} / 0)`);
+        gold.addColorStop(from, `rgb(${GOLDS[0]} / ${0.3 * peak})`);
+        gold.addColorStop(from + (1 - from) * 0.2, `rgb(${GOLDS[0]} / ${peak})`);
+        gold.addColorStop(from + (1 - from) * 0.55, `rgb(${GOLDS[1]} / ${0.55 * peak})`);
+        gold.addColorStop(1, `rgb(${GOLDS[2]} / 0)`);
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        ctx.save();
+        if (within) {
+          ctx.beginPath();
+          ctx.rect(within.left, within.top, within.width, within.height);
+          ctx.clip();
+        }
+        ctx.fillStyle = gold;
+        ctx.fill(shape);
+        ctx.restore();
+      };
+      lay(paper);
+      const bar = dark();
+      if (bar) lay(night, bar);
     }
 
     const move = (e: PointerEvent) => {
@@ -150,7 +179,12 @@ export function Trail() {
     };
   }, []);
 
-  return <canvas ref={ref} className="trail" aria-hidden="true" />;
+  return (
+    <>
+      <canvas ref={paperRef} className="trail" aria-hidden="true" />
+      <canvas ref={nightRef} className="trail trail--night" aria-hidden="true" />
+    </>
+  );
 }
 
 /** The positions as a smooth curve (Catmull-Rom, four steps between each two). */

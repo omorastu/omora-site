@@ -61,10 +61,11 @@ html:has(.kz),
   --gold-hi: #BE9645;
   --gold-lo: #876122;
   --gold-text: var(--gold-lo);
-  /* The buttons' gold: the gold type's three golds (.gold), each 19% deeper,
-     falling from the top edge to the bottom, the mid gold reached just above
-     the capitals, so the paper on them reads clearly (4.6:1 or more). */
-  --gold-button: linear-gradient(180deg, #9A7A38, #886826 38%, #6D4F1C);
+  /* The buttons' gold: from the gold type's light gold (.gold) at the top
+     edge down to a deep gold at the foot, through a mid gold 19% deeper
+     than the type's, reached above the capitals, so the paper on them reads
+     clearly (4.6:1 or more). */
+  --gold-button: linear-gradient(180deg, var(--gold-hi), #886826 36%, #6D4F1C);
 
   /* --font-logo (Cormorant Garamond) comes from next/font on <html>
      (app/layout.tsx), --font-hanken on .kz itself (components/kozmoz/fonts.ts). */
@@ -207,7 +208,8 @@ html:has(.kz) body {
 /* And behind the rings as the mouse moves, a fine gold thread (trail.tsx),
    over everything, the intro's black too, and never in the way: on the
    paper it multiplies, so it tints the paper and leaves the ink as it is;
-   over the intro's black it's laid on as it is. */
+   over the intro's black, and over the header's bar once it has turned
+   black (a second canvas, drawn only there), it's laid on as it is. */
 .kz .trail {
   position: fixed;
   inset: 0;
@@ -217,6 +219,7 @@ html:has(.kz) body {
   pointer-events: none;
   mix-blend-mode: multiply;
 }
+.kz .trail--night,
 html:has(#kz-intro-boot) .kz .trail { mix-blend-mode: normal; }
 @media not (pointer: fine), (prefers-reduced-motion: reduce) {
   .kz .trail { display: none; }
@@ -590,7 +593,8 @@ html[data-menu] body { overflow: hidden; }
   transition: letter-spacing .6s var(--spring-soft), box-shadow .25s var(--ease);
 }
 .kz .act[aria-disabled="true"] { cursor: progress; }
-.kz .act:focus-visible { box-shadow: inset 0 0 0 100vmax rgb(32 20 4 / .16); }
+/* Keyboard focus: the deeper gold, and a thin ink ring just clear of it. */
+.kz .act:focus-visible { outline-color: var(--ink); box-shadow: inset 0 0 0 100vmax rgb(32 20 4 / .16); }
 @media (hover: hover) {
   .kz .act:hover:not([aria-disabled="true"]) { box-shadow: inset 0 0 0 100vmax rgb(32 20 4 / .16); }
 }

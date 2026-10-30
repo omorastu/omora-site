@@ -24,7 +24,6 @@
   z-index: 1000;
   display: none;
   overflow: hidden;
-  cursor: default;
   user-select: none;
   -webkit-user-select: none;
   -webkit-tap-highlight-color: transparent;
