@@ -128,6 +128,20 @@ html:has(.kz) body {
   color: var(--ink);
 }
 
+/* While the intro and the hero's entrance play (hold.ts), the page doesn't
+   scroll, not even a bounce or a pull to refresh; a pinch still zooms.
+   Anything that moves it all the same (a focused link further down) moves
+   it at once, not smoothly, so hold.ts puts it back before it shows. The
+   scrollbar's place is kept, so nothing shifts when it comes back. */
+html[data-kz-hold] {
+  overflow: hidden;
+  overscroll-behavior: none;
+  scroll-behavior: auto;
+  scrollbar-gutter: stable;
+  touch-action: manipulation;
+  touch-action: pinch-zoom;
+}
+
 /* ---------- base ---------- */
 /* At least a screen tall, so a short page's footer still sits at the bottom. */
 .kz {

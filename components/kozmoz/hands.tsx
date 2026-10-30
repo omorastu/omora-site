@@ -2,6 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { people, type Who } from "@/lib/kozmoz";
+import { cameBack, free, hold, HOLD_MAX } from "@/components/kozmoz/hold";
 import { cn } from "@/lib/utils";
 
 /**
@@ -19,11 +20,17 @@ import { cn } from "@/lib/utils";
  * right, first name then last, both in the same 1.8s, so they finish
  * together; once the second letter of each first name is in, the gold
  * ampersand drops into its place (0.45s); and once it has landed, the hint,
- * the lede and the button rise in together (1s) while the names finish. The names are on
- * the page from the start; the entrance only
- * reveals them, so nothing moves. A scroll, click or key on the way, or an
- * intro cut short, goes straight to the finished hero. Under reduced motion
- * everything is simply there.
+ * the lede and the button rise in together (1s) while the names finish. The
+ * names are on the page from the start; the entrance only reveals them, so
+ * nothing moves. Under reduced motion everything is simply there.
+ *
+ * Until it's done, the page is held still at its top (hold.ts), the intro
+ * before it too, and nothing a visitor does cuts it short; the moment the
+ * hero is in, the page scrolls. Sent to a part of the page further down (a
+ * #link, back or forward to where they were, a reload partway down), the
+ * hero is there already and nothing holds. Should anything stall, by
+ * HOLD_MAX from the first paint the hero is shown finished and the page
+ * let go.
  */
 
 type View = Who | "";
@@ -52,8 +59,8 @@ const RISE_EASE = "cubic-bezier(.3, .55, .25, 1)";
 const LETTER_EASE = "cubic-bezier(.45, .05, .45, 1)";
 /** Across a name, the letters a little slower at its start and end, so it gathers and settles. */
 const pace = (u: number) => 0.6 * u + 0.4 * ((1 - Math.cos(Math.PI * u)) / 2);
-/** If the intro never says it has cleared, start anyway. */
-const INTRO_WAIT = 10000;
+/** If the intro never says it has cleared (its own failsafe ends it by 8s), start anyway, in ms from the first paint. */
+const INTRO_WAIT = 9000;
 
 export function Hands({ className, children }: { className?: string; children: React.ReactNode }) {
   const root = useRef<HTMLDivElement>(null);
@@ -62,6 +69,8 @@ export function Hands({ className, children }: { className?: string; children: R
   const [status, setStatus] = useState("");
   // .is-in: the names have been handed to their entrance and may show.
   const [isIn, setIsIn] = useState(false);
+  // This visit to the page: its first paint, and whether a page load brought it (or a move within the site).
+  const visit = useRef<{ t0: number; load: boolean } | null>(null);
 
   const apply = useCallback((next: View) => {
     viewRef.current = next;
@@ -76,23 +85,38 @@ export function Hands({ className, children }: { className?: string; children: R
     [apply]
   );
 
-  /* Entrance: the ampersand, the names writing themselves in, a pause, the rest. */
+  /* Entrance: the names writing themselves in, the ampersand, the rest; the page held still meanwhile. */
   useEffect(() => {
     const el = root.current;
     if (!el) return;
     let cancelled = false;
+    let begun = false;
     let wait = 0;
     /** Ends a running entrance where it would have ended. */
     let settle: (() => void) | null = null;
+    /** Lets the page go: at its top, unless it's going. */
+    let release: ((atTop?: boolean) => void) | null = null;
+    const done = (atTop = true) => {
+      release?.(atTop);
+      release = null;
+    };
+
+    const boot = window.__kzIntro;
+    visit.current ??= boot && !boot.taken ? { t0: boot.t0, load: true } : { t0: performance.now(), load: false };
+    if (boot) boot.taken = true;
+    const { t0, load } = visit.current;
+    const intro = !!boot?.show && !boot.done && !boot.clear;
 
     const entrance = (finished = false) => {
-      if (cancelled) return;
+      if (cancelled || begun) return;
+      begun = true;
       const hero = el.querySelector<HTMLElement>(".hero");
       const a = el.querySelector<HTMLElement>(".name--a");
       const j = el.querySelector<HTMLElement>(".name--j");
       const amp = el.querySelector<HTMLElement>(".name-amp");
       if (finished || !hero || !a || !j || !amp || reducedMotion() || typeof a.animate !== "function") {
         setIsIn(true);
+        done();
         return;
       }
       const anims: Animation[] = [];
@@ -146,18 +170,15 @@ export function Hands({ className, children }: { className?: string; children: R
         else anims.push(line.animate({ opacity: [0, 1] }, rise));
       }
 
-      // Done, or cut short by a scroll, a click or a key: the hero as it ends.
-      // (Every step ends on the page's own styles, so stopping them is finishing them.)
-      const cut = ["wheel", "touchmove", "pointerdown", "keydown", "scroll"] as const;
+      // Done: the hero as it ends, and the page free. (Every step ends on
+      // the page's own styles, so stopping them is finishing them.)
       settle = () => {
         settle = null;
-        for (const type of cut) removeEventListener(type, end, true);
         for (const anim of anims) anim.cancel();
         for (const fn of undo) fn();
+        done();
       };
-      const end = () => settle?.();
-      for (const type of cut) addEventListener(type, end, { capture: true, passive: true });
-      Promise.all(anims.map((anim) => anim.finished)).then(end, () => {});
+      Promise.all(anims.map((anim) => anim.finished)).then(() => settle?.(), () => {});
       setIsIn(true);
     };
 
@@ -166,24 +187,44 @@ export function Hands({ className, children }: { className?: string; children: R
       Promise.race([fontsReady, new Promise((r) => setTimeout(r, 900))]).then(() => entrance());
     };
 
-    // With the intro up, wait for it to clear (components/intro/intro.tsx);
-    // cut short, it leaves the hero finished.
-    const intro = window.__kzIntro;
+    // With no intro, sent further down the page: a #link, back or forward
+    // to where they were, or a reload partway down (a move within the site
+    // otherwise starts at the top, whatever the scroll it's left with). The
+    // hero is there already, finished, and nothing holds.
+    const target = location.hash.length > 1 ? document.getElementById(decodeURIComponent(location.hash.slice(1))) : null;
+    const away = !!target || (load ? scrollY > 1 : cameBack());
+    if (!intro && (away || reducedMotion())) {
+      free();
+      entrance(true);
+      return;
+    }
+
+    // With the intro up, wait for it to clear (components/intro/intro.tsx).
     const go = () => {
       removeEventListener("kz:intro-clear", go);
       clearTimeout(wait);
-      if (window.__kzIntro?.skipped) entrance(true);
-      else begin();
+      begin();
     };
-    if (intro?.show && !intro.done && !intro.clear) {
+    // Whatever has stalled by now: no intro, the hero finished, the page free.
+    const late = () => {
+      removeEventListener("kz:intro-clear", go);
+      clearTimeout(wait);
+      window.__kzIntro?.end?.();
+      if (settle) settle();
+      else entrance(true);
+      done();
+    };
+    release = hold(t0 + HOLD_MAX, late);
+    if (intro) {
       addEventListener("kz:intro-clear", go);
-      wait = window.setTimeout(go, INTRO_WAIT);
+      wait = window.setTimeout(go, t0 + INTRO_WAIT - performance.now());
     } else begin();
 
     return () => {
       cancelled = true;
       removeEventListener("kz:intro-clear", go);
       clearTimeout(wait);
+      done(false);
       settle?.();
     };
   }, []);

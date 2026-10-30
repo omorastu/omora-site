@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import Image from "next/image";
 import { createSmoke, type Smoke } from "@/components/intro/smoke";
+import { HOLD_ATTR, HOLD_MAX } from "@/components/kozmoz/hold";
 import "@/components/intro/intro.css";
 
 /**
@@ -21,12 +22,14 @@ import "@/components/intro/intro.css";
  *              left in one piece (0.8s), uncovering the page from the right,
  *              while the logo flies over it to the header's wordmark, turning
  *              into it as it lands, just as the last of the black goes
+ *   5.25s      the black has gone; the hero's entrance follows (1.8s)
  *
  * The hero comes in once the black has gone ("kz:intro-clear",
- * components/kozmoz/hands.tsx). A click, tap, key or scroll goes straight to
- * the page, finished: a quick fade, no flight, and the hero already in. Under
- * reduced motion the logo and the line are simply there, held a moment, then
- * the black fades away.
+ * components/kozmoz/hands.tsx). From the first paint until the hero is in,
+ * the page is held still at its top (components/kozmoz/hold.ts), and
+ * nothing a visitor does, a click, a tap, a key or a scroll, cuts any of it
+ * short. Under reduced motion the logo and the line are simply there, held
+ * a moment, then the black fades away (3.2–3.8s) onto the hero, already in.
  * While it shows, the browser's chrome is near-black too.
  *
  * The decision to show it is made by a tiny inline script during the first
@@ -48,8 +51,6 @@ const SLIDE_EASE = "cubic-bezier(.37, 0, .63, 1)";
 /** Reduced motion: a hold, then a plain fade. */
 const REDUCED_HOLD_END = 3200;
 const FADE = 600;
-/** A click, key or scroll: straight to the page. */
-const SKIP = 250;
 /** From here intro.css's fallback owns the exit (keep in step with intro.css and BOOT). */
 const FALLBACK_AT = 5200;
 /** If nothing else has, the overlay goes at this point regardless. */
@@ -83,15 +84,29 @@ const LOGO = { src: "/m/brand/elorro-logo.png", width: 1695, height: 287, ink: {
  * --kz-wait) and the header's wordmark (the logo lands on it) until the
  * overlay's fallback has run; a theme-color ahead of the page's darkens the
  * browser's chrome, and goes again by then if nothing has taken over.
+ *
+ * It also holds the page still (hold.ts) for the intro, or, without it, for
+ * the hero's entrance, unless that is simply there (reduced motion) or the
+ * visit is to a part of the page further down (a #link). Should the page's
+ * script never take that over, it lets go by HOLD_MAX all the same.
  */
-const BOOT = `(function(){var show=false,q=/[?&]intro(=|&|$)/.test(location.search);try{var r=document.referrer,inside=false;try{inside=!!r&&new URL(r).origin===location.origin}catch(e){}var seen=sessionStorage.getItem("${KEY}");sessionStorage.setItem("${KEY}","1");show=!seen&&!inside}catch(e){}show=show||q;var b=window.__kzIntro={show:show,t0:performance.now()};if(show){var s=document.createElement("style");s.id="${KEY}-boot";s.textContent="html .kz-intro{display:block}html{--kz-wait:${(FALLBACK_AT + FADE + 200) / 1000}s}.kz .top .brand .wordmark{animation:kz-intro-word ${FALLBACK_AT + FADE}ms}";document.head.appendChild(s);var m=document.createElement("meta");m.name="theme-color";m.content="${NIGHT}";m.id="${KEY}-theme";document.head.prepend(m);setTimeout(function(){if(!b.live)m.remove()},${FALLBACK_AT + FADE})}})();`;
+const BOOT = `(function(){var show=false,q=/[?&]intro(=|&|$)/.test(location.search);try{var r=document.referrer,inside=false;try{inside=!!r&&new URL(r).origin===location.origin}catch(e){}var seen=sessionStorage.getItem("${KEY}");sessionStorage.setItem("${KEY}","1");show=!seen&&!inside}catch(e){}show=show||q;var b=window.__kzIntro={show:show,t0:performance.now()},h=document.documentElement,still=false;try{still=matchMedia("(prefers-reduced-motion: reduce)").matches}catch(e){}if(show||!(still||location.hash.length>1)){h.setAttribute("${HOLD_ATTR}","");setTimeout(function(){if(!b.taken)h.removeAttribute("${HOLD_ATTR}")},${HOLD_MAX})}if(show){var s=document.createElement("style");s.id="${KEY}-boot";s.textContent="html .kz-intro{display:block}html{--kz-wait:${(FALLBACK_AT + FADE + 200) / 1000}s}.kz .top .brand .wordmark{animation:kz-intro-word ${FALLBACK_AT + FADE}ms}";document.head.appendChild(s);var m=document.createElement("meta");m.name="theme-color";m.content="${NIGHT}";m.id="${KEY}-theme";document.head.prepend(m);setTimeout(function(){if(!b.live)m.remove()},${FALLBACK_AT + FADE})}})();`;
 
 /**
  * Set by the boot script; `live` once this has taken over, `clear` once the
- * page shows through (`skipped` if a click, key or scroll cut it short),
- * `done` once the overlay has gone.
+ * page shows through, `done` once the overlay has gone; `taken` once the
+ * page has taken over holding itself still (hands.tsx). `end`, while the
+ * intro plays, takes it away at once (hands.tsx, if all else stalls).
  */
-type Boot = { show: boolean; t0: number; live?: boolean; clear?: boolean; skipped?: boolean; done?: boolean };
+type Boot = {
+  show: boolean;
+  t0: number;
+  live?: boolean;
+  clear?: boolean;
+  done?: boolean;
+  taken?: boolean;
+  end?: () => void;
+};
 
 declare global {
   interface Window {
@@ -242,28 +257,25 @@ function play(el: HTMLDivElement, cv: HTMLCanvasElement, boot: Boot, finish: () 
     fading = null;
     anims.forEach((a) => a.cancel());
     anims.length = 0;
+    if (boot.end === end) delete boot.end;
     delete el.dataset.live;
     delete el.dataset.mode;
     delete el.dataset.leaving;
     delete el.dataset.flying;
   }
 
-  /** The page is there: the hero can come in. */
-  function clear() {
-    if (boot.clear) return;
-    boot.clear = true;
-    window.dispatchEvent(new Event("kz:intro-clear"));
-  }
-
-  /** Gone: the browser's chrome and the header's wordmark are the page's again. */
+  /** Gone: the browser's chrome and the header's wordmark are the page's again, and the hero can come in. */
   function end() {
     if (ended) return;
     ended = true;
     cleanup();
-    clear();
     document.getElementById(`${KEY}-theme`)?.remove();
     document.getElementById(`${KEY}-boot`)?.remove();
     finish();
+    if (!boot.clear) {
+      boot.clear = true;
+      window.dispatchEvent(new Event("kz:intro-clear"));
+    }
   }
 
   // Hydrated so late that intro.css's fallback is already fading it out: let it finish.
@@ -273,6 +285,7 @@ function play(el: HTMLDivElement, cv: HTMLCanvasElement, boot: Boot, finish: () 
   }
 
   boot.live = true;
+  boot.end = end;
   el.dataset.live = ""; // from here the script owns the exit, not the CSS fallback
   const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -307,23 +320,13 @@ function play(el: HTMLDivElement, cv: HTMLCanvasElement, boot: Boot, finish: () 
     fading.onfinish = end;
   }
 
-  /** Let clicks through to the page again — after the press that started this has let go. */
-  function release(cause: string) {
-    const free = () => (el.dataset.leaving = "");
-    if (cause === "pointer") {
-      const up = () => later(60, free);
-      on(el, "pointerup", up, { once: true });
-      on(el, "pointercancel", up, { once: true });
-      later(900, free);
-    } else later(200, free);
-  }
-
   /** The way out, on time: the words dim, then the black slides away and the logo flies. */
   function leave() {
     if (leaving) return;
     leaving = true;
-    release("timer");
-    if (reduced) return clear(), fade(FADE);
+    // The pointer reaches the page again (hold.ts still keeps it from pressing anything).
+    later(200, () => (el.dataset.leaving = ""));
+    if (reduced) return fade(FADE);
     for (const w of el.querySelectorAll<HTMLElement>(".kz-intro-rule, .kz-intro-def")) {
       anims.push(w.animate({ opacity: [Number(getComputedStyle(w).opacity), 0] }, { duration: DIM, easing: "ease-in", fill: "forwards" }));
     }
@@ -336,7 +339,7 @@ function play(el: HTMLDivElement, cv: HTMLCanvasElement, boot: Boot, finish: () 
    * the header meanwhile, over it, in step with it.
    */
   function slide() {
-    if (!ground) return clear(), fade(FADE);
+    if (!ground) return fade(FADE);
     const door = { transform: ["none", "translateX(-100%)"] };
     const timing: KeyframeAnimationOptions = { duration: SLIDE, easing: SLIDE_EASE, fill: "both" };
     const black = ground.animate(door, timing);
@@ -353,27 +356,10 @@ function play(el: HTMLDivElement, cv: HTMLCanvasElement, boot: Boot, finish: () 
     black.onfinish = end;
   }
 
-  /** A click, key or scroll: straight to the page. */
-  function skip(cause: string) {
-    if (ended) return;
-    if (!leaving) release(cause);
-    leaving = true;
-    if (!boot.clear) boot.skipped = true;
-    clear();
-    fade(SKIP);
-  }
-
   // On its own: leave after the hold.
   later((reduced ? REDUCED_HOLD_END : HOLD_END) - since(), leave);
   // And whatever happens, never leave the overlay up.
   later(FAILSAFE - since(), end);
-
-  // Early: any press, key or scroll.
-  on(el, "pointerdown", () => skip("pointer"));
-  on(window, "keydown", (e) => {
-    if (!["Shift", "Control", "Alt", "Meta"].includes(e.key)) skip("key");
-  });
-  on(el, "wheel", () => skip("wheel"), { passive: true });
 
   // With a mouse, the pointer stirs the logo once it has faded in.
   if (mouse && !reduced) {
