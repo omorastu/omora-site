@@ -13,8 +13,8 @@ import "@/components/intro/intro.css";
  * glowing edge, and settles as gold cut into the stone.
  *
  *   0–0.75s    the logo fades in, then the gold rule draws (intro.css)
- *   0.85s      a band of light sweeps across the gold, once (0.9s), and
- *              once more, fainter, during the hold (from 3.2s)
+ *   0.85s      a band of light glides across the gold, once (1.6s), and
+ *              once more, fainter, during the hold (2.8–4.3s)
  *   0.75–2s    the line burns in (intro.css); the hold runs to 4.2s, and
  *              with a mouse the pointer bends the logo a little (smoke.ts)
  *   4.2s       the line dims out (0.25s), then the black slides off to the

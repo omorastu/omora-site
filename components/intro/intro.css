@@ -95,16 +95,17 @@
   mix-blend-mode: screen;
   -webkit-mask: var(--logo) 0 0 / 100% 100% no-repeat;
   mask: var(--logo) 0 0 / 100% 100% no-repeat;
-  animation: kz-intro-shine 3.25s .85s both;
+  animation: kz-intro-shine 3.45s .85s both;
 }
 .kz-intro-shine[data-on] { visibility: visible; }
 .kz-intro[data-flying] .kz-intro-shine { display: none; }
-/* 0.85–1.75s the first sweep; 3.2–4.1s the second, fainter. */
+/* 0.85–2.45s the first sweep, gliding across the word; 2.8–4.3s the second,
+   fainter, done before the black starts to slide (4.45s). */
 @keyframes kz-intro-shine {
   0% { background-position: 100% 0; opacity: 1; animation-timing-function: cubic-bezier(.45, 0, .55, 1); }
-  27.7% { background-position: 0% 0; opacity: 1; }
-  27.8% { background-position: 100% 0; opacity: .55; }
-  72.3% { background-position: 100% 0; opacity: .55; animation-timing-function: cubic-bezier(.45, 0, .55, 1); }
+  46.4% { background-position: 0% 0; opacity: 1; }
+  46.5% { background-position: 100% 0; opacity: .55; }
+  56.5% { background-position: 100% 0; opacity: .55; animation-timing-function: cubic-bezier(.45, 0, .55, 1); }
   100% { background-position: 0% 0; opacity: .55; }
 }
 
