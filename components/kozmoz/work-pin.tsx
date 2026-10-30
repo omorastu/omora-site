@@ -12,8 +12,14 @@ import { PlayGateContext, type PlayGate } from "@/components/kozmoz/work-video";
  * went. The row glides to that card's middle (MOVE ms) and takes no more
  * input until it's there, so a swipe never skips a card or stops between
  * two. On the last card the next swipe on lets the page go on down into
- * Contact; on the first, a swipe back lets it go up. Coming in from above
- * it holds on the first card, from below on the last.
+ * Contact; on the first, a swipe back lets it go up.
+ *
+ * Coming in, it's a hard stop: however big or quick the scroll or fling,
+ * the moment the page reaches (or has passed) the section's start coming
+ * down, it's put exactly on the first card, and coming up, on the last; and
+ * the page is frozen there (freeze()) so whatever momentum is left dies,
+ * until the next touch, wheel or key. Scrolls to a link (the hero's button,
+ * the menu) pass straight through.
  *
  * Underneath it's a tall box with a sticky stage: each card has its own
  * stop down the box, the row's place (--x, in cards) follows the page's
@@ -39,10 +45,18 @@ const FLICK = 12;
 const FLICK_MS = 220;
 /** Under this, in px, the finger hasn't yet said which way it's going. */
 const SLOP = 6;
-/** A swipe that let go this recently may still be carrying the page, in ms. */
-const COAST = 1200;
 /** A scroll that has stopped for this long, in ms, has ended (the wheel, keys). */
 const SETTLE = 160;
+/** A wheel after this long a pause, in ms, is a new scroll, not the last one's momentum. */
+const WHEEL_PAUSE = 250;
+/** Frozen, the page slipping this many times gets a firmer hold. */
+const DRIFT = 2;
+/** The page still for this long, in ms, needs no watching frame by frame (scroll events still come). */
+const QUIET = 600;
+/** Someone's scroll is over when the page has been still this long, in ms, with no finger down. */
+const OVER = 400;
+/** Keys that scroll the page a screen or a line. (Home and End go to a place, like a link.) */
+const SCROLL_KEYS = new Set([" ", "PageDown", "PageUp", "ArrowDown", "ArrowUp"]);
 
 const easeOut = (t: number) => 1 - (1 - t) ** 3;
 
@@ -61,6 +75,9 @@ type Touch = {
   moved: boolean;
 };
 
+/** The page frozen on a stop: where, and whether the body has been pinned too. */
+type Frozen = { at: number; fixed: boolean; drift: number };
+
 export function WorkPin({ count, children }: { count: number; children: React.ReactNode }) {
   const ref = useRef<HTMLDivElement>(null);
   const [gate] = useState(createGate);
@@ -71,30 +88,36 @@ export function WorkPin({ count, children }: { count: number; children: React.Re
     if (!pin || !(stage instanceof HTMLElement)) return;
     const pinned = window.matchMedia(PINNED);
     const root = document.documentElement;
+    const body = document.body;
     const cards = [...pin.querySelectorAll<HTMLElement>(".proj")];
     const last = count - 1;
     let raf = 0;
+    let watching = 0;
     let near = false;
-    let lastY = scrollY;
     let touch: Touch | null = null;
-    /** When the last swipe (not a tap) let go. */
-    let swipedAt = -Infinity;
+    /** What moved the page last: someone scrolling it (a swipe, a wheel, keys), or a link. */
+    let intent: "scroll" | "link" | null = null;
+    let frozen: Frozen | null = null;
+    let lastWheel = -Infinity;
+    let over = 0;
+    /** When anything last moved, or might be moving, the page. */
+    let stirred = performance.now();
     /** A glide under way. */
     let gliding = 0;
-    /** The page held still on a stop, and what lets it go (the next touch, or the end of the coast). */
-    let held: (() => void) | null = null;
-    let letGo = 0;
     let settling = 0;
     let bound = false;
 
     const on = () => pinned.matches && last >= 1;
+    /** Where the page is scrolled to (frozen with the body pinned, the window reads 0). */
+    const pageY = () => (frozen?.fixed ? frozen.at : scrollY);
+    let lastY = pageY();
     /** The pin's top, in page px, and the page px per card. */
-    const top = () => pin.getBoundingClientRect().top + scrollY;
+    const top = () => pin.getBoundingClientRect().top + pageY();
     const step = () => (pin.offsetHeight - stage.offsetHeight) / last;
     const stop = (i: number) => top() + i * step();
     /** Where the row is, in cards, for where the page is. */
-    const place = () => Math.min(last, Math.max(0, (scrollY - top()) / step()));
-    const inside = () => scrollY > stop(0) - 2 && scrollY < stop(last) + 2;
+    const place = () => Math.min(last, Math.max(0, (pageY() - top()) / step()));
+    const inside = () => pageY() > stop(0) - 2 && pageY() < stop(last) + 2;
 
     const show = () => {
       if (!on()) {
@@ -113,6 +136,8 @@ export function WorkPin({ count, children }: { count: number; children: React.Re
     };
     const update = () => {
       raf = 0;
+      // The hard stop first, so no frame shows the row moved by a scroll that's about to be stopped.
+      check();
       show();
       // Only while the row is held does a swipe need stopping from scrolling the page.
       const want = on() && inside();
@@ -125,6 +150,90 @@ export function WorkPin({ count, children }: { count: number; children: React.Re
     const queue = () => {
       if (!raf) raf = requestAnimationFrame(update);
     };
+
+    /* ── The hard stop ─────────────────────────────────────────────────── */
+
+    /** Someone's scroll lasts as long as the page keeps moving, or a finger is down (and a little after). */
+    const scrolling = () => {
+      intent = "scroll";
+      clearTimeout(over);
+      over = window.setTimeout(() => {
+        if (!touch) intent = null;
+      }, OVER);
+    };
+
+    /**
+     * Put the page exactly on a stop and freeze it there: nothing scrolls it
+     * (not a finger still down, not the momentum of a fling) until the next
+     * touch, wheel or key lets go (thaw()).
+     */
+    const freeze = (at: number) => {
+      scrollTo({ top: at, behavior: "instant" });
+      // The root only: on the body as well, the body would become a scroller of its own and the stage would stop sticking.
+      root.style.overflow = "hidden";
+      frozen = { at, fixed: false, drift: 0 };
+      lastY = at;
+      intent = null;
+      queue();
+      watch();
+    };
+    /** If the page drifts all the same (momentum that ignores the above), pin the body where it is. */
+    const fix = () => {
+      if (!frozen || frozen.fixed) return;
+      frozen.fixed = true;
+      Object.assign(body.style, { position: "fixed", top: `${-frozen.at}px`, left: "0", right: "0", width: "100%" });
+    };
+    const thaw = () => {
+      if (!frozen) return;
+      const { at, fixed } = frozen;
+      frozen = null;
+      root.style.removeProperty("overflow");
+      for (const prop of ["position", "top", "left", "right", "width"]) body.style.removeProperty(prop);
+      if (fixed) scrollTo({ top: at, behavior: "instant" });
+      lastY = scrollY;
+    };
+
+    /**
+     * Each scroll and each frame near the section: someone's scroll that has
+     * reached the section, or gone past it within a frame, stops on its first
+     * card coming down and its last coming up; and frozen, the page stays put.
+     */
+    const check = () => {
+      if (!on() || gliding) return;
+      if (frozen) {
+        if (frozen.fixed) return;
+        // Slipped (momentum that the frozen root didn't stop): back, and a second slip gets the firmer hold.
+        if (Math.abs(scrollY - frozen.at) > 1) {
+          scrollTo({ top: frozen.at, behavior: "instant" });
+          if (++frozen.drift >= DRIFT) fix();
+        }
+        return;
+      }
+      const y = scrollY;
+      if (!gliding && intent === "scroll") {
+        const a = stop(0);
+        const b = stop(last);
+        if (lastY < a - 1 && y >= a - 1) return freeze(a);
+        if (lastY > b + 1 && y <= b + 1) return freeze(b);
+      }
+      lastY = y;
+    };
+    /** Every frame while the page is moving near the section, or has just been frozen on it. */
+    const watch = () => {
+      stirred = performance.now();
+      if (watching) return;
+      const frame = () => {
+        watching = 0;
+        const y = pageY();
+        if (Math.abs(y - lastY) > 0.5) stirred = performance.now();
+        check();
+        const close = y > stop(0) - 2 * innerHeight && y < stop(last) + 2 * innerHeight;
+        if (on() && close && performance.now() - stirred < QUIET) watching = requestAnimationFrame(frame);
+      };
+      watching = requestAnimationFrame(frame);
+    };
+
+    /* ── Moving through the cards ──────────────────────────────────────── */
 
     /** Glide the page to `to` (page px), the row with it; nothing else moves it meanwhile. */
     const glide = (to: number) => {
@@ -149,34 +258,15 @@ export function WorkPin({ count, children }: { count: number; children: React.Re
       else if (axis === "x") glide(dir > 0 ? stop(last) + innerHeight * 0.6 : stop(0) - innerHeight * 0.6);
     };
 
-    /**
-     * Stop the page on a stop, wherever its scroll was taking it: still the
-     * page's own scrolling there, and keep it still through any coast after
-     * the finger lifts, until the next touch (or the coast is surely over).
-     */
-    const hold = (at: number) => {
-      root.style.overflow = "hidden";
-      scrollTo({ top: at, behavior: "instant" });
-      lastY = scrollY;
-      swipedAt = -Infinity;
-      clearTimeout(letGo);
-      held = () => {
-        held = null;
-        clearTimeout(letGo);
-        root.style.removeProperty("overflow");
-      };
-      letGo = window.setTimeout(() => held?.(), COAST);
-      queue();
-    };
-
     const onStart = (e: TouchEvent) => {
+      // A new touch: whatever froze the page, it's this finger's now.
+      thaw();
+      watch();
       if (e.touches.length !== 1) {
         touch = null;
         return;
       }
       const p = e.touches[0];
-      // A new touch: whatever held the page, it's this finger's now.
-      held?.();
       const ours = on() && (gliding > 0 || inside());
       touch = { x: p.clientX, y: p.clientY, t: performance.now(), kind: ours ? (gliding ? "spent" : "open") : "page", nx: p.clientX, ny: p.clientY, moved: false };
     };
@@ -185,7 +275,8 @@ export function WorkPin({ count, children }: { count: number; children: React.Re
       if (!touch || e.touches.length !== 1) return;
       touch.nx = e.touches[0].clientX;
       touch.ny = e.touches[0].clientY;
-      if (Math.abs(touch.nx - touch.x) > 10 || Math.abs(touch.ny - touch.y) > 10) touch.moved = true;
+      if (!touch.moved && (Math.abs(touch.nx - touch.x) > 10 || Math.abs(touch.ny - touch.y) > 10)) touch.moved = true;
+      if (touch.moved) scrolling();
     };
     /** While the row is held: which way, and keep the page from scrolling under it. */
     function onMove(e: TouchEvent) {
@@ -233,27 +324,46 @@ export function WorkPin({ count, children }: { count: number; children: React.Re
         const d = touch.axis === "x" ? touch.nx - touch.x : touch.ny - touch.y;
         if (Math.abs(d) >= FLICK) go(touch.dir!, touch.axis!);
       }
-      if (touch.moved && !held) swipedAt = performance.now();
+      // A swipe let go: its momentum may carry the page on yet.
+      if (touch.moved) scrolling();
       touch = null;
     };
 
-    const onScroll = () => {
-      const y = scrollY;
-      if (on() && !gliding && !held) {
-        // A swipe from outside carrying the page in: hold it on the first card
-        // coming from above, on the last coming from below.
-        const swiping = (touch?.kind === "page" && touch.moved) || performance.now() - swipedAt < COAST;
-        const a = stop(0);
-        const b = stop(last);
-        if (swiping && lastY < a - 1 && y > a + 1 && y < b) hold(a);
-        else if (swiping && lastY > b + 1 && y < b - 1 && y > a) hold(b);
-      }
-      lastY = scrollY;
+    /* ── Everything else that moves the page ───────────────────────────── */
+
+    const onWheel = () => {
+      const now = performance.now();
+      // A new turn of the wheel lets a frozen page go; the last one's momentum doesn't.
+      if (now - lastWheel > WHEEL_PAUSE) thaw();
+      lastWheel = now;
+      scrolling();
+      watch();
+    };
+    const onKey = (e: KeyboardEvent) => {
+      thaw();
+      if (SCROLL_KEYS.has(e.key)) scrolling();
+      else if (e.key === "Home" || e.key === "End" || e.key === "Tab") intent = "link";
+    };
+    /** A link (the hero's button, the menu's sections) takes the page where it's going. */
+    const onClick = (e: MouseEvent) => {
+      if (e.target instanceof Element && e.target.closest("a[href]")) intent = "link";
+    };
+    /** Turned or resized: let go, and stand on the nearest card. */
+    const onResize = () => {
+      thaw();
+      if (on() && inside()) scrollTo({ top: stop(Math.round(place())), behavior: "instant" });
       queue();
+    };
+
+    const onScroll = () => {
+      check();
+      queue();
+      watch();
+      if (intent === "scroll") scrolling();
       // Any other scroll that comes to rest between two cards settles on the nearer.
       clearTimeout(settling);
       settling = window.setTimeout(() => {
-        if (!on() || gliding || held || touch || !inside()) return;
+        if (!on() || gliding || frozen || touch || !inside()) return;
         const at = stop(Math.round(place()));
         if (Math.abs(scrollY - at) > 1) glide(at);
       }, SETTLE);
@@ -263,33 +373,45 @@ export function WorkPin({ count, children }: { count: number; children: React.Re
     const onFocus = (e: FocusEvent) => {
       const i = cards.findIndex((c) => c.contains(e.target as Node));
       if (!on() || i < 0) return;
+      intent = "link";
       scrollTo({ top: stop(i), behavior: "instant" });
     };
 
     // Loaded part way through: on the nearest card.
     if (on() && inside()) scrollTo({ top: stop(Math.round(place())), behavior: "instant" });
     update();
+    watch();
     addEventListener("scroll", onScroll, { passive: true });
     addEventListener("touchstart", onStart, { passive: true });
     addEventListener("touchmove", track, { passive: true });
     addEventListener("touchend", onEnd, { passive: true });
     addEventListener("touchcancel", onEnd, { passive: true });
-    addEventListener("resize", queue);
-    pinned.addEventListener("change", queue);
+    addEventListener("wheel", onWheel, { passive: true });
+    addEventListener("keydown", onKey);
+    addEventListener("click", onClick, true);
+    addEventListener("resize", onResize);
+    addEventListener("orientationchange", onResize);
+    pinned.addEventListener("change", onResize);
     pin.addEventListener("focusin", onFocus);
     return () => {
       cancelAnimationFrame(raf);
+      cancelAnimationFrame(watching);
       cancelAnimationFrame(gliding);
       clearTimeout(settling);
-      held?.();
+      clearTimeout(over);
+      thaw();
       removeEventListener("scroll", onScroll);
       removeEventListener("touchstart", onStart);
       removeEventListener("touchmove", track);
       removeEventListener("touchend", onEnd);
       removeEventListener("touchcancel", onEnd);
       removeEventListener("touchmove", onMove);
-      removeEventListener("resize", queue);
-      pinned.removeEventListener("change", queue);
+      removeEventListener("wheel", onWheel);
+      removeEventListener("keydown", onKey);
+      removeEventListener("click", onClick, true);
+      removeEventListener("resize", onResize);
+      removeEventListener("orientationchange", onResize);
+      pinned.removeEventListener("change", onResize);
       pin.removeEventListener("focusin", onFocus);
       gate.set(false, null);
     };
