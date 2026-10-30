@@ -1,5 +1,6 @@
 import { Header } from "@/components/kozmoz/header";
 import { Footer } from "@/components/kozmoz/footer";
+import { Trail } from "@/components/kozmoz/trail";
 import { hanken } from "@/components/kozmoz/fonts";
 import { cn } from "@/lib/utils";
 import "@/components/kozmoz/kozmoz.css";
@@ -28,6 +29,7 @@ export function Page({
       <Header local={local} />
       <main id="main">{children}</main>
       <Footer />
+      <Trail />
     </div>
   );
 }

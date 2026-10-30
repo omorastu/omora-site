@@ -1,4 +1,5 @@
 import { Hands } from "@/components/kozmoz/hands";
+import { Trail } from "@/components/kozmoz/trail";
 import { Header } from "@/components/kozmoz/header";
 import { Hero } from "@/components/kozmoz/hero";
 import { Us } from "@/components/kozmoz/us";
@@ -39,6 +40,7 @@ export default function Home() {
           <Contact />
         </main>
         <Footer />
+        <Trail />
 
         {/* With scripting off nothing will run the hero's entrance, so show it all now. */}
         <noscript>

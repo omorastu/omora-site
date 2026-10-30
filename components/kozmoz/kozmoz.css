@@ -204,6 +204,23 @@ html:has(.kz) body {
   .kz a[href], .kz button, .kz label, .kz summary, .kz select, .kz [role="button"] { cursor: pointer; }
   .kz input:not([type="radio"], [type="checkbox"], [type="submit"], [type="button"]), .kz textarea { cursor: text; }
 }
+/* And behind the rings as the mouse moves, a fine gold thread (trail.tsx),
+   over everything, the intro's black too, and never in the way: on the
+   paper it multiplies, so it tints the paper and leaves the ink as it is;
+   over the intro's black it's laid on as it is. */
+.kz .trail {
+  position: fixed;
+  inset: 0;
+  z-index: 1001;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  mix-blend-mode: multiply;
+}
+html:has(#kz-intro-boot) .kz .trail { mix-blend-mode: normal; }
+@media not (pointer: fine), (prefers-reduced-motion: reduce) {
+  .kz .trail { display: none; }
+}
 
 /* Shared things cross the seam: they sit on paper so the seam breaks around them. */
 .kz .across {
