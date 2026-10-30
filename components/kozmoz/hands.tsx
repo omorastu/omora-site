@@ -13,13 +13,16 @@ import { cn } from "@/lib/utils";
  * dims or changes. Picking the same name again closes it; picking the other
  * switches straight across.
  *
- * The root also runs the hero's entrance, once the intro has cleared or, with
- * no intro, as soon as the fonts are in: the gold ampersand drops into place,
- * a gold pen writes "Ashan Fernando" and then "Jordan Lopez" left to right,
- * the letters inking in right behind its nib, and the lede rises in under
- * them, all inside about two seconds. The names are on the page from the
- * start; the entrance only reveals them, so nothing moves. Under reduced
- * motion everything is simply there.
+ * The root also runs the hero's entrance, once the intro's black has gone or,
+ * with no intro, as soon as the fonts are in, one step at a time: the gold
+ * ampersand comes up softly (0.4s); then "Ashan Fernando" and "Jordan Lopez"
+ * write themselves in together, letter by letter, left to right, first name
+ * then last, both in the same 1.8s, so they finish together; a second with
+ * just the names; then the hint, the lede and the button rise in together
+ * (0.6s). The names are on the page from the start; the entrance only
+ * reveals them, so nothing moves. A scroll, click or key on the way, or an
+ * intro cut short, goes straight to the finished hero. Under reduced motion
+ * everything is simply there.
  */
 
 type View = Who | "";
@@ -36,34 +39,17 @@ function useHands() {
 
 const reducedMotion = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-/** The entrance's steps, in ms. (The ampersand's drop, about 350ms, is its spring's.) */
-const WRITE_AT = 300;
-const WRITE_MS = 500;
-const WRITE_GAP = 70;
-const RISE_MS = 400;
-/** A quick start, a steady stroke, a light lift off the end. */
-const WRITE_EASE = "cubic-bezier(.42, .1, .45, 1)";
+/** The entrance's steps, in ms: the ampersand, both names together, a pause on the names, the rest. */
+const AMP_MS = 400;
+const WRITE_MS = 1800;
+const PAUSE_MS = 1000;
+const RISE_MS = 600;
+/** Each letter, as a hand draws it: eased in, a steady stroke, eased off. */
+const LETTER_EASE = "cubic-bezier(.45, .05, .45, 1)";
+/** Across a name, the letters a little slower at its start and end, so it gathers and settles. */
+const pace = (u: number) => 0.6 * u + 0.4 * ((1 - Math.cos(Math.PI * u)) / 2);
 /** If the intro never says it has cleared, start anyway. */
-const INTRO_WAIT = 9000;
-
-/**
- * A damped spring sampled into a CSS linear() easing.
- * damping = ratio (<1 overshoots), omega = natural frequency (rad/s).
- */
-function spring(damping = 0.58, omega = 13, samples = 40) {
-  const wd = omega * Math.sqrt(1 - damping * damping);
-  const T = Math.log(1 / 0.004) / (damping * omega);
-  const pts: number[] = [];
-  for (let i = 0; i <= samples; i++) {
-    const t = (T * i) / samples;
-    const x =
-      1 -
-      Math.exp(-damping * omega * t) *
-        (Math.cos(wd * t) + ((damping * omega) / wd) * Math.sin(wd * t));
-    pts.push(i === samples ? 1 : +x.toFixed(4));
-  }
-  return { easing: `linear(${pts.join(", ")})`, duration: Math.round(T * 1000) };
-}
+const INTRO_WAIT = 10000;
 
 export function Hands({ className, children }: { className?: string; children: React.ReactNode }) {
   const root = useRef<HTMLDivElement>(null);
@@ -86,110 +72,101 @@ export function Hands({ className, children }: { className?: string; children: R
     [apply]
   );
 
-  /* Entrance: the ampersand drops, the pen writes the names, the lede rises. */
+  /* Entrance: the ampersand, the names writing themselves in, a pause, the rest. */
   useEffect(() => {
     const el = root.current;
     if (!el) return;
     let cancelled = false;
     let wait = 0;
+    /** Ends a running entrance where it would have ended. */
+    let settle: (() => void) | null = null;
 
-    const entrance = () => {
+    const entrance = (finished = false) => {
       if (cancelled) return;
       const hero = el.querySelector<HTMLElement>(".hero");
       const a = el.querySelector<HTMLElement>(".name--a");
       const j = el.querySelector<HTMLElement>(".name--j");
       const amp = el.querySelector<HTMLElement>(".name-amp");
-      const nib = el.querySelector<HTMLElement>(".nib");
-      if (!hero || !a || !j || !amp || !nib || reducedMotion() || typeof a.animate !== "function") {
+      if (finished || !hero || !a || !j || !amp || reducedMotion() || typeof a.animate !== "function") {
         setIsIn(true);
         return;
       }
+      const anims: Animation[] = [];
+      /** What the writing puts on the page, to take off again once it's done. */
+      const undo: (() => void)[] = [];
 
-      // The ampersand, a short drop with a slight overshoot. The seam (desktop) draws down meanwhile.
-      const drop = spring(0.62, 25);
-      amp.animate(
-        { transform: ["translateY(-.32em)", "none"] },
-        { duration: drop.duration, easing: drop.easing, fill: "backwards" }
+      // The ampersand first, softly. The seam (desktop) draws down meanwhile.
+      anims.push(
+        amp.animate(
+          { opacity: [0, 1], transform: ["scale(.97)", "none"] },
+          { duration: AMP_MS, easing: "cubic-bezier(.3, .1, .3, 1)", fill: "backwards" }
+        )
       );
-      amp.animate({ opacity: [0, 1] }, { duration: 140, easing: "linear", fill: "backwards" });
-      el.querySelector(".seam")?.animate(
-        { scale: ["1 0", "1 1"] },
-        { duration: 900, easing: "cubic-bezier(.65, 0, .35, 1)", fill: "backwards" }
-      );
+      const seam = el.querySelector(".seam");
+      if (seam) {
+        anims.push(seam.animate({ scale: ["1 0", "1 1"] }, { duration: 900, easing: "cubic-bezier(.65, 0, .35, 1)", fill: "backwards" }));
+      }
 
-      // Each name written in, left to right: the button's clip opens behind
-      // the nib, which rides the clip's edge along the first name's line.
-      // Placed by layout (offsets from the hero).
-      const write = (name: HTMLElement, at: number) => {
-        const first = name.querySelector<HTMLElement>(".name-first") ?? name;
-        const size = parseFloat(getComputedStyle(name).fontSize);
-        const w = name.offsetWidth;
-        // Room for ink past the box: the J's hook on the left, tails above and below.
-        const side = Math.ceil(size * 0.08);
-        const tall = Math.ceil(size * 0.3);
-        // The stroke runs from `from` to `to` (px from the button's left
-        // edge): its own width, and the last name's too where that's
-        // centred out past it, in its half of the hero.
-        const last = name.querySelector(".name-last");
-        const box = name.getBoundingClientRect();
-        const ink = last ? textBox(last) : null;
-        const from = Math.min(0, ink ? ink.left - box.left : 0) - side;
-        const to = Math.max(w, ink ? ink.right - box.left : w) + side;
-        const timing = { duration: WRITE_MS, delay: at, easing: WRITE_EASE };
-        name.animate(
-          { clipPath: [`inset(-${tall}px ${w - from}px -${tall}px ${from}px)`, `inset(-${tall}px ${w - to}px -${tall}px ${from}px)`] },
-          { ...timing, fill: "backwards" }
-        );
-        const x0 = name.offsetLeft + from;
-        const x1 = name.offsetLeft + to;
-        const y = first.offsetTop + first.offsetHeight * 0.62;
-        nib.animate(
-          [
-            { transform: `translate(${x0}px, ${y}px)`, opacity: 0 },
-            { opacity: 1, offset: 0.06 },
-            { opacity: 1, offset: 0.86 },
-            { transform: `translate(${x1}px, ${y}px)`, opacity: 0 },
-          ],
-          timing
-        );
-        // The hand's own small rise and fall as it writes.
-        const bob = size * 0.035;
-        nib.firstElementChild?.animate(
-          { translate: ["0 0", `0 ${-bob}px`, `0 ${bob * 0.7}px`, `0 ${-bob * 0.5}px`, "0 0"] },
-          { duration: WRITE_MS, delay: at, easing: "linear" }
-        );
-      };
-      write(a, WRITE_AT);
-      write(j, WRITE_AT + WRITE_MS + WRITE_GAP);
+      // Then both names at once, letter by letter, first name then last:
+      // each name's letters share the same time, however many there are.
+      for (const name of [a, j]) {
+        const parts = [...name.querySelectorAll<HTMLElement>(".name-first, .name-last")]
+          .map((line) => ({ line, edges: letterEdges(line) }))
+          .filter((part) => part.edges.length > 1);
+        const count = parts.reduce((n, part) => n + part.edges.length - 1, 0);
+        let before = 0;
+        for (const { line, edges } of parts) {
+          const times = edges.map((_, k) => AMP_MS + pace((before + k) / count) * WRITE_MS);
+          before += edges.length - 1;
+          const writing = reveal(line, edges, times);
+          anims.push(...writing.anims);
+          undo.push(writing.undo);
+        }
+      }
 
-      // Then the lines under them rise in, quick, with no long settle. The
-      // hint and the lede sit on paper that breaks the seam: their letters
-      // fade in, not the paper, or the seam would show through it.
-      const riseAt = WRITE_AT + 2 * WRITE_MS + 2 * WRITE_GAP;
-      const lines = [hero.querySelector(".hint"), hero.querySelector(".lede"), hero.querySelector(":scope > .act")];
+      // A moment with just the names; then the lines under them rise in
+      // together. The hint and the lede sit on paper that breaks the seam:
+      // their letters fade in, not the paper, or the seam would show through it.
+      const riseAt = AMP_MS + WRITE_MS + PAUSE_MS;
+      const rest = [hero.querySelector(".hint"), hero.querySelector(".lede"), hero.querySelector(":scope > .act")];
       // Whole pixels, so a line's paper waits with crisp edges, not a faint seam of its own.
       const lift = Math.round(parseFloat(getComputedStyle(document.documentElement).fontSize) * 0.875);
-      lines.forEach((line, i) => {
-        if (!line) return;
-        const rise = { duration: RISE_MS, delay: riseAt + (i === 2 ? 60 : 0), easing: "cubic-bezier(.2, .7, .3, 1)", fill: "backwards" } as const;
-        line.animate({ transform: [`translateY(${lift}px)`, "none"] }, rise);
-        if (line.classList.contains("across")) line.animate({ color: ["transparent", getComputedStyle(line).color] }, rise);
-        else line.animate({ opacity: [0, 1] }, rise);
-      });
+      for (const line of rest) {
+        if (!line) continue;
+        const rise = { duration: RISE_MS, delay: riseAt, easing: "cubic-bezier(.2, .7, .3, 1)", fill: "backwards" } as const;
+        anims.push(line.animate({ transform: [`translateY(${lift}px)`, "none"] }, rise));
+        if (line.classList.contains("across")) anims.push(line.animate({ color: ["transparent", getComputedStyle(line).color] }, rise));
+        else anims.push(line.animate({ opacity: [0, 1] }, rise));
+      }
+
+      // Done, or cut short by a scroll, a click or a key: the hero as it ends.
+      // (Every step ends on the page's own styles, so stopping them is finishing them.)
+      const cut = ["wheel", "touchmove", "pointerdown", "keydown", "scroll"] as const;
+      settle = () => {
+        settle = null;
+        for (const type of cut) removeEventListener(type, end, true);
+        for (const anim of anims) anim.cancel();
+        for (const fn of undo) fn();
+      };
+      const end = () => settle?.();
+      for (const type of cut) addEventListener(type, end, { capture: true, passive: true });
+      Promise.all(anims.map((anim) => anim.finished)).then(end, () => {});
       setIsIn(true);
     };
 
     const begin = () => {
       const fontsReady = document.fonts?.ready ?? Promise.resolve();
-      Promise.race([fontsReady, new Promise((r) => setTimeout(r, 900))]).then(entrance);
+      Promise.race([fontsReady, new Promise((r) => setTimeout(r, 900))]).then(() => entrance());
     };
 
-    // With the intro up, wait for it to clear (components/intro/intro.tsx).
+    // With the intro up, wait for it to clear (components/intro/intro.tsx);
+    // cut short, it leaves the hero finished.
     const intro = window.__kzIntro;
     const go = () => {
       removeEventListener("kz:intro-clear", go);
       clearTimeout(wait);
-      begin();
+      if (window.__kzIntro?.skipped) entrance(true);
+      else begin();
     };
     if (intro?.show && !intro.done && !intro.clear) {
       addEventListener("kz:intro-clear", go);
@@ -200,6 +177,7 @@ export function Hands({ className, children }: { className?: string; children: R
       cancelled = true;
       removeEventListener("kz:intro-clear", go);
       clearTimeout(wait);
+      settle?.();
     };
   }, []);
 
@@ -216,13 +194,76 @@ export function Hands({ className, children }: { className?: string; children: R
   );
 }
 
-/** Where an element's text runs, on screen: its glyphs' boxes, not the element's. */
-function textBox(el: Element) {
+/**
+ * Where a line's letters run, in px from its left edge: where the first
+ * begins, then where each one ends.
+ */
+function letterEdges(line: HTMLElement) {
+  const left = line.getBoundingClientRect().left;
+  const edges: number[] = [];
   const range = document.createRange();
-  range.selectNodeContents(el);
-  const r = range.getBoundingClientRect();
+  const walk = document.createTreeWalker(line, NodeFilter.SHOW_TEXT);
+  for (let node = walk.nextNode() as Text | null; node; node = walk.nextNode() as Text | null) {
+    for (let i = 0; i < node.length; i++) {
+      if (/\s/.test(node.data[i])) continue;
+      range.setStart(node, i);
+      range.setEnd(node, i + 1);
+      const r = range.getBoundingClientRect();
+      if (!r.width) continue;
+      if (!edges.length) edges.push(r.left - left);
+      edges.push(r.right - left);
+    }
+  }
   range.detach();
-  return r.width ? r : null;
+  return edges;
+}
+
+/**
+ * Writes a line in, left to right: its edge reaches the end of each letter
+ * at that letter's time (`times`, ms from the start of the entrance), easing
+ * through each. The edge is a clip that reaches past the line's box (the J's
+ * hook, the tails above and below), softened by a short fade to the paper
+ * riding just inside it.
+ */
+function reveal(line: HTMLElement, edges: number[], times: number[]) {
+  const size = parseFloat(getComputedStyle(line).fontSize);
+  const w = line.offsetWidth;
+  const h = line.offsetHeight;
+  // Room for ink past the box, and the soft edge's width.
+  const side = Math.ceil(size * 0.12);
+  const tall = Math.ceil(size * 0.4);
+  const fade = Math.max(2, size * 0.14);
+  const last = edges.length - 1;
+  // The edge, letter by letter: clear of the first letter's ink before it, past the last one's after.
+  const fronts = edges.map((e, k) => (k === 0 ? e - side : k === last ? e + side + fade : e + fade));
+  const span = times[last] - times[0];
+  const at = (k: number) => ({ offset: (times[k] - times[0]) / span, easing: LETTER_EASE });
+  const timing = { duration: span, delay: times[0], fill: "both" } as const;
+
+  const soft = document.createElement("span");
+  soft.setAttribute("aria-hidden", "true");
+  Object.assign(soft.style, {
+    position: "absolute",
+    left: "0",
+    top: `${-tall}px`,
+    width: `${fade}px`,
+    height: `${h + 2 * tall}px`,
+    background: "linear-gradient(90deg, transparent, var(--paper))",
+    pointerEvents: "none",
+  });
+  const placed = getComputedStyle(line).position !== "static";
+  if (!placed) line.style.position = "relative";
+  line.append(soft);
+  return {
+    anims: [
+      line.animate(fronts.map((f, k) => ({ clipPath: `inset(-${tall}px ${w - f}px -${tall}px -${tall}px)`, ...at(k) })), timing),
+      soft.animate(fronts.map((f, k) => ({ transform: `translateX(${f - fade}px)`, ...at(k) })), timing),
+    ],
+    undo: () => {
+      soft.remove();
+      if (!placed) line.style.removeProperty("position");
+    },
+  };
 }
 
 /**

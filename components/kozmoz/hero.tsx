@@ -11,8 +11,9 @@ import { cn } from "@/lib/utils";
  * under the first, centred in its half of the hero (Fernando between the
  * left edge and the seam, Lopez between the seam and the right edge; on
  * phones, where the names stack, mirrored under the first names), and
- * belongs to the same button; the light stays on the first name. The pen writes the names in as the page
- * opens (hands.tsx). The seam runs the hero's length and stops with it.
+ * belongs to the same button; the light stays on the first name. The names
+ * write themselves in as the page opens (hands.tsx). The seam runs the
+ * hero's length and stops with it.
  * `id="top"` is where the wordmark links.
  */
 export function Hero() {
@@ -34,7 +35,6 @@ export function Hero() {
           <FullName who="j" />
         </WhoButton>
       </h1>
-      <Nib />
       <p className="hint label across" id="hands-hint">
         {hero.hint}
       </p>
@@ -63,28 +63,5 @@ function FullName({ who }: { who: Who }) {
       <span className="name-first">{people[who].name}</span>{" "}
       <span className="name-last">{people[who].last}</span>
     </>
-  );
-}
-
-/** The gold pen nib that writes the names in, tip down at the point it hangs from. */
-function Nib() {
-  return (
-    <span className="nib" aria-hidden="true">
-      <svg viewBox="0 0 20 32" width="20" height="32">
-        <defs>
-          <linearGradient id="nib-gold" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" style={{ stopColor: "var(--gold-hi)" }} />
-            <stop offset=".55" style={{ stopColor: "var(--gold)" }} />
-            <stop offset="1" style={{ stopColor: "var(--gold-lo)" }} />
-          </linearGradient>
-        </defs>
-        <path
-          d="M10 32C8.6 27 4.4 21.5 3.6 16.6 3 12.8 4.2 9.8 6 8V1h8v7c1.8 1.8 3 4.8 2.4 8.6-.8 4.9-5 10.4-6.4 15.4Z"
-          fill="url(#nib-gold)"
-        />
-        <path className="nib-cut" d="M10 30.6V16.2" strokeWidth="0.9" strokeLinecap="round" />
-        <circle className="nib-cut" cx="10" cy="14.6" r="1.7" />
-      </svg>
-    </span>
   );
 }

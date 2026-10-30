@@ -30,7 +30,7 @@
   -webkit-tap-highlight-color: transparent;
   /* If the page's script never takes over (a failed bundle, a crash), the
      overlay still gets out of the way on its own. data-live cancels this. */
-  animation: kz-intro-fallback .6s ease 4.2s forwards;
+  animation: kz-intro-fallback .6s ease 5.2s forwards;
 }
 .kz-intro[data-live] { animation: none; }
 @keyframes kz-intro-fallback { to { opacity: 0; visibility: hidden; } }

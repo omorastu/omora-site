@@ -1,6 +1,13 @@
 /**
- * The intro's stir: a Canvas 2D copy of the logo, cut into narrow upright
- * strips that a mouse pointer pushes around like smoke.
+ * The intro's stir: a Canvas 2D copy of the logo that a mouse pointer bends,
+ * gently: a slow ripple of a few pixels, strongest under the pointer and
+ * easing out to nothing at a distance, that settles back when the pointer
+ * goes.
+ *
+ * The bend is drawn one screen pixel column at a time: each column takes the
+ * column of the logo the bend says belongs there, moved up or down and
+ * stretched a touch. The bend changes smoothly from one column to the next,
+ * so the logo stays whole: no seams, no letter torn.
  *
  * It takes over from the page's logo only when asked (interactive()),
  * drawing it exactly where the browser laid it out, so the hand-over can't
@@ -10,7 +17,7 @@
  */
 
 export type Smoke = {
-  /** Take over the logo from the page and let the pointer stir it. False if it can't yet (the image). */
+  /** Take over the logo from the page and let the pointer bend it. False if it can't yet (the image). */
   interactive(): boolean;
   /** Pointer position in viewport px, or null when it leaves. */
   pointer(x: number | null, y?: number): void;
@@ -19,14 +26,23 @@ export type Smoke = {
   destroy(): void;
 };
 
-/** A strip of the logo: where it's drawn, its slice of the picture (sx, from the left, in CSS px), and how far it's been pushed. */
-type Strip = { x: number; y: number; w: number; h: number; sx: number; cx: number; cy: number; dx: number; dy: number; vx: number; vy: number };
-type Picture = { img: HTMLImageElement; x: number; y: number; w: number; h: number; alpha: number; strips: Strip[] };
+type Picture = { img: HTMLImageElement; x: number; y: number; w: number; h: number; alpha: number };
+type Shift = { dx: number; dy: number };
 
-/**
- * Every [data-picture] image, cut into upright strips so the pointer can
- * bend it. Null while any of them hasn't loaded: the canvas would draw a gap.
- */
+const TAU = Math.PI * 2;
+
+/** The bend, in CSS px: the ripple up and down, the swell of the letters nearest the pointer, and the most it drags them along. */
+const RIPPLE = 4;
+const SWELL = 2.5;
+const DRAG = 2.5;
+/** Seconds: the bend gliding after the pointer, coming in, and dying away. */
+const FOLLOW = 0.12;
+const RISE = 0.35;
+const FALL = 0.5;
+/** The ripple's travel, in waves a second. */
+const SPEED = 0.45;
+
+/** Every [data-picture] image. Null while any of them hasn't loaded: the canvas would draw a gap. */
 function measurePictures(root: HTMLElement, box: DOMRect): Picture[] | null {
   const out: Picture[] = [];
   for (const img of root.querySelectorAll<HTMLImageElement>("img[data-picture]")) {
@@ -34,24 +50,7 @@ function measurePictures(root: HTMLElement, box: DOMRect): Picture[] | null {
     const r = img.getBoundingClientRect();
     if (!r.width || !r.height) continue;
     const alpha = Number(getComputedStyle(img).opacity) || 0;
-    const x = r.left - box.left;
-    const y = r.top - box.top;
-    const n = Math.max(8, Math.round(r.width / 20));
-    const w = r.width / n;
-    const strips = Array.from({ length: n }, (_, i): Strip => ({
-      x: x + i * w,
-      y,
-      w,
-      h: r.height,
-      sx: i * w,
-      cx: x + i * w + w / 2,
-      cy: y + r.height / 2,
-      dx: 0,
-      dy: 0,
-      vx: 0,
-      vy: 0,
-    }));
-    out.push({ img, x, y, w: r.width, h: r.height, alpha, strips });
+    out.push({ img, x: r.left - box.left, y: r.top - box.top, w: r.width, h: r.height, alpha });
   }
   return out;
 }
@@ -69,12 +68,10 @@ export function createSmoke(root: HTMLElement, canvas: HTMLCanvasElement): Smoke
   const dpr = Math.min(window.devicePixelRatio || 1, 2, Math.sqrt(8.3e6 / (W * H)));
   canvas.width = Math.round(W * dpr);
   canvas.height = Math.round(H * dpr);
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-  const strips = pictures.flatMap((p) => p.strips);
-  // Each picture drawn once at its size on screen, to cut the strips from. (An
-  // image picked from a srcset reports its size on the page, not its file's,
-  // so slicing the image itself would cut in the wrong places.)
+  // Each picture drawn once at its size on screen, to take the columns from.
+  // (An image picked from a srcset reports its size on the page, not its
+  // file's, so slicing the image itself would cut in the wrong places.)
   const rasters = pictures.map((p) => {
     const c = document.createElement("canvas");
     c.width = Math.max(1, Math.round(p.w * dpr));
@@ -85,63 +82,76 @@ export function createSmoke(root: HTMLElement, canvas: HTMLCanvasElement): Smoke
     return c;
   });
 
-  /* ── The pointer and its field ─────────────────────────────────────── */
+  /* ── The pointer and the bend ───────────────────────────────────────── */
 
-  const P = { x: 0, y: 0, vx: 0, vy: 0, on: false, lx: 0, ly: 0, lt: 0 };
-  const R = Math.max(90, Math.min(220, W * 0.12));
-  const tgt = { x: 0, y: 0 };
+  // Where the pointer is (P), and where the bend is centred (S), gliding after it.
+  const P = { x: 0, y: 0, on: false };
+  const S = { x: 0, y: 0, vx: 0 };
+  /** How much of the bend there is, 0 to 1. */
+  let amount = 0;
+  let phase = 0;
+  /** How far the bend reaches from its centre. */
+  const R = Math.max(110, Math.min(190, W * 0.1));
+  const WAVE = R * 0.9;
+
+  /** Whether the pointer is over the logo or close to it. */
+  const near = () =>
+    P.on && pictures.some((p) => P.x > p.x - R / 2 && P.x < p.x + p.w + R / 2 && P.y > p.y - R / 2 && P.y < p.y + p.h + R / 2);
 
   /**
-   * Where the stir wants a point at (cx, cy) to be pushed: around the pointer
-   * (a swirl), a little away from it, and along with its motion — so a slow
-   * pass curls the strips, a fast one drags them like smoke.
+   * How far the bend moves the logo at (x, y), in CSS px. Strongest at its
+   * centre, and easing out to nothing at R, so nothing past it is touched.
    */
-  function field(cx: number, cy: number, time: number) {
-    if (!P.on) {
-      tgt.x = tgt.y = 0;
+  function bend(x: number, y: number, out: Shift) {
+    const ox = x - S.x;
+    const oy = y - S.y;
+    const q = (ox * ox + oy * oy) / (R * R);
+    if (q >= 1) {
+      out.dx = out.dy = 0;
       return;
     }
-    const ox = cx - P.x;
-    const oy = cy - P.y;
-    const f = Math.exp(-(ox * ox + oy * oy) / (R * R));
-    if (f < 0.003) {
-      tgt.x = tgt.y = 0;
-      return;
-    }
-    const d = Math.hypot(ox, oy) || 1;
-    const nx = ox / d;
-    const ny = oy / d;
-    const wobble = Math.sin(time * 2.1 + cx * 0.05 + cy * 0.03) * 4;
-    tgt.x = f * (-ny * 26 + nx * 10 + P.vx * 0.05 + wobble);
-    tgt.y = f * (nx * 26 + ny * 10 + P.vy * 0.05 - wobble);
+    const f = amount * (1 - q) * (1 - q);
+    out.dx = f * ((ox / R) * SWELL + Math.max(-DRAG, Math.min(DRAG, S.vx * 0.006)));
+    out.dy = f * (Math.sin((TAU * ox) / WAVE - phase) * RIPPLE + (oy / R) * SWELL);
   }
 
   /* ── Drawing ────────────────────────────────────────────────────────── */
 
+  const top: Shift = { dx: 0, dy: 0 };
+  const foot: Shift = { dx: 0, dy: 0 };
+
   function drawLogo() {
-    // Whole while nothing has moved it (exactly as the page drew it), else
-    // strip by strip, each a hair wider so no gap opens between.
+    // In the canvas's own pixels, so each column fills exactly one.
+    ctx!.setTransform(1, 0, 0, 1, 0, 0);
+    ctx!.clearRect(0, 0, canvas.width, canvas.height);
     ctx!.imageSmoothingQuality = "high";
     pictures!.forEach((p, i) => {
       const raster = rasters[i];
       ctx!.globalAlpha = p.alpha;
-      if (p.strips.every((s) => Math.abs(s.dx) + Math.abs(s.dy) < 0.05)) {
-        ctx!.drawImage(raster, p.x, p.y, p.w, p.h);
+      const x0 = p.x * dpr;
+      const y0 = p.y * dpr;
+      const w = p.w * dpr;
+      const h = p.h * dpr;
+      const k = raster.width / w;
+      // The columns the bend reaches. Unbent, the logo is drawn whole, exactly as the page drew it.
+      const a = Math.max(Math.ceil(x0), Math.floor((S.x - R) * dpr));
+      const b = Math.min(Math.floor(x0 + w), Math.ceil((S.x + R) * dpr));
+      if (amount < 0.001 || b <= a) {
+        ctx!.drawImage(raster, x0, y0, w, h);
         return;
       }
-      const k = raster.width / p.w;
-      for (const s of p.strips) {
-        const tilt = s.dx * 0.002;
-        const w = Math.min(s.w + 0.6, p.w - s.sx);
-        if (Math.abs(tilt) < 0.002) {
-          ctx!.drawImage(raster, s.sx * k, 0, w * k, raster.height, s.x + s.dx, s.y + s.dy, w, s.h);
-        } else {
-          ctx!.save();
-          ctx!.translate(s.cx + s.dx, s.cy + s.dy);
-          ctx!.rotate(tilt);
-          ctx!.drawImage(raster, s.sx * k, 0, w * k, raster.height, s.x - s.cx, s.y - s.cy, w, s.h);
-          ctx!.restore();
-        }
+      // Either side of the bend, as it is; within it, column by column, each
+      // from where the bend says it came from, its top and foot moved apart.
+      if (a > x0) ctx!.drawImage(raster, 0, 0, (a - x0) * k, raster.height, x0, y0, a - x0, h);
+      if (b < x0 + w) ctx!.drawImage(raster, (b - x0) * k, 0, (x0 + w - b) * k, raster.height, b, y0, x0 + w - b, h);
+      for (let c = a; c < b; c++) {
+        const x = (c + 0.5) / dpr;
+        bend(x, p.y, top);
+        bend(x, p.y + p.h, foot);
+        const from = Math.min(Math.max((c - x0 - ((top.dx + foot.dx) / 2) * dpr) * k, 0), raster.width - k);
+        const y1 = y0 + top.dy * dpr;
+        const y2 = y0 + h + foot.dy * dpr;
+        ctx!.drawImage(raster, from, 0, k, raster.height, c, y1, 1, y2 - y1);
       }
     });
     ctx!.globalAlpha = 1;
@@ -152,26 +162,28 @@ export function createSmoke(root: HTMLElement, canvas: HTMLCanvasElement): Smoke
   let live = false;
   let raf = 0;
   let last = 0;
-
-  function stepStrips(dt: number, time: number) {
-    for (const s of strips) {
-      field(s.cx, s.cy, time);
-      s.vx += (90 * (tgt.x - s.dx) - 14 * s.vx) * dt;
-      s.vy += (90 * (tgt.y - s.dy) - 14 * s.vy) * dt;
-      s.dx += s.vx * dt;
-      s.dy += s.vy * dt;
-    }
-  }
+  /** Drawn whole and at rest: nothing to redraw until the pointer comes back. */
+  let still = false;
 
   function tick(now: number) {
     const dt = Math.min(0.05, (now - last) / 1000 || 0.016);
     last = now;
-    const time = now / 1000;
-    P.vx *= Math.exp(-dt * 6);
-    P.vy *= Math.exp(-dt * 6);
-    stepStrips(dt, time);
-    ctx!.clearRect(0, 0, W, H);
-    drawLogo();
+    // Near the logo, the bend glides after the pointer and comes in; away
+    // from it (or off the page), it stays where it was and dies away.
+    const close = near();
+    if (close) {
+      const glide = 1 - Math.exp(-dt / FOLLOW);
+      const x = S.x + (P.x - S.x) * glide;
+      S.vx += ((x - S.x) / dt - S.vx) * (1 - Math.exp(-dt / 0.15));
+      S.x = x;
+      S.y += (P.y - S.y) * glide;
+    } else S.vx *= Math.exp(-dt / 0.15);
+    const want = close ? 1 : 0;
+    amount += (want - amount) * (1 - Math.exp(-dt / (close ? RISE : FALL)));
+    if (!close && amount < 0.002) amount = 0;
+    phase += dt * TAU * SPEED;
+    if (amount || !still) drawLogo();
+    still = !amount;
     raf = requestAnimationFrame(tick);
   }
 
@@ -184,8 +196,8 @@ export function createSmoke(root: HTMLElement, canvas: HTMLCanvasElement): Smoke
     interactive() {
       if (live) return true;
       // Draw the logo as it stands and put the canvas in front of the page's, in one go.
-      ctx.clearRect(0, 0, W, H);
       drawLogo();
+      still = true;
       root.dataset.mode = "canvas";
       live = true;
       last = performance.now();
@@ -194,32 +206,31 @@ export function createSmoke(root: HTMLElement, canvas: HTMLCanvasElement): Smoke
     },
 
     pointer(x, y) {
-      const now = performance.now();
       if (x === null || y === undefined) {
         P.on = false;
         return;
       }
-      x -= box.left;
-      y -= box.top;
-      if (P.on && P.lt) {
-        const dt = Math.max(8, now - P.lt) / 1000;
-        P.vx += ((x - P.lx) / dt - P.vx) * 0.35;
-        P.vy += ((y - P.ly) / dt - P.vy) * 0.35;
-      }
-      P.x = P.lx = x;
-      P.y = P.ly = y;
-      P.lt = now;
+      P.x = x - box.left;
+      P.y = y - box.top;
       P.on = true;
+      // Coming back after the bend has died away: it starts where the pointer is.
+      if (amount < 0.05) {
+        S.x = P.x;
+        S.y = P.y;
+        S.vx = 0;
+      }
     },
 
     release() {
       stop();
-      ctx.clearRect(0, 0, W, H);
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
     },
 
     destroy() {
       stop();
-      ctx.clearRect(0, 0, W, H);
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
       canvas.width = canvas.height = 0;
       for (const c of rasters) c.width = c.height = 0;
     },

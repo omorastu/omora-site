@@ -13,17 +13,18 @@ import "@/components/intro/intro.css";
  * glowing edge, and settles as gold cut into the stone.
  *
  *   0–0.75s    the logo fades in, then the gold rule draws (intro.css)
- *   0.75–2s    the line burns in (intro.css); the hold runs to 3.2s, and
- *              with a mouse the pointer stirs the logo like smoke
- *   3.2s       the line dims out (0.25s), then the black slides off to the
+ *   0.75–2s    the line burns in (intro.css); the hold runs to 4.2s, and
+ *              with a mouse the pointer bends the logo a little (smoke.ts)
+ *   4.2s       the line dims out (0.25s), then the black slides off to the
  *              left in one piece (0.8s), uncovering the page from the right,
  *              while the logo flies over it to the header's wordmark, turning
  *              into it as it lands, just as the last of the black goes
  *
- * The hero comes in as the black starts to move ("kz:intro-clear",
+ * The hero comes in once the black has gone ("kz:intro-clear",
  * components/kozmoz/hands.tsx). A click, tap, key or scroll goes straight to
- * the page: a quick fade, no flight. Under reduced motion the logo and the
- * line are simply there, held a moment, then the black fades away.
+ * the page, finished: a quick fade, no flight, and the hero already in. Under
+ * reduced motion the logo and the line are simply there, held a moment, then
+ * the black fades away.
  * While it shows, the browser's chrome is near-black too.
  *
  * The decision to show it is made by a tiny inline script during the first
@@ -36,21 +37,21 @@ import "@/components/intro/intro.css";
  */
 
 /** Timeline, in ms from the first paint. */
-const HOLD_END = 3200;
+const HOLD_END = 4200;
 /** The line and the rule dim out, before the black moves. */
 const DIM = 250;
 /** The black sliding off to the left; the logo's flight to the header takes the same time, on the same curve. */
 const SLIDE = 800;
 const SLIDE_EASE = "cubic-bezier(.37, 0, .63, 1)";
-/** Reduced motion: a short hold, then a plain fade. */
-const REDUCED_HOLD_END = 2200;
+/** Reduced motion: a hold, then a plain fade. */
+const REDUCED_HOLD_END = 3200;
 const FADE = 600;
 /** A click, key or scroll: straight to the page. */
 const SKIP = 250;
 /** From here intro.css's fallback owns the exit (keep in step with intro.css and BOOT). */
-const FALLBACK_AT = 4200;
+const FALLBACK_AT = 5200;
 /** If nothing else has, the overlay goes at this point regardless. */
-const FAILSAFE = 7000;
+const FAILSAFE = 8000;
 /** The logo has faded in: from here the mouse may stir it. */
 const ENTERED = 800;
 
@@ -81,10 +82,14 @@ const LOGO = { src: "/m/brand/elorro-logo.png", width: 962, height: 172, ink: { 
  * overlay's fallback has run; a theme-color ahead of the page's darkens the
  * browser's chrome, and goes again by then if nothing has taken over.
  */
-const BOOT = `(function(){var show=false,q=/[?&]intro(=|&|$)/.test(location.search);try{var r=document.referrer,inside=false;try{inside=!!r&&new URL(r).origin===location.origin}catch(e){}var seen=sessionStorage.getItem("${KEY}");sessionStorage.setItem("${KEY}","1");show=!seen&&!inside}catch(e){}show=show||q;var b=window.__kzIntro={show:show,t0:performance.now()};if(show){var s=document.createElement("style");s.id="${KEY}-boot";s.textContent="html .kz-intro{display:block}html{--kz-wait:5s}.kz .top .brand .wordmark{animation:kz-intro-word ${FALLBACK_AT + FADE}ms}";document.head.appendChild(s);var m=document.createElement("meta");m.name="theme-color";m.content="${NIGHT}";m.id="${KEY}-theme";document.head.prepend(m);setTimeout(function(){if(!b.live)m.remove()},${FALLBACK_AT + FADE})}})();`;
+const BOOT = `(function(){var show=false,q=/[?&]intro(=|&|$)/.test(location.search);try{var r=document.referrer,inside=false;try{inside=!!r&&new URL(r).origin===location.origin}catch(e){}var seen=sessionStorage.getItem("${KEY}");sessionStorage.setItem("${KEY}","1");show=!seen&&!inside}catch(e){}show=show||q;var b=window.__kzIntro={show:show,t0:performance.now()};if(show){var s=document.createElement("style");s.id="${KEY}-boot";s.textContent="html .kz-intro{display:block}html{--kz-wait:${(FALLBACK_AT + FADE + 200) / 1000}s}.kz .top .brand .wordmark{animation:kz-intro-word ${FALLBACK_AT + FADE}ms}";document.head.appendChild(s);var m=document.createElement("meta");m.name="theme-color";m.content="${NIGHT}";m.id="${KEY}-theme";document.head.prepend(m);setTimeout(function(){if(!b.live)m.remove()},${FALLBACK_AT + FADE})}})();`;
 
-/** Set by the boot script; `live` once this has taken over, `clear` once the page shows through, `done` once the overlay has gone. */
-type Boot = { show: boolean; t0: number; live?: boolean; clear?: boolean; done?: boolean };
+/**
+ * Set by the boot script; `live` once this has taken over, `clear` once the
+ * page shows through (`skipped` if a click, key or scroll cut it short),
+ * `done` once the overlay has gone.
+ */
+type Boot = { show: boolean; t0: number; live?: boolean; clear?: boolean; skipped?: boolean; done?: boolean };
 
 declare global {
   interface Window {
@@ -237,7 +242,7 @@ function play(el: HTMLDivElement, cv: HTMLCanvasElement, boot: Boot, finish: () 
     delete el.dataset.flying;
   }
 
-  /** The page shows through: the hero can come in. */
+  /** The page is there: the hero can come in. */
   function clear() {
     if (boot.clear) return;
     boot.clear = true;
@@ -326,7 +331,6 @@ function play(el: HTMLDivElement, cv: HTMLCanvasElement, boot: Boot, finish: () 
       const inner = el.querySelector<HTMLElement>(".kz-intro-inner");
       if (inner) anims.push(inner.animate(door, timing));
     }
-    clear();
     black.onfinish = end;
   }
 
@@ -335,6 +339,7 @@ function play(el: HTMLDivElement, cv: HTMLCanvasElement, boot: Boot, finish: () 
     if (ended) return;
     if (!leaving) release(cause);
     leaving = true;
+    if (!boot.clear) boot.skipped = true;
     clear();
     fade(SKIP);
   }
