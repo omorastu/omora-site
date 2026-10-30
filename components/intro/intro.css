@@ -37,7 +37,7 @@
 .kz-intro[data-leaving] { pointer-events: none; }
 
 /* The black, and the canvas the mouse stirs the logo on (smoke.ts). On the
-   way out, intro.tsx opens a soft-edged hole in it from the middle. */
+   way out, intro.tsx slides it off to the left in one piece. */
 .kz-intro-ground {
   position: absolute;
   inset: 0;
@@ -83,12 +83,12 @@
   background: linear-gradient(90deg, var(--gilt-lo), var(--gilt-hi) 50%, var(--gilt-lo));
 }
 
-/* The one line under the logo: about 27px on a laptop, 21px on a phone,
-   no more than about 32 characters to a line. Set twice, one over the
-   other: the cut, and the ember of the burn. */
+/* The line under the logo: about 27px on a laptop, 21px on a phone, in two
+   even lines, or three on a phone (its breaks are set in intro.tsx). Set
+   twice, one over the other: the cut, and the ember of the burn. */
 .kz-intro-def {
   position: relative;
-  max-width: min(32ch, 100%);
+  max-width: 100%;
   margin: 0;
   text-wrap: balance;
   font-family: var(--font-logo), serif;
@@ -97,12 +97,10 @@
   line-height: 1.35;
   letter-spacing: .01em;
 }
-.kz-intro-def i {
-  font-family: var(--font-intro-italic), var(--font-logo), serif;
-  font-style: italic;
-}
 .kz-intro-cut,
 .kz-intro-ember { display: block; }
+@media (min-width: 768px) { .kz-intro-narrow { display: none; } }
+@media (max-width: 767px) { .kz-intro-wide { display: none; } }
 
 /* Cut into the stone and filled with gold: the logo's golds falling down
    each line (the gradient repeats every line), and the cut's shadow and

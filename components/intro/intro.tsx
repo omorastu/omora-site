@@ -3,27 +3,27 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import Image from "next/image";
 import { createSmoke, type Smoke } from "@/components/intro/smoke";
-import { cormorantItalic } from "@/components/intro/font";
 import "@/components/intro/intro.css";
 
 /**
  * The intro: near-black, full screen, before anything else of the home page
  * shows, on a visitor's first page load of the session. The Elorro logo (the
  * gold lettering with its runners, public/m/brand/elorro-logo.png) fades in
- * on the black, then the name's definition burns in under it, left to right
- * behind a glowing edge, and settles as gold cut into the stone.
+ * on the black, then the line under it burns in, left to right behind a
+ * glowing edge, and settles as gold cut into the stone.
  *
  *   0–0.75s    the logo fades in, then the gold rule draws (intro.css)
- *   0.75–2s    the definition burns in (intro.css); the hold runs to 3.2s,
- *              and with a mouse the pointer stirs the logo like smoke
- *   3.2s       the definition dims out (0.25s), then the black opens from
- *              the middle (0.7s) onto the page while the logo flies (0.6s)
- *              to the header's wordmark, turning into it as it lands
+ *   0.75–2s    the line burns in (intro.css); the hold runs to 3.2s, and
+ *              with a mouse the pointer stirs the logo like smoke
+ *   3.2s       the line dims out (0.25s), then the black slides off to the
+ *              left in one piece (0.8s), uncovering the page from the right,
+ *              while the logo flies over it to the header's wordmark, turning
+ *              into it as it lands, just as the last of the black goes
  *
- * The hero comes in as the black opens ("kz:intro-clear",
+ * The hero comes in as the black starts to move ("kz:intro-clear",
  * components/kozmoz/hands.tsx). A click, tap, key or scroll goes straight to
  * the page: a quick fade, no flight. Under reduced motion the logo and the
- * definition are simply there, held a moment, then the black fades away.
+ * line are simply there, held a moment, then the black fades away.
  * While it shows, the browser's chrome is near-black too.
  *
  * The decision to show it is made by a tiny inline script during the first
@@ -37,12 +37,11 @@ import "@/components/intro/intro.css";
 
 /** Timeline, in ms from the first paint. */
 const HOLD_END = 3200;
-/** The definition and the rule dim out, before the black opens. */
+/** The line and the rule dim out, before the black moves. */
 const DIM = 250;
-/** The black opening from the middle. */
-const OPEN = 700;
-/** The logo's flight to the header, from the start of the opening. */
-const FLIGHT = 600;
+/** The black sliding off to the left; the logo's flight to the header takes the same time, on the same curve. */
+const SLIDE = 800;
+const SLIDE_EASE = "cubic-bezier(.37, 0, .63, 1)";
 /** Reduced motion: a short hold, then a plain fade. */
 const REDUCED_HOLD_END = 2200;
 const FADE = 600;
@@ -59,10 +58,14 @@ const KEY = "kz-intro";
 /** The black, here and in intro.css (--night), and the browser chrome while the intro shows. */
 const NIGHT = "#0C0A08";
 
-/** The dictionary line under the logo: the name, its part of speech, what it means. */
+/**
+ * The line under the logo, broken by hand so it wraps evenly: two lines, or
+ * three on a phone (intro.css shows each set of breaks where it belongs).
+ */
 const DEFINITION: React.ReactNode = (
   <>
-    elorro · <i>noun</i> · two people who listen first, then build what adds real value to your business.
+    Two people who listen first,<br className="kz-intro-narrow" /> then build<br className="kz-intro-wide" /> what adds
+    real<br className="kz-intro-narrow" /> value to your business.
   </>
 );
 
@@ -127,7 +130,7 @@ export function Intro() {
   if (!on && !firstRender) return null;
 
   return (
-    <div ref={root} className={`kz-intro ${cormorantItalic.variable}`} aria-hidden="true">
+    <div ref={root} className="kz-intro" aria-hidden="true">
       {firstRender && <script dangerouslySetInnerHTML={{ __html: BOOT }} />}
       <div className="kz-intro-ground">
         <canvas ref={canvas} className="kz-intro-canvas" />
@@ -145,7 +148,7 @@ export function Intro() {
           data-picture=""
         />
         <span className="kz-intro-rule" />
-        {/* The definition twice over: cut in gold, and the burn's glowing edge, laid on it. */}
+        {/* The line twice over: cut in gold, and the burn's glowing edge, laid on it. */}
         <p className="kz-intro-def">
           <span className="kz-intro-cut">{DEFINITION}</span>
           <span className="kz-intro-ember">{DEFINITION}</span>
@@ -212,7 +215,6 @@ function play(el: HTMLDivElement, cv: HTMLCanvasElement, boot: Boot, finish: () 
   let fading: Animation | null = null;
   /** Stops the logo's flight and takes its copy away. */
   let landing: (() => void) | null = null;
-  let opening = 0;
   let leaving = false;
   let ended = false;
 
@@ -221,7 +223,6 @@ function play(el: HTMLDivElement, cv: HTMLCanvasElement, boot: Boot, finish: () 
     timers.length = 0;
     offs.forEach((off) => off());
     offs.length = 0;
-    cancelAnimationFrame(opening);
     landing?.();
     landing = null;
     smoke?.destroy();
@@ -230,8 +231,6 @@ function play(el: HTMLDivElement, cv: HTMLCanvasElement, boot: Boot, finish: () 
     fading = null;
     anims.forEach((a) => a.cancel());
     anims.length = 0;
-    ground?.style.removeProperty("mask-image");
-    ground?.style.removeProperty("-webkit-mask-image");
     delete el.dataset.live;
     delete el.dataset.mode;
     delete el.dataset.leaving;
@@ -270,7 +269,7 @@ function play(el: HTMLDivElement, cv: HTMLCanvasElement, boot: Boot, finish: () 
   const getSmoke = () => {
     if (!smoke) {
       try {
-        smoke = createSmoke(el, cv, { fine: mouse });
+        smoke = createSmoke(el, cv);
       } catch {
         smoke = null;
       }
@@ -295,7 +294,7 @@ function play(el: HTMLDivElement, cv: HTMLCanvasElement, boot: Boot, finish: () 
     } else later(200, free);
   }
 
-  /** The way out, on time: the words dim, then the black opens and the logo flies. */
+  /** The way out, on time: the words dim, then the black slides away and the logo flies. */
   function leave() {
     if (leaving) return;
     leaving = true;
@@ -304,37 +303,31 @@ function play(el: HTMLDivElement, cv: HTMLCanvasElement, boot: Boot, finish: () 
     for (const w of el.querySelectorAll<HTMLElement>(".kz-intro-rule, .kz-intro-def")) {
       anims.push(w.animate({ opacity: [Number(getComputedStyle(w).opacity), 0] }, { duration: DIM, easing: "ease-in", fill: "forwards" }));
     }
-    later(DIM, open);
+    later(DIM, slide);
   }
 
-  /** The black opens from the middle, soft-edged, onto the page; the logo flies to the header meanwhile. */
-  function open() {
+  /**
+   * The black slides off to the left in one piece, its straight edge
+   * crossing the screen from right to left, onto the page; the logo flies to
+   * the header meanwhile, over it, in step with it.
+   */
+  function slide() {
     if (!ground) return clear(), fade(FADE);
-    smoke?.release();
-    landing = fly(el);
-    if (landing) el.dataset.flying = "";
-    else {
+    const door = { transform: ["none", "translateX(-100%)"] };
+    const timing: KeyframeAnimationOptions = { duration: SLIDE, easing: SLIDE_EASE, fill: "both" };
+    const black = ground.animate(door, timing);
+    anims.push(black);
+    landing = fly(el, () => Number(black.effect?.getComputedTiming().progress ?? 0));
+    if (landing) {
+      smoke?.release();
+      el.dataset.flying = "";
+    } else {
       // Nothing to land on: the logo goes with the black.
-      delete el.dataset.mode;
-      for (const img of el.querySelectorAll<HTMLElement>(".kz-intro-logo")) {
-        anims.push(img.animate({ opacity: [1, 0] }, { duration: OPEN * 0.6, easing: "ease", fill: "forwards" }));
-      }
+      const inner = el.querySelector<HTMLElement>(".kz-intro-inner");
+      if (inner) anims.push(inner.animate(door, timing));
     }
     clear();
-    const reach = Math.hypot(innerWidth, innerHeight) / 2;
-    const soft = Math.max(80, Math.min(innerWidth, innerHeight) * 0.22);
-    const t0 = performance.now();
-    const frame = (now: number) => {
-      const t = Math.min(1, (now - t0) / OPEN);
-      const p = (1 - Math.cos(Math.PI * t)) / 2;
-      const r = p * (reach + soft);
-      const mask = `radial-gradient(circle at 50% 50%, transparent ${Math.max(0, r - soft).toFixed(1)}px, #000 ${r.toFixed(1)}px)`;
-      ground.style.setProperty("-webkit-mask-image", mask);
-      ground.style.setProperty("mask-image", mask);
-      if (t < 1) opening = requestAnimationFrame(frame);
-      else end();
-    };
-    opening = requestAnimationFrame(frame);
+    black.onfinish = end;
   }
 
   /** A click, key or scroll: straight to the page. */
@@ -408,13 +401,14 @@ const WORDMARK_STYLE = [
 ];
 
 /**
- * The logo's flight: over FLIGHT ms (easing out) it shrinks and moves onto
- * the header's wordmark, crossfading on the way into a copy of it, which then
- * stays exactly over the wordmark (held back meanwhile, by BOOT's rule;
- * followed, should the page move) until the overlay has gone. Returns what stops it, or null if there's no wordmark
- * in view to land on.
+ * The logo's flight: as `progress` goes from 0 to 1 (the black's slide) it
+ * shrinks and moves onto the header's wordmark, crossfading at the very end
+ * into a copy of it, which then stays exactly over the wordmark (followed,
+ * should the page move) until the overlay has gone. The wordmark itself is
+ * held hidden until then, so there's only ever the one. Returns what stops
+ * it, or null if there's no wordmark in view to land on.
  */
-function fly(el: HTMLElement): (() => void) | null {
+function fly(el: HTMLElement, progress: () => number): (() => void) | null {
   const logo = el.querySelector<HTMLImageElement>(".kz-intro-logo");
   const target = document.querySelector<HTMLElement>(".top .brand .wordmark");
   if (!logo?.complete || !logo.naturalWidth || !target) return null;
@@ -448,23 +442,23 @@ function fly(el: HTMLElement): (() => void) | null {
   const s0 = from.width / pw;
   const x0 = from.left - px * s0;
   const y0 = from.top - py * s0;
-  const t0 = performance.now();
   let raf = 0;
-  const frame = (now: number) => {
-    const t = Math.min(1, (now - t0) / FLIGHT);
-    const p = 1 - (1 - t) ** 4;
+  const frame = () => {
+    const p = Math.min(1, Math.max(0, progress()));
     const at = target.getBoundingClientRect();
     const s = Math.exp(Math.log(s0) * (1 - p));
     flyer.style.transform = `translate(${x0 + (at.left - x0) * p}px, ${y0 + (at.top - y0) * p}px) scale(${s})`;
-    pic.style.opacity = String(1 - smooth(0.2, 0.65, t));
-    word.style.opacity = String(smooth(0.3, 0.75, t));
+    pic.style.opacity = String(1 - smooth(0.8, 1, p));
+    word.style.opacity = String(smooth(0.76, 0.97, p));
     raf = requestAnimationFrame(frame);
   };
-  frame(t0);
+  frame();
   el.append(flyer);
+  target.style.visibility = "hidden";
 
   return () => {
     cancelAnimationFrame(raf);
     flyer.remove();
+    target.style.removeProperty("visibility");
   };
 }

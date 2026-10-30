@@ -1,14 +1,12 @@
 /**
  * The intro's stir: a Canvas 2D copy of the logo, cut into narrow upright
- * strips that a mouse pointer pushes around like smoke, over a few faint
- * motes of warm smoke drifting up the black.
+ * strips that a mouse pointer pushes around like smoke.
  *
  * It takes over from the page's logo only when asked (interactive()),
  * drawing it exactly where the browser laid it out, so the hand-over can't
  * be seen; the canvas is clear everywhere else, over the overlay's own
  * black. release() stops drawing the logo (the intro carries its copy off
- * to the header) and lets the motes fade. One requestAnimationFrame loop;
- * destroy() frees everything.
+ * to the header). One requestAnimationFrame loop; destroy() frees everything.
  */
 
 export type Smoke = {
@@ -16,7 +14,7 @@ export type Smoke = {
   interactive(): boolean;
   /** Pointer position in viewport px, or null when it leaves. */
   pointer(x: number | null, y?: number): void;
-  /** Hand the logo back: stop drawing it, and fade the motes out. */
+  /** Hand the logo back: stop drawing it. */
   release(): void;
   destroy(): void;
 };
@@ -24,28 +22,6 @@ export type Smoke = {
 /** A strip of the logo: where it's drawn, its slice of the picture (sx, from the left, in CSS px), and how far it's been pushed. */
 type Strip = { x: number; y: number; w: number; h: number; sx: number; cx: number; cy: number; dx: number; dy: number; vx: number; vy: number };
 type Picture = { img: HTMLImageElement; x: number; y: number; w: number; h: number; alpha: number; strips: Strip[] };
-type Mote = { x: number; y: number; vx: number; vy: number; r: number; a: number };
-
-const smooth = (a: number, b: number, v: number) => {
-  const t = Math.min(1, Math.max(0, (v - a) / (b - a)));
-  return t * t * (3 - 2 * t);
-};
-const rand = (a: number, b: number) => a + Math.random() * (b - a);
-
-/** The motes' colour: the logo's palest gold, barely there on the black. */
-const MOTE_RGB = "226,198,140";
-
-/** A soft round dab, pre-rendered once and stamped with drawImage. */
-function dab(rgb: string, px: number) {
-  const c = document.createElement("canvas");
-  c.width = c.height = px;
-  const g = c.getContext("2d")!;
-  const grad = g.createRadialGradient(px / 2, px / 2, 0, px / 2, px / 2, px / 2);
-  for (const [at, a] of [[0, 1], [0.22, 0.62], [0.5, 0.22], [0.78, 0.05], [1, 0]]) grad.addColorStop(at, `rgba(${rgb},${a})`);
-  g.fillStyle = grad;
-  g.fillRect(0, 0, px, px);
-  return c;
-}
 
 /**
  * Every [data-picture] image, cut into upright strips so the pointer can
@@ -80,11 +56,7 @@ function measurePictures(root: HTMLElement, box: DOMRect): Picture[] | null {
   return out;
 }
 
-export function createSmoke(
-  root: HTMLElement,
-  canvas: HTMLCanvasElement,
-  { fine }: { fine: boolean }
-): Smoke | null {
+export function createSmoke(root: HTMLElement, canvas: HTMLCanvasElement): Smoke | null {
   const ctx = canvas.getContext("2d");
   if (!ctx) return null;
   const box = root.getBoundingClientRect();
@@ -112,7 +84,6 @@ export function createSmoke(
     g.drawImage(p.img, 0, 0, c.width, c.height);
     return c;
   });
-  const mote = dab(MOTE_RGB, 32);
 
   /* ── The pointer and its field ─────────────────────────────────────── */
 
@@ -123,19 +94,19 @@ export function createSmoke(
   /**
    * Where the stir wants a point at (cx, cy) to be pushed: around the pointer
    * (a swirl), a little away from it, and along with its motion — so a slow
-   * pass curls the strips, a fast one drags them like smoke. Returns falloff.
+   * pass curls the strips, a fast one drags them like smoke.
    */
   function field(cx: number, cy: number, time: number) {
     if (!P.on) {
       tgt.x = tgt.y = 0;
-      return 0;
+      return;
     }
     const ox = cx - P.x;
     const oy = cy - P.y;
     const f = Math.exp(-(ox * ox + oy * oy) / (R * R));
     if (f < 0.003) {
       tgt.x = tgt.y = 0;
-      return 0;
+      return;
     }
     const d = Math.hypot(ox, oy) || 1;
     const nx = ox / d;
@@ -143,13 +114,9 @@ export function createSmoke(
     const wobble = Math.sin(time * 2.1 + cx * 0.05 + cy * 0.03) * 4;
     tgt.x = f * (-ny * 26 + nx * 10 + P.vx * 0.05 + wobble);
     tgt.y = f * (nx * 26 + ny * 10 + P.vy * 0.05 - wobble);
-    return f;
   }
 
   /* ── Drawing ────────────────────────────────────────────────────────── */
-
-  /** Whether the logo is still the canvas's to draw (release() hands it back). */
-  let withLogo = true;
 
   function drawLogo() {
     // Whole while nothing has moved it (exactly as the page drew it), else
@@ -180,50 +147,11 @@ export function createSmoke(
     ctx!.globalAlpha = 1;
   }
 
-  /* ── Ambient smoke the pointer stirs (mouse only, on larger screens) ── */
-
-  const motes: Mote[] = [];
-  if (fine && W >= 700) {
-    const n = Math.round(Math.max(60, Math.min(150, (W * H) / 10000)));
-    for (let i = 0; i < n; i++) {
-      motes.push({ x: rand(0, W), y: rand(0, H), vx: 0, vy: rand(-14, -4), r: rand(8, 26), a: rand(0.03, 0.08) });
-    }
-  }
-
-  function stepMotes(dt: number, time: number) {
-    for (const m of motes) {
-      const f = field(m.x, m.y, time);
-      if (f) {
-        m.vx += tgt.x * 9 * dt;
-        m.vy += tgt.y * 9 * dt;
-      }
-      const damp = Math.exp(-dt * 1.4);
-      m.vx *= damp;
-      m.vy = m.vy * damp + -9 * (1 - damp);
-      m.x += m.vx * dt;
-      m.y += m.vy * dt;
-      if (m.y < -m.r) m.y = H + m.r;
-      if (m.x < -m.r) m.x = W + m.r;
-      if (m.x > W + m.r) m.x = -m.r;
-    }
-  }
-
-  function drawMotes(fade: number) {
-    if (fade <= 0) return;
-    for (const m of motes) {
-      ctx!.globalAlpha = m.a * fade;
-      ctx!.drawImage(mote, m.x - m.r, m.y - m.r, m.r * 2, m.r * 2);
-    }
-    ctx!.globalAlpha = 1;
-  }
-
   /* ── The loop ───────────────────────────────────────────────────────── */
 
   let live = false;
   let raf = 0;
   let last = 0;
-  let liveAt = 0;
-  let releasedAt = 0;
 
   function stepStrips(dt: number, time: number) {
     for (const s of strips) {
@@ -242,12 +170,8 @@ export function createSmoke(
     P.vx *= Math.exp(-dt * 6);
     P.vy *= Math.exp(-dt * 6);
     stepStrips(dt, time);
-    stepMotes(dt, time);
     ctx!.clearRect(0, 0, W, H);
-    const out = releasedAt ? 1 - smooth(0, 300, now - releasedAt) : 1;
-    drawMotes(smooth(0, 600, now - liveAt) * out);
-    if (withLogo) drawLogo();
-    if (releasedAt && out <= 0) return stop();
+    drawLogo();
     raf = requestAnimationFrame(tick);
   }
 
@@ -264,7 +188,7 @@ export function createSmoke(
       drawLogo();
       root.dataset.mode = "canvas";
       live = true;
-      liveAt = last = performance.now();
+      last = performance.now();
       raf = requestAnimationFrame(tick);
       return true;
     },
@@ -289,17 +213,15 @@ export function createSmoke(
     },
 
     release() {
-      withLogo = false;
-      if (live && !releasedAt) releasedAt = performance.now();
-      if (!raf) ctx.clearRect(0, 0, W, H);
+      stop();
+      ctx.clearRect(0, 0, W, H);
     },
 
     destroy() {
       stop();
       ctx.clearRect(0, 0, W, H);
       canvas.width = canvas.height = 0;
-      for (const c of [mote, ...rasters]) c.width = c.height = 0;
-      motes.length = 0;
+      for (const c of rasters) c.width = c.height = 0;
     },
   };
 }
