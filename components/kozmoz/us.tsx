@@ -1,11 +1,10 @@
-import Image from "next/image";
 import { people, sectionLabel, us, type Who } from "@/lib/kozmoz";
-import { onDisk } from "@/lib/public-files";
 import { cn } from "@/lib/utils";
 
 /**
- * Us: on the left, the line about who does the work, where we are and the
- * three promises; on the right, the two people side by side.
+ * Us: on the left, the line about who does the work and where we are; under
+ * it, the three promises, and level with them on the right, the two people
+ * side by side (stacked on phones), each under a short gold rule.
  */
 export function Us() {
   return (
@@ -19,43 +18,32 @@ export function Us() {
             {us.title}
           </h2>
           <p className="where">{us.where}</p>
-          <ul className="promises">
-            {us.promises.map((p) => (
-              <li key={p}>{p}</li>
-            ))}
-          </ul>
         </div>
+        <ul className="promises">
+          {us.promises.map((p) => (
+            <li key={p}>{p}</li>
+          ))}
+        </ul>
 
         <div className="pair">
-          <PersonCard who="a" />
-          <PersonCard who="j" />
+          <Person who="a" />
+          <Person who="j" />
         </div>
       </div>
     </section>
   );
 }
 
-/**
- * A portrait frame and a line. Until the person's photo is in public/ (its
- * path is `photo` in lib/kozmoz.ts: public/m/us/ashan.jpg, jordan.jpg) the
- * frame is a plate with their initial; once it's there, the photo fills the
- * frame, the initial steps back and the name plate gets a paper ground to
- * sit on.
- */
-function PersonCard({ who }: { who: Who }) {
+/** A person: their full name and what they do. */
+function Person({ who }: { who: Who }) {
   const p = people[who];
-  const photo = onDisk(p.photo);
   return (
     <article className={cn("person", `person--${who}`)}>
-      <div className={cn("frame", `slide-${who}`, photo && "has-photo")}>
-        {photo && <Image src={p.photo} alt={p.name} fill sizes="(max-width: 1023px) 50vw, 18rem" />}
-        <span className="frame-initial" aria-hidden="true">
-          {p.initial}
-        </span>
-        <span className="frame-name label">{p.name}</span>
-      </div>
       <p className="person-line">
-        <b>{p.name}.</b> {p.line}
+        <b>
+          {p.name} {p.last}.
+        </b>{" "}
+        {p.line}
       </p>
     </article>
   );

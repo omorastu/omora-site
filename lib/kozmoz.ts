@@ -31,12 +31,7 @@ export type Person = {
   initial: string;
   /** What they do, after their name. */
   line: string;
-  /**
-   * Their portrait's place in public/. Until a file is there the frame shows
-   * the initial; add it (4:5, at least 800×1000) and rebuild, and the photo
-   * takes the initial's place.
-   */
-  photo: string;
+  // Photos can come back later: a `photo` here and a frame in components/kozmoz/us.tsx (removed for launch).
 };
 
 export const people: Record<Who, Person> = {
@@ -44,14 +39,12 @@ export const people: Record<Who, Person> = {
     name: "Ashan",
     last: "Fernando",
     initial: "A",
-    photo: "/m/us/ashan.jpg",
     line: "Decides how it looks and how it should feel to use. Plans the shoot and the posts. Then tries to break the site before your customers can.",
   },
   j: {
     name: "Jordan",
     last: "Lopez",
     initial: "J",
-    photo: "/m/us/jordan.jpg",
     line: "Builds it: the site, the booking, the phone answering and the follow-up behind it. Shoots the photos and video.",
   },
 };
