@@ -7,13 +7,13 @@
    ===================================================================== */
 
 /* The burn's front, as a share of the definition's width (animated below). */
-@property --kz-burn {
+@property --elo-burn {
   syntax: "<percentage>";
   inherits: true;
   initial-value: 120%;
 }
 
-.kz-intro {
+.elo-intro {
   --night: #0C0A08;
   /* The logo's golds, as they read on the black: light, mid and deep. */
   --gilt-hi: #F3DA96;
@@ -29,32 +29,32 @@
   -webkit-tap-highlight-color: transparent;
   /* If the page's script never takes over (a failed bundle, a crash), the
      overlay still gets out of the way on its own. data-live cancels this. */
-  animation: kz-intro-fallback .6s ease 5.2s forwards;
+  animation: elo-intro-fallback .6s ease 5.2s forwards;
 }
-.kz-intro[data-live] { animation: none; }
-@keyframes kz-intro-fallback { to { opacity: 0; visibility: hidden; } }
-.kz-intro[data-leaving] { pointer-events: none; }
+.elo-intro[data-live] { animation: none; }
+@keyframes elo-intro-fallback { to { opacity: 0; visibility: hidden; } }
+.elo-intro[data-leaving] { pointer-events: none; }
 
 /* The black, and the canvas the mouse stirs the logo on (smoke.ts). On the
    way out, intro.tsx slides it off to the left in one piece. */
-.kz-intro-ground {
+.elo-intro-ground {
   position: absolute;
   inset: 0;
   background: var(--night);
 }
-.kz-intro-canvas {
+.elo-intro-canvas {
   position: absolute;
   inset: 0;
   display: none;
   width: 100%;
   height: 100%;
 }
-.kz-intro[data-mode="canvas"] .kz-intro-canvas { display: block; }
+.elo-intro[data-mode="canvas"] .elo-intro-canvas { display: block; }
 /* The canvas draws the logo while it's stirred; then its copy flies it off. */
-.kz-intro[data-mode="canvas"] .kz-intro-logo,
-.kz-intro[data-flying] .kz-intro-logo { visibility: hidden; }
+.elo-intro[data-mode="canvas"] .elo-intro-logo,
+.elo-intro[data-flying] .elo-intro-logo { visibility: hidden; }
 
-.kz-intro-inner {
+.elo-intro-inner {
   position: absolute;
   inset: 0;
   display: flex;
@@ -69,13 +69,13 @@
    the file's proportions (1695×287, the letters spaced wide) by its width
    and height attributes. Its letters stand as tall as the old logo's did at
    640px. */
-.kz-intro-mark {
+.elo-intro-mark {
   position: relative;
   display: block;
   width: min(680px, 90vw);
   max-width: 100%;
 }
-.kz-intro-logo {
+.elo-intro-logo {
   display: block;
   width: 100%;
   height: auto;
@@ -86,7 +86,7 @@
    (the logo's own picture as its mask, set by intro.tsx once it's loaded).
    Once as the logo comes in, then once more, fainter, during the hold;
    gone by the time the black moves. */
-.kz-intro-shine {
+.elo-intro-shine {
   position: absolute;
   inset: 0;
   visibility: hidden;
@@ -95,13 +95,13 @@
   mix-blend-mode: screen;
   -webkit-mask: var(--logo) 0 0 / 100% 100% no-repeat;
   mask: var(--logo) 0 0 / 100% 100% no-repeat;
-  animation: kz-intro-shine 3.45s .85s both;
+  animation: elo-intro-shine 3.45s .85s both;
 }
-.kz-intro-shine[data-on] { visibility: visible; }
-.kz-intro[data-flying] .kz-intro-shine { display: none; }
+.elo-intro-shine[data-on] { visibility: visible; }
+.elo-intro[data-flying] .elo-intro-shine { display: none; }
 /* 0.85–2.45s the first sweep, gliding across the word; 2.8–4.3s the second,
    fainter, done before the black starts to slide (4.45s). */
-@keyframes kz-intro-shine {
+@keyframes elo-intro-shine {
   0% { background-position: 100% 0; opacity: 1; animation-timing-function: cubic-bezier(.45, 0, .55, 1); }
   46.4% { background-position: 0% 0; opacity: 1; }
   46.5% { background-position: 100% 0; opacity: .55; }
@@ -109,7 +109,7 @@
   100% { background-position: 0% 0; opacity: .55; }
 }
 
-.kz-intro-rule {
+.elo-intro-rule {
   display: block;
   width: clamp(56px, 7vw, 104px);
   height: 1px;
@@ -120,7 +120,7 @@
 /* The line under the logo: about 27px on a laptop, 21px on a phone, in two
    even lines, or three on a phone (its breaks are set in intro.tsx). Set
    twice, one over the other: the cut, and the ember of the burn. */
-.kz-intro-def {
+.elo-intro-def {
   position: relative;
   max-width: 100%;
   margin: 0;
@@ -131,47 +131,47 @@
   line-height: 1.35;
   letter-spacing: .01em;
 }
-.kz-intro-cut,
-.kz-intro-ember { display: block; }
-@media (min-width: 768px) { .kz-intro-narrow { display: none; } }
-@media (max-width: 767px) { .kz-intro-wide { display: none; } }
+.elo-intro-cut,
+.elo-intro-ember { display: block; }
+@media (min-width: 768px) { .elo-intro-narrow { display: none; } }
+@media (max-width: 767px) { .elo-intro-wide { display: none; } }
 
 /* Cut into the stone and filled with gold: the logo's golds falling down
    each line (the gradient repeats every line), and the cut's shadow and
-   lit edge (the #kz-engrave filter, intro.tsx). Revealed up to the burn's
+   lit edge (the #elo-engrave filter, intro.tsx). Revealed up to the burn's
    front. */
-.kz-intro-cut {
+.elo-intro-cut {
   color: var(--gilt);
-  -webkit-mask-image: linear-gradient(100deg, #000 calc(var(--kz-burn) - 2%), transparent calc(var(--kz-burn) + 1%));
-  mask-image: linear-gradient(100deg, #000 calc(var(--kz-burn) - 2%), transparent calc(var(--kz-burn) + 1%));
+  -webkit-mask-image: linear-gradient(100deg, #000 calc(var(--elo-burn) - 2%), transparent calc(var(--elo-burn) + 1%));
+  mask-image: linear-gradient(100deg, #000 calc(var(--elo-burn) - 2%), transparent calc(var(--elo-burn) + 1%));
 }
 @supports (-webkit-background-clip: text) or (background-clip: text) {
-  .kz-intro-cut {
+  .elo-intro-cut {
     background: linear-gradient(180deg, var(--gilt-hi) 32%, var(--gilt) 56%, var(--gilt-lo) 88%) 0 0 / 100% 1.35em repeat-y;
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
-    filter: url(#kz-engrave);
+    filter: url(#elo-engrave);
   }
 }
 /* The burn's edge: the same letters white-hot at the front, cooling to
    orange behind it, glowing, laid over the cut only along a band at the
    front; and a soft warm glow on the stone around the front itself, there
    only while it moves. */
-.kz-intro-ember {
+.elo-intro-ember {
   position: absolute;
   inset: 0;
   color: #FFF1C8;
   text-shadow: 0 0 .05em #FFD58A, 0 0 .22em rgb(255 150 50 / .95), 0 0 .6em rgb(255 100 20 / .6), 0 0 1.2em rgb(255 80 10 / .3);
-  -webkit-mask-image: linear-gradient(100deg, transparent calc(var(--kz-burn) - 18%), rgb(0 0 0 / .35) calc(var(--kz-burn) - 8%), #000 calc(var(--kz-burn) - .5%), transparent calc(var(--kz-burn) + 1.5%));
-  mask-image: linear-gradient(100deg, transparent calc(var(--kz-burn) - 18%), rgb(0 0 0 / .35) calc(var(--kz-burn) - 8%), #000 calc(var(--kz-burn) - .5%), transparent calc(var(--kz-burn) + 1.5%));
+  -webkit-mask-image: linear-gradient(100deg, transparent calc(var(--elo-burn) - 18%), rgb(0 0 0 / .35) calc(var(--elo-burn) - 8%), #000 calc(var(--elo-burn) - .5%), transparent calc(var(--elo-burn) + 1.5%));
+  mask-image: linear-gradient(100deg, transparent calc(var(--elo-burn) - 18%), rgb(0 0 0 / .35) calc(var(--elo-burn) - 8%), #000 calc(var(--elo-burn) - .5%), transparent calc(var(--elo-burn) + 1.5%));
 }
 
-.kz-intro-def::after {
+.elo-intro-def::after {
   content: "";
   position: absolute;
   inset: -30% -6%;
-  background: radial-gradient(ellipse 2.4em 46% at var(--kz-burn) 50%, rgb(255 132 40 / .16), rgb(255 110 30 / .05) 55%, transparent);
+  background: radial-gradient(ellipse 2.4em 46% at var(--elo-burn) 50%, rgb(255 132 40 / .16), rgb(255 110 30 / .05) 55%, transparent);
   mix-blend-mode: screen;
   opacity: 0;
   pointer-events: none;
@@ -179,33 +179,33 @@
 
 /* Entrance: a moment of black, the logo (0.6s), the rule, then the burn
    (1.2s). The front starts and ends clear of the text, ember and all. */
-.kz-intro-logo { animation: kz-intro-in .6s cubic-bezier(.25, .6, .3, 1) .15s both; }
-.kz-intro-rule { animation: kz-intro-rule .5s cubic-bezier(.2, .6, .2, 1) .55s both; }
-.kz-intro-def { animation: kz-intro-burn 1.2s cubic-bezier(.45, .1, .55, .9) .75s both; }
-.kz-intro-def::after { animation: kz-intro-glow 1.2s linear .75s both; }
+.elo-intro-logo { animation: elo-intro-in .6s cubic-bezier(.25, .6, .3, 1) .15s both; }
+.elo-intro-rule { animation: elo-intro-rule .5s cubic-bezier(.2, .6, .2, 1) .55s both; }
+.elo-intro-def { animation: elo-intro-burn 1.2s cubic-bezier(.45, .1, .55, .9) .75s both; }
+.elo-intro-def::after { animation: elo-intro-glow 1.2s linear .75s both; }
 
-@keyframes kz-intro-in { from { opacity: 0; } }
-@keyframes kz-intro-rule {
+@keyframes elo-intro-in { from { opacity: 0; } }
+@keyframes elo-intro-rule {
   from { opacity: 0; transform: scaleX(0); }
   to { opacity: 1; transform: none; }
 }
-@keyframes kz-intro-burn {
-  from { --kz-burn: -4%; }
-  to { --kz-burn: 120%; }
+@keyframes elo-intro-burn {
+  from { --elo-burn: -4%; }
+  to { --elo-burn: 120%; }
 }
-@keyframes kz-intro-glow {
+@keyframes elo-intro-glow {
   0%, 100% { opacity: 0; }
   12%, 72% { opacity: 1; }
 }
 /* The header's wordmark, held back while the logo is on its way to it (intro.tsx's boot rule). */
-@keyframes kz-intro-word { from, to { opacity: 0; } }
+@keyframes elo-intro-word { from, to { opacity: 0; } }
 
 /* The cut's filter, kept out of the layout. */
-.kz-intro-filters { position: absolute; width: 0; height: 0; overflow: hidden; }
+.elo-intro-filters { position: absolute; width: 0; height: 0; overflow: hidden; }
 
 /* The logo's flight to the header (intro.tsx): the logo's copy and the
    wordmark's, one over the other, moved and scaled together. */
-.kz-intro-flyer {
+.elo-intro-flyer {
   position: fixed;
   left: 0;
   top: 0;
@@ -214,7 +214,7 @@
   pointer-events: none;
   will-change: transform;
 }
-.kz-intro-flyer > * {
+.elo-intro-flyer > * {
   position: absolute;
   left: 0;
   top: 0;
@@ -225,7 +225,7 @@
 /* Reduced motion: the logo and the definition are simply there, cut and
    settled; the exit is a plain fade. */
 @media (prefers-reduced-motion: reduce) {
-  .kz-intro-logo, .kz-intro-rule, .kz-intro-def, .kz-intro-def::after { animation: none; }
-  .kz-intro-shine { display: none; }
-  .kz-intro-def { --kz-burn: 120%; }
+  .elo-intro-logo, .elo-intro-rule, .elo-intro-def, .elo-intro-def::after { animation: none; }
+  .elo-intro-shine { display: none; }
+  .elo-intro-def { --elo-burn: 120%; }
 }

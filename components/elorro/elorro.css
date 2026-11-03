@@ -1,0 +1,1452 @@
+/* =====================================================================
+   ELORRO · the site · "Names on the door"
+   Ported rule for rule from the first static preview's tokens.css and
+   brand.css. Four decisions, kept from the original, and a fifth since:
+   1. Concept: the door of a two-partner firm. Two names joined by an
+      ampersand, a seam down the middle between them. The seam runs the
+      hero only; below it the page is one left-aligned editorial grid
+      ("below the hero").
+   2. Black, gold and the paper. The ink is black; the gold is the logo's,
+      kept for a few things: the wordmark and the two rings, the
+      ampersand between the names, the picked name and the send button.
+      The two people share both. Nothing decorative.
+   3. Cormorant Garamond, the wordmark's family, for every heading and
+      display line (names ~3x a normal h1), in 500 and 600 + Hanken
+      Grotesk for everything else (text, wide-caps labels, fields, buttons).
+   4. Photo direction: real screens of real projects, unframed, square,
+      one hairline; no portraits for now (lib/elorro.ts).
+   5. The paper runs edge to edge: no frame, no card, nothing behind it.
+
+   Scoping. Every rule hangs off .elo, the page root: the home page's is
+   rendered by components/elorro/hands.tsx, every other page's by
+   components/elorro/page.tsx. Rules that have to sit on <html> (the fluid
+   root size, the paper behind overscroll) use html:has(.elo): they apply
+   exactly while a page is mounted, server render included. Tokens are
+   declared on both, so a page still renders correctly in a browser without
+   :has() — only the fluid root is lost there.
+
+   The home page's sections come first; the other pages' own parts follow,
+   from "inner pages" down.
+   ===================================================================== */
+
+/* ---------- tokens ---------- */
+html:has(.elo),
+.elo {
+  /* Fluid root: the page is designed at one frame width and scales as a
+     poster. 1440 frame on desktop, 375 frame under 1024px. The frame is
+     the screen less --edge either side (px, as the root size is worked out
+     from it): the margin the page once floated in, kept so that nothing
+     moved when it went. Every side margin (--pad) includes it. */
+  --viewport: 1440;
+  --edge: 28px;
+
+  --ink: #16130F;
+  --paper: #F4F1EA;
+  --accent: #F4F1EA;                 /* selection = paper on ink */
+  --ink-20: color-mix(in srgb, var(--ink) 20%, transparent);
+
+  --ink-65: color-mix(in srgb, var(--ink) 65%, var(--paper));  /* 5.6:1 secondary text */
+  --ink-50: color-mix(in srgb, var(--ink) 50%, var(--paper));  /* 3.4:1 large, unchosen */
+  --frame: color-mix(in srgb, var(--ink) 6%, var(--paper));
+
+  /* The logo's gold (public/m/brand/elorro-logo.png): its mid tone, and a
+     lighter and a deeper one for the fall down the letters, kept dark
+     enough to read on paper (3.2:1 at the middle, for large type). Small
+     gold text takes the deep tone alone (4.95:1); the send button runs
+     from the mid tone to deeper still, under paper text (4.95:1 at the
+     middle, where the text is). */
+  --gold: #A8802F;
+  --gold-hi: #BE9645;
+  --gold-lo: #876122;
+  --gold-text: var(--gold-lo);
+  /* The buttons' gold: from the gold type's light gold (.gold) at the top
+     edge down to a deep gold at the foot, through a mid gold 19% deeper
+     than the type's, reached above the capitals, so the paper on them reads
+     clearly (4.6:1 or more). */
+  --gold-button: linear-gradient(180deg, var(--gold-hi), #886826 36%, #6D4F1C);
+
+  /* --font-logo (Cormorant Garamond) comes from next/font on <html>
+     (app/layout.tsx), --font-hanken on .elo itself (components/elorro/fonts.ts). */
+  --font-display: var(--font-logo), Georgia, "Times New Roman", serif;
+  --font-text: var(--font-hanken), "Helvetica Neue", Arial, sans-serif;
+  --font-label: var(--font-hanken), "Helvetica Neue", Arial, sans-serif;
+
+  --ease: cubic-bezier(.31, .13, .11, 1);
+  --pad: calc(2rem + var(--edge));   /* page margin */
+  --header-h: 4rem;
+  --gap: 4rem;                       /* the space either side of the seam (2rem each) */
+
+  /* Springs as linear() curves (sampled damped oscillator, see hands.tsx) */
+  --spring-soft: linear(0, 0.0542, 0.181, 0.3384, 0.4982, 0.6435, 0.7657, 0.8619, 0.933, 0.9821, 1.0131, 1.0303, 1.0375, 1.038, 1.0346, 1.029, 1.0228, 1.0169, 1.0116, 1.0074, 1.0041, 1.0017, 1.0001, 0.9992, 1);
+}
+
+@media (max-width: 1023px) {
+  html:has(.elo),
+  .elo { --viewport: 375; --edge: 16px; --pad: calc(1rem + var(--edge)); --header-h: 4rem; --gap: 0rem; }
+}
+@media (max-width: 767px) {
+  html:has(.elo),
+  .elo { --edge: 12px; }
+}
+
+/* ---------- root ----------
+   Nothing on <html> or <body> changes how the page scrolls, ever: no
+   overflow, touch-action, overscroll-behavior, position or scrollbar-gutter,
+   from here or from a script (the intro's hold, the Work section's stop, the
+   menu). After the page had had them, even for a moment, iOS Safari
+   wouldn't scroll it down from its top with a swipe up. What clips the page
+   sideways is on .elo, below. */
+html:has(.elo) {
+  font-size: calc(16 / var(--viewport) * (100vw - 2 * var(--edge)));
+  background: var(--paper);
+  color: var(--ink);
+  color-scheme: light;
+  scroll-behavior: smooth;
+  scroll-padding-top: calc(var(--header-h) + 1rem);
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  /* Undo two V3 globals (Tailwind preflight, globals.css body) the preview
+     never had: taps flash as the browser draws them; text renders as auto. */
+  -webkit-tap-highlight-color: initial;
+}
+
+/* Tablet guard: 576-1023px would blow the 375 frame up to 2.7x.
+   Pin the root at the 576px screen's value (16/375*(576-2*12)). */
+@media (min-width: 576px) and (max-width: 1023px) {
+  html:has(.elo) { font-size: 23.552px; }
+}
+
+/* Ultrawide guard: stop growing past a 1920px screen (16/1440*(1920-2*28)).
+   Columns keep stretching; type and spacing stop. */
+@media (min-width: 1921px) {
+  html:has(.elo) { font-size: 20.7111px; }
+}
+
+html:has(.elo) body {
+  margin: 0;
+  text-rendering: auto;
+  background: var(--paper);
+  color: var(--ink);
+}
+
+/* While the intro and the hero's entrance play, the page is held still by
+   script alone (hold.ts, and the intro's boot script before it):
+   html[data-elo-hold] only marks it, and no style here hangs off it. */
+
+/* ---------- base ---------- */
+/* At least a screen tall, so a short page's footer still sits at the bottom.
+   Nothing wider than the screen makes the page scroll sideways: clip, not
+   hidden, so it's no scroller of its own and the header and the Work stage
+   still stick to the screen. */
+.elo {
+  display: flex;
+  flex-direction: column;
+  min-height: 100svh;
+  overflow-x: clip;
+  color: var(--ink);
+  font-family: var(--font-text);
+  font-weight: 400;
+  font-size: max(1.0625rem, 15px);
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+/* Tailwind's preflight greys every border; this page's borders are all ink. */
+.elo *, .elo *::before, .elo *::after { box-sizing: border-box; border-color: currentColor; }
+.elo img, .elo video, .elo svg, .elo picture { display: block; max-width: 100%; }
+.elo h1, .elo h2, .elo h3, .elo p, .elo figure, .elo ul, .elo ol, .elo dl, .elo dd { margin: 0; }
+.elo ul, .elo ol { padding: 0; list-style: none; }
+.elo .sr-only { margin: -1px; }
+.elo a { color: inherit; text-decoration: none; }
+.elo button, .elo input, .elo textarea {
+  font: inherit;
+  color: inherit;
+  border-radius: 0;
+  box-shadow: none;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.elo button { background: none; border: 0; padding: 0; margin: 0; cursor: pointer; text-align: inherit; }
+.elo ::selection { background: var(--ink); color: var(--accent); }
+.elo :focus-visible { outline: 1px solid currentColor; outline-offset: .25rem; border-radius: 0; }
+
+.elo .label {
+  font-family: var(--font-label);
+  font-weight: 600;
+  font-size: max(.75rem, 11px);
+  letter-spacing: .14em;
+  line-height: 1.3;
+  text-transform: uppercase;
+}
+
+/* Gold type: the wordmark, the ampersands. A light-to-deep fall down the
+   letters (they fill about the middle half of the text's box), or the
+   solid mid tone where text can't take a background. */
+.elo .gold { color: var(--gold); }
+@supports (-webkit-background-clip: text) or (background-clip: text) {
+  .elo .gold {
+    background: linear-gradient(180deg, var(--gold-hi) 26%, var(--gold) 52%, var(--gold-lo) 78%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+}
+
+.elo .skip {
+  position: absolute; left: -9999px; top: .5rem; z-index: 300;
+  min-width: 12rem;                  /* covers the whole wordmark lockup */
+  background: var(--ink); color: var(--paper); padding: .75rem 1rem;
+}
+.elo .skip:focus { left: var(--pad); top: .5rem; }
+.elo > main { flex: 1 0 auto; }
+
+/* ---------- cursor: the two rings ----------
+   With a mouse or trackpad, the pointer is the mark: the two gold rings,
+   linked as in the logo (the left over the right at the top, under it at
+   the bottom), 22px, its hotspot between them; each ring has a pale halo
+   so it shows on any ground and the two read apart where they cross. Links
+   and buttons keep the hand, text fields the text bar. Touch screens never
+   see it. */
+@media (pointer: fine) {
+  html:has(.elo) {
+    cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='22' viewBox='0 0 22 22'%3E%3Cdefs%3E%3CclipPath id='t'%3E%3Crect x='8' y='3' width='6' height='6'/%3E%3C/clipPath%3E%3C/defs%3E%3Cg fill='none'%3E%3Ccircle cx='7.7' cy='11' r='5.7' stroke='%23fff' stroke-opacity='.8' stroke-width='3.8'/%3E%3Ccircle cx='7.7' cy='11' r='5.7' stroke='%23A8802F' stroke-width='2'/%3E%3Ccircle cx='14.3' cy='11' r='5.7' stroke='%23fff' stroke-opacity='.8' stroke-width='3.8'/%3E%3Ccircle cx='14.3' cy='11' r='5.7' stroke='%23A8802F' stroke-width='2'/%3E%3Cg clip-path='url(%23t)'%3E%3Ccircle cx='7.7' cy='11' r='5.7' stroke='%23fff' stroke-opacity='.8' stroke-width='3.8'/%3E%3Ccircle cx='7.7' cy='11' r='5.7' stroke='%23A8802F' stroke-width='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E") 11 11, auto;
+  }
+  .elo a[href], .elo button, .elo label, .elo summary, .elo select, .elo [role="button"] { cursor: pointer; }
+  .elo input:not([type="radio"], [type="checkbox"], [type="submit"], [type="button"]), .elo textarea { cursor: text; }
+}
+/* And behind the rings as the mouse moves, a fine gold thread (trail.tsx),
+   over everything, the intro's black too, and never in the way: on the
+   paper it multiplies, so it tints the paper and leaves the ink as it is;
+   over the intro's black, and over the header's bar once it has turned
+   black (a second canvas, drawn only there), it's laid on as it is. */
+.elo .trail {
+  position: fixed;
+  inset: 0;
+  z-index: 1001;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  mix-blend-mode: multiply;
+}
+.elo .trail--night,
+html:has(#elo-intro-boot) .elo .trail { mix-blend-mode: normal; }
+@media not (pointer: fine), (prefers-reduced-motion: reduce) {
+  .elo .trail { display: none; }
+}
+
+/* Shared things cross the seam: they sit on paper so the seam breaks around them. */
+.elo .across {
+  position: relative;
+  z-index: 1;
+  background: var(--paper);
+}
+
+/* ---------- header: the door plate ----------
+   At the top of the page, the gold rings and wordmark on the left and the
+   menu button on the right, on the paper. Once the names on the door have
+   gone under it (header.tsx adds .is-dark), it turns black from edge to
+   edge: the two names fade in on the seam, the gold stays gold and
+   everything else turns paper. (On phones the names come in as initials,
+   in the wordmark's place: see "phones".) The black is a layer of its own
+   over the header's paper. */
+.elo .top {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  height: var(--header-h);
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  padding-inline: var(--pad);
+  background: var(--paper);
+  border-bottom: 1px solid var(--ink-20);
+  color: var(--ink);
+  transition: transform .45s var(--ease), color .25s ease, border-color .25s ease;
+}
+.elo .top::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 -1px;
+  z-index: -1;
+  background: var(--ink);
+  opacity: 0;
+  transition: opacity .25s ease;
+  pointer-events: none;
+}
+.elo .top.is-dark { color: var(--paper); border-bottom-color: transparent; }
+.elo .top.is-dark::before { opacity: 1; }
+/* min-height: the old Fraunces lockup's line box (1.375rem × 1.45), so the
+   header rows stand where they did; it only bites at tablet widths. */
+.elo .brand {
+  grid-area: 1 / 1;
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  gap: .72rem;
+  min-height: max(44px, calc(1.375rem * 1.45));
+}
+.elo .brand img { width: 2.15rem; height: auto; }
+.elo .brand .wordmark { font-size: 1.725rem; line-height: 1; }
+
+/* The wordmark, here and in the footer, in the logo's gold (.gold): set a
+   weight up from the plain wordmark's 500 and a little tighter, so the
+   thin gold holds together at this size. */
+.elo .brand .wordmark,
+.elo .foot-l .wordmark {
+  font-weight: 600;
+  letter-spacing: .36em;
+  margin-right: -.36em;
+}
+
+/* The names, on the seam, only while the header is black. Hidden, they
+   leave the tab order and the accessibility tree too. Each carries its
+   initial as well, for phones; here only the name shows. */
+.elo .who {
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 600;
+  line-height: 1;
+  min-height: 44px;
+  padding-inline: .25rem;
+}
+.elo .who-initial { display: none; }
+.elo .who--a { grid-area: 1 / 1; justify-self: end; }
+.elo .who--j { grid-area: 1 / 3; justify-self: start; }
+.elo .top-amp {
+  grid-area: 1 / 2;
+  padding-inline: .5rem;
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 500;
+  line-height: 1;
+}
+.elo .top .who,
+.elo .top .top-amp {
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity .25s ease, visibility 0s .25s, translate .55s var(--spring-soft);
+}
+.elo .top.is-dark .who,
+.elo .top.is-dark .top-amp {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity .25s ease, visibility 0s, translate .55s var(--spring-soft);
+}
+.elo .who[aria-pressed="true"] {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: .22em;
+}
+
+/* The menu button: three lines in the header's ink, black on the paper and
+   paper on the black. A 44px target, set so its lines end on the margin. */
+.elo .menu-btn {
+  grid-area: 1 / 3;
+  justify-self: end;
+  display: inline-grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  margin-right: calc((1.5rem - 44px) / 2);
+}
+.elo .menu-btn svg,
+.elo .menu-close svg { width: 1.5rem; height: auto; fill: none; stroke: currentColor; stroke-width: 1.5; }
+
+/* ---------- the menu ----------
+   The whole screen in the paper (components/elorro/menu.tsx, a modal
+   <dialog>): a bar like the header's, with Close where the menu button was,
+   then the home page's sections large down the page's grid and the two
+   pages under them. The page behind doesn't scroll while it's open
+   (menu.tsx, by script: html[data-menu] only marks it). */
+.elo .menu {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: var(--paper);
+  color: var(--ink);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.elo .menu[open] { display: flex; flex-direction: column; }
+.elo .menu::backdrop { background: transparent; }
+.elo .menu-bar {
+  flex: none;
+  height: var(--header-h);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-inline: var(--pad);
+  border-bottom: 1px solid var(--ink-20);
+}
+.elo .menu-close {
+  display: inline-flex;
+  align-items: center;
+  gap: .625rem;
+  min-height: 44px;
+  margin-right: calc((1.5rem - 44px) / 2);
+  padding-inline: .625rem calc((44px - 1.5rem) / 2);
+}
+.elo .menu-close svg { width: 1.375rem; }
+.elo .menu-body {
+  flex: 1 0 auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 3rem var(--pad) 4rem;
+}
+.elo .menu-body > * { width: 100%; max-width: 75rem; margin-inline: auto; }
+.elo .menu-links a {
+  display: inline-block;
+  padding-block: .125rem;
+  font-family: var(--font-display);
+  font-size: 5rem;
+  font-weight: 500;
+  line-height: 1.04;
+  letter-spacing: -.015em;
+}
+.elo .menu-pages-label { margin-top: 3.5rem; color: var(--ink-65); }
+.elo .menu-pages { display: flex; flex-wrap: wrap; gap: .5rem 2.5rem; margin-top: 1rem; }
+.elo .menu-pages a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-family: var(--font-display);
+  font-size: 2rem;
+  font-weight: 500;
+  line-height: 1.1;
+}
+.elo .menu-body a {
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  text-decoration-thickness: .04em;
+  text-underline-offset: .14em;
+  transition: text-decoration-color .25s ease;
+}
+.elo .menu-body a[aria-current="page"] { text-decoration-color: currentColor; }
+@media (hover: hover) {
+  .elo .menu-body a:hover { text-decoration-color: currentColor; }
+}
+
+/* ---------- the seam (desktop only) ---------- */
+.elo main { position: relative; }
+.elo .seam {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 1px;
+  margin-left: -.5px;
+  background: var(--ink-50);
+  transform-origin: 50% 0;
+  pointer-events: none;
+  z-index: 0;
+}
+.elo main > section { position: relative; z-index: 1; }
+
+/* ---------- hero ---------- */
+.elo .hero {
+  min-height: calc(100svh - var(--header-h));
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  padding: 2rem var(--pad) 5rem;
+}
+.elo .names {
+  --names-size: 14rem;
+  --last-size: 2.375rem;
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: baseline;
+  font-family: var(--font-display);
+  font-size: var(--names-size);
+  font-weight: 500;
+  line-height: .9;
+  letter-spacing: -.02em;
+}
+.elo .name { font: inherit; letter-spacing: inherit; line-height: inherit; color: var(--ink); }
+.elo .name--a { justify-self: end; }
+.elo .name--j { justify-self: start; }
+.elo .name-first { display: block; }
+/* The last name, under the first: the lede's size, in the display face's
+   bold. margin-top: close under the first name, but clear of its picked
+   band (which ends .04 of the names' size above the line's foot) by about
+   a third of the last name's size. */
+.elo .name-last {
+  display: block;
+  margin-top: calc(.16em - var(--names-size) * .04);
+  font-family: var(--font-display-bold), var(--font-display);
+  font-size: var(--last-size);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0;
+}
+/* Side by side, each last name is centred in its half of the hero: Fernando
+   between the hero's left edge and the seam, Lopez between the seam and the
+   right edge. It's taken out of the line and placed against the hero itself
+   (left and width), at the height it had in the line (top left at auto); the
+   button keeps that room for it. (Stacked, on phones, they're mirrored
+   under the first names instead: see "phones".) */
+@media (min-width: 1024px) {
+  .elo .name { padding-bottom: calc(var(--last-size) * 1.16 - var(--names-size) * .04); }
+  .elo .name-last { position: absolute; width: 50%; text-align: center; }
+  .elo .name--a .name-last { left: 0; }
+  .elo .name--j .name-last { left: 50%; }
+}
+/* Picked, a name lights up: a band of gold laid under the first name, run
+   out from the seam. Nothing else on the page changes. */
+.elo .name-first {
+  background: linear-gradient(var(--lit), var(--lit)) no-repeat;
+  background-size: 0% .3em;
+  transition: background-size .6s var(--ease);
+  --lit: color-mix(in srgb, var(--gold) 26%, transparent);
+}
+.elo .name--a .name-first { background-position: right 0 bottom .04em; }
+.elo .name--j .name-first { background-position: left 0 bottom .04em; }
+.elo .name[aria-pressed="true"] .name-first { background-size: 100% .3em; }
+/* The ampersand, in gold, on a patch of paper so the seam breaks around it. */
+.elo .name-amp {
+  position: relative;
+  z-index: 1;
+  display: inline-block;
+  padding-inline: .16em;
+  background: var(--paper);
+  font-weight: 500;
+}
+.elo .name-amp .gold { display: inline-block; }
+.elo .hint {
+  margin-top: 2.75rem;
+  padding: .25rem .5rem;
+  color: var(--ink-65);
+}
+/* The picked person's line: shut until a name is picked, then open under the
+   hint, on that person's side of the seam. Both lines hold the space, so
+   going from one name to the other moves nothing. */
+.elo .picked {
+  display: grid;
+  grid-template-rows: 0fr;
+  width: 100%;
+  transition: grid-template-rows .55s var(--ease);
+}
+.elo[data-view] .picked { grid-template-rows: 1fr; }
+.elo .picked-in {
+  min-height: 0;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: var(--gap);
+}
+.elo .picked-line {
+  grid-row: 1;
+  align-self: start;
+  max-width: 30rem;
+  margin-top: 1.75rem;
+  font-size: 1.25rem;
+  line-height: 1.42;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity .3s var(--ease), visibility 0s .3s;
+}
+.elo .picked-line--a { grid-column: 1; justify-self: end; text-align: right; }
+.elo .picked-name { color: var(--gold-text); font-weight: 600; }
+.elo .picked-line--j { grid-column: 2; justify-self: start; }
+.elo[data-view="a"] .picked-line--a,
+.elo[data-view="j"] .picked-line--j {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity .45s var(--ease) .1s, visibility 0s;
+}
+.elo .lede {
+  margin-top: 1.5rem;
+  max-width: 50rem;
+  padding-block: .5rem;
+  font-family: var(--font-display);
+  font-size: 2.375rem;
+  font-weight: 500;
+  line-height: 1.16;
+  letter-spacing: -.005em;
+  text-align: center;
+  text-wrap: balance;
+}
+
+/* The one action: gold, square, its capitals in the paper (the solid mid
+   gold where a gradient can't be drawn). Hovered or focused, a deeper gold. */
+.elo .act {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 3.25rem;
+  margin-top: 2.25rem;
+  padding: 1rem 1.75rem;
+  background: var(--gold);
+  background-image: var(--gold-button);
+  color: var(--paper);
+  font-family: var(--font-label);
+  font-weight: 600;
+  font-size: max(.8125rem, 12px);
+  letter-spacing: .14em;
+  line-height: 1;
+  text-transform: uppercase;
+  white-space: nowrap;
+  transition: letter-spacing .6s var(--spring-soft), box-shadow .25s var(--ease);
+}
+.elo .act[aria-disabled="true"] { cursor: progress; }
+/* Keyboard focus: the deeper gold, and a thin ink ring just clear of it. */
+.elo .act:focus-visible { outline-color: var(--ink); box-shadow: inset 0 0 0 100vmax rgb(32 20 4 / .16); }
+@media (hover: hover) {
+  .elo .act:hover:not([aria-disabled="true"]) { box-shadow: inset 0 0 0 100vmax rgb(32 20 4 / .16); }
+}
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .elo .act:hover:not([aria-disabled="true"]) { letter-spacing: .22em; }
+}
+
+/* ---------- below the hero: one grid ----------
+   The seam stops with the hero. Every section under it sits on one
+   12-column grid, 75rem wide (1200px in the 1440 frame) and left-aligned:
+   its label top left, headings on the left, running text held to a reading
+   measure (--measure). Rules divide sections and items; nothing sits on one. */
+.elo .sec {
+  border-top: 1px solid var(--ink-20);
+  padding: 5rem var(--pad);
+}
+.elo .wrap {
+  --measure: 62ch;
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  column-gap: 2rem;
+  align-items: start;
+  max-width: 75rem;
+  margin-inline: auto;
+}
+.elo .wrap > * { grid-column: 1 / -1; }
+.elo .sec-h {
+  margin-top: 1.25rem;
+  font-family: var(--font-display);
+  font-size: 3.625rem;
+  font-weight: 500;
+  line-height: 1.04;
+  letter-spacing: -.015em;
+  text-wrap: balance;
+}
+/* The way on from a home section to its own page, under it. */
+.elo .more {
+  margin-top: 2rem;
+  font-family: var(--font-label);
+  font-weight: 600;
+  font-size: max(.8125rem, 12px);
+  letter-spacing: .14em;
+  line-height: 1.3;
+  text-transform: uppercase;
+}
+.elo .more a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: .3em;
+}
+
+/* ---------- us ----------
+   The line and where on the left; under them the promises, and level with
+   them on the right, the two people side by side, each under a short gold
+   rule on the line of the promises' first hairline. */
+.elo .us-head { grid-column: 1 / span 5; grid-row: 1; }
+.elo .where {
+  margin-top: 2rem;
+  font-family: var(--font-display);
+  font-size: 1.8125rem;
+  font-weight: 500;
+  line-height: 1.2;
+}
+.elo .promises { margin-top: 1.75rem; border-top: 1px solid var(--ink-20); }
+.elo .us .promises { grid-column: 1 / span 5; grid-row: 2; }
+.elo .promises li {
+  padding-block: .875rem;
+  border-bottom: 1px solid var(--ink-20);
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 500;
+  line-height: 1.2;
+  text-wrap: pretty;
+}
+.elo .pair {
+  grid-column: 7 / -1;
+  grid-row: 2;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 2rem;
+  margin-top: 1.75rem;
+}
+/* A short gold rule over each, the gold beside the hero's picked line on phones. */
+.elo .person::before {
+  content: "";
+  display: block;
+  width: 2.5rem;
+  height: 2px;
+  background: var(--gold);
+}
+/* In the promises' type, so the two sides read as one. */
+.elo .person-line {
+  padding-top: .875rem;
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 500;
+  line-height: 1.25;
+  text-wrap: pretty;
+}
+.elo .person-line b { font-weight: 600; }
+
+/* ---------- what we do ----------
+   The home page's four, two by two: the title and a line under it, each
+   card the way to its service's page. */
+.elo .do-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 2.5rem 2rem;
+  margin-top: 2rem;
+}
+.elo .svc-card { padding-top: 1.5rem; border-top: 1px solid var(--ink-20); }
+.elo .svc-card-title {
+  font-family: var(--font-display);
+  font-size: 2.75rem;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: -.01em;
+  text-wrap: balance;
+}
+.elo .svc-card-text {
+  max-width: var(--measure);
+  margin-top: 1rem;
+  font-size: max(1.125rem, 15px);
+  line-height: 1.45;
+  text-wrap: pretty;
+}
+/* A card that is one link: the title's, stretched over the whole card.
+   Pointed at, the title underlines. */
+.elo .card-link { position: relative; }
+.elo .card-link h2 a::after,
+.elo .card-link h3 a::after { content: ""; position: absolute; inset: 0; z-index: 1; }
+.elo .card-link h2 a,
+.elo .card-link h3 a {
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  text-decoration-thickness: .04em;
+  text-underline-offset: .14em;
+  transition: text-decoration-color .25s ease;
+}
+@media (hover: hover) {
+  .elo .card-link:hover h2 a,
+  .elo .card-link:hover h3 a { text-decoration-color: currentColor; }
+}
+
+/* ---------- work ----------
+   Two across, every card the same: the screen at 16:10 (4:5 on phones),
+   then the name, where and how it stands, the line and the link. */
+.elo .work-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 3.5rem 2rem;
+  margin-top: 2rem;
+}
+.elo .proj-media {
+  position: relative;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  margin: 0;
+  background: var(--frame);
+  border: 1px solid var(--ink-20);
+}
+.elo .proj-media img,
+.elo .proj-media video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 0;
+}
+.elo .proj-media video { opacity: 0; transition: opacity .5s var(--ease); }
+/* The home page's grid on phones (under 768px): one row to swipe through,
+   each card 85% of the frame's width so the next one shows at its edge.
+   (Two classes, to win over the phone block's one-column grid further down.) */
+@media (max-width: 767px) {
+  .elo .work-grid.work-grid--swipe {
+    grid-template-columns: none;
+    grid-auto-flow: column;
+    grid-auto-columns: calc(.85 * (100vw - 2 * var(--edge)));
+    gap: 1rem;
+    margin-inline: calc(-1 * var(--pad));
+    padding-inline: var(--pad);
+    scroll-padding-inline: var(--pad);
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+  }
+  .elo .work-grid.work-grid--swipe::-webkit-scrollbar { display: none; }
+  .elo .work-grid--swipe > .proj { scroll-snap-align: start; }
+}
+
+/* ---------- work, pinned (phones) ----------
+   Under 768px the home page's row is pinned (components/elorro/work-pin.tsx):
+   once the section reaches the top of the screen, its stage sticks there
+   and each swipe moves the row one card along, to the middle, with a line
+   beside the label for where you are; after the last card it lets go. The
+   pin is as tall as that takes: the stage, plus a --step of scroll per card
+   after the first, each card's stop. The card is sized to fit the screen's
+   height as well as its width. Under reduced motion, or without scripting,
+   the row stays a row to swipe; at 768px and up the pin and its stage step
+   aside and the grid is the grid. */
+.elo .work-pin,
+.elo .work-stage { display: contents; }
+.elo .work-stage > * { grid-column: 1 / -1; }
+.elo .work-progress { display: none; }
+@media (max-width: 767px) and (prefers-reduced-motion: no-preference) and (scripting: enabled) {
+  .elo .work.sec { padding-top: 0; }
+  .elo .work-pin {
+    --step: 70svh;
+    /* 4:5, so the card's screen is 1.25× its width; about 17rem for the
+       label and the card's text. */
+    --card-w: min(85vw, calc((100svh - var(--header-h) - 17rem) * .8));
+    --card-gap: 1rem;
+    display: block;
+    position: relative;
+    height: calc(100svh + (var(--cards) - 1) * var(--step));
+  }
+  .elo .work-stage {
+    position: sticky;
+    top: 0;
+    height: 100svh;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-content: center;
+    margin-inline: calc(-1 * var(--pad));
+    padding: var(--header-h) var(--pad) 1rem;
+    overflow-x: clip;
+  }
+  .elo .work-grid.work-grid--swipe {
+    grid-auto-columns: var(--card-w);
+    gap: var(--card-gap);
+    padding-inline: calc((100vw - var(--card-w)) / 2);
+    overflow: visible;
+    scroll-snap-type: none;
+    translate: calc(var(--x, 0) * -1 * (var(--card-w) + var(--card-gap))) 0;
+  }
+  .elo .work-grid--swipe > .proj { scroll-snap-align: none; }
+  .elo .work-stage > .sec-label { grid-area: 1 / 1; }
+  .elo .work-stage > .work-grid { grid-area: 2 / 1 / 3 / 3; }
+  .elo .work-progress {
+    grid-area: 1 / 2;
+    align-self: center;
+    display: block;
+    position: relative;
+    width: 4.5rem;
+    height: 2px;
+    background: var(--ink-20);
+  }
+  .elo .work-progress span {
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: calc(100% / var(--cards));
+    background: var(--ink);
+    translate: calc(var(--x, 0) * 100%) 0;
+  }
+}
+.elo .proj-media video.is-on { opacity: 1; }
+.elo .proj-body { margin-top: 1.25rem; }
+.elo .proj-name {
+  font-family: var(--font-display);
+  font-size: 2.25rem;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: -.01em;
+}
+.elo .proj-meta { margin-top: .625rem; color: var(--ink-65); }
+.elo .proj-line {
+  max-width: var(--measure);
+  margin-top: .75rem;
+  font-size: max(1.0625rem, 15px);
+  line-height: 1.45;
+  text-wrap: pretty;
+}
+.elo .proj-site { margin-top: .625rem; }
+.elo .proj-link {
+  font-weight: 500;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: .22em;
+}
+
+/* ---------- contact ----------
+   The line and the promise on the left; the form on the right, in two
+   columns: the three short fields, and the message beside them. */
+.elo .contact-head { grid-column: 1 / span 5; }
+.elo .contact-lede {
+  max-width: var(--measure);
+  margin-top: 1.25rem;
+  font-size: max(1.125rem, 15px);
+  line-height: 1.45;
+}
+.elo .form { grid-column: 7 / -1; }
+.elo .fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 2rem;
+  row-gap: 1.75rem;
+}
+.elo .field { grid-column: 1; display: grid; align-content: start; gap: .5rem; }
+/* The message beside the first two, its line level with the second's. */
+.elo .field--msg { grid-column: 2; grid-row: 1 / span 2; grid-template-rows: auto 1fr; align-content: stretch; }
+.elo .field input,
+.elo .field textarea {
+  width: 100%;
+  padding: .5rem 0 .625rem;
+  border: 0;
+  border-bottom: 1px solid var(--ink);
+  background: transparent;
+  font-size: max(1.125rem, 16px);
+  line-height: 1.3;
+}
+.elo .field textarea { resize: vertical; min-height: 6.5rem; }
+/* Server-side field errors from /api/lead. One ink, like everything else:
+   the line under the field and the sentence say it, not a colour. */
+.elo .field [aria-invalid="true"] { border-bottom-width: 2px; padding-bottom: calc(.625rem - 1px); }
+.elo .field-error { font-size: max(.875rem, 13px); line-height: 1.3; }
+
+/* Who writes back, under the fields. */
+.elo .reply-note {
+  margin-top: 2.25rem;
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 500;
+  line-height: 1.25;
+  text-wrap: pretty;
+}
+
+/* The button and the email beside it; what the form says back, under both. */
+.elo .send-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem 1.75rem;
+  margin-top: 1.75rem;
+}
+.elo .send-row .act { margin-top: 0; }
+.elo .form-status { order: 1; flex-basis: 100%; max-width: var(--measure); }
+.elo .form-status:empty { display: none; }
+.elo .or a { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: .22em; }
+
+/* ---------- footer ---------- */
+.elo .foot {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  column-gap: var(--gap);
+  padding: 2rem var(--pad);
+  border-top: 1px solid var(--ink-20);
+  font-size: max(.875rem, 13px);
+}
+/* min-height keeps the line box the old Fraunces lockup had (1.125rem × 1.45),
+   so the footer stands as tall as it did. */
+.elo .foot-l { display: inline-flex; align-items: center; gap: .575rem; min-height: calc(1.125rem * 1.45); }
+.elo .foot-l img { width: 1.725rem; height: auto; }
+.elo .foot-l .wordmark { font-size: 1.4375rem; line-height: 1; }
+.elo .foot-c { font-family: var(--font-display); font-size: 1.25rem; font-weight: 500; }
+.elo .foot-c b { font-weight: 600; }
+.elo .foot-r { justify-self: end; text-align: right; }
+.elo .foot-r a { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: .22em; }
+
+/* ---------- the hero's entrance ----------
+   The ampersand, the names and the lines under them wait for hands.tsx,
+   which brings them in (the ampersand, then both names writing themselves
+   in together, the lines under them rising in as the last names start) and
+   adds .is-in. They hold their places meanwhile, so nothing moves when they
+   appear. If the script never gets that far they show anyway after 2.5s
+   (later while the intro is up: intro.tsx sets --elo-wait); with scripting
+   off the page's <noscript> shows them at once. */
+.elo:not(.is-in) :is(.name, .name-amp, .hero .hint, .lede, .hero > .act) {
+  opacity: 0;
+  animation: elo-hero-fallback .45s var(--ease) var(--elo-wait, 2.5s) forwards;
+}
+@keyframes elo-hero-fallback { from { opacity: 0; } to { opacity: 1; } }
+
+/* ---------- hover: the names lean toward the seam ---------- */
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  /* The hero's names lean line by line, not as whole buttons: moving the
+     button would make it the box its last name is placed against. */
+  .elo .name-first { transition: background-size .6s var(--ease), translate .55s var(--spring-soft); }
+  .elo .name-last { transition: translate .55s var(--spring-soft); }
+  /* Only the home page's names are buttons; elsewhere they're just names. */
+  .elo button.who--a:hover { translate: .25rem 0; }
+  .elo button.who--j:hover { translate: -.25rem 0; }
+  .elo .name--a:hover :is(.name-first, .name-last) { translate: calc(var(--names-size) * .035) 0; }
+  .elo .name--j:hover :is(.name-first, .name-last) { translate: calc(var(--names-size) * -.035) 0; }
+}
+
+/* ---------- scroll: the seam draws ----------
+   The seam finishes drawing at --seam-end, the scroll at which its tip
+   reaches the bottom of the hero (components/elorro/seam.tsx). */
+@media (min-width: 1024px) and (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    .elo .seam {
+      animation: elo-seam-draw linear both;
+      animation-timeline: scroll(root block);
+      animation-range: 0 var(--seam-end, 100%);
+    }
+  }
+}
+@keyframes elo-seam-draw {
+  from { transform: scaleY(var(--seam-from, .14)); }
+  to { transform: scaleY(1); }
+}
+
+/* =====================================================================
+   inner pages — /services, /work, the case studies, legal, not found.
+   Same frame as the home page (components/elorro/page.tsx) and, for
+   /services, /work and the case studies, the same grid. The seam is the
+   home page's hero's alone.
+   ===================================================================== */
+
+/* A page's title: a label over the first section, as the home page labels
+   its sections. */
+.elo .page-top { padding: 4rem var(--pad) 2rem; }
+
+/* ---------- /services ----------
+   Each service a section, and the way to its page: the title and text on
+   the left over a preview of its work, what's included as a ruled list on
+   the right. Then how a project starts. */
+.elo .svc-head { grid-column: 1 / span 5; grid-row: 1; }
+.elo .svc-title { margin-top: 0; }
+.elo .svc-text {
+  max-width: var(--measure);
+  margin-top: 1.25rem;
+  font-size: max(1.125rem, 15px);
+  line-height: 1.45;
+  text-wrap: pretty;
+}
+.elo .incl { grid-column: 7 / -1; grid-row: 1 / span 2; border-top: 1px solid var(--ink-20); }
+/* Where a service's work will show, once there is some: for now a plain
+   plate (.placeholder) the shape of a Work card's screen. */
+.elo .svc-preview { grid-column: 1 / span 5; grid-row: 2; margin-top: 2rem; aspect-ratio: 16 / 10; }
+.elo .placeholder { background: var(--frame); border: 1px solid var(--ink-20); }
+.elo .incl li {
+  padding-block: .875rem;
+  border-bottom: 1px solid var(--ink-20);
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 500;
+  line-height: 1.2;
+  text-wrap: pretty;
+}
+
+.elo .start-h { margin-top: 0; }
+.elo .steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  column-gap: 2rem;
+  margin-top: 2.5rem;
+}
+.elo .step { padding-top: 1.5rem; border-top: 1px solid var(--ink-20); }
+.elo .step-n { color: var(--ink-65); }
+.elo .step-title {
+  margin-top: 1rem;
+  font-family: var(--font-display);
+  font-size: 2.25rem;
+  font-weight: 500;
+  line-height: 1.04;
+  letter-spacing: -.01em;
+  text-wrap: balance;
+}
+.elo .step-text {
+  max-width: var(--measure);
+  margin-top: .75rem;
+  font-size: max(1.125rem, 15px);
+  line-height: 1.45;
+  text-wrap: pretty;
+}
+.elo .start-note {
+  max-width: 40rem;
+  margin-top: 3.5rem;
+  font-family: var(--font-display);
+  font-size: 1.8125rem;
+  font-weight: 500;
+  line-height: 1.25;
+  text-wrap: pretty;
+}
+.elo .start-act .act { margin-top: 2rem; }
+
+/* ---------- /work ----------
+   The home page's Work grid with every project, under the page's label. */
+.elo .work--page { padding: 4rem var(--pad) 6rem; }
+.elo .page-end { margin-top: 4.5rem; }
+.elo .page-end .act { margin-top: 0; }
+
+/* ---------- case study (/work/<slug>) ----------
+   A reading page on the home page's grid: the head and the live card, then
+   the long text in one left-aligned column. */
+.elo .cs-head { padding: 5rem var(--pad) 5rem; }
+.elo .cs-intro { grid-column: 1 / span 9; }
+.elo .cs-eyebrow { color: var(--ink-65); }
+.elo .cs-title {
+  margin-top: 1.5rem;
+  font-family: var(--font-display);
+  font-size: 4.5rem;
+  font-weight: 500;
+  line-height: 1.04;
+  letter-spacing: -.015em;
+  text-wrap: balance;
+}
+.elo .cs-sub {
+  max-width: 44rem;
+  margin-top: 1.5rem;
+  font-family: var(--font-display);
+  font-size: 1.8125rem;
+  font-weight: 500;
+  line-height: 1.25;
+  text-wrap: pretty;
+}
+.elo .cs-facts { display: flex; gap: 4rem; margin-top: 2.5rem; }
+.elo .cs-facts dt { color: var(--ink-65); }
+.elo .cs-facts dd { margin-top: .5rem; font-size: 1.25rem; line-height: 1.3; }
+.elo .cs-caps {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  margin-top: 3rem;
+  border-block: 1px solid var(--ink-20);
+}
+.elo .cs-caps li {
+  padding: 1.5rem 2rem 1.5rem 0;
+  font-size: 1.25rem;
+  line-height: 1.42;
+  text-wrap: pretty;
+}
+.elo .cs-caps li + li { padding-left: 2rem; border-left: 1px solid var(--ink-20); }
+/* The live card, as on /work, and its caption. */
+.elo .cs-live { grid-column: 1 / span 10; margin-top: 3.5rem; }
+.elo .cs-caption {
+  max-width: var(--measure);
+  margin-top: .875rem;
+  color: var(--ink-65);
+  font-size: max(1rem, 14px);
+  line-height: 1.45;
+  text-wrap: pretty;
+}
+.elo .cs-demo { margin-right: .375rem; color: var(--ink); }
+.elo .cs-fig { margin-top: 2.5rem; }
+.elo .cs-fig-frame { border: 1px solid var(--ink-20); background: var(--frame); }
+.elo .cs-fig-frame img { width: 100%; height: auto; }
+.elo .cs-shot {
+  position: relative;
+  width: min(100%, 60rem);
+  aspect-ratio: 16 / 10;
+  margin-top: 4rem;
+  overflow: hidden;
+  background: var(--frame);
+  border: 1px solid var(--ink-20);
+}
+.elo .cs-shot img, .elo .cs-shot video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.elo .cs-step .cs-shot { width: 100%; margin-top: 2.5rem; }
+
+.elo .cs-steps, .elo .cs-notes { border-top: 1px solid var(--ink-20); padding: 5rem var(--pad); }
+.elo .cs-steps ol { grid-column: 1 / span 8; display: grid; row-gap: 5rem; }
+.elo .cs-step-n {
+  display: flex;
+  gap: .875rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--ink);
+  color: var(--ink-65);
+}
+.elo .cs-step-n span { color: var(--ink); }
+.elo .cs-step-h {
+  margin-top: 1.5rem;
+  font-family: var(--font-display);
+  font-size: 3.125rem;
+  font-weight: 500;
+  line-height: 1.06;
+  letter-spacing: -.012em;
+  text-wrap: balance;
+}
+.elo .cs-body { margin-top: 1.5rem; font-size: 1.25rem; line-height: 1.55; text-wrap: pretty; }
+.elo .cs-figure { margin-top: 2.5rem; }
+.elo .cs-figure-n {
+  font-family: var(--font-display);
+  font-size: 6.75rem;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: -.015em;
+}
+.elo .cs-figure .label { margin-top: .75rem; color: var(--ink-65); }
+
+.elo .cs-note { grid-column: 1 / span 8; }
+.elo .cs-notes--two .cs-note { grid-column: 1 / span 6; }
+.elo .cs-notes--two .cs-note--data { grid-column: 8 / -1; }
+.elo .cs-note h2 { color: var(--ink-65); }
+.elo .cs-note .cs-body { margin-top: 1.25rem; }
+.elo .cs-note--data ul { margin-top: 1.25rem; border-top: 1px solid var(--ink-20); }
+.elo .cs-note--data li {
+  padding-block: 1rem;
+  border-bottom: 1px solid var(--ink-20);
+  font-size: 1.0625rem;
+  line-height: 1.5;
+  text-wrap: pretty;
+}
+
+/* ---------- a service's page (/services/<slug>) ----------
+   The case study's head and steps (above), with what's included in place
+   of its capabilities, one across for each (three or four), "What we do"
+   over the steps, and a slot for the work: two plates where its cards
+   will go, the Work grid's shape. */
+.elo .svc-caps { grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); }
+.elo .svc-steps-label { margin-bottom: 2.5rem; }
+.elo .svc-work-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 2rem;
+  margin-top: 2rem;
+}
+.elo .svc-work-grid .placeholder { aspect-ratio: 16 / 10; }
+
+/* ---------- reading pages: legal, not found ---------- */
+.elo .read {
+  max-width: calc(46rem + 2 * var(--pad));
+  margin-inline: auto;
+  padding: 7rem var(--pad) 8rem;
+}
+.elo .read-head > .label:first-child { color: var(--ink-65); }
+.elo .read-title {
+  margin-top: 1.25rem;
+  font-family: var(--font-display);
+  font-size: 5.25rem;
+  font-weight: 500;
+  line-height: 1.02;
+  letter-spacing: -.015em;
+  text-wrap: balance;
+}
+.elo .read-date { margin-top: 1.5rem; color: var(--ink-65); }
+.elo .read-part { margin-top: 3.5rem; padding-top: 1.5rem; border-top: 1px solid var(--ink-20); }
+.elo .read-part h2 {
+  font-family: var(--font-display);
+  font-size: 2.25rem;
+  font-weight: 500;
+  line-height: 1.1;
+  letter-spacing: -.01em;
+}
+.elo .read-body { margin-top: 1rem; font-size: 1.25rem; line-height: 1.55; text-wrap: pretty; }
+.elo .read--short .read-body { margin-top: 2.5rem; }
+/* Links set in the page bodies themselves carry V3's colour classes; one ink here. */
+.elo .read-body a {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: currentColor;
+  text-decoration-thickness: 1px;
+  text-underline-offset: .22em;
+}
+
+/* ---------- phones: one column; in the hero, the seam becomes a rule beside the picked line ---------- */
+@media (max-width: 1023px) {
+  /* The header, one row: the rings, then the wordmark or, on the black, the
+     initials in its place ("A & J", the names' weights), then the menu
+     button at the end. The brand's link runs on under the initials, which
+     sit over it once they show; its name stays for screen readers. */
+  .elo .top { grid-template-columns: calc(2.15rem + .72rem) auto auto auto 1fr auto; }
+  .elo .brand { grid-area: 1 / 1 / 2 / 6; }
+  .elo .brand .wordmark { font-size: 1.3rem; transition: opacity .25s ease; }
+  .elo .top.is-dark > .brand .wordmark { opacity: 0; }
+  .elo .who--a { grid-area: 1 / 2; justify-self: start; }
+  .elo .top-amp { grid-area: 1 / 3; padding-inline: .1875rem; }
+  .elo .who--j { grid-area: 1 / 4; justify-self: start; }
+  .elo .menu-btn { grid-area: 1 / 6; }
+  .elo .who, .elo .top-amp { font-size: 1.75rem; }
+  .elo .who { min-width: 24px; justify-content: center; padding-inline: .125rem; }
+  .elo .who-name {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .elo .who-initial { display: inline; }
+  .elo .top.is-hidden { transform: translateY(-100%); }
+  .elo .menu-body { padding-block: 2rem 3rem; }
+  .elo .menu-links a { font-size: 3.25rem; }
+  .elo .menu-pages-label { margin-top: 2.5rem; }
+  .elo .menu-pages { column-gap: 1.75rem; margin-top: .5rem; }
+  .elo .menu-pages a { font-size: 1.625rem; }
+
+  .elo .seam { display: none; }
+
+  .elo .hero {
+    min-height: auto;
+    justify-items: start;
+    padding: 3rem var(--pad) 4.5rem;
+  }
+  .elo .names {
+    --names-size: 7rem;
+    grid-template-columns: 1fr;
+    line-height: .92;
+  }
+  /* The last names, mirrored under the first: Fernando starts where Ashan
+     starts, Lopez ends where Jordan ends, ink on ink. The margins make up
+     for each line's side bearings (measured from the fonts, at their own
+     sizes): A in 500 -.0047em (its foot reaches past its box), F in 700
+     .031em on the left; n in 500 .0173em (plus the first name's tracking)
+     and z in 700 .026em on the right. */
+  .elo .names { --last-size: 1.6875rem; }
+  .elo .name--a .name-last {
+    text-align: left;
+    margin-left: calc(var(--names-size) * -.0047 - .031em);
+  }
+  .elo .name--j .name-last {
+    text-align: right;
+    margin-right: calc(var(--names-size) * (.0173 + -.02) - .026em);
+  }
+  .elo .name--a { justify-self: start; }
+  .elo .name--a .name-first { background-position: left 0 bottom .04em; }
+  .elo .name-amp { justify-self: center; padding-inline: 0; font-size: .8em; line-height: .9; }
+  .elo .name--j { justify-self: end; }
+  .elo .name--j .name-first { background-position: right 0 bottom .04em; }
+  .elo .hint { margin-top: 2.25rem; padding: 0; }
+  .elo .picked-in { grid-template-columns: 1fr; }
+  .elo .picked-line, .elo .picked-line--a, .elo .picked-line--j {
+    grid-area: 1 / 1;
+    justify-self: stretch;
+    max-width: none;
+    margin-top: 1.25rem;
+    font-size: 1.125rem;
+    text-align: left;
+  }
+  .elo .lede {
+    margin-top: 1.25rem;
+    padding-block: 0;
+    font-size: 1.6875rem;
+    line-height: 1.2;
+    text-align: left;
+  }
+  .elo .act { margin-top: 2rem; }
+
+  /* below the hero: one column */
+  .elo .sec { padding: 3rem var(--pad); }
+  .elo .wrap { grid-template-columns: minmax(0, 1fr); column-gap: 0; }
+  .elo .wrap > *,
+  .elo .us-head, .elo .pair, .elo .contact-head, .elo .form, .elo .svc-head, .elo .incl, .elo .svc-preview,
+  .elo .cs-intro, .elo .cs-live, .elo .cs-steps ol,
+  .elo .cs-note, .elo .cs-notes--two .cs-note, .elo .cs-notes--two .cs-note--data { grid-column: 1 / -1; }
+  .elo .sec-h { margin-top: .875rem; font-size: 2.375rem; }
+  .elo .more { margin-top: 1.75rem; }
+
+  /* The picked line, a gold rule beside it. */
+  .elo .picked-line { position: relative; padding-left: 1.125rem; }
+  .elo .picked-line::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: var(--gold);
+  }
+
+  .elo .where { margin-top: 1.5rem; font-size: 1.5rem; }
+  .elo .promises { margin-top: 1.25rem; }
+  .elo .promises li { padding-block: .75rem; font-size: 1.375rem; }
+  /* The two people under the promises, one above the other. */
+  .elo .us-head, .elo .pair { grid-row: auto; }
+  .elo .us .promises { grid-column: 1 / -1; grid-row: auto; }
+  .elo .pair { grid-template-columns: minmax(0, 1fr); row-gap: 1.75rem; margin-top: 2.25rem; }
+  .elo .person-line { padding-top: .75rem; font-size: 1.375rem; }
+
+  .elo .do-grid { grid-template-columns: minmax(0, 1fr); gap: 1.75rem; margin-top: 1.25rem; }
+  .elo .svc-card { padding-top: 1.25rem; }
+  .elo .svc-card-title { font-size: 2.25rem; }
+  .elo .svc-card-text { margin-top: .75rem; font-size: 1.0625rem; }
+
+  .elo .work-grid { grid-template-columns: minmax(0, 1fr); gap: 2.25rem; margin-top: 1.25rem; }
+  .elo .proj-media { aspect-ratio: 4 / 5; }
+  /* Only bites on a still taller than 4:5: show it from just below the top. */
+  .elo .proj-media img { object-position: 50% 12%; }
+  .elo .proj-body { margin-top: 1rem; }
+  .elo .proj-name { font-size: 2rem; }
+  .elo .proj-line { margin-top: .625rem; }
+
+  .elo .contact-lede { margin-top: 1rem; font-size: 1.0625rem; }
+  .elo .form { margin-top: 2rem; }
+  .elo .fields { grid-template-columns: minmax(0, 1fr); row-gap: 1.5rem; }
+  .elo .field, .elo .field--msg { grid-column: 1; grid-row: auto; }
+  .elo .reply-note { margin-top: 2rem; font-size: 1.375rem; }
+  .elo .send-row { margin-top: 1.5rem; }
+
+  .elo .foot { grid-template-columns: 1fr; row-gap: .75rem; padding-block: 2rem 2.5rem; }
+  .elo .foot-r { justify-self: start; text-align: left; }
+
+  /* inner pages */
+  .elo .page-top { padding: 2.5rem var(--pad) 1.25rem; }
+
+  .elo .svc-text { margin-top: .875rem; font-size: 1.0625rem; }
+  .elo .incl { grid-row: auto; margin-top: 1.75rem; }
+  .elo .svc-head, .elo .svc-preview { grid-row: auto; }
+  .elo .svc-preview { margin-top: 1.75rem; }
+  .elo .incl li { padding-block: .75rem; font-size: 1.375rem; }
+
+  .elo .steps { grid-template-columns: minmax(0, 1fr); row-gap: 1.75rem; margin-top: 1.5rem; }
+  .elo .step { padding-top: 1.25rem; }
+  .elo .step-title { margin-top: .625rem; font-size: 2rem; }
+  .elo .step-text { margin-top: .625rem; font-size: 1.0625rem; }
+  .elo .start-note { margin-top: 2.5rem; font-size: 1.5rem; }
+
+  .elo .work--page { padding: 2.5rem var(--pad) 4rem; }
+  .elo .page-end { margin-top: 3rem; }
+
+  .elo .cs-head { padding: 3rem var(--pad) 3.5rem; }
+  .elo .cs-title { margin-top: 1.25rem; font-size: 2.75rem; }
+  .elo .cs-sub { margin-top: 1.25rem; font-size: 1.5rem; }
+  .elo .cs-facts { flex-wrap: wrap; gap: 1.25rem 2.5rem; margin-top: 2rem; }
+  .elo .cs-facts dd { font-size: 1.125rem; }
+  .elo .cs-caps, .elo .svc-caps { grid-template-columns: 1fr; grid-auto-flow: row; margin-top: 2.5rem; }
+  .elo .cs-caps li, .elo .cs-caps li + li { padding: 1.125rem 0; font-size: 1.125rem; }
+  .elo .cs-caps li + li { border-left: 0; border-top: 1px solid var(--ink-20); }
+  .elo .cs-live { margin-top: 2.5rem; }
+  .elo .cs-shot { margin-top: 2.5rem; }
+  .elo .cs-fig { margin-top: 2rem; }
+  .elo .cs-steps, .elo .cs-notes { padding: 3.5rem var(--pad); }
+  .elo .cs-steps ol { row-gap: 3.5rem; }
+  .elo .cs-step-h { margin-top: 1.125rem; font-size: 2.25rem; }
+  .elo .cs-body { margin-top: 1.125rem; font-size: 1.125rem; }
+  .elo .cs-figure-n { font-size: 4.5rem; }
+  .elo .cs-note--data { margin-top: 3rem; }
+  .elo .svc-steps-label { margin-bottom: 1.75rem; }
+  .elo .svc-work-grid { grid-template-columns: minmax(0, 1fr); gap: 1.25rem; margin-top: 1.25rem; }
+  .elo .svc-work-grid .placeholder { aspect-ratio: 4 / 5; }
+
+  .elo .read { padding: 3.5rem var(--pad) 5rem; }
+  .elo .read-title { font-size: 3rem; }
+  .elo .read-part { margin-top: 2.5rem; }
+  .elo .read-part h2 { font-size: 1.8125rem; }
+  .elo .read-body { font-size: 1.0625rem; }
+}
+
+/* ---------- reduced motion: everything still, everything visible ---------- */
+@media (prefers-reduced-motion: reduce) {
+  html:has(.elo) { scroll-behavior: auto; }
+  .elo:not(.is-in) :is(.name, .name-amp, .hero .hint, .lede, .hero > .act) { opacity: 1; animation: none; }
+  .elo .top, .elo .top::before, .elo .top .who, .elo .top .top-amp, .elo .brand .wordmark, .elo .act, .elo .proj-media video,
+  .elo .name, .elo .name-first, .elo .name-last, .elo .picked, .elo .picked-line, .elo .card-link a, .elo .menu-body a { transition: none; }
+  .elo .proj-media video { display: none; }
+}

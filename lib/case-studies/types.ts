@@ -2,12 +2,12 @@
  * The shape of one case study — everything the template in
  * components/work/case-study.tsx needs to render a /work/<slug> page.
  *
- * Same rule as lib/kozmoz.ts: the copy lives in the data file, not in the JSX.
+ * Same rule as lib/elorro.ts: the copy lives in the data file, not in the JSX.
  * Screenshots of the client's own data stay unset until the client signs them
  * off, and print nothing meanwhile; screens with made-up data say so (`demo`).
  */
 
-import type { ProjectMedia, Still } from "@/lib/kozmoz";
+import type { ProjectMedia, Still } from "@/lib/elorro";
 import type { MediaAsset } from "@/lib/media";
 
 /** A screenshot slot. With no `media` it renders as a labelled placeholder. */
@@ -45,7 +45,7 @@ export type CaseStep = {
 export type CaseStudy = {
   /** URL slug. The page is served at /work/<slug>. */
   slug: string;
-  /** The project's name, for the page title: "<name> — Omora". */
+  /** The project's name, for the page title: "<name> — Elorro". */
   name: string;
   /** Meta description. */
   description: string;

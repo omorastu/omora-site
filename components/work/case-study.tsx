@@ -1,8 +1,8 @@
 import Image from "next/image";
 import type { CaseFigure, CaseShot, CaseStep, CaseStudy } from "@/lib/case-studies";
-import { Page } from "@/components/kozmoz/page";
-import { Contact } from "@/components/kozmoz/contact";
-import { ProjectScreen } from "@/components/kozmoz/work";
+import { Page } from "@/components/elorro/page";
+import { Contact } from "@/components/elorro/contact";
+import { ProjectScreen } from "@/components/elorro/work";
 import { onDisk } from "@/lib/public-files";
 import { mediaOnDisk } from "@/lib/work-media";
 import { cn } from "@/lib/utils";
@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
  * lib/case-studies. app/work/[slug] renders every study through it, so a new
  * study is a data file, not a page.
  *
- * In the home page's frame (components/kozmoz/page.tsx), type and grid, set
+ * In the home page's frame (components/elorro/page.tsx), type and grid, set
  * as a reading page: the long text in one left-aligned column.
  *
  * What a study leads with is Capabilities — three lines on what the thing
@@ -104,7 +104,7 @@ export function CaseStudyPage({ study }: { study: CaseStudy }) {
       <Contact
         title={study.cta.heading}
         lede={study.cta.body}
-        source={`omora.studio/work/${study.slug}`}
+        source={`elorro.com/work/${study.slug}`}
       />
     </Page>
   );

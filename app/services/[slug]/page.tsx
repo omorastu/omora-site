@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { serviceFor, services } from "@/lib/kozmoz";
-import { ServicePage } from "@/components/kozmoz/service-page";
+import { serviceFor, services } from "@/lib/elorro";
+import { ServicePage } from "@/components/elorro/service-page";
 
 /**
  * /services/<slug> — one route for every service, each prerendered at build
- * time from its entry in lib/kozmoz.ts (`services`), through the one template
- * in components/kozmoz/service-page.tsx.
+ * time from its entry in lib/elorro.ts (`services`), through the one template
+ * in components/elorro/service-page.tsx.
  */
 export function generateStaticParams() {
   return services.map((s) => ({ slug: s.slug }));

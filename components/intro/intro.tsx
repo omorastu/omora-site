@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import Image from "next/image";
 import { createSmoke, type Smoke } from "@/components/intro/smoke";
-import { HOLD_ATTR, HOLD_MAX } from "@/components/kozmoz/hold";
+import { HOLD_ATTR, HOLD_MAX } from "@/components/elorro/hold";
 import "@/components/intro/intro.css";
 
 /**
@@ -24,9 +24,9 @@ import "@/components/intro/intro.css";
  *              into it as it lands, just as the last of the black goes
  *   5.25s      the black has gone; the hero's entrance follows (1.8s)
  *
- * The hero comes in once the black has gone ("kz:intro-clear",
- * components/kozmoz/hands.tsx). From the first paint until the hero is in,
- * the page is held still at its top (components/kozmoz/hold.ts), and
+ * The hero comes in once the black has gone ("elo:intro-clear",
+ * components/elorro/hands.tsx). From the first paint until the hero is in,
+ * the page is held still at its top (components/elorro/hold.ts), and
  * nothing a visitor does, a click, a tap, a key or a scroll, cuts any of it
  * short. Under reduced motion the logo and the line are simply there, held
  * a moment, then the black fades away (3.2–3.8s) onto the hero, already in.
@@ -58,7 +58,7 @@ const FAILSAFE = 8000;
 /** The logo has faded in: from here the mouse may stir it. */
 const ENTERED = 800;
 
-const KEY = "kz-intro";
+const KEY = "elo-intro";
 /** The black, here and in intro.css (--night), and the browser chrome while the intro shows. */
 const NIGHT = "#0C0A08";
 
@@ -68,8 +68,8 @@ const NIGHT = "#0C0A08";
  */
 const DEFINITION: React.ReactNode = (
   <>
-    Two people who listen first,<br className="kz-intro-narrow" /> then build<br className="kz-intro-wide" /> what adds
-    real<br className="kz-intro-narrow" /> value to your business.
+    Two people who listen first,<br className="elo-intro-narrow" /> then build<br className="elo-intro-wide" /> what adds
+    real<br className="elo-intro-narrow" /> value to your business.
   </>
 );
 
@@ -80,8 +80,8 @@ const LOGO = { src: "/m/brand/elorro-logo.png", width: 1695, height: 287, ink: {
  * Runs as the overlay is parsed, before the first paint. Shows the overlay
  * (by adding a style rule — it touches nothing React renders) only on the
  * session's first load, and not when arriving from another page of the
- * site. The same rule holds back the hero's own fallback (kozmoz.css,
- * --kz-wait) and the header's wordmark (the logo lands on it) until the
+ * site. The same rule holds back the hero's own fallback (elorro.css,
+ * --elo-wait) and the header's wordmark (the logo lands on it) until the
  * overlay's fallback has run; a theme-color ahead of the page's darkens the
  * browser's chrome, and goes again by then if nothing has taken over.
  *
@@ -95,7 +95,7 @@ const LOGO = { src: "/m/brand/elorro-logo.png", width: 1695, height: 287, ink: {
  * Should the page's script never take that over, it lets go by HOLD_MAX
  * all the same.
  */
-const BOOT = `(function(){var show=false,q=/[?&]intro(=|&|$)/.test(location.search);try{var r=document.referrer,inside=false;try{inside=!!r&&new URL(r).origin===location.origin}catch(e){}var seen=sessionStorage.getItem("${KEY}");sessionStorage.setItem("${KEY}","1");show=!seen&&!inside}catch(e){}show=show||q;var b=window.__kzIntro={show:show,t0:performance.now()},h=document.documentElement,still=false;try{still=matchMedia("(prefers-reduced-motion: reduce)").matches}catch(e){}if(show||!(still||location.hash.length>1)){h.setAttribute("${HOLD_ATTR}","");var u=false,o={capture:true,passive:false},x=function(e){u=true;e.preventDefault()},L=[["wheel",x,o],["touchmove",function(e){if(e.touches.length<2)x(e)},o],["keydown",function(e){var g=e.target;u=true;if(/^( |Page(Up|Down)|Home|End|Arrow(Up|Down|Left|Right))$/.test(e.key)&&!e.metaKey&&!e.ctrlKey&&!e.altKey&&!(g&&(g.isContentEditable||/^(INPUT|TEXTAREA|SELECT)$/.test(g.tagName))))x(e)},true],["click",function(e){x(e);e.stopPropagation()},true],["scroll",function(){if(u&&(scrollX||scrollY))scrollTo({top:0,left:0,behavior:"instant"})},{passive:true}]];L.forEach(function(l){addEventListener(l[0],l[1],l[2])});b.letGo=function(){b.letGo=null;L.forEach(function(l){removeEventListener(l[0],l[1],l[2])})};setTimeout(function(){if(!b.taken)h.removeAttribute("${HOLD_ATTR}");if(b.letGo)b.letGo()},${HOLD_MAX})}if(show){var s=document.createElement("style");s.id="${KEY}-boot";s.textContent="html .kz-intro{display:block}html{--kz-wait:${(FALLBACK_AT + FADE + 200) / 1000}s}.kz .top .brand .wordmark{animation:kz-intro-word ${FALLBACK_AT + FADE}ms}";document.head.appendChild(s);var m=document.createElement("meta");m.name="theme-color";m.content="${NIGHT}";m.id="${KEY}-theme";document.head.prepend(m);setTimeout(function(){if(!b.live)m.remove()},${FALLBACK_AT + FADE})}})();`;
+const BOOT = `(function(){var show=false,q=/[?&]intro(=|&|$)/.test(location.search);try{var r=document.referrer,inside=false;try{inside=!!r&&new URL(r).origin===location.origin}catch(e){}var seen=sessionStorage.getItem("${KEY}");sessionStorage.setItem("${KEY}","1");show=!seen&&!inside}catch(e){}show=show||q;var b=window.__eloIntro={show:show,t0:performance.now()},h=document.documentElement,still=false;try{still=matchMedia("(prefers-reduced-motion: reduce)").matches}catch(e){}if(show||!(still||location.hash.length>1)){h.setAttribute("${HOLD_ATTR}","");var u=false,o={capture:true,passive:false},x=function(e){u=true;e.preventDefault()},L=[["wheel",x,o],["touchmove",function(e){if(e.touches.length<2)x(e)},o],["keydown",function(e){var g=e.target;u=true;if(/^( |Page(Up|Down)|Home|End|Arrow(Up|Down|Left|Right))$/.test(e.key)&&!e.metaKey&&!e.ctrlKey&&!e.altKey&&!(g&&(g.isContentEditable||/^(INPUT|TEXTAREA|SELECT)$/.test(g.tagName))))x(e)},true],["click",function(e){x(e);e.stopPropagation()},true],["scroll",function(){if(u&&(scrollX||scrollY))scrollTo({top:0,left:0,behavior:"instant"})},{passive:true}]];L.forEach(function(l){addEventListener(l[0],l[1],l[2])});b.letGo=function(){b.letGo=null;L.forEach(function(l){removeEventListener(l[0],l[1],l[2])})};setTimeout(function(){if(!b.taken)h.removeAttribute("${HOLD_ATTR}");if(b.letGo)b.letGo()},${HOLD_MAX})}if(show){var s=document.createElement("style");s.id="${KEY}-boot";s.textContent="html .elo-intro{display:block}html{--elo-wait:${(FALLBACK_AT + FADE + 200) / 1000}s}.elo .top .brand .wordmark{animation:elo-intro-word ${FALLBACK_AT + FADE}ms}";document.head.appendChild(s);var m=document.createElement("meta");m.name="theme-color";m.content="${NIGHT}";m.id="${KEY}-theme";document.head.prepend(m);setTimeout(function(){if(!b.live)m.remove()},${FALLBACK_AT + FADE})}})();`;
 
 /**
  * Set by the boot script; `live` once this has taken over, `clear` once the
@@ -118,7 +118,7 @@ type Boot = {
 
 declare global {
   interface Window {
-    __kzIntro?: Boot;
+    __eloIntro?: Boot;
   }
 }
 
@@ -136,7 +136,7 @@ export function Intro() {
   // Mounted later on the client (navigating back to the home page)? Nothing to show.
   const [on, setOn] = useState(() => {
     if (typeof window === "undefined") return true;
-    const boot = window.__kzIntro;
+    const boot = window.__eloIntro;
     return !!boot?.show && !boot.done;
   });
   const root = useRef<HTMLDivElement>(null);
@@ -145,7 +145,7 @@ export function Intro() {
   useEffect(() => {
     const el = root.current;
     const cv = canvas.current;
-    const boot = window.__kzIntro;
+    const boot = window.__eloIntro;
     if (!el || !cv || !boot?.show || boot.done) {
       setOn(false);
       return;
@@ -160,15 +160,15 @@ export function Intro() {
   if (!on && !firstRender) return null;
 
   return (
-    <div ref={root} className="kz-intro" aria-hidden="true">
+    <div ref={root} className="elo-intro" aria-hidden="true">
       {firstRender && <script dangerouslySetInnerHTML={{ __html: BOOT }} />}
-      <div className="kz-intro-ground">
-        <canvas ref={canvas} className="kz-intro-canvas" />
+      <div className="elo-intro-ground">
+        <canvas ref={canvas} className="elo-intro-canvas" />
       </div>
-      <div className="kz-intro-inner">
-        <span className="kz-intro-mark">
+      <div className="elo-intro-inner">
+        <span className="elo-intro-mark">
           <Image
-            className="kz-intro-logo"
+            className="elo-intro-logo"
             src={LOGO.src}
             width={LOGO.width}
             height={LOGO.height}
@@ -179,13 +179,13 @@ export function Intro() {
             data-picture=""
           />
           {/* The shine: light across the gold, only where the gold is (intro.css). */}
-          <span className="kz-intro-shine" />
+          <span className="elo-intro-shine" />
         </span>
-        <span className="kz-intro-rule" />
+        <span className="elo-intro-rule" />
         {/* The line twice over: cut in gold, and the burn's glowing edge, laid on it. */}
-        <p className="kz-intro-def">
-          <span className="kz-intro-cut">{DEFINITION}</span>
-          <span className="kz-intro-ember">{DEFINITION}</span>
+        <p className="elo-intro-def">
+          <span className="elo-intro-cut">{DEFINITION}</span>
+          <span className="elo-intro-ember">{DEFINITION}</span>
         </p>
         {/* The old tagline, out for now: "When everything works the way it should, and looks the way it should." */}
       </div>
@@ -201,8 +201,8 @@ export function Intro() {
  */
 function Engrave() {
   return (
-    <svg className="kz-intro-filters" width="0" height="0" focusable="false">
-      <filter id="kz-engrave" x="-5%" y="-15%" width="110%" height="130%" colorInterpolationFilters="sRGB">
+    <svg className="elo-intro-filters" width="0" height="0" focusable="false">
+      <filter id="elo-engrave" x="-5%" y="-15%" width="110%" height="130%" colorInterpolationFilters="sRGB">
         <feOffset in="SourceAlpha" dy="0.7" result="down" />
         <feGaussianBlur in="down" stdDeviation="0.35" result="downSoft" />
         <feComposite in="SourceAlpha" in2="downSoft" operator="out" result="topEdge" />
@@ -243,7 +243,7 @@ function play(el: HTMLDivElement, cv: HTMLCanvasElement, boot: Boot, finish: () 
     target.addEventListener(type, fn as EventListener, opts);
     offs.push(() => target.removeEventListener(type, fn as EventListener, opts));
   };
-  const ground = el.querySelector<HTMLElement>(".kz-intro-ground");
+  const ground = el.querySelector<HTMLElement>(".elo-intro-ground");
 
   let smoke: Smoke | null = null;
   let fading: Animation | null = null;
@@ -282,7 +282,7 @@ function play(el: HTMLDivElement, cv: HTMLCanvasElement, boot: Boot, finish: () 
     finish();
     if (!boot.clear) {
       boot.clear = true;
-      window.dispatchEvent(new Event("kz:intro-clear"));
+      window.dispatchEvent(new Event("elo:intro-clear"));
     }
   }
 
@@ -298,8 +298,8 @@ function play(el: HTMLDivElement, cv: HTMLCanvasElement, boot: Boot, finish: () 
   const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   // The shine is cut to the logo's own picture, the file the page already has: it shows once that's in.
-  const logo = el.querySelector<HTMLImageElement>(".kz-intro-logo");
-  const shine = el.querySelector<HTMLElement>(".kz-intro-shine");
+  const logo = el.querySelector<HTMLImageElement>(".elo-intro-logo");
+  const shine = el.querySelector<HTMLElement>(".elo-intro-shine");
   if (logo && shine && !reduced) {
     const arm = () => {
       if (!logo.naturalWidth) return;
@@ -335,7 +335,7 @@ function play(el: HTMLDivElement, cv: HTMLCanvasElement, boot: Boot, finish: () 
     // The pointer reaches the page again (hold.ts still keeps it from pressing anything).
     later(200, () => (el.dataset.leaving = ""));
     if (reduced) return fade(FADE);
-    for (const w of el.querySelectorAll<HTMLElement>(".kz-intro-rule, .kz-intro-def")) {
+    for (const w of el.querySelectorAll<HTMLElement>(".elo-intro-rule, .elo-intro-def")) {
       anims.push(w.animate({ opacity: [Number(getComputedStyle(w).opacity), 0] }, { duration: DIM, easing: "ease-in", fill: "forwards" }));
     }
     later(DIM, slide);
@@ -358,7 +358,7 @@ function play(el: HTMLDivElement, cv: HTMLCanvasElement, boot: Boot, finish: () 
       el.dataset.flying = "";
     } else {
       // Nothing to land on: the logo goes with the black.
-      const inner = el.querySelector<HTMLElement>(".kz-intro-inner");
+      const inner = el.querySelector<HTMLElement>(".elo-intro-inner");
       if (inner) anims.push(inner.animate(door, timing));
     }
     black.onfinish = end;
@@ -427,7 +427,7 @@ const WORDMARK_STYLE = [
  * it, or null if there's no wordmark in view to land on.
  */
 function fly(el: HTMLElement, progress: () => number): (() => void) | null {
-  const logo = el.querySelector<HTMLImageElement>(".kz-intro-logo");
+  const logo = el.querySelector<HTMLImageElement>(".elo-intro-logo");
   const target = document.querySelector<HTMLElement>(".top .brand .wordmark");
   if (!logo?.complete || !logo.naturalWidth || !target) return null;
   const from = logo.getBoundingClientRect();
@@ -452,7 +452,7 @@ function fly(el: HTMLElement, progress: () => number): (() => void) | null {
   Object.assign(pic.style, { left: `${px}px`, top: `${py}px`, width: `${pw}px`, height: `${ph}px` });
 
   const flyer = document.createElement("div");
-  flyer.className = "kz-intro-flyer";
+  flyer.className = "elo-intro-flyer";
   Object.assign(flyer.style, { width: `${to.width}px`, height: `${to.height}px` });
   flyer.append(pic, word);
 

@@ -4,7 +4,7 @@
 
 /*
  * Site-wide basics only. Every page's look lives in
- * components/kozmoz/kozmoz.css, under its .kz root; this file just makes sure
+ * components/elorro/elorro.css, under its .elo root; this file just makes sure
  * nothing renders before or outside that root in anything but the same ink
  * on the same paper.
  */

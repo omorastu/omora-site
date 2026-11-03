@@ -6,7 +6,7 @@ import { services, type ServiceId } from "@/lib/content";
  * over a window event rather than shared React state — and the anchor still
  * works on its own if JS hasn't loaded.
  */
-export const PREFILL_EVENT = "omora:prefill";
+export const PREFILL_EVENT = "elorro:prefill";
 
 export type PrefillDetail = { need: ServiceId };
 

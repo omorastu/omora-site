@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { newLead, saveLead } from "@/lib/leads";
 import { NEED_OPTIONS } from "@/lib/prefill";
-import { contact as homeContact, people } from "@/lib/kozmoz";
+import { contact as homeContact, people } from "@/lib/elorro";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -151,7 +151,7 @@ export async function POST(req: Request) {
     budget,
     replyFrom,
     message,
-    source: str(body.source, 200) || "omora.studio",
+    source: str(body.source, 200) || "elorro.com",
     userAgent: req.headers.get("user-agent")?.slice(0, 300) ?? undefined,
   });
 

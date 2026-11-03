@@ -11,8 +11,6 @@ export default defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
-    // The archived V1 site: not routed, not type-checked (see tsconfig.json).
-    "app/_v1/**",
     // The Work loops' Remotion project: its own package, its own dependencies.
     "video/**",
   ]),

@@ -1,4 +1,4 @@
-import { Page } from "@/components/kozmoz/page";
+import { Page } from "@/components/elorro/page";
 
 /**
  * Shared frame for the two legal pages, so they sit in the site's frame and

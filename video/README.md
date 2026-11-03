@@ -65,8 +65,8 @@ It uses Remotion's own ffmpeg, so nothing needs installing.
   loop. The Sticker Smith's loops are already lighter than that, so they have
   none.
 
-The site picks between the cuts in `components/kozmoz/work-video.tsx`; the
-files are listed on each project in `lib/kozmoz.ts`. One that's listed but not
+The site picks between the cuts in `components/elorro/work-video.tsx`; the
+files are listed on each project in `lib/elorro.ts`. One that's listed but not
 in `public/m/work/` yet is left out when the site builds, named in the build
 log, and its card shows the poster in its place (`lib/work-media.ts`).
 

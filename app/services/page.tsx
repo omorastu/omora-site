@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { services, servicesPage } from "@/lib/kozmoz";
-import { Page } from "@/components/kozmoz/page";
-import { ServiceRow } from "@/components/kozmoz/services";
+import { services, servicesPage } from "@/lib/elorro";
+import { Page } from "@/components/elorro/page";
+import { ServiceRow } from "@/components/elorro/services";
 
 export const metadata: Metadata = {
   title: "Services — Elorro",
@@ -14,7 +14,7 @@ export const metadata: Metadata = {
  * /services — the home page's four services, each a section of its own
  * (/services#<slug>) with what's included and the way to its own page, then
  * how a project starts. On the home page's grid, below a title as /work has.
- * Copy in lib/kozmoz.ts.
+ * Copy in lib/elorro.ts.
  */
 export default function ServicesPage() {
   const { start } = servicesPage;

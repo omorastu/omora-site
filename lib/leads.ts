@@ -45,7 +45,7 @@ const ALPHABET = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
 
 /**
  * Every prefix a lead reference has been issued under. New leads get OMR-.
- * KZM- was issued briefly during the Kozmoz rename trial (on hold), so those
+ * KZM- was issued briefly while the site tried out another name, so those
  * references stay valid: anything that reads a reference must accept both.
  */
 export const TICKET_PREFIXES = ["OMR", "KZM"] as const;
@@ -97,7 +97,7 @@ async function toFile(lead: Lead): Promise<DurableResult> {
 async function toEmail(lead: Lead): Promise<DurableResult> {
   const apiKey = process.env.RESEND_API_KEY;
   const to = process.env.CONTACT_TO_EMAIL;
-  const from = process.env.CONTACT_FROM_EMAIL ?? "Omora <onboarding@resend.dev>";
+  const from = process.env.CONTACT_FROM_EMAIL ?? "Elorro <onboarding@resend.dev>";
 
   if (!apiKey || !to) {
     return {

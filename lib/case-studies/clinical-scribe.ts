@@ -1,4 +1,4 @@
-import { clinicalScribeMedia } from "@/lib/kozmoz";
+import { clinicalScribeMedia } from "@/lib/elorro";
 import type { CaseStudy } from "@/lib/case-studies/types";
 
 /**

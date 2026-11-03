@@ -6,8 +6,8 @@ import "./globals.css";
 /*
  * The display face, loaded once for every page: Cormorant Garamond, the
  * wordmark's family (.wordmark in globals.css, 500) and every heading's
- * (kozmoz.css points --font-display here; 500 and 600). The text face,
- * Hanken Grotesk, comes with each page's frame (components/kozmoz/fonts.ts).
+ * (elorro.css points --font-display here; 500 and 600). The text face,
+ * Hanken Grotesk, comes with each page's frame (components/elorro/fonts.ts).
  */
 const cormorantGaramond = Cormorant_Garamond({
   subsets: ["latin"],
@@ -22,7 +22,7 @@ const SITE =
   process.env.NEXT_PUBLIC_SITE_URL ??
   (process.env.VERCEL_PROJECT_PRODUCTION_URL
     ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
-    : "https://omora.studio");
+    : "https://elorro.com");
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE),
@@ -53,7 +53,7 @@ export const metadata: Metadata = {
   },
 };
 
-// The browser chrome matches the paper every page is set on (kozmoz.css).
+// The browser chrome matches the paper every page is set on (elorro.css).
 // The home page's intro darkens it while it shows (components/intro/intro.tsx).
 export const viewport: Viewport = {
   themeColor: "#F4F1EA",

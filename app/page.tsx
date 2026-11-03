@@ -1,26 +1,25 @@
-import { Hands } from "@/components/kozmoz/hands";
-import { Trail } from "@/components/kozmoz/trail";
-import { Header } from "@/components/kozmoz/header";
-import { Hero } from "@/components/kozmoz/hero";
-import { Us } from "@/components/kozmoz/us";
-import { Services } from "@/components/kozmoz/services";
-import { Work } from "@/components/kozmoz/work";
-import { Contact } from "@/components/kozmoz/contact";
-import { Footer } from "@/components/kozmoz/footer";
+import { Hands } from "@/components/elorro/hands";
+import { Trail } from "@/components/elorro/trail";
+import { Header } from "@/components/elorro/header";
+import { Hero } from "@/components/elorro/hero";
+import { Us } from "@/components/elorro/us";
+import { Services } from "@/components/elorro/services";
+import { Work } from "@/components/elorro/work";
+import { Contact } from "@/components/elorro/contact";
+import { Footer } from "@/components/elorro/footer";
 import { Intro } from "@/components/intro/intro";
-import { ScrollDebug } from "@/components/kozmoz/scroll-debug";
-import { hanken } from "@/components/kozmoz/fonts";
-import "@/components/kozmoz/kozmoz.css";
+import { ScrollDebug } from "@/components/elorro/scroll-debug";
+import { hanken } from "@/components/elorro/fonts";
+import "@/components/elorro/elorro.css";
 
 /**
- * The home page — Elorro, "Names on the door". Rebuilt from the live preview
- * at omora-a.vercel.app; styles in components/kozmoz/kozmoz.css, copy and
- * data in lib/kozmoz.ts.
+ * The home page — Elorro, "Names on the door". Styles in
+ * components/elorro/elorro.css, copy and data in lib/elorro.ts.
  *
  * Sections run hero, us, what we do, work, contact: the hero across the seam,
  * the rest on one left-aligned grid below it, all on the paper, edge to
  * edge. The other pages share its header, footer and type through
- * components/kozmoz/page.tsx; this one builds its own frame, because its
+ * components/elorro/page.tsx; this one builds its own frame, because its
  * root is also the "pick a name" toggle.
  */
 
@@ -47,7 +46,7 @@ export default function Home() {
         {/* With scripting off nothing will run the hero's entrance, so show it all now. */}
         <noscript>
           <style>
-            {".kz:not(.is-in) :is(.name, .name-amp, .hero .hint, .lede, .hero > .act) { opacity: 1; animation: none; }"}
+            {".elo:not(.is-in) :is(.name, .name-amp, .hero .hint, .lede, .hero > .act) { opacity: 1; animation: none; }"}
           </style>
         </noscript>
       </Hands>

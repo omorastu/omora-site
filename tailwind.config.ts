@@ -2,7 +2,7 @@ import type { Config } from "tailwindcss";
 import animate from "tailwindcss-animate";
 
 /**
- * Omora v2 — "Violet & Signal"
+ * The v2 theme — "Violet & Signal"
  *
  * Palette discipline (keep this rule when adding anything):
  *   violet family = the built thing — structure, rules, plates, headings, CTAs
@@ -58,7 +58,7 @@ const config: Config = {
         display: ["var(--font-display)", "system-ui", "sans-serif"],
         body: ["var(--font-inter)", "system-ui", "sans-serif"],
         mono: ["var(--font-mono)", "ui-monospace", "monospace"],
-        /* Wordmark only — the OMORA lockup (.wordmark in globals.css). */
+        /* Wordmark only — the ELORRO lockup (.wordmark in globals.css). */
         logo: ["var(--font-logo)", "serif"],
       },
       maxWidth: {

@@ -1,4 +1,4 @@
-# Omora — site
+# Elorro — site
 
 Next.js 16 (App Router) · React 19 · Tailwind 3 · TypeScript
 
@@ -11,10 +11,9 @@ npm run typecheck
 
 ## The site — "Names on the door"
 
-Rebuilt from the design preview at omora-a.vercel.app. Two names on the door,
-a seam down the middle, and everything on the side of whoever's hands it is
-in. One ink on paper; the two people's colours (brass, cyan) mark names and
-credits only.
+Two names on the door, a seam down the middle, and everything on the side of
+whoever's hands it is in. One ink on paper; the two people's colours (brass,
+cyan) mark names and credits only.
 
 | Route | What it is |
 | --- | --- |
@@ -30,23 +29,20 @@ every old `/services/<slug>` → `/services`; see `next.config.mjs`.
 
 | File | What it is |
 | --- | --- |
-| `lib/kozmoz.ts` | **all copy and data**: people, services (with what's included), projects, contact, the inner pages' copy |
+| `lib/elorro.ts` | **all copy and data**: people, services (with what's included), projects, contact, the inner pages' copy |
 | `app/page.tsx` | the home page |
-| `components/kozmoz/` | one file per home section, plus `hands.tsx` (the "pick a name" toggle, the names' entrance), `seam.tsx`, `page.tsx` (the frame every other page sits in) |
-| `components/kozmoz/kozmoz.css` | every style on every page, scoped under `.kz` |
+| `components/elorro/` | one file per home section, plus `hands.tsx` (the "pick a name" toggle, the names' entrance), `seam.tsx`, `page.tsx` (the frame every other page sits in) |
+| `components/elorro/elorro.css` | every style on every page, scoped under `.elo` |
 | `components/work/case-study.tsx` | the case-study template |
-| `components/wordmark.tsx` | the OMORA wordmark (Cormorant Garamond 500, caps, 0.42em) |
-
-(The `kozmoz` folder and file names date from a paused rename to Kozmoz; the
-site is Omora.)
+| `components/wordmark.tsx` | the ELORRO wordmark (Cormorant Garamond 500, caps, 0.42em) |
 
 The pages scale as a poster: the root font size follows the viewport (a 1440
-frame on desktop, 375 under 1024px), so every `rem` in `kozmoz.css` scales with
+frame on desktop, 375 under 1024px), so every `rem` in `elorro.css` scales with
 it.
 
 ## Editing content
 
-Everything is in `lib/kozmoz.ts`.
+Everything is in `lib/elorro.ts`.
 
 - **Work.** Projects show in list order. The home page shows the first
   `homeWorkCount` (3), then "See all work"; `/work` shows them all. Set
@@ -55,7 +51,7 @@ Everything is in `lib/kozmoz.ts`.
   other opens in a new tab.
 - **Services.** Each has an `id` (its anchor on `/services`) and an
   `included` list.
-- **Portraits** are placeholders until the shoot — set `photo` on a person.
+- **Portraits**: none for launch; `lib/elorro.ts` says how they come back.
 - **Case studies** are data files in `lib/case-studies/`; screenshots print
   only once a study's shot has `media`.
 
@@ -103,7 +99,5 @@ motion, check both paths.
 
 ## v1
 
-The previous site is archived in `app/_v1/`. Next ignores `_`-prefixed folders,
-so those routes don't build. Delete the folder, or move a page back up into
-`app/` to restore it — its styles reference v1 palette tokens that no longer
-exist, so it would need restyling first.
+The previous site lived in `app/_v1/` (not routed). It was removed with the
+rename to Elorro and is in the git history before that commit.

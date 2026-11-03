@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { hero, workPage } from "@/lib/kozmoz";
-import { Page } from "@/components/kozmoz/page";
-import { WorkGrid, shownProjects } from "@/components/kozmoz/work";
+import { hero, workPage } from "@/lib/elorro";
+import { Page } from "@/components/elorro/page";
+import { WorkGrid, shownProjects } from "@/components/elorro/work";
 
 export const metadata: Metadata = {
   title: "Work — Elorro",
@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 };
 
 /**
- * /work — every project ready to show (lib/kozmoz.ts `projects`, hidden ones
+ * /work — every project ready to show (lib/elorro.ts `projects`, hidden ones
  * skipped), on the home page's cards, two across.
  */
 export default function WorkPage() {

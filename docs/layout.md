@@ -1,6 +1,6 @@
-# Omora homepage — layout spec
+# Elorro homepage — layout spec
 
-Reference build: design/homepage-v3-mockup.html (live at omora-mockup.vercel.app).
+Reference build: design/homepage-v3-mockup.html.
 Port this structure into the Next.js app. Image slots stay blank until the shoot.
 
 ## Nav
@@ -36,7 +36,7 @@ Form (name, email or phone, what's the problem), button "Start the project".
 Text-us number beside it.
 
 ## Footer
-Omora wordmark, Instagram, Terms, Privacy.
+Elorro wordmark, Instagram, Terms, Privacy.
 
 ## Rules
 - Never "ticket". It's "Start a project" everywhere.

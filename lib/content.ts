@@ -1,5 +1,5 @@
 /**
- * Site copy and data for the Omora v2 one-pager.
+ * Site copy and data for the v2 one-pager, the site before this one.
  *
  * Everything a non-developer might want to change lives here rather than inside
  * the components, so copy edits never mean touching JSX.

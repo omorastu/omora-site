@@ -1,10 +1,10 @@
 import path from "node:path";
-import type { ProjectMedia } from "@/lib/kozmoz";
+import type { ProjectMedia } from "@/lib/elorro";
 import { onDisk } from "@/lib/public-files";
 
 /**
  * What of a project's media is actually in public/, checked on the server as
- * the page is built. A loop cut or a reduced-motion still that lib/kozmoz.ts
+ * the page is built. A loop cut or a reduced-motion still that lib/elorro.ts
  * lists but that isn't there yet is left out, so the card shows its still in
  * that place instead of asking for a file that isn't there; without both
  * stills the card has no screen at all. The build log names what's missing.
