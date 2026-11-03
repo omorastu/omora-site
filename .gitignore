@@ -8,6 +8,8 @@ node_modules
 
 node_modules/
 .next/
+# TypeScript's incremental cache: every typecheck rewrites it.
+*.tsbuildinfo
 .vercel/
 .env*.local
 .DS_Store

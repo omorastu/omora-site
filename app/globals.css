@@ -24,6 +24,30 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* ── Fallbacks ──────────────────────────────────────────────────────────
+   What the text is set in until the fonts in app/fonts arrive (they load
+   with display: swap): a system face sized and spaced to the real one, so
+   the page barely moves when it swaps. The figures are the ones next/font
+   used for these two families when they came from Google Fonts, kept so the
+   move to local files changed nothing (app/layout.tsx,
+   components/elorro/fonts.ts and hero-font.ts name these). */
+@font-face {
+  font-family: "Cormorant Garamond Fallback";
+  src: local("Times New Roman");
+  ascent-override: 95.27%;
+  descent-override: 29.59%;
+  line-gap-override: 0%;
+  size-adjust: 96.98%;
+}
+@font-face {
+  font-family: "Hanken Grotesk Fallback";
+  src: local("Arial");
+  ascent-override: 99.07%;
+  descent-override: 30.02%;
+  line-gap-override: 0%;
+  size-adjust: 100.94%;
+}
+
 /* ── Reduced motion ─────────────────────────────────────────────────────
    Global kill-switch. Anything running JS motion (the intro's smoke, the
    names' entrance, the work loops) also checks the media query in JS — CSS

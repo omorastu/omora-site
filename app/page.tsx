@@ -8,7 +8,6 @@ import { Work } from "@/components/elorro/work";
 import { Contact } from "@/components/elorro/contact";
 import { Footer } from "@/components/elorro/footer";
 import { Intro } from "@/components/intro/intro";
-import { ScrollDebug } from "@/components/elorro/scroll-debug";
 import { hanken } from "@/components/elorro/fonts";
 import "@/components/elorro/elorro.css";
 
@@ -26,7 +25,6 @@ import "@/components/elorro/elorro.css";
 export default function Home() {
   return (
     <>
-      <ScrollDebug />
       <Intro />
       <Hands className={hanken.variable}>
         <a className="skip label" href="#main">

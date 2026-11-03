@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Cormorant_Garamond } from "next/font/google";
+import localFont from "next/font/local";
 import { Analytics } from "@vercel/analytics/react";
 import "./globals.css";
 
@@ -8,12 +8,21 @@ import "./globals.css";
  * wordmark's family (.wordmark in globals.css, 500) and every heading's
  * (elorro.css points --font-display here; 500 and 600). The text face,
  * Hanken Grotesk, comes with each page's frame (components/elorro/fonts.ts).
+ *
+ * All the site's fonts are files in app/fonts (Google Fonts' own latin
+ * files, so the build never fetches them; README there), declared the way
+ * Google's CSS declared them: one variable file serving 500 and 600. Their
+ * stand-ins while they load are in globals.css ("fallbacks").
  */
-const cormorantGaramond = Cormorant_Garamond({
-  subsets: ["latin"],
+const cormorantGaramond = localFont({
+  src: [
+    { path: "./fonts/cormorant-garamond-latin-wght.woff2", weight: "500", style: "normal" },
+    { path: "./fonts/cormorant-garamond-latin-wght.woff2", weight: "600", style: "normal" },
+  ],
   variable: "--font-logo",
-  weight: ["500", "600"],
   display: "swap",
+  adjustFontFallback: false,
+  fallback: ["Cormorant Garamond Fallback"],
 });
 
 // Absolute base for link previews (og:image etc.). Uses the live Vercel URL
