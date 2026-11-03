@@ -14,7 +14,7 @@ Goal: Elorro live on elorro.com by **Wednesday, November 4, 2026**. Your pull re
 ## The project
 
 - **What it is:** elorro.com, the site for Elorro, a two-person studio: Ashan Fernando and Jordan Lopez. They build websites, shoot photo and video, set up phone answering, booking and follow-up, and build custom tools for established Bay Area businesses (wineries, dental and ortho, med spas, builders, wedding venues, senior living).
-- **Repo:** github.com/omorastu/omora-site. Working branch: **kozmoz-v1** (the code is Elorro now; the working branch is still called kozmoz-v1 until after launch).
+- **Repo:** github.com/omorastu/omora-site. Working branch: **elorro-v1** (renamed from kozmoz-v1; GitHub redirects the old name, but use elorro-v1).
 - **Stack:** Next.js (App Router), TypeScript, plain CSS in components/elorro/elorro.css, deployed on Vercel (project omora-v3, currently at omora-v3.vercel.app).
 - **Look:** black, gold and paper (#F4F1EA). Headings in Cormorant Garamond, body in Hanken Grotesk. No blue. Gold is rare on purpose: the logo, the "&", the rings, the buttons.
 - **Voice:** plain, confident, no agency jargon, no hype. "We" is Ashan and Jordan. No prices anywhere on the site, ever (prices come in a one-page plan after a 30-minute call).
@@ -22,7 +22,7 @@ Goal: Elorro live on elorro.com by **Wednesday, November 4, 2026**. Your pull re
 
 ## Rules
 
-1. Work on your own branch off kozmoz-v1, named **jordan-work**. Open a pull request into kozmoz-v1. Never push to kozmoz-v1 or main directly, never force-push, never deploy to production. Ashan merges and deploys.
+1. Work on your own branch off elorro-v1, named **jordan-work**. Open a pull request into elorro-v1. Never push to elorro-v1 or main directly, never force-push, never deploy to production. Ashan merges and deploys.
 2. **Don't change these files** (the design system and the motion, which took a lot of tuning): components/intro/*, components/elorro/hands.tsx, hero.tsx, hold.ts, work-pin.tsx, trail.tsx, header.tsx, menu.tsx, seam.tsx, us.tsx, scroll-debug.tsx. Don't restyle existing classes in elorro.css. If you truly need new CSS, add a clearly commented block at the end using the existing variables, fonts and spacing.
 3. Reuse what exists: the project card in components/elorro/work.tsx, the Project and ProjectMedia types in lib/elorro.ts, the service page in components/elorro/service-page.tsx.
 4. Before every push: `npm run lint`, a typecheck, and `npm run build` must pass.
@@ -83,3 +83,5 @@ Add an entry in Thread with: the pull request link, the full list of projects yo
 **2026-11-03, 02:30 PT — Ashan's Claude:** Updated the tasks: adding projects with a `service` field comes first, then the service pages (the must-have for launch), then the full /work page. Headshots are out for launch and us.tsx is now off-limits. Everything else stands. Branch off the latest kozmoz-v1 (ce60712 or later).
 
 **2026-11-03, 03:01 PT — Ashan's Claude Code:** Renamed the code to Elorro (components/elorro, lib/elorro.ts, elorro.css, the elo- CSS prefix). Branch off kozmoz-v1 at this commit or later.
+
+**2026-11-03, 12:15 PT — Ashan's Claude:** The working branch is now **elorro-v1** (renamed from kozmoz-v1, same history). Branch jordan-work off elorro-v1 and open your pull request into elorro-v1. Earlier entries that say kozmoz-v1 mean this branch.
