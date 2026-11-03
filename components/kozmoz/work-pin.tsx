@@ -19,7 +19,10 @@ import { PlayGateContext, type PlayGate } from "@/components/kozmoz/work-video";
  * down, it's put exactly on the first card, and coming up, on the last; and
  * the page is frozen there (freeze()) so whatever momentum is left dies,
  * until the next touch, wheel or key. Scrolls to a link (the hero's button,
- * the menu) pass straight through.
+ * the menu) pass straight through. Frozen is all script (put back on the
+ * stop with each scroll and each frame, a finger's move and the wheel
+ * cancelled meanwhile): nothing on <html> or <body> changes, as nothing may
+ * (kozmoz.css, "root").
  *
  * Underneath it's a tall box with a sticky stage: each card has its own
  * stop down the box, the row's place (--x, in cards) follows the page's
@@ -49,8 +52,6 @@ const SLOP = 6;
 const SETTLE = 160;
 /** A wheel after this long a pause, in ms, is a new scroll, not the last one's momentum. */
 const WHEEL_PAUSE = 250;
-/** Frozen, the page slipping this many times gets a firmer hold. */
-const DRIFT = 2;
 /** The page still for this long, in ms, needs no watching frame by frame (scroll events still come). */
 const QUIET = 600;
 /** Someone's scroll is over when the page has been still this long, in ms, with no finger down. */
@@ -75,8 +76,8 @@ type Touch = {
   moved: boolean;
 };
 
-/** The page frozen on a stop: where, and whether the body has been pinned too. */
-type Frozen = { at: number; fixed: boolean; drift: number };
+/** The page frozen on a stop: where. */
+type Frozen = { at: number };
 
 export function WorkPin({ count, children }: { count: number; children: React.ReactNode }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -87,8 +88,6 @@ export function WorkPin({ count, children }: { count: number; children: React.Re
     const stage = pin?.firstElementChild;
     if (!pin || !(stage instanceof HTMLElement)) return;
     const pinned = window.matchMedia(PINNED);
-    const root = document.documentElement;
-    const body = document.body;
     const cards = [...pin.querySelectorAll<HTMLElement>(".proj")];
     const last = count - 1;
     let raf = 0;
@@ -108,16 +107,14 @@ export function WorkPin({ count, children }: { count: number; children: React.Re
     let bound = false;
 
     const on = () => pinned.matches && last >= 1;
-    /** Where the page is scrolled to (frozen with the body pinned, the window reads 0). */
-    const pageY = () => (frozen?.fixed ? frozen.at : scrollY);
-    let lastY = pageY();
+    let lastY = scrollY;
     /** The pin's top, in page px, and the page px per card. */
-    const top = () => pin.getBoundingClientRect().top + pageY();
+    const top = () => pin.getBoundingClientRect().top + scrollY;
     const step = () => (pin.offsetHeight - stage.offsetHeight) / last;
     const stop = (i: number) => top() + i * step();
     /** Where the row is, in cards, for where the page is. */
-    const place = () => Math.min(last, Math.max(0, (pageY() - top()) / step()));
-    const inside = () => pageY() > stop(0) - 2 && pageY() < stop(last) + 2;
+    const place = () => Math.min(last, Math.max(0, (scrollY - top()) / step()));
+    const inside = () => scrollY > stop(0) - 2 && scrollY < stop(last) + 2;
     /**
      * The stage stuck to the top of the screen, as it shows (the pin's box
      * running from above the screen's top to the stage's foot at least):
@@ -175,34 +172,37 @@ export function WorkPin({ count, children }: { count: number; children: React.Re
 
     /**
      * Put the page exactly on a stop and freeze it there: nothing scrolls it
-     * (not a finger still down, not the momentum of a fling) until the next
-     * touch, wheel or key lets go (thaw()).
+     * (not a finger still down, not the momentum of a fling or a wheel) until
+     * the next touch, wheel or key lets go (thaw()). Putting it there stops a
+     * fling's momentum in Safari; whatever moves it all the same is put back
+     * (check(), each scroll and each frame), and a finger's moves and the
+     * wheel's are cancelled where they still can be.
      */
     const freeze = (at: number) => {
       scrollTo({ top: at, behavior: "instant" });
-      // The root only: on the body as well, the body would become a scroller of its own and the stage would stop sticking.
-      root.style.overflow = "hidden";
-      frozen = { at, fixed: false, drift: 0 };
+      frozen = { at };
       lastY = at;
       intent = null;
+      addEventListener("touchmove", stayTouch, { passive: false });
+      addEventListener("wheel", stayWheel, { passive: false });
       queue();
       watch();
     };
-    /** If the page drifts all the same (momentum that ignores the above), pin the body where it is. */
-    const fix = () => {
-      if (!frozen || frozen.fixed) return;
-      frozen.fixed = true;
-      Object.assign(body.style, { position: "fixed", top: `${-frozen.at}px`, left: "0", right: "0", width: "100%" });
-    };
     const thaw = () => {
       if (!frozen) return;
-      const { at, fixed } = frozen;
       frozen = null;
-      root.style.removeProperty("overflow");
-      for (const prop of ["position", "top", "left", "right", "width"]) body.style.removeProperty(prop);
-      if (fixed) scrollTo({ top: at, behavior: "instant" });
+      removeEventListener("touchmove", stayTouch);
+      removeEventListener("wheel", stayWheel);
       lastY = scrollY;
     };
+    // One finger only, and no ctrl-wheel: a pinch still zooms.
+    function stayTouch(e: TouchEvent) {
+      if (frozen && e.touches.length < 2 && e.cancelable) e.preventDefault();
+    }
+    // The last turn's momentum (a new turn has thawed it by now: onWheel hears it first).
+    function stayWheel(e: WheelEvent) {
+      if (frozen && !e.ctrlKey) e.preventDefault();
+    }
 
     /**
      * Each scroll and each frame near the section: someone's scroll that has
@@ -212,12 +212,8 @@ export function WorkPin({ count, children }: { count: number; children: React.Re
     const check = () => {
       if (!on() || gliding) return;
       if (frozen) {
-        if (frozen.fixed) return;
-        // Slipped (momentum that the frozen root didn't stop): back, and a second slip gets the firmer hold.
-        if (Math.abs(scrollY - frozen.at) > 1) {
-          scrollTo({ top: frozen.at, behavior: "instant" });
-          if (++frozen.drift >= DRIFT) fix();
-        }
+        // Slipped (momentum, a finger already scrolling): back.
+        if (Math.abs(scrollY - frozen.at) > 1) scrollTo({ top: frozen.at, behavior: "instant" });
         return;
       }
       const y = scrollY;
@@ -235,7 +231,7 @@ export function WorkPin({ count, children }: { count: number; children: React.Re
       if (watching) return;
       const frame = () => {
         watching = 0;
-        const y = pageY();
+        const y = scrollY;
         if (Math.abs(y - lastY) > 0.5) stirred = performance.now();
         check();
         const close = y > stop(0) - 2 * innerHeight && y < stop(last) + 2 * innerHeight;

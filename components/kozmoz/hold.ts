@@ -6,11 +6,18 @@
  * until it's let go. The pointer still moves (the mouse bends the intro's
  * logo, the cursor's trail follows it), and two fingers can still zoom.
  *
+ * It's all script: listeners that cancel a finger's move, the wheel and
+ * the keys, swallow presses, and put the page back at its top. It never
+ * sets a style on <html> or <body> (kozmoz.css, "root", for why);
+ * html[data-kz-hold] only marks that it's on.
+ *
  * The boot script in components/intro/intro.tsx starts it during the first
- * paint, with html[data-kz-hold] (kozmoz.css: the page can't scroll), so
- * nothing moves before the page's script is in; hold() takes it over from
- * there (components/kozmoz/hands.tsx), or starts it on a move to the home
- * page from within the site. Whatever stalls, it lets go by HOLD_MAX.
+ * paint, with the same listeners (though it puts the page back at its top
+ * only once the visitor has done something: before that, a scroll is the
+ * browser putting a reload back where it was), so nothing moves before the
+ * page's script is in; hold() takes it over from there
+ * (components/kozmoz/hands.tsx), or starts it on a move to the home page
+ * from within the site. Whatever stalls, it lets go by HOLD_MAX.
  */
 
 export const HOLD_ATTR = "data-kz-hold";
@@ -24,7 +31,10 @@ const typing = (target: EventTarget | null) =>
   target instanceof HTMLElement && (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName));
 
 /** Lets go of a hold the boot script started, when there's nothing to hold for. */
-export const free = () => document.documentElement.removeAttribute(HOLD_ATTR);
+export const free = () => {
+  window.__kzIntro?.letGo?.();
+  document.documentElement.removeAttribute(HOLD_ATTR);
+};
 
 /** The browser's last move back or forward, and where to: a page come back to is left where it was. */
 let traversed: { at: number; href: string } | null = null;
@@ -81,6 +91,8 @@ export function hold(until: number, late: () => void): (atTop?: boolean) => void
   addEventListener("touchmove", onTouch, active);
   addEventListener("keydown", onKey, true);
   addEventListener("click", onClick, true);
+  // These hold it now: the boot script's can go.
+  window.__kzIntro?.letGo?.();
   const timer = window.setTimeout(late, until - performance.now());
 
   return (atTop = true) => {

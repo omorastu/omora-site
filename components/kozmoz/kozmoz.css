@@ -91,11 +91,15 @@ html:has(.kz),
   .kz { --edge: 12px; }
 }
 
-/* ---------- root ---------- */
+/* ---------- root ----------
+   Nothing on <html> or <body> changes how the page scrolls, ever: no
+   overflow, touch-action, overscroll-behavior, position or scrollbar-gutter,
+   from here or from a script (the intro's hold, the Work section's stop, the
+   menu). After the page had had them, even for a moment, iOS Safari
+   wouldn't scroll it down from its top with a swipe up. What clips the page
+   sideways is on .kz, below. */
 html:has(.kz) {
   font-size: calc(16 / var(--viewport) * (100vw - 2 * var(--edge)));
-  /* clip, not hidden: keeps position: sticky working on the header. */
-  overflow-x: clip;
   background: var(--paper);
   color: var(--ink);
   color-scheme: light;
@@ -122,32 +126,25 @@ html:has(.kz) {
 
 html:has(.kz) body {
   margin: 0;
-  overflow-x: clip;
   text-rendering: auto;
   background: var(--paper);
   color: var(--ink);
 }
 
-/* While the intro and the hero's entrance play (hold.ts), the page doesn't
-   scroll, not even a bounce or a pull to refresh; a pinch still zooms.
-   Anything that moves it all the same (a focused link further down) moves
-   it at once, not smoothly, so hold.ts puts it back before it shows. The
-   scrollbar's place is kept, so nothing shifts when it comes back. */
-html[data-kz-hold] {
-  overflow: hidden;
-  overscroll-behavior: none;
-  scroll-behavior: auto;
-  scrollbar-gutter: stable;
-  touch-action: manipulation;
-  touch-action: pinch-zoom;
-}
+/* While the intro and the hero's entrance play, the page is held still by
+   script alone (hold.ts, and the intro's boot script before it):
+   html[data-kz-hold] only marks it, and no style here hangs off it. */
 
 /* ---------- base ---------- */
-/* At least a screen tall, so a short page's footer still sits at the bottom. */
+/* At least a screen tall, so a short page's footer still sits at the bottom.
+   Nothing wider than the screen makes the page scroll sideways: clip, not
+   hidden, so it's no scroller of its own and the header and the Work stage
+   still stick to the screen. */
 .kz {
   display: flex;
   flex-direction: column;
   min-height: 100svh;
+  overflow-x: clip;
   color: var(--ink);
   font-family: var(--font-text);
   font-weight: 400;
@@ -363,9 +360,8 @@ html:has(#kz-intro-boot) .kz .trail { mix-blend-mode: normal; }
    The whole screen in the paper (components/kozmoz/menu.tsx, a modal
    <dialog>): a bar like the header's, with Close where the menu button was,
    then the home page's sections large down the page's grid and the two
-   pages under them. The page behind doesn't scroll while it's open. */
-html[data-menu],
-html[data-menu] body { overflow: hidden; }
+   pages under them. The page behind doesn't scroll while it's open
+   (menu.tsx, by script: html[data-menu] only marks it). */
 .kz .menu {
   position: fixed;
   inset: 0;

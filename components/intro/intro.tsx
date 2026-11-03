@@ -87,16 +87,23 @@ const LOGO = { src: "/m/brand/elorro-logo.png", width: 1695, height: 287, ink: {
  *
  * It also holds the page still (hold.ts) for the intro, or, without it, for
  * the hero's entrance, unless that is simply there (reduced motion) or the
- * visit is to a part of the page further down (a #link). Should the page's
- * script never take that over, it lets go by HOLD_MAX all the same.
+ * visit is to a part of the page further down (a #link): hold.ts's own
+ * listeners, written small (a finger's move, the wheel, the scroll keys,
+ * presses, and the page put back at its top, though only once the visitor
+ * has done something: before that, a scroll is the browser putting a
+ * reload back where it was), until hold() takes over and calls `letGo`.
+ * Should the page's script never take that over, it lets go by HOLD_MAX
+ * all the same.
  */
-const BOOT = `(function(){var show=false,q=/[?&]intro(=|&|$)/.test(location.search);try{var r=document.referrer,inside=false;try{inside=!!r&&new URL(r).origin===location.origin}catch(e){}var seen=sessionStorage.getItem("${KEY}");sessionStorage.setItem("${KEY}","1");show=!seen&&!inside}catch(e){}show=show||q;var b=window.__kzIntro={show:show,t0:performance.now()},h=document.documentElement,still=false;try{still=matchMedia("(prefers-reduced-motion: reduce)").matches}catch(e){}if(show||!(still||location.hash.length>1)){h.setAttribute("${HOLD_ATTR}","");setTimeout(function(){if(!b.taken)h.removeAttribute("${HOLD_ATTR}")},${HOLD_MAX})}if(show){var s=document.createElement("style");s.id="${KEY}-boot";s.textContent="html .kz-intro{display:block}html{--kz-wait:${(FALLBACK_AT + FADE + 200) / 1000}s}.kz .top .brand .wordmark{animation:kz-intro-word ${FALLBACK_AT + FADE}ms}";document.head.appendChild(s);var m=document.createElement("meta");m.name="theme-color";m.content="${NIGHT}";m.id="${KEY}-theme";document.head.prepend(m);setTimeout(function(){if(!b.live)m.remove()},${FALLBACK_AT + FADE})}})();`;
+const BOOT = `(function(){var show=false,q=/[?&]intro(=|&|$)/.test(location.search);try{var r=document.referrer,inside=false;try{inside=!!r&&new URL(r).origin===location.origin}catch(e){}var seen=sessionStorage.getItem("${KEY}");sessionStorage.setItem("${KEY}","1");show=!seen&&!inside}catch(e){}show=show||q;var b=window.__kzIntro={show:show,t0:performance.now()},h=document.documentElement,still=false;try{still=matchMedia("(prefers-reduced-motion: reduce)").matches}catch(e){}if(show||!(still||location.hash.length>1)){h.setAttribute("${HOLD_ATTR}","");var u=false,o={capture:true,passive:false},x=function(e){u=true;e.preventDefault()},L=[["wheel",x,o],["touchmove",function(e){if(e.touches.length<2)x(e)},o],["keydown",function(e){var g=e.target;u=true;if(/^( |Page(Up|Down)|Home|End|Arrow(Up|Down|Left|Right))$/.test(e.key)&&!e.metaKey&&!e.ctrlKey&&!e.altKey&&!(g&&(g.isContentEditable||/^(INPUT|TEXTAREA|SELECT)$/.test(g.tagName))))x(e)},true],["click",function(e){x(e);e.stopPropagation()},true],["scroll",function(){if(u&&(scrollX||scrollY))scrollTo({top:0,left:0,behavior:"instant"})},{passive:true}]];L.forEach(function(l){addEventListener(l[0],l[1],l[2])});b.letGo=function(){b.letGo=null;L.forEach(function(l){removeEventListener(l[0],l[1],l[2])})};setTimeout(function(){if(!b.taken)h.removeAttribute("${HOLD_ATTR}");if(b.letGo)b.letGo()},${HOLD_MAX})}if(show){var s=document.createElement("style");s.id="${KEY}-boot";s.textContent="html .kz-intro{display:block}html{--kz-wait:${(FALLBACK_AT + FADE + 200) / 1000}s}.kz .top .brand .wordmark{animation:kz-intro-word ${FALLBACK_AT + FADE}ms}";document.head.appendChild(s);var m=document.createElement("meta");m.name="theme-color";m.content="${NIGHT}";m.id="${KEY}-theme";document.head.prepend(m);setTimeout(function(){if(!b.live)m.remove()},${FALLBACK_AT + FADE})}})();`;
 
 /**
  * Set by the boot script; `live` once this has taken over, `clear` once the
  * page shows through, `done` once the overlay has gone; `taken` once the
  * page has taken over holding itself still (hands.tsx). `end`, while the
  * intro plays, takes it away at once (hands.tsx, if all else stalls).
+ * `letGo`, while the boot script's own hold is on, takes its listeners
+ * off (hold.ts, once its own are on, or there's nothing to hold for).
  */
 type Boot = {
   show: boolean;
@@ -106,6 +113,7 @@ type Boot = {
   done?: boolean;
   taken?: boolean;
   end?: () => void;
+  letGo?: (() => void) | null;
 };
 
 declare global {

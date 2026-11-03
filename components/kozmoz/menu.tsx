@@ -35,12 +35,49 @@ export function Menu({
 }) {
   const ref = useRef<HTMLDialogElement>(null);
   const shutting = useRef(false);
+  const letGo = useRef<(() => void) | null>(null);
   const pathname = usePathname();
 
-  /** The page behind holds still while the menu is open. */
+  /**
+   * The page behind holds still while the menu is open, by script alone
+   * (nothing on <html> or <body> may change: kozmoz.css, "root"): a finger's
+   * move or the wheel is cancelled unless the menu has a scroll of its own
+   * to take it (which it keeps to itself, overscroll-behavior), and the page
+   * is put back if anything moves it all the same. html[data-menu] marks it.
+   */
   const hold = (on: boolean) => {
-    if (on) document.documentElement.dataset.menu = "";
-    else delete document.documentElement.dataset.menu;
+    letGo.current?.();
+    letGo.current = null;
+    const html = document.documentElement;
+    if (!on) {
+      delete html.dataset.menu;
+      return;
+    }
+    html.dataset.menu = "";
+    const dialog = ref.current;
+    const x = scrollX;
+    const y = scrollY;
+    const back = () => {
+      if (Math.abs(scrollX - x) > 1 || Math.abs(scrollY - y) > 1) scrollTo({ left: x, top: y, behavior: "instant" });
+    };
+    const scrolls = (e: Event) =>
+      !!dialog && dialog.scrollHeight > dialog.clientHeight + 1 && e.target instanceof Node && dialog.contains(e.target);
+    // One finger only, and no ctrl-wheel: a pinch still zooms.
+    const onTouch = (e: TouchEvent) => {
+      if (e.touches.length < 2 && e.cancelable && !scrolls(e)) e.preventDefault();
+    };
+    const onWheel = (e: WheelEvent) => {
+      if (!e.ctrlKey && !scrolls(e)) e.preventDefault();
+    };
+    const active = { passive: false };
+    addEventListener("scroll", back, { passive: true });
+    addEventListener("touchmove", onTouch, active);
+    addEventListener("wheel", onWheel, active);
+    letGo.current = () => {
+      removeEventListener("scroll", back);
+      removeEventListener("touchmove", onTouch);
+      removeEventListener("wheel", onWheel);
+    };
   };
 
   useEffect(() => {
