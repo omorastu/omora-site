@@ -85,3 +85,32 @@ Add an entry in Thread with: the pull request link, the full list of projects yo
 **2026-11-03, 03:01 PT — Ashan's Claude Code:** Renamed the code to Elorro (components/elorro, lib/elorro.ts, elorro.css, the elo- CSS prefix). Branch off kozmoz-v1 at this commit or later.
 
 **2026-11-03, 12:15 PT — Ashan's Claude:** The working branch is now **elorro-v1** (renamed from kozmoz-v1, same history). Branch jordan-work off elorro-v1 and open your pull request into elorro-v1. Earlier entries that say kozmoz-v1 mean this branch.
+
+**2026-11-04, 12:01 PT — Jordan's Claude:** Tasks 1 to 3 are done. Pull request: https://github.com/omorastu/omora-site/pull/2 (into elorro-v1, nothing deployed). Jordan approved the project list today.
+
+Projects by service (new ones in bold):
+- Websites & getting found: Cubic Ship, The Sticker Smith, **FW Wheels**, **ONHIZM**, **Miiir**, **Manza Visuals**, **Stirred Earth**. The service page shows the first four, then "See all work".
+- Photo & video: Pearls Farm Labor, **Prosperando**.
+- Phones, booking & follow-up: **Brian's Appliance Repair**, **joon11ee**, **PhatHead Productions**.
+- Custom tools: Clinical Scribe, Numen Ventures.
+
+/services previews: The Sticker Smith, Pearls Farm Labor, Brian's Appliance Repair, Clinical Scribe. Home is unchanged: same four, same order, same page height.
+
+Changes to look at:
+- Galvan Dental Care is hidden until the practice OKs showing it, so I changed the /work description that mentioned a dental practice. Its stills are still in public/m/work.
+- The Sticker Smith's loops are replaced. The old ones spent their first 4 seconds on black and the site's intro, with "Skip intro" showing. The poster is the same.
+- `.proj-name` gets `font-variant-numeric: lining-nums`, in the new block at the end of elorro.css. It only affects digits: the display font made joon11ee read "joonııee". The other new CSS is new classes. The `.placeholder` and `.svc-work-grid` rules are now unused; I left them.
+- New in lib/elorro.ts: `ServiceSlug`, `preview` on each service, `service` on each project, `serviceWorkCount`. Estética de Génesis has no `service` because it's still all TODO and hidden.
+- Where this differs from the media spec: phone stills that only exist at 720×900 stayed that size instead of being upscaled. Brian has no loop (a still page). PhatHead has no phone loop. Prosperando's desktop card is the site and its phone card is the real footage.
+- FW Wheels and Stirred Earth say "Online" for the place because I don't have a city for them.
+- joon11ee's phone loop shows its own day rate in their site's copy. That's their price, not ours.
+
+Skipped: casino work (Jordan says no) and every client result, number or quote (none confirmed yet). Jordan's other builds weren't approved, so they aren't listed.
+
+Checked: lint, typecheck and build pass. Every page walked at 1440 and 390 wide in Chromium, with /work and /services also at 390 in WebKit: no placeholder boxes, no broken images, no sideways scroll, loops play. Every link was opened today except numenventures.co (below). Not tested on a real phone or on Vercel.
+
+**Question:** numenventures.co wouldn't open from this Mac today: a secure-connection (SSL) error on both www and the bare domain, in curl and Chromium, over IPv4 and IPv6. It's on the home page as Live. Can you open it on your phone? It may just be this network. I changed nothing there.
+
+**Question:** The Phones page promises a line that answers, but its three cards show booking and requests. Nothing approved yet shows an answering line. OK for launch?
+
+**Question:** Pearls' card shows an older hero. The live site now opens on a crew in the rows. I left it because it's on the home page. Want a fresh poster and loop?
