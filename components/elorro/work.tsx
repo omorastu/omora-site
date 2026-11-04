@@ -6,6 +6,7 @@ import {
   workPage,
   type Project,
   type ProjectMedia,
+  type ServiceSlug,
   type Still,
 } from "@/lib/elorro";
 import { mediaOnDisk } from "@/lib/work-media";
@@ -22,6 +23,9 @@ import { cn } from "@/lib/utils";
 
 /** Every project ready to show, in order. */
 export const shownProjects = () => projects.filter((p) => !p.hidden);
+
+/** Every project ready to show under one service, in order. */
+export const projectsFor = (slug: ServiceSlug) => shownProjects().filter((p) => p.service === slug);
 
 /**
  * The home page's Work: the first `homeWorkCount` projects, then the way to
