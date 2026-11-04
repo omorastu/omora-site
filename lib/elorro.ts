@@ -98,9 +98,17 @@ export const us = {
 
 export type ServiceStep = { kind: string; heading: string; body: string };
 
+export type ServiceSlug =
+  | "websites-and-getting-found"
+  | "photo-and-video"
+  | "phones-booking-follow-up"
+  | "custom-tools";
+
 export type Service = {
-  /** Its page, /services/<slug>, and its section on /services (/services#<slug>). */
-  slug: string;
+  /** Its page, /services/<slug>, and its section on /services and /work (#<slug>). */
+  slug: ServiceSlug;
+  /** The project whose screen fills this service's box on /services, by name. */
+  preview: string;
   title: string;
   /** One plain line: on its card, on /services, and under its page's title. */
   text: string;
@@ -120,6 +128,7 @@ export type Service = {
 export const services: Service[] = [
   {
     slug: "websites-and-getting-found",
+    preview: "The Sticker Smith",
     title: "Websites & getting found.",
     text: "The site itself, and the work that gets it found on Google and in AI search like ChatGPT, so people can call, book or buy.",
     included: [
@@ -164,6 +173,7 @@ export const services: Service[] = [
   },
   {
     slug: "photo-and-video",
+    preview: "Pearls Farm Labor",
     title: "Photo & video.",
     text: "Your place, your people and your work, shot on location and cut for your site, Google and your posts.",
     included: [
@@ -192,6 +202,7 @@ export const services: Service[] = [
   },
   {
     slug: "phones-booking-follow-up",
+    preview: "Brian’s Appliance Repair",
     title: "Phones, booking & follow-up.",
     text: "A line that answers when you can’t, booking that fills the calendar, and follow-up that goes out on its own.",
     included: [
@@ -225,6 +236,7 @@ export const services: Service[] = [
   },
   {
     slug: "custom-tools",
+    preview: "Clinical Scribe",
     title: "Custom tools.",
     text: "When the problem is particular to your business, we build the tool for it, around how you already work.",
     included: [
@@ -303,6 +315,11 @@ export type Project = {
   media?: ProjectMedia;
   /** A link starting "/" stays on the site; any other opens in a new tab. */
   link?: { href: string; label: string };
+  /**
+   * What it mainly shows, one service only: where it goes on /work and on the
+   * service's page. Without one it's on neither, only the home page's first few.
+   */
+  service?: ServiceSlug;
   /** Not ready to show. Every component that reads `projects` skips these. */
   hidden?: boolean;
 };
@@ -331,6 +348,7 @@ export const clinicalScribeMedia: ProjectMedia = {
 export const projects: Project[] = [
   {
     name: "Pearls Farm Labor",
+    service: "photo-and-video",
     place: "Napa",
     status: "Live",
     line: "A vineyard labor company. New site and drone film from the vineyards they work.",
@@ -349,6 +367,7 @@ export const projects: Project[] = [
   },
   {
     name: "Clinical Scribe",
+    service: "custom-tools",
     place: "Orthodontic practice",
     status: "In testing with the practice",
     line: "Records the consult, then drafts the doctor’s letter and the patient’s take-home letter from it.",
@@ -357,6 +376,7 @@ export const projects: Project[] = [
   },
   {
     name: "Numen Ventures",
+    service: "custom-tools",
     place: "Bay Area",
     status: "Live",
     line: "Their old site had been down for months. Now founders land on a new site and can score their pitch deck in minutes.",
@@ -380,6 +400,7 @@ export const projects: Project[] = [
   },
   {
     name: "Cubic Ship",
+    service: "websites-and-getting-found",
     place: "15 counters in 8 states",
     status: "Live",
     line: "An independent operator of DHL Express counters. A site in 18 languages, so customers can ship home in their own.",
@@ -399,6 +420,7 @@ export const projects: Project[] = [
   },
   {
     name: "The Sticker Smith",
+    service: "websites-and-getting-found",
     place: "Hayward",
     status: "Live",
     line: "A custom sticker print shop. A site where customers set up their own order.",
@@ -406,13 +428,15 @@ export const projects: Project[] = [
       alt: "The Sticker Smith homepage, with die-cut stickers under the headline.",
       desktop: { src: "/m/work/sticker-d-poster.jpg", width: 1280, height: 800 },
       mobile: { src: "/m/work/sticker-m-poster.jpg", width: 720, height: 900 },
-      // No SD cuts: both loops are already lighter than an SD cut may be.
+      // No SD cuts: both loops are already lighter than an SD cut may be. Both
+      // start on the store itself, past the site's intro.
       loop: { desktop: "/m/work/sticker-d.mp4", mobile: "/m/work/sticker-m.mp4" },
     },
     link: { href: "https://tssprint.com", label: "tssprint.com" },
   },
   {
     name: "Galvan Dental Care",
+    service: "websites-and-getting-found",
     place: "Danville & Vallejo",
     status: "In progress",
     line: "A two-office dental practice. New site and a team shoot.",
@@ -428,6 +452,8 @@ export const projects: Project[] = [
         mobileSd: "/m/work/galvan-m-sd.mp4",
       },
     },
+    // Off the site until the practice OKs showing it.
+    hidden: true,
   },
   {
     name: "Estética de Génesis",
@@ -437,10 +463,154 @@ export const projects: Project[] = [
     link: { href: "TODO: https://… (full URL)", label: "TODO: domain as shown, e.g. example.com" },
     hidden: true,
   },
+  {
+    name: "Brian’s Appliance Repair",
+    service: "phones-booking-follow-up",
+    place: "Vacaville",
+    status: "Live",
+    line: "A home appliance repair business. Customers can call, text or book from the first screen, and requests land in the scheduling app the business already uses.",
+    media: {
+      alt: "The Brian’s Appliance Repair homepage: his name, what he fixes, Vacaville and his phone number, all big, with buttons to text him or request a visit.",
+      desktop: { src: "/m/work/brian-d-poster.jpg", width: 1280, height: 800 },
+      mobile: { src: "/m/work/brian-m-poster.jpg", width: 800, height: 1000 },
+    },
+    link: { href: "https://brianappliancerepair.com", label: "brianappliancerepair.com" },
+  },
+  {
+    name: "Prosperando",
+    service: "photo-and-video",
+    place: "Napa",
+    status: "Live",
+    line: "The Flores family’s wine brand. The photos and video, the color on the site, the family’s story and its first posts.",
+    media: {
+      alt: "Prosperando’s site opening on a vineyard with the family crest, and on phones, a bottle of its wine at a lunch table.",
+      desktop: { src: "/m/work/prosperando-d-poster.jpg", width: 1280, height: 800 },
+      mobile: { src: "/m/work/prosperando-m-poster.jpg", width: 720, height: 900 },
+      // Desktop: the site. Phones: the footage itself, focus moving from the table to the bottle.
+      loop: {
+        desktop: "/m/work/prosperando-d.mp4",
+        desktopSd: "/m/work/prosperando-d-sd.mp4",
+        mobile: "/m/work/prosperando-m.mp4",
+        mobileSd: "/m/work/prosperando-m-sd.mp4",
+      },
+    },
+    link: { href: "https://prosperandovineyards.com", label: "prosperandovineyards.com" },
+  },
+  {
+    name: "joon11ee",
+    service: "phones-booking-follow-up",
+    place: "Miami, LA/OC & San Francisco",
+    status: "Live",
+    line: "Exotic car rentals. People pick a car, check it for their dates and send a request, and Joon confirms before anyone pays.",
+    media: {
+      alt: "The joon11ee homepage: a silver Porsche by the water, above the name.",
+      desktop: { src: "/m/work/joon-d-poster.jpg", width: 1280, height: 800 },
+      mobile: { src: "/m/work/joon-m-poster.jpg", width: 720, height: 900 },
+      loop: {
+        desktop: "/m/work/joon-d.mp4",
+        desktopSd: "/m/work/joon-d-sd.mp4",
+        mobile: "/m/work/joon-m.mp4",
+      },
+    },
+    link: { href: "https://joon11ee.com", label: "joon11ee.com" },
+  },
+  {
+    name: "FW Wheels",
+    service: "websites-and-getting-found",
+    place: "Online",
+    status: "Live",
+    line: "A wheel shop. A catalog you shop by brand, and a real person checks the fit by text before you order.",
+    media: {
+      alt: "The FW Wheels homepage: “Wheels that fit your car.” beside a close-up of a wheel, over a form for your car.",
+      desktop: { src: "/m/work/fw-d-poster.jpg", width: 1280, height: 800 },
+      mobile: { src: "/m/work/fw-m-poster.jpg", width: 720, height: 900 },
+      loop: {
+        desktop: "/m/work/fw-d.mp4",
+        desktopSd: "/m/work/fw-d-sd.mp4",
+        mobile: "/m/work/fw-m.mp4",
+        mobileSd: "/m/work/fw-m-sd.mp4",
+      },
+    },
+    link: { href: "https://fwwheelz.com", label: "fwwheelz.com" },
+  },
+  {
+    name: "ONHIZM",
+    service: "websites-and-getting-found",
+    place: "Bay Area",
+    status: "Live",
+    line: "A streetwear brand. The store: live stock, the artist wall and the text club.",
+    media: {
+      alt: "The ONHIZM store’s artist wall: a grid of artists wearing the brand.",
+      desktop: { src: "/m/work/onhizm-d-poster.jpg", width: 1280, height: 800 },
+      mobile: { src: "/m/work/onhizm-m-poster.jpg", width: 720, height: 900 },
+      loop: { desktop: "/m/work/onhizm-d.mp4", desktopSd: "/m/work/onhizm-d-sd.mp4", mobile: "/m/work/onhizm-m.mp4" },
+    },
+    link: { href: "https://onhizm.com", label: "onhizm.com" },
+  },
+  {
+    name: "Miiir",
+    service: "websites-and-getting-found",
+    place: "Bay Area",
+    status: "Live",
+    line: "A music producer. A beat store where his mix keeps playing as you browse and the page moves with the bass.",
+    media: {
+      alt: "The Miiir site: the name over a film still, with the mix playing under it.",
+      desktop: { src: "/m/work/miiir-d-poster.jpg", width: 1280, height: 800 },
+      mobile: { src: "/m/work/miiir-m-poster.jpg", width: 720, height: 900 },
+      loop: { desktop: "/m/work/miiir-d.mp4", desktopSd: "/m/work/miiir-d-sd.mp4", mobile: "/m/work/miiir-m.mp4" },
+    },
+    link: { href: "https://miiir.shop", label: "miiir.shop" },
+  },
+  {
+    name: "Manza Visuals",
+    service: "websites-and-getting-found",
+    place: "Bay Area",
+    status: "Live",
+    line: "A music video director. A new site with his clips playing up front. The films are his.",
+    media: {
+      alt: "The Manza Visuals homepage: a music video playing above the name.",
+      desktop: { src: "/m/work/manza-d-poster.jpg", width: 1280, height: 800 },
+      mobile: { src: "/m/work/manza-m-poster.jpg", width: 720, height: 900 },
+      loop: { desktop: "/m/work/manza-d.mp4", desktopSd: "/m/work/manza-d-sd.mp4", mobile: "/m/work/manza-m.mp4" },
+    },
+    link: { href: "https://manzavisuals.com", label: "manzavisuals.com" },
+  },
+  {
+    name: "PhatHead Productions",
+    service: "phones-booking-follow-up",
+    place: "Oakland",
+    status: "Live",
+    line: "A music video director. A booking site that reads like a menu: pick a package and the ticket fills itself in.",
+    media: {
+      alt: "The PhatHead Productions site: the logo and a video above “Music videos and film, out of Oakland.”, and on phones, a package’s ticket filling in.",
+      desktop: { src: "/m/work/phathead-d-poster.jpg", width: 1280, height: 800 },
+      mobile: { src: "/m/work/phathead-m-poster.jpg", width: 800, height: 1000 },
+      // No phone cut: phones keep the still, the ticket itself.
+      loop: { desktop: "/m/work/phathead-d.mp4" },
+    },
+    link: { href: "https://www.phatheadproductions.com", label: "phatheadproductions.com" },
+  },
+  {
+    name: "Stirred Earth",
+    service: "websites-and-getting-found",
+    place: "Online",
+    status: "In progress",
+    line: "A mushroom coffee and cacao brand, before launch. New site.",
+    media: {
+      alt: "The Stirred Earth homepage: “A little earth. A better everyday.” beside a mug on a rocky coast at sunset.",
+      desktop: { src: "/m/work/stirred-d-poster.jpg", width: 1280, height: 800 },
+      mobile: { src: "/m/work/stirred-m-poster.jpg", width: 720, height: 900 },
+      loop: { desktop: "/m/work/stirred-d.mp4", mobile: "/m/work/stirred-m.mp4", mobileSd: "/m/work/stirred-m-sd.mp4" },
+    },
+    link: { href: "https://stirred-earth-site.vercel.app", label: "stirred-earth-site.vercel.app" },
+  },
 ];
 
 /** How many projects the home page shows before "See all work". */
 export const homeWorkCount = 4;
+
+/** How many projects a service's page shows before "See all work". */
+export const serviceWorkCount = 4;
 
 /* ── Contact ──────────────────────────────────────────────────────────── */
 
