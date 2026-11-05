@@ -1450,3 +1450,17 @@ html:has(#elo-intro-boot) .elo .trail { mix-blend-mode: normal; }
   .elo .name, .elo .name-first, .elo .name-last, .elo .picked, .elo .picked-line, .elo .card-link a, .elo .menu-body a { transition: none; }
   .elo .proj-media video { display: none; }
 }
+
+/* ---------- /work's groups (Jordan's agents, jordan-work) ----------
+   New classes only: the space around each service's heading on /work. The one
+   rule on an existing class changes digits only: the display font's old-style
+   figures made joon11ee read "joonııee". */
+.elo .work-group { margin-top: 2.5rem; scroll-margin-top: 6rem; }
+.elo .work-group + .work-group { margin-top: 5.5rem; }
+.elo .work-group-h { margin-top: 0; font-size: 2.75rem; }
+.elo .proj-name { font-variant-numeric: lining-nums; }
+@media (max-width: 1023px) {
+  .elo .work-group { margin-top: 1.75rem; }
+  .elo .work-group + .work-group { margin-top: 3.5rem; }
+  .elo .work-group-h { font-size: 2.25rem; }
+}

@@ -1,14 +1,15 @@
 import Link from "next/link";
-import { servicesPage, type Service } from "@/lib/elorro";
+import { serviceWorkCount, servicesPage, workPage, type Service } from "@/lib/elorro";
 import { Page } from "@/components/elorro/page";
 import { Contact } from "@/components/elorro/contact";
+import { WorkGrid, projectsFor } from "@/components/elorro/work";
 
 /**
  * A service's own page, /services/<slug> (app/services/[slug]): the
  * case-study page's frame and look (components/work/case-study.tsx, its
  * classes in elorro.css), so the two read as one site. The title (under the
  * way back to /services) and a short intro, what's included, "What we do" as
- * numbered steps, a slot for the work, and the contact section. Copy in
+ * numbered steps, its work (the Work grid's cards), and the contact section. Copy in
  * lib/elorro.ts (`services`).
  */
 export function ServicePage({ service: s }: { service: Service }) {
@@ -51,17 +52,15 @@ export function ServicePage({ service: s }: { service: Service }) {
         </div>
       </section>
 
-      {/* TODO: this service's work. Structure only for now: two neutral boxes
-          where its projects' cards will go (the Work grid's, components/elorro/work.tsx). */}
       <section className="svc-work sec" aria-labelledby="svc-work-h">
         <div className="wrap">
           <h2 className="sec-label label" id="svc-work-h">
             Work
           </h2>
-          <div className="svc-work-grid">
-            <div className="placeholder" aria-hidden="true" />
-            <div className="placeholder" aria-hidden="true" />
-          </div>
+          <WorkGrid projects={projectsFor(s.slug).slice(0, serviceWorkCount)} />
+          <p className="more">
+            <Link href={`/work#${s.slug}`}>{workPage.more}</Link>
+          </p>
         </div>
       </section>
 

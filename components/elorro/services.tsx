@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { sectionLabel, services, servicesPage, type Service } from "@/lib/elorro";
+import { mediaOnDisk } from "@/lib/work-media";
+import { ProjectScreen, shownProjects } from "@/components/elorro/work";
 
 /**
  * What we do: the four services two by two, each card the way to its own
@@ -39,6 +41,8 @@ export function Services() {
  * the service's page.
  */
 export function ServiceRow({ service: s }: { service: Service }) {
+  const preview = shownProjects().find((p) => p.name === s.preview);
+  const { media } = mediaOnDisk(s.preview, preview?.media);
   return (
     <section className="svc sec card-link" id={s.slug} aria-labelledby={`${s.slug}-h`}>
       <div className="wrap">
@@ -53,8 +57,7 @@ export function ServiceRow({ service: s }: { service: Service }) {
             <li key={item}>{item}</li>
           ))}
         </ul>
-        {/* TODO: a preview of this service's work goes here once there's work to show. */}
-        <div className="svc-preview placeholder" aria-hidden="true" />
+        {media && <ProjectScreen media={media} className="svc-preview" />}
       </div>
     </section>
   );
