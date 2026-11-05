@@ -5,6 +5,7 @@ import { Hero } from "@/components/elorro/hero";
 import { Us } from "@/components/elorro/us";
 import { Services } from "@/components/elorro/services";
 import { Work } from "@/components/elorro/work";
+import { Faq } from "@/components/elorro/faq";
 import { Contact } from "@/components/elorro/contact";
 import { Footer } from "@/components/elorro/footer";
 import { Intro } from "@/components/intro/intro";
@@ -15,11 +16,11 @@ import "@/components/elorro/elorro.css";
  * The home page — Elorro, "Names on the door". Styles in
  * components/elorro/elorro.css, copy and data in lib/elorro.ts.
  *
- * Sections run hero, us, what we do, work, contact: the hero across the seam,
- * the rest on one left-aligned grid below it, all on the paper, edge to
- * edge. The other pages share its header, footer and type through
- * components/elorro/page.tsx; this one builds its own frame, because its
- * root is also the "pick a name" toggle.
+ * Sections run hero, us, what we do, work, questions, contact: the hero
+ * across the seam, the rest on one left-aligned grid below it, all on the
+ * paper, edge to edge. The other pages share its header, footer and type
+ * through components/elorro/page.tsx; this one builds its own frame, because
+ * its root is also the "pick a name" toggle.
  */
 
 export default function Home() {
@@ -36,6 +37,7 @@ export default function Home() {
           <Us />
           <Services />
           <Work />
+          <Faq />
           <Contact />
         </main>
         <Footer />

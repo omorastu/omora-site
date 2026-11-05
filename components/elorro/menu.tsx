@@ -11,7 +11,7 @@ import { Wordmark } from "@/components/wordmark";
  * The menu: the site's links, off the header and over the whole screen, in
  * the paper (elorro.css, "the menu"). A modal <dialog>, opened by the
  * header's button (header.tsx): the home page's sections large down the
- * page's grid, the two pages under them, and Close where the button was.
+ * page's grid, the pages under them, and Close where the button was.
  * While it's open, focus goes round inside it and the page behind doesn't
  * scroll; it closes on a link, on Close or on Escape, and focus goes back
  * to the button.

@@ -17,10 +17,11 @@ cyan) mark names and credits only.
 
 | Route | What it is |
 | --- | --- |
-| `/` | hero, us, what we do, work (the first few projects), contact |
+| `/` | hero, us, what we do, work (the first few projects), questions, contact |
 | `/services` | the four services, each with what's included (`/services#websites` …), then how it starts |
 | `/work` | every project ready to show |
 | `/work/clinical-scribe` | the case study (`lib/case-studies/`) |
+| `/questions` | the chat-style FAQ, all ten questions (`lib/faq.ts`), then contact |
 | `/privacy`, `/terms` | legal |
 
 There are no prices anywhere on the site. `/pricing` and `/team` are gone and

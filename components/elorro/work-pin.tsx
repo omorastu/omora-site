@@ -12,7 +12,7 @@ import { PlayGateContext, type PlayGate } from "@/components/elorro/work-video";
  * went. The row glides to that card's middle (MOVE ms) and takes no more
  * input until it's there, so a swipe never skips a card or stops between
  * two. On the last card the next swipe on lets the page go on down into
- * Contact; on the first, a swipe back lets it go up.
+ * Questions; on the first, a swipe back lets it go up.
  *
  * Coming in, it's a hard stop: however big or quick the scroll or fling,
  * the moment the page reaches (or has passed) the section's start coming

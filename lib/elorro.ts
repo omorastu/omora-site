@@ -68,6 +68,7 @@ export const menu = {
   pages: [
     { href: "/services", label: "All services" },
     { href: "/work", label: "All work" },
+    { href: "/questions", label: "Questions" },
   ],
 };
 

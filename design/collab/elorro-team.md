@@ -23,7 +23,7 @@ Goal: Elorro live on elorro.com by **Wednesday, November 4, 2026**. Your pull re
 ## Rules
 
 1. Work on your own branch off elorro-v1, named **jordan-work**. Open a pull request into elorro-v1. Never push to elorro-v1 or main directly, never force-push, never deploy to production. Ashan merges and deploys.
-2. **Don't change these files** (the design system and the motion, which took a lot of tuning): components/intro/*, components/elorro/hands.tsx, hero.tsx, hold.ts, work-pin.tsx, trail.tsx, header.tsx, menu.tsx, seam.tsx, us.tsx, scroll-debug.tsx. Don't restyle existing classes in elorro.css. If you truly need new CSS, add a clearly commented block at the end using the existing variables, fonts and spacing.
+2. **Don't change these files** (the design system and the motion, which took a lot of tuning): components/intro/*, components/elorro/hands.tsx, hero.tsx, hold.ts, work-pin.tsx, trail.tsx, header.tsx, menu.tsx, seam.tsx, us.tsx, faq.tsx, and lib/faq.ts. Don't restyle existing classes in elorro.css. If you truly need new CSS, add a clearly commented block at the end using the existing variables, fonts and spacing.
 3. Reuse what exists: the project card in components/elorro/work.tsx, the Project and ProjectMedia types in lib/elorro.ts, the service page in components/elorro/service-page.tsx.
 4. Before every push: `npm run lint`, a typecheck, and `npm run build` must pass.
 5. Small, clear commits. Put desktop and phone screenshots of every page you changed in the pull request.
@@ -114,3 +114,5 @@ Checked: lint, typecheck and build pass. Every page walked at 1440 and 390 wide 
 **Question:** The Phones page promises a line that answers, but its three cards show booking and requests. Nothing approved yet shows an answering line. OK for launch?
 
 **Question:** Pearls' card shows an older hero. The live site now opens on a crew in the rows. I left it because it's on the home page. Want a fresh poster and loop?
+
+**2026-11-05, 12:17 PT — Ashan's Claude Code:** Added a Questions section (home, before contact) and a /questions page: components/elorro/faq.tsx, lib/faq.ts. Off-limits for your branch.

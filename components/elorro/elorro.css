@@ -1464,3 +1464,163 @@ html:has(#elo-intro-boot) .elo .trail { mix-blend-mode: normal; }
   .elo .work-group + .work-group { margin-top: 3.5rem; }
   .elo .work-group-h { font-size: 2.25rem; }
 }
+
+/* ---------- questions (Ashan's Claude Code) ----------
+   The home page's section before Contact, and /questions: a chat-style FAQ
+   (components/elorro/faq.tsx, copy in lib/faq.ts). New classes only.
+
+   Laid out as Contact is: the heading on the left, what you use on the right,
+   with the thread under the heading. The thread never moves what's around
+   it, and it's sticky so a reply is on screen wherever the chip that asked
+   for it was: beside the chips here, however many there are; on phones
+   (below) under them, and held up at the foot of the screen until the
+   page reaches it. Square and hairlined like everything else: their
+   bubbles in the ink, ours on the paper. */
+.elo .faq .wrap { grid-template-rows: auto 1fr auto; }
+.elo .faq-head { grid-column: 1 / span 5; grid-row: 1; }
+.elo .faq-lede {
+  margin-top: 1.25rem;
+  font-size: max(1.125rem, 15px);
+  line-height: 1.45;
+}
+.elo .faq-ask { grid-column: 7 / -1; grid-row: 1 / span 2; }
+
+.elo .faq-chips { display: flex; flex-wrap: wrap; gap: .625rem; }
+.elo .faq-chip {
+  min-height: max(2.75rem, 44px);
+  padding: .375rem 1rem .5rem;
+  border: 1px solid var(--ink-20);
+  font-family: var(--font-display);
+  font-size: 1.375rem;
+  font-weight: 500;
+  line-height: 1.15;
+  transition: border-color .25s var(--ease), color .25s var(--ease);
+}
+.elo .faq-chip.is-asked { color: var(--ink-65); border-color: color-mix(in srgb, var(--ink) 10%, transparent); }
+@media (hover: hover) {
+  .elo .faq-chip:hover { border-color: currentColor; }
+}
+
+.elo .faq-form { display: flex; align-items: flex-end; gap: 1.25rem; margin-top: 2rem; }
+.elo .faq-form .field { flex: 1 1 auto; min-width: 0; }
+/* The site's button in the ink: gold stays with the one action, the call. */
+.elo .faq-send {
+  flex: none;
+  min-height: 3.25rem;
+  padding: 1rem 1.75rem;
+  background: var(--ink);
+  color: var(--paper);
+  font-family: var(--font-label);
+  font-weight: 600;
+  font-size: max(.8125rem, 12px);
+  letter-spacing: .14em;
+  line-height: 1;
+  text-align: center;
+  text-transform: uppercase;
+  transition: background-color .25s var(--ease);
+}
+.elo .faq-send:focus-visible { outline-color: var(--ink); }
+@media (hover: hover) {
+  .elo .faq-send:hover { background: color-mix(in srgb, var(--ink) 82%, var(--paper)); }
+}
+
+.elo .faq-thread {
+  grid-column: 1 / span 5;
+  grid-row: 2;
+  position: sticky;
+  top: calc(var(--header-h) + 1.5rem);
+  z-index: 1;
+  display: grid;
+  gap: 1.25rem;
+  align-content: start;
+  max-height: min(30rem, calc(100svh - var(--header-h) - 3rem));
+  overflow-y: auto;
+  background: var(--paper);
+  scrollbar-width: thin;
+  scrollbar-color: var(--ink-20) transparent;
+}
+.elo .faq-thread:not(:empty) { margin-top: 2.5rem; }
+.elo .faq-turn { display: grid; gap: .625rem; }
+.elo .faq-you {
+  justify-self: end;
+  max-width: 85%;
+  padding: .4375rem .875rem .5625rem;
+  background: var(--ink);
+  color: var(--paper);
+  font-family: var(--font-display);
+  font-size: 1.375rem;
+  font-weight: 500;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+.elo .faq-you::selection, .elo .faq-you ::selection { background: var(--paper); color: var(--ink); }
+.elo .faq-us { display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: .625rem; align-items: start; }
+.elo .faq-mark {
+  padding-top: .75rem;
+  font-family: var(--font-display);
+  font-size: 1.125rem;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+}
+.elo .faq-mark .gold { margin-inline: .06em; }
+.elo .faq-reply {
+  justify-self: start;
+  min-width: 0;
+  padding: .6875rem 1rem .8125rem;
+  border: 1px solid var(--ink-20);
+  background: var(--paper);
+  font-size: max(1.0625rem, 15px);
+  line-height: 1.45;
+}
+.elo .faq-reply .act { margin-top: .875rem; padding-inline: 1.125rem; }
+
+/* A bubble settles in; the dots wait; the words come in one after another
+   (each word's delay is set in faq.tsx). None of it changes a size. */
+.elo .faq-you, .elo .faq-us { animation: faq-in .25s var(--ease) both; }
+.elo .faq-word { animation: faq-word .18s var(--ease) both; }
+.elo .faq-dots { display: flex; align-items: center; gap: .3125rem; height: 1.45em; }
+.elo .faq-dots i {
+  width: .375rem;
+  height: .375rem;
+  border-radius: 50%;
+  background: var(--ink);
+  animation: faq-dot .9s ease-in-out infinite;
+}
+.elo .faq-dots i:nth-child(2) { animation-delay: .15s; }
+.elo .faq-dots i:nth-child(3) { animation-delay: .3s; }
+@keyframes faq-in { from { opacity: 0; transform: translateY(.375rem); } }
+@keyframes faq-word { from { opacity: 0; } }
+@keyframes faq-dot { 0%, 100% { opacity: .2; } 40% { opacity: 1; } }
+
+/* The questions and answers as plain text: only with scripting off, when
+   nothing could answer a chip. */
+.elo .faq-all { display: none; }
+@media (scripting: none) {
+  .elo .faq-ask, .elo .faq-lede, .elo .faq-thread { display: none; }
+  .elo .faq-all { grid-column: 7 / -1; grid-row: 1 / span 2; display: grid; row-gap: 1.75rem; }
+  .elo .faq-all dt { font-family: var(--font-display); font-size: 1.625rem; font-weight: 500; line-height: 1.15; }
+  .elo .faq-all dd { margin-top: .375rem; max-width: var(--measure); }
+}
+
+/* /questions: the first thing on the page, spaced as /work is. */
+.elo .faq--page { border-top: 0; padding: 4rem var(--pad) 6rem; }
+
+@media (max-width: 1023px) {
+  /* One column; not a grid here, or the thread's sticky box would be its own row. */
+  .elo .faq .wrap { display: block; }
+  .elo .faq-lede { margin-top: 1rem; font-size: 1.0625rem; }
+  .elo .faq-ask { margin-top: 1.75rem; }
+  .elo .faq-form { margin-top: 1.75rem; }
+  /* The ring of paper: held up over the chips and the box, the thread's edge
+     falls between two pixels, and the box's ink line showed past it. */
+  .elo .faq-thread { top: auto; bottom: 0; max-height: 46svh; box-shadow: 0 0 0 1px var(--paper); }
+  .elo .faq-thread:not(:empty) { margin-top: 1.75rem; padding-block: 1rem; border-top: 1px solid var(--ink-20); }
+  .elo .faq-all { margin-top: 1.75rem; }
+  .elo .faq--page { padding: 2.5rem var(--pad) 4rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .elo .faq-you, .elo .faq-us { animation: none; }
+  .elo .faq-chip, .elo .faq-send { transition: none; }
+}

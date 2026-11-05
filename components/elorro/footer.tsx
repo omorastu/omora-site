@@ -5,7 +5,7 @@ import { Wordmark } from "@/components/wordmark";
 
 /**
  * The plate again, small: the studio, the two names, where and how to reach
- * us, and the two legal pages.
+ * us, Questions and the two legal pages.
  */
 export function Footer() {
   return (
@@ -20,6 +20,7 @@ export function Footer() {
         {brand.where} <span aria-hidden="true">·</span>{" "}
         <a href={`mailto:${brand.email}`}>{brand.email}</a> <span aria-hidden="true">·</span> ©{" "}
         {new Date().getFullYear()} {brand.name} <span aria-hidden="true">·</span>{" "}
+        <Link href="/questions">Questions</Link> <span aria-hidden="true">·</span>{" "}
         <Link href="/privacy">Privacy</Link> <span aria-hidden="true">·</span>{" "}
         <Link href="/terms">Terms</Link>
       </p>
