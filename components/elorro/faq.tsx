@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { hero, people } from "@/lib/elorro";
 import { answerFor, faqs, faqSection, homeFaqs, type Faq as Question } from "@/lib/faq";
@@ -12,17 +12,22 @@ import { cn } from "@/lib/utils";
  * The visitor taps a question or types one, and the reply is only ever an
  * answer from lib/faq.ts, whole, or the line that sends them to the call.
  *
- * A question goes in the thread as their bubble, on the right; then three
- * dots (DOTS_MS); then our reply on the left, its words coming in within
- * TYPE_MS. Under reduced motion the reply is simply there, with no dots.
+ * A question goes up as their bubble, on the right; then three dots
+ * (DOTS_MS); then our reply on the left, its words coming in within TYPE_MS.
+ * Under reduced motion the reply is simply there, with no dots.
+ *
+ * Where it goes depends on the width (NARROW, elorro.css's breakpoint):
+ *
+ * - On desktop, in the thread: a sticky box beside the chips (elorro.css,
+ *   "questions"), capped in height, that keeps the newest in view by
+ *   scrolling itself. A chip asks every time it's tapped.
+ * - On phones, in the page's flow, where the visitor's thumb already is: a
+ *   chip opens its exchange right under itself and closes it when tapped
+ *   again, any number at once. What's typed goes right under the field,
+ *   newest first, and that's all the thread holds there.
  *
  * Nothing here ever scrolls the page. A reply takes its full size the moment
- * it arrives and only its words fade in, so typing never moves anything, and
- * the only thing scrolled is the thread's own box, capped in height, to keep
- * the newest in view. The thread is sticky (elorro.css, "questions") so that
- * a reply is on screen wherever the chip that asked for it was: beside the
- * chips on desktop; on phones under them, but held up at the foot of the
- * screen when that's further down than the screen reaches.
+ * it arrives and only its words fade in, so typing never moves anything.
  *
  * Every question and answer on the page is in its server HTML: in the list
  * shown when scripting is off, and in the FAQPage JSON-LD.
@@ -33,12 +38,24 @@ const DOTS_MS = 600;
 const TYPE_MS = 1000;
 const WORD_MS = 65;
 
-/** One question in the thread: what was asked, and how its reply is coming. */
+const NARROW = "(max-width: 1023px)";
+const onWidthChange = (fn: () => void) => {
+  const width = window.matchMedia(NARROW);
+  width.addEventListener("change", fn);
+  return () => width.removeEventListener("change", fn);
+};
+const isNarrow = () => window.matchMedia(NARROW).matches;
+/** The server draws the desktop markup; nothing differs on screen until a question is asked. */
+const notNarrow = () => false;
+
+/** One question and how its reply is coming. */
 type Turn = {
   key: number;
   question: string;
   /** The answer, or nothing for a question with no good match. */
   faq?: Question;
+  /** The chip that asked it, by its question's id. Unset: it was typed. */
+  chip?: string;
   /** "typing": the dots. "typed": the words coming in. "still": all at once. */
   reply: "typing" | "typed" | "still";
 };
@@ -49,6 +66,7 @@ export function Faq({ all = false }: { all?: boolean }) {
   const shown = all ? faqs : homeFaqs;
   const Label = all ? "h1" : "p";
 
+  const narrow = useSyncExternalStore(onWidthChange, isNarrow, notNarrow);
   const [thread, setThread] = useState<Turn[]>([]);
   const [draft, setDraft] = useState("");
   const box = useRef<HTMLDivElement>(null);
@@ -61,24 +79,33 @@ export function Faq({ all = false }: { all?: boolean }) {
     return () => pending.forEach((t) => clearTimeout(t));
   }, []);
 
-  // The newest in view, inside the thread's own box.
+  // The newest in view, inside the thread's own box. On phones it has no box of its own.
   useEffect(() => {
     const el = box.current;
+    if (narrow) return;
     el?.scrollTo({ top: el.scrollHeight, behavior: reducedMotion() ? "auto" : "smooth" });
-  }, [thread]);
+  }, [thread, narrow]);
 
-  const ask = (question: string, faq?: Question) => {
+  const ask = (question: string, faq?: Question, chip?: string) => {
     const key = turns.current++;
     if (reducedMotion()) {
-      setThread((t) => [...t, { key, question, faq, reply: "still" }]);
+      setThread((t) => [...t, { key, question, faq, chip, reply: "still" }]);
       return;
     }
-    setThread((t) => [...t, { key, question, faq, reply: "typing" }]);
+    setThread((t) => [...t, { key, question, faq, chip, reply: "typing" }]);
     const timer = window.setTimeout(() => {
       timers.current.delete(timer);
       setThread((t) => t.map((turn) => (turn.key === key ? { ...turn, reply: "typed" } : turn)));
     }, DOTS_MS);
     timers.current.add(timer);
+  };
+
+  const onChip = (faq: Question) => {
+    if (narrow && thread.some((turn) => turn.chip === faq.id)) {
+      setThread((t) => t.filter((turn) => turn.chip !== faq.id));
+      return;
+    }
+    ask(faq.q, faq, faq.id);
   };
 
   const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -91,7 +118,9 @@ export function Faq({ all = false }: { all?: boolean }) {
     if (window.matchMedia("(pointer: coarse)").matches) input.current?.blur();
   };
 
-  const asked = new Set(thread.map((turn) => turn.faq?.id));
+  // A chip dims once its answer is on the page: on phones, while it's open under the chip.
+  const asked = new Set(thread.map((turn) => (narrow ? turn.chip : turn.faq?.id)));
+  const typed = thread.filter((turn) => !turn.chip).reverse();
 
   return (
     <section className={cn("faq sec", all && "faq--page")} id="questions" aria-labelledby="questions-h">
@@ -106,17 +135,28 @@ export function Faq({ all = false }: { all?: boolean }) {
 
         <div className="faq-ask">
           <ul className="faq-chips">
-            {shown.map((faq) => (
-              <li key={faq.id}>
-                <button
-                  type="button"
-                  className={cn("faq-chip", asked.has(faq.id) && "is-asked")}
-                  onClick={() => ask(faq.q, faq)}
-                >
-                  {faq.q}
-                </button>
-              </li>
-            ))}
+            {shown.map((faq) => {
+              const open = thread.filter((turn) => turn.chip === faq.id).at(-1);
+              return (
+                <li key={faq.id}>
+                  <button
+                    type="button"
+                    className={cn("faq-chip", asked.has(faq.id) && "is-asked")}
+                    aria-expanded={narrow ? !!open : undefined}
+                    aria-controls={narrow ? `faq-open-${faq.id}` : undefined}
+                    onClick={() => onChip(faq)}
+                  >
+                    {faq.q}
+                  </button>
+                  {/* Here before it's needed, so screen readers hear what arrives in it. */}
+                  {narrow && (
+                    <div className="faq-open" id={`faq-open-${faq.id}`} aria-live="polite">
+                      {open && <Exchange turn={open} />}
+                    </div>
+                  )}
+                </li>
+              );
+            })}
           </ul>
 
           <form className="faq-form" onSubmit={onSubmit}>
@@ -147,16 +187,10 @@ export function Faq({ all = false }: { all?: boolean }) {
           role="log"
           aria-live="polite"
           aria-label={faqSection.thread}
-          tabIndex={thread.length ? 0 : undefined}
+          tabIndex={thread.length && !narrow ? 0 : undefined}
         >
-          {thread.map((turn) => (
-            <div key={turn.key} className="faq-turn">
-              <p className="faq-you">
-                <span className="sr-only">{faqSection.you} </span>
-                {turn.question}
-              </p>
-              <Reply turn={turn} />
-            </div>
+          {(narrow ? typed : thread).map((turn) => (
+            <Exchange key={turn.key} turn={turn} />
           ))}
         </div>
 
@@ -182,6 +216,19 @@ export function Faq({ all = false }: { all?: boolean }) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd(shown)).replace(/</g, "\\u003c") }}
       />
     </section>
+  );
+}
+
+/** A question and its reply. */
+function Exchange({ turn }: { turn: Turn }) {
+  return (
+    <div className="faq-turn">
+      <p className="faq-you">
+        <span className="sr-only">{faqSection.you} </span>
+        {turn.question}
+      </p>
+      <Reply turn={turn} />
+    </div>
   );
 }
 

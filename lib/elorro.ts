@@ -110,6 +110,12 @@ export type Service = {
   slug: ServiceSlug;
   /** The project whose screen fills this service's box on /services, by name. */
   preview: string;
+  /**
+   * The order of its projects on /work and on its page, by name, the clients
+   * closest to our market first. One with this `service` that isn't listed
+   * comes after these.
+   */
+  work: string[];
   title: string;
   /** One plain line: on its card, on /services, and under its page's title. */
   text: string;
@@ -130,6 +136,7 @@ export const services: Service[] = [
   {
     slug: "websites-and-getting-found",
     preview: "The Sticker Smith",
+    work: ["Cubic Ship", "The Sticker Smith", "FW Wheels", "ONHIZM", "Miiir", "Manza Visuals"],
     title: "Websites & getting found.",
     text: "The site itself, and the work that gets it found on Google and in AI search like ChatGPT, so people can call, book or buy.",
     included: [
@@ -174,7 +181,8 @@ export const services: Service[] = [
   },
   {
     slug: "photo-and-video",
-    preview: "Pearls Farm Labor",
+    preview: "Prosperando",
+    work: ["Prosperando", "Pearls Farm Labor"],
     title: "Photo & video.",
     text: "Your place, your people and your work, shot on location and cut for your site, Google and your posts.",
     included: [
@@ -204,6 +212,7 @@ export const services: Service[] = [
   {
     slug: "phones-booking-follow-up",
     preview: "Brian’s Appliance Repair",
+    work: ["Brian’s Appliance Repair", "joon11ee", "PhatHead Productions"],
     title: "Phones, booking & follow-up.",
     text: "A line that answers when you can’t, booking that fills the calendar, and follow-up that goes out on its own.",
     included: [
@@ -238,6 +247,7 @@ export const services: Service[] = [
   {
     slug: "custom-tools",
     preview: "Clinical Scribe",
+    work: ["Clinical Scribe", "Numen Ventures"],
     title: "Custom tools.",
     text: "When the problem is particular to your business, we build the tool for it, around how you already work.",
     included: [
@@ -305,11 +315,13 @@ export type ProjectMedia = {
 /**
  * One piece of shared work. Every project is laid out the same way and
  * credits no one: it is the studio's work, not one person's. The order here
- * is the order on the home page and /work.
+ * is the home page's, which shows the first `homeWorkCount`, so it stays put:
+ * /work and the service pages each have their own (`work` on the service).
  */
 export type Project = {
   name: string;
-  place: string;
+  /** Where it is, only if it's a real place. Unset: the card shows the status alone. */
+  place?: string;
   status: string;
   line: string;
   /** Unset: the card is its text alone. */
@@ -518,7 +530,6 @@ export const projects: Project[] = [
   {
     name: "FW Wheels",
     service: "websites-and-getting-found",
-    place: "Online",
     status: "Live",
     line: "A wheel shop. A catalog you shop by brand, and a real person checks the fit by text before you order.",
     media: {
@@ -594,7 +605,6 @@ export const projects: Project[] = [
   {
     name: "Stirred Earth",
     service: "websites-and-getting-found",
-    place: "Online",
     status: "In progress",
     line: "A mushroom coffee and cacao brand, before launch. New site.",
     media: {
@@ -604,6 +614,8 @@ export const projects: Project[] = [
       loop: { desktop: "/m/work/stirred-d.mp4", mobile: "/m/work/stirred-m.mp4", mobileSd: "/m/work/stirred-m-sd.mp4" },
     },
     link: { href: "https://stirred-earth-site.vercel.app", label: "stirred-earth-site.vercel.app" },
+    // Off the site until their site launches: the link is still a vercel.app test address.
+    hidden: true,
   },
 ];
 
@@ -644,6 +656,8 @@ export const workPage = {
   title: "Work",
   /** The link under the home page's Work. */
   more: "See all work",
+  /** The links to its groups, for screen readers. */
+  jump: "Work by service",
 };
 
 export const servicesPage = {

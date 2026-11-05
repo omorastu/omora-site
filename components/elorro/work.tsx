@@ -3,6 +3,7 @@ import Link from "next/link";
 import {
   homeWorkCount,
   projects,
+  serviceFor,
   workPage,
   type Project,
   type ProjectMedia,
@@ -24,8 +25,14 @@ import { cn } from "@/lib/utils";
 /** Every project ready to show, in order. */
 export const shownProjects = () => projects.filter((p) => !p.hidden);
 
-/** Every project ready to show under one service, in order. */
-export const projectsFor = (slug: ServiceSlug) => shownProjects().filter((p) => p.service === slug);
+/** Every project ready to show under one service, in that service's own order. */
+export const projectsFor = (slug: ServiceSlug) => {
+  const order = serviceFor(slug)?.work ?? [];
+  const rank = (p: Project) => (order.includes(p.name) ? order.indexOf(p.name) : order.length);
+  return shownProjects()
+    .filter((p) => p.service === slug)
+    .sort((a, b) => rank(a) - rank(b));
+};
 
 /**
  * The home page's Work: the first `homeWorkCount` projects, then the way to
@@ -78,7 +85,12 @@ function ProjectCard({ project: p, heading: Heading, sizes }: { project: Project
       <div className="proj-body">
         <Heading className="proj-name">{p.name}</Heading>
         <p className="proj-meta label">
-          {p.place} <span aria-hidden="true">·</span> {p.status}
+          {p.place && (
+            <>
+              {p.place} <span aria-hidden="true">·</span>{" "}
+            </>
+          )}
+          {p.status}
         </p>
         <p className="proj-line">{p.line}</p>
         {p.link && (

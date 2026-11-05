@@ -1455,10 +1455,13 @@ html:has(#elo-intro-boot) .elo .trail { mix-blend-mode: normal; }
    New classes only: the space around each service's heading on /work. The one
    rule on an existing class changes digits only: the display font's old-style
    figures made joon11ee read "joonııee". */
-.elo .work-group { margin-top: 2.5rem; scroll-margin-top: 6rem; }
+/* The page's scroll-padding-top clears the header; this is only the space under it. */
+.elo .work-group { margin-top: 2.5rem; scroll-margin-top: 1rem; }
 .elo .work-group + .work-group { margin-top: 5.5rem; }
 .elo .work-group-h { margin-top: 0; font-size: 2.75rem; }
 .elo .proj-name { font-variant-numeric: lining-nums; }
+/* The links to the groups, under the page's title: .more's type and links, in a row. */
+.elo .work-jump { display: flex; flex-wrap: wrap; column-gap: 2rem; margin-top: 1rem; }
 @media (max-width: 1023px) {
   .elo .work-group { margin-top: 1.75rem; }
   .elo .work-group + .work-group { margin-top: 3.5rem; }
@@ -1472,10 +1475,10 @@ html:has(#elo-intro-boot) .elo .trail { mix-blend-mode: normal; }
    Laid out as Contact is: the heading on the left, what you use on the right,
    with the thread under the heading. The thread never moves what's around
    it, and it's sticky so a reply is on screen wherever the chip that asked
-   for it was: beside the chips here, however many there are; on phones
-   (below) under them, and held up at the foot of the screen until the
-   page reaches it. Square and hairlined like everything else: their
-   bubbles in the ink, ours on the paper. */
+   for it was, beside the chips, however many there are. On phones (below)
+   there's no box and nothing sticks: each exchange opens in the page's flow,
+   under its chip, or under the field for what's typed. Square and hairlined
+   like everything else: their bubbles in the ink, ours on the paper. */
 .elo .faq .wrap { grid-template-rows: auto 1fr auto; }
 .elo .faq-head { grid-column: 1 / span 5; grid-row: 1; }
 .elo .faq-lede {
@@ -1607,15 +1610,17 @@ html:has(#elo-intro-boot) .elo .trail { mix-blend-mode: normal; }
 .elo .faq--page { border-top: 0; padding: 4rem var(--pad) 6rem; }
 
 @media (max-width: 1023px) {
-  /* One column; not a grid here, or the thread's sticky box would be its own row. */
   .elo .faq .wrap { display: block; }
   .elo .faq-lede { margin-top: 1rem; font-size: 1.0625rem; }
   .elo .faq-ask { margin-top: 1.75rem; }
+  /* One chip to a row, so an exchange opening under one never moves another sideways. */
+  .elo .faq-chips { display: grid; grid-template-columns: minmax(0, 1fr); }
+  .elo .faq-chip { width: 100%; text-align: left; }
+  .elo .faq-open:not(:empty) { padding-block: .875rem .625rem; }
   .elo .faq-form { margin-top: 1.75rem; }
-  /* The ring of paper: held up over the chips and the box, the thread's edge
-     falls between two pixels, and the box's ink line showed past it. */
-  .elo .faq-thread { top: auto; bottom: 0; max-height: 46svh; box-shadow: 0 0 0 1px var(--paper); }
-  .elo .faq-thread:not(:empty) { margin-top: 1.75rem; padding-block: 1rem; border-top: 1px solid var(--ink-20); }
+  /* What's typed, under the field, in the flow like everything else. */
+  .elo .faq-thread { position: static; z-index: auto; max-height: none; overflow: visible; background: none; }
+  .elo .faq-thread:not(:empty) { margin-top: 1.75rem; }
   .elo .faq-all { margin-top: 1.75rem; }
   .elo .faq--page { padding: 2.5rem var(--pad) 4rem; }
 }
