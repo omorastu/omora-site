@@ -123,7 +123,7 @@ export function Hands({ className, children }: { className?: string; children: R
       /** What the writing puts on the page, to take off again once it's done. */
       const undo: (() => void)[] = [];
 
-      // The seam (desktop) draws down as the names start.
+      // The seam (desktop) draws down as the names start: its first showing (elorro.css holds it back till now).
       const seam = el.querySelector(".seam");
       if (seam) {
         anims.push(seam.animate({ scale: ["1 0", "1 1"] }, { duration: 900, easing: "cubic-bezier(.65, 0, .35, 1)", fill: "backwards" }));

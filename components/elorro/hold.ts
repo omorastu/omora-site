@@ -22,7 +22,7 @@
 
 export const HOLD_ATTR = "data-elo-hold";
 /** At the latest, from the first paint, the page is let go and the hero shown finished. */
-export const HOLD_MAX = 12000;
+export const HOLD_MAX = 12000; // The seam's own fallback waits this long too (elorro.css, elo-seam-fallback).
 
 /** Keys that scroll the page. */
 const SCROLL_KEYS = new Set([" ", "PageDown", "PageUp", "Home", "End", "ArrowDown", "ArrowUp", "ArrowLeft", "ArrowRight"]);

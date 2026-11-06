@@ -981,6 +981,19 @@ html:has(#elo-intro-boot) .elo .trail { mix-blend-mode: normal; }
 }
 @keyframes elo-hero-fallback { from { opacity: 0; } to { opacity: 1; } }
 
+/* The seam waits too, at no length, so the first anyone sees of it is
+   hands.tsx drawing it down with the names. It doesn't share their 2.5s: on
+   a slow connection it would show, then be taken back to be drawn. If the
+   script never comes it shows at the hold's limit (hold.ts, HOLD_MAX: keep in
+   step). With scripting off or under reduced motion it never waits. */
+@media (min-width: 1024px) and (prefers-reduced-motion: no-preference) and (scripting: enabled) {
+  .elo:not(.is-in) .seam {
+    scale: 1 0;
+    animation: elo-seam-fallback .45s var(--ease) 12s forwards;
+  }
+}
+@keyframes elo-seam-fallback { to { scale: 1 1; } }
+
 /* ---------- hover: the names lean toward the seam ---------- */
 @media (hover: hover) and (prefers-reduced-motion: no-preference) {
   /* The hero's names lean line by line, not as whole buttons: moving the
