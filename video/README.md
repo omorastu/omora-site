@@ -13,6 +13,7 @@ npm run capture      # full-page screenshots of numenventures.co → public/capt
 npm run render       # every project's videos, posters and stills → ../public/m/work/
 npm run build        # capture, then render
 npm run pearls       # pearls-d.mp4 and its SD cut, from pearlsfarminc.com
+npm run pearls-drone # Pearls' Photo & video loops and posters, from its hero video
 npm run sd           # SD cuts of Pearls' phone loop and Cubic Ship's
 npm run studio       # preview and scrub the compositions in the browser
 ```
@@ -60,6 +61,11 @@ It uses Remotion's own ffmpeg, so nothing needs installing.
   page captured, into a near-lossless master that's encoded as above. Nothing
   is dropped or doubled, as a screen recording would. The phone loop is the
   older one.
+- `scripts/pearls-drone.mjs` makes Pearls' Photo & video card (`pearls-drone-…`,
+  every size above, posters 1280×800 and 800×1000) from the drone footage in
+  pearlsfarminc.com's hero video, with no site around it: 8 s of the crew in
+  the rows, whose last second dissolves into its first. The source file and
+  the timings are in its opening comment.
 - `scripts/sd.mjs` makes `pearls-m-sd.mp4` and `cubic-d-sd.mp4` from the
   loops themselves: scaled to the SD size, and at most 900 KB and 60% of the
   loop. The Sticker Smith's loops are already lighter than that, so they have
