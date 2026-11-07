@@ -163,7 +163,7 @@ export async function POST(req: Request) {
     return NextResponse.json(
       {
         error:
-          "We couldn't file that on our end. Email studio.omora@gmail.com directly and we'll pick it up from there.",
+          "We couldn't file that on our end. Email elorro.us@gmail.com directly and we'll pick it up from there.",
       },
       { status: 503 }
     );

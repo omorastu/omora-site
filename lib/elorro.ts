@@ -18,7 +18,7 @@ export const brand = {
   name: "Elorro",
   /** The two rings, both in the logo's gold. */
   mark: "/m/brand/mark-192.png",
-  email: "studio.omora@gmail.com",
+  email: "elorro.us@gmail.com",
   where: "Bay Area",
 };
 
@@ -326,6 +326,11 @@ export type Project = {
   line: string;
   /** Unset: the card is its text alone. */
   media?: ProjectMedia;
+  /**
+   * Its card's media on its service's page and in its group on /work, where
+   * that should differ from the home page's card. Unset: `media` there too.
+   */
+  serviceMedia?: ProjectMedia;
   /** A link starting "/" stays on the site; any other opens in a new tab. */
   link?: { href: string; label: string };
   /**
@@ -374,6 +379,19 @@ export const projects: Project[] = [
         desktopSd: "/m/work/pearls-d-sd.mp4",
         mobile: "/m/work/pearls-m.mp4",
         mobileSd: "/m/work/pearls-m-sd.mp4",
+      },
+    },
+    // Under Photo & video, the film alone: Jordan's drone footage, cut from the
+    // live site's hero video (the crew in the rows, 5.4s to 14.4s).
+    serviceMedia: {
+      alt: "A Pearls Farm Labor crew at work between the vine rows, filmed from a drone.",
+      desktop: { src: "/m/work/pearls-drone-d-poster.jpg", width: 1280, height: 800 },
+      mobile: { src: "/m/work/pearls-drone-m-poster.jpg", width: 800, height: 1000 },
+      loop: {
+        desktop: "/m/work/pearls-drone-d.mp4",
+        desktopSd: "/m/work/pearls-drone-d-sd.mp4",
+        mobile: "/m/work/pearls-drone-m.mp4",
+        mobileSd: "/m/work/pearls-drone-m-sd.mp4",
       },
     },
     link: { href: "https://pearlsfarminc.com", label: "pearlsfarminc.com" },

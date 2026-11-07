@@ -25,13 +25,17 @@ import { cn } from "@/lib/utils";
 /** Every project ready to show, in order. */
 export const shownProjects = () => projects.filter((p) => !p.hidden);
 
-/** Every project ready to show under one service, in that service's own order. */
+/**
+ * Every project ready to show under one service, in that service's own order,
+ * each on its service media where it has some (the home page keeps `media`).
+ */
 export const projectsFor = (slug: ServiceSlug) => {
   const order = serviceFor(slug)?.work ?? [];
   const rank = (p: Project) => (order.includes(p.name) ? order.indexOf(p.name) : order.length);
   return shownProjects()
     .filter((p) => p.service === slug)
-    .sort((a, b) => rank(a) - rank(b));
+    .sort((a, b) => rank(a) - rank(b))
+    .map((p) => (p.serviceMedia ? { ...p, media: p.serviceMedia } : p));
 };
 
 /**

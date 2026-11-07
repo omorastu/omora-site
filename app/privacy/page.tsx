@@ -53,10 +53,10 @@ export default function Privacy() {
             <p>
               Email{" "}
               <a
-                href="mailto:studio.omora@gmail.com"
+                href="mailto:elorro.us@gmail.com"
                 className="text-violet underline decoration-violet-deep underline-offset-4 transition-colors hover:text-violet"
               >
-                studio.omora@gmail.com
+                elorro.us@gmail.com
               </a>{" "}
               any time to see what we hold on you or to have it deleted. Quote
               your reference number if you have one and it&rsquo;s faster.

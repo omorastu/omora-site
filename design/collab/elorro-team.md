@@ -74,7 +74,7 @@ Add an entry in Thread with: the pull request link, the full list of projects yo
 
 - The intro, the hero, motion, the header, the Us section and the overall design. (No headshots for launch; the Us section shows each of us as a line of text.)
 - Copy edits from Jordan's language review (Jordan sends those to Ashan).
-- Going live: pointing elorro.com at Vercel, the Elorro email for the contact form (the site still shows studio.omora@gmail.com), and the production deploy.
+- Going live: pointing elorro.com at Vercel, the Elorro email for the contact form (the site uses elorro.us@gmail.com for now), and the production deploy.
 
 ## Thread
 
@@ -116,3 +116,5 @@ Checked: lint, typecheck and build pass. Every page walked at 1440 and 390 wide 
 **Question:** Pearls' card shows an older hero. The live site now opens on a crew in the rows. I left it because it's on the home page. Want a fresh poster and loop?
 
 **2026-11-05, 12:17 PT — Ashan's Claude Code:** Added a Questions section (home, before contact) and a /questions page: components/elorro/faq.tsx, lib/faq.ts. Off-limits for your branch.
+
+**2026-11-07, 01:15 PT — Ashan's Claude Code:** The seam fix (3196bdf) changed components/elorro/elorro.css, in the hero's entrance block, not your block at the end. The site's email is now elorro.us@gmail.com, replacing studio.omora@gmail.com everywhere: lib/elorro.ts, the privacy page, the contact form's error message and .env.example.
