@@ -17,6 +17,17 @@ import { createContext, useContext, useEffect, useRef, useState } from "react";
  *
  * Inside a PlayGate (the home page's pinned row on phones, work-pin.tsx) a
  * loop also waits for the gate: in view but held back, it stays on its still.
+ *
+ * Some browsers won't start even a muted loop on their own: an iPhone in Low
+ * Power Mode (Safari, and Chrome, which is Safari underneath) refuses every
+ * play() until the visitor touches the page. A loop refused that way isn't
+ * given up on: it keeps its source, waits on its still and holds no download
+ * slot. The first loop on the page asks once whether loops may start on their
+ * own; if not, the page listens for the visitor's first tap, swipe or key, and
+ * in that gesture (iOS counts only what happens inside it) starts the loops
+ * refused so far and plays-and-pauses every loop with nothing loaded yet,
+ * which is what lets each start on its own later. Where loops start on their
+ * own, nothing listens and nothing changes.
  */
 
 /** Which of the loops in view may play; without one, all of them. */
@@ -62,6 +73,52 @@ function takeSlot(start: () => void) {
   };
 }
 
+/* Loops the browser won't start on their own (iOS in Low Power Mode). */
+
+/** A loop on the page, as the visitor's gesture sees it: true if it may now play. */
+type Loop = { unlock(): boolean };
+const loops = new Set<Loop>();
+/** What counts as the visitor's say-so: a tap (its touchend, pointerup or click), a swipe's touchend, a key. */
+const GESTURES = ["touchend", "pointerup", "click", "keydown"] as const;
+/** Heard first and only heard: never stopped, never prevented, so the hold, the Work row and the rest hear it as before. */
+const HEAR = { capture: true, passive: true } as const;
+let listening = false;
+let asked = false;
+
+/** Listen for the visitor's next gesture, until one lets a loop play. */
+function awaitGesture() {
+  if (listening) return;
+  listening = true;
+  for (const type of GESTURES) addEventListener(type, onGesture, HEAR);
+}
+
+/**
+ * Inside the gesture, every loop takes its chance (each only counts if it
+ * calls play() right here). Once any is let play, the gesture has counted and
+ * nothing more is needed; if none is, the browser didn't count this one, and
+ * the next gesture tries again.
+ */
+function onGesture() {
+  let allowed = false;
+  for (const loop of loops) if (loop.unlock()) allowed = true;
+  if (!allowed) return;
+  listening = false;
+  for (const type of GESTURES) removeEventListener(type, onGesture, HEAR);
+}
+
+/**
+ * Whether loops may start on their own, asked once, of a loop with nothing
+ * loaded (so nothing downloads). A browser that refuses play() leaves it
+ * paused there and then; one that doesn't is paused again at once.
+ */
+function ask(v: HTMLVideoElement) {
+  if (asked) return;
+  asked = true;
+  v.play()?.catch(() => {});
+  if (v.paused) awaitGesture();
+  else v.pause();
+}
+
 export function WorkVideo({ desktop, mobile, desktopSd, mobileSd }: Cuts) {
   const ref = useRef<HTMLVideoElement>(null);
   const [playing, setPlaying] = useState(false);
@@ -79,8 +136,11 @@ export function WorkVideo({ desktop, mobile, desktopSd, mobileSd }: Cuts) {
     let inView = false;
     let gaveUp = false;
     let ready = false; // enough of the cut is in to play through
+    let blocked = false; // the browser refused to start it on its own: on its still till a gesture
     let release: (() => void) | null = null;
     let stall = 0;
+
+    if (budget() !== "none") ask(v);
 
     const want = () => {
       const b = budget();
@@ -108,6 +168,7 @@ export function WorkVideo({ desktop, mobile, desktopSd, mobileSd }: Cuts) {
       calm();
       letGo();
       ready = false;
+      blocked = false;
       if (v.dataset.loaded) {
         v.pause();
         v.removeAttribute("src");
@@ -121,9 +182,28 @@ export function WorkVideo({ desktop, mobile, desktopSd, mobileSd }: Cuts) {
       unload();
     }
 
+    /** In view and, inside a gate, let through. */
+    const allowed = () => inView && (!gate || gate.plays(v));
+
     const play = () => {
       watch();
-      v.play()?.catch(() => {});
+      v.play()?.catch(refused);
+    };
+
+    /**
+     * A play() that didn't happen. Cut short by a pause or a new source (ours)
+     * or failing to load (the error event's business), it's nothing to do with
+     * this. Refused (iOS in Low Power Mode): keep the source and the still,
+     * stop the stall watch, free the slot, and wait for the visitor's gesture.
+     */
+    const refused = (err: unknown) => {
+      const name = err instanceof DOMException ? err.name : "";
+      if (name === "AbortError" || name === "NotSupportedError") return;
+      if (!v.paused || !v.dataset.loaded || !allowed()) return;
+      blocked = true;
+      calm();
+      letGo();
+      awaitGesture();
     };
 
     // Play the cut for the current width and connection while the card is
@@ -144,7 +224,8 @@ export function WorkVideo({ desktop, mobile, desktopSd, mobileSd }: Cuts) {
         if (held) setPlaying(false);
         return;
       }
-      if (v.dataset.loaded === src) return play();
+      // Refused before: it stays on its still until the visitor's gesture starts it.
+      if (v.dataset.loaded === src) return blocked ? undefined : play();
       if (release && !v.dataset.loaded) return; // already in line
       unload();
       release = takeSlot(() => {
@@ -169,6 +250,34 @@ export function WorkVideo({ desktop, mobile, desktopSd, mobileSd }: Cuts) {
       if (v.dataset.loaded) giveUp();
     };
 
+    /**
+     * Inside the visitor's gesture. Refused and allowed now: start it here,
+     * with a slot if one is free; if not, it goes back in line with nothing
+     * loading. Any loop with nothing loaded: play and pause it here, so it may
+     * start on its own when its turn comes. True if the browser let it play.
+     */
+    const loop: Loop = {
+      unlock() {
+        let requeue = false;
+        if (blocked) {
+          blocked = false;
+          if (allowed() && loading < MAX_LOADING) {
+            release = takeSlot(play);
+            return !v.paused;
+          }
+          unload();
+          requeue = true;
+        }
+        if (v.dataset.loaded || !v.paused) return false;
+        v.play()?.catch(() => {});
+        const ok = !v.paused;
+        v.pause();
+        if (requeue) sync();
+        return ok;
+      },
+    };
+    loops.add(loop);
+
     v.addEventListener("playing", onPlaying);
     v.addEventListener("canplaythrough", onReady);
     v.addEventListener("waiting", onDry);
@@ -186,6 +295,7 @@ export function WorkVideo({ desktop, mobile, desktopSd, mobileSd }: Cuts) {
     small.addEventListener("change", sync);
     const unsubscribe = gate?.subscribe(sync);
     return () => {
+      loops.delete(loop);
       unsubscribe?.();
       io.disconnect();
       small.removeEventListener("change", sync);
