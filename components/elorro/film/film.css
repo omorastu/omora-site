@@ -1,0 +1,330 @@
+/* =====================================================================
+   The film (components/elorro/film): full screen over the page, on the
+   intro's black, in the site's gold, paper and type. Only /film loads this.
+
+   One clock: every animation here is a CSS animation timed in seconds from
+   the film's start (a scene's --s and --d, a beat's --at share of it, a
+   caption's --from and --len), and film.tsx runs them all together, from
+   one place in time, in step with Elora's voice. Its resting state is never
+   a motion: with every effect done, each scene reads as it should, which is
+   what reduced motion shows, fading in (at the end of this file).
+   ===================================================================== */
+
+.film {
+  --night: #0C0A08;
+  --paper: #F4F1EA;
+  --ink: #16130F;
+  --gold: #A8802F;
+  --gold-hi: #BE9645;
+  --gold-lo: #876122;
+  --film-ease: cubic-bezier(.33, 0, .15, 1);
+  --display: var(--font-logo), Georgia, "Times New Roman", serif;
+  --text: var(--font-hanken), "Helvetica Neue", Arial, sans-serif;
+  /* The set: square, as big as the screen allows under the top bar and over the captions. */
+  --set: min(calc(100vw - 24px), calc(100svh - 15.5rem), 760px);
+  position: fixed;
+  inset: 0;
+  z-index: 2147483000;
+  color: var(--paper);
+  font-family: var(--text);
+  -webkit-font-smoothing: antialiased;
+  touch-action: none;
+  overscroll-behavior: contain;
+  transition: opacity .45s ease;
+}
+.film.is-closing { opacity: 0; pointer-events: none; }
+.film *, .film *::before, .film *::after { box-sizing: border-box; }
+
+/* The page fades to black. */
+.film-reel {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  background: var(--night);
+  overflow: hidden;
+  animation: film-open .8s ease-out 0s both;
+}
+@keyframes film-open { from { opacity: 0; } }
+
+/* ---------- the top: a scene's label, and leaving ---------- */
+.film-top {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  min-height: 4rem;
+  padding: max(.75rem, env(safe-area-inset-top)) max(.75rem, env(safe-area-inset-right)) 0 max(1.25rem, env(safe-area-inset-left));
+}
+.film-labels { position: relative; flex: 1; height: 1.5em; font-size: max(.8125rem, 11px); }
+.film-label {
+  position: absolute;
+  inset: 0 auto auto 0;
+  margin: 0;
+  color: var(--gold-hi);
+  font-weight: 500;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  animation: film-window var(--len) linear var(--from) both;
+}
+.film-ctls { display: flex; gap: .25rem; }
+.film-ctl {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  color: rgb(244 241 234 / .62);
+  cursor: pointer;
+  transition: color .2s ease, background-color .2s ease;
+}
+.film-ctl svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.film-ctl:focus-visible { outline: 2px solid var(--gold-hi); outline-offset: 0; color: var(--paper); }
+@media (hover: hover) {
+  .film-ctl:hover { color: var(--paper); background: rgb(244 241 234 / .06); }
+}
+
+/* ---------- the set ---------- */
+.film-stage { position: relative; display: grid; place-items: center; min-height: 0; }
+.film-set { position: relative; width: var(--set); height: var(--set); }
+.film-scene { position: absolute; inset: 0; }
+.film-lens, .film-drift { position: absolute; inset: 0; }
+.film-art { display: block; width: 100%; height: 100%; overflow: visible; }
+
+/* Each scene comes in as the camera eases forward, drifts on while it
+   plays, and goes as the camera pushes on through it into the next, the
+   two overlapping: no cuts. */
+.film-scene {
+  animation:
+    film-in 1.2s var(--film-ease) calc(var(--s) - .25s) both,
+    film-out 1.1s ease-in calc(var(--s) + var(--d) - .55s) forwards;
+}
+.film-lens {
+  animation:
+    lens-in 1.9s var(--film-ease) calc(var(--s) - .25s) both,
+    lens-out 1.1s cubic-bezier(.55, 0, .8, .2) calc(var(--s) + var(--d) - .55s) forwards;
+}
+.film-drift { animation: film-drift calc(var(--d) + .8s) linear calc(var(--s) - .25s) both; }
+/* The first scene rises out of the black; the last one stays. */
+.film-scene:first-of-type { animation-delay: .5s, calc(var(--s) + var(--d) - .55s); }
+.film-scene:last-of-type { animation: film-in 1.2s var(--film-ease) calc(var(--s) - .25s) both; }
+.film-scene:last-of-type .film-lens { animation: lens-in 1.9s var(--film-ease) calc(var(--s) - .25s) both; }
+@keyframes film-in { from { opacity: 0; } }
+@keyframes film-out { to { opacity: 0; } }
+@keyframes lens-in { from { transform: scale(.93); } }
+@keyframes lens-out { to { transform: scale(1.07); } }
+@keyframes film-drift { from { transform: scale(1); } to { transform: scale(1.035); } }
+
+/* "And the rest": three panels side by side, the camera panning across. */
+.film-scene[data-scene="more"] .film-drift {
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 7%, #000 93%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 7%, #000 93%, transparent);
+}
+.film-strip { position: absolute; inset: 0 auto 0 0; display: flex; width: 300%; }
+.film-panel { position: relative; width: calc(100% / 3); height: 100%; }
+/* .fx too, so the generic beat timing below doesn't win over the pan's own. */
+.film .fx.fx-pan { animation: film-pan var(--d) linear var(--s) both; }
+@keyframes film-pan {
+  0%, 31% { transform: translateX(0); animation-timing-function: cubic-bezier(.6, 0, .25, 1); }
+  37.5%, 55% { transform: translateX(calc(-100% / 3)); animation-timing-function: cubic-bezier(.6, 0, .25, 1); }
+  61.5%, 100% { transform: translateX(calc(-200% / 3)); }
+}
+
+/* ---------- drawing on the set ---------- */
+.film-art text { fill: var(--paper); font-family: var(--text); text-anchor: middle; }
+.film-art .t-disp { font-family: var(--display); font-weight: 500; letter-spacing: -.01em; }
+.film-art .t-mark { font-weight: 600; }
+.film-art .t-small { font-weight: 500; letter-spacing: .16em; text-transform: uppercase; fill: rgb(244 241 234 / .62); }
+.film-art .t-caps { font-weight: 600; letter-spacing: .14em; text-transform: uppercase; }
+.film-art .t-left { text-anchor: start; }
+.film-art .t-right { text-anchor: end; }
+.film-art .t-soft { fill: rgb(244 241 234 / .7); }
+.film-art .t-ink { fill: var(--ink); }
+.film-art .t-ink-soft { fill: rgb(22 19 15 / .6); }
+.film-art .t-gold { fill: var(--gold-hi); }
+.film-art .t-gold-deep { fill: var(--gold-lo); }
+.film-art .t-strong, .film-art .t-num { font-weight: 600; }
+
+.film-art .s-line { fill: none; stroke: rgb(244 241 234 / .42); stroke-width: 3; }
+.film-art .s-soft { fill: none; stroke: rgb(244 241 234 / .18); stroke-width: 3; stroke-linecap: round; }
+.film-art .s-dim { fill: none; stroke: rgb(244 241 234 / .42); stroke-width: 3; stroke-linecap: round; }
+.film-art .s-paper { fill: none; stroke: var(--paper); stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; }
+.film-art .s-gold { fill: none; stroke: var(--gold-hi); stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; }
+.film-art .s-gold-thin { fill: none; stroke: var(--gold-hi); stroke-width: 2.5; stroke-linecap: round; }
+.film-art .s-gold-faint { fill: rgb(190 150 69 / .06); stroke: rgb(190 150 69 / .55); stroke-width: 2.5; }
+.film-art .s-ink { fill: none; stroke: var(--ink); stroke-width: 5; stroke-linecap: round; stroke-linejoin: round; }
+.film-art .s-ink-soft { fill: none; stroke: rgb(22 19 15 / .2); stroke-width: 2; }
+.film-art .thick { stroke-width: 12; }
+.film-art .dashed { stroke-dasharray: 10 12; }
+.film-art .f-gold { fill: var(--gold-hi); }
+.film-art .f-paper { fill: var(--paper); }
+.film-art .f-card, .film-art .f-site { fill: rgb(244 241 234 / .03); }
+.film-art .f-glow { fill: rgb(190 150 69 / .08); }
+.film-art .f-gold-dim { fill: rgb(190 150 69 / .18); }
+.film-art .f-dim { fill: rgb(244 241 234 / .3); }
+
+/* ---------- effects ----------
+   A beat: `fx fx-<kind>`, starting --at of the way into its scene, --len
+   long, --n times. In SVG it moves about its own middle. */
+.film .fx {
+  animation-duration: var(--len, .9s);
+  animation-timing-function: var(--film-ease);
+  animation-fill-mode: both;
+  animation-delay: calc(var(--s) + var(--d) * var(--at, 0));
+  animation-iteration-count: var(--n, 1);
+}
+.film-art .fx { transform-box: fill-box; transform-origin: center; }
+.film .fx-fade { animation-name: fx-fade; }
+.film .fx-out { animation-name: fx-out; }
+.film .fx-rise { animation-name: fx-rise; }
+.film .fx-pop { animation-name: fx-pop; }
+.film .fx-draw { animation-name: fx-draw; stroke-dasharray: 1 1; }
+.film .fx-undraw { animation-name: fx-undraw; stroke-dasharray: 1 1; }
+.film .fx-ring { animation-name: fx-ring; animation-timing-function: ease-out; }
+.film .fx-flow { animation-name: fx-flow; animation-timing-function: linear; }
+.film .fx-blink { animation-name: fx-blink; animation-timing-function: ease-in-out; }
+.film .fx-shake { animation-name: fx-shake; animation-timing-function: linear; }
+.film .fx-slide { animation-name: fx-slide; }
+.film .fx-moveto { animation-name: fx-moveto; }
+.film .fx-glow { animation-name: fx-glow; }
+.film .fx-open { animation-name: fx-open; }
+.film .fx-press { animation-name: fx-press; }
+.film .fx-grow { animation-name: fx-grow; transform-origin: left center; }
+.film .fx-focus { animation-name: fx-focus; }
+
+@keyframes fx-fade { from { opacity: 0; } }
+@keyframes fx-out { to { opacity: 0; } }
+@keyframes fx-rise { from { opacity: 0; transform: translate3d(0, 26px, 0); } }
+@keyframes fx-pop { from { opacity: 0; transform: scale(.82); } }
+@keyframes fx-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+@keyframes fx-undraw { from { stroke-dashoffset: 0; } to { stroke-dashoffset: -1; } }
+@keyframes fx-ring {
+  0% { opacity: 0; transform: scale(1); }
+  20% { opacity: .55; }
+  100% { opacity: 0; transform: scale(1.7); }
+}
+@keyframes fx-flow { from { transform: translateX(0); } to { transform: translateX(var(--dx)); } }
+@keyframes fx-blink { 0%, 100% { opacity: 1; } 50% { opacity: .15; } }
+@keyframes fx-shake {
+  0%, 60%, 100% { transform: rotate(0); }
+  10%, 30%, 50% { transform: rotate(-5deg); }
+  20%, 40% { transform: rotate(5deg); }
+}
+@keyframes fx-slide { from { transform: translate3d(0, var(--dy), 0); } }
+@keyframes fx-moveto { to { transform: translate3d(var(--dx, 0), var(--dy, 0), 0); } }
+@keyframes fx-glow { from { opacity: .35; } }
+@keyframes fx-open { from { opacity: 0; transform: translate3d(0, -150px, 0) scale(.42); } }
+@keyframes fx-press { 0%, 100% { transform: none; } 40% { transform: scale(.94); } }
+@keyframes fx-grow { from { transform: scaleX(0); } }
+@keyframes fx-focus { from { opacity: 0; transform: scale(1.6); } }
+
+/* ---------- the end: book a call ---------- */
+.film-book {
+  position: absolute;
+  left: 50%;
+  top: 79%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 3.25rem;
+  padding: 0 1.75rem;
+  background: var(--gold);
+  background-image: linear-gradient(180deg, var(--gold-hi), #886826 36%, #6D4F1C);
+  color: var(--paper);
+  font-family: var(--text);
+  font-size: max(.8125rem, 12px);
+  font-weight: 600;
+  letter-spacing: .14em;
+  line-height: 1;
+  text-decoration: none;
+  text-transform: uppercase;
+  white-space: nowrap;
+  animation: film-book .9s var(--film-ease) var(--from) both;
+}
+.film-book:focus-visible { outline: 2px solid var(--paper); outline-offset: 3px; }
+@media (hover: hover) {
+  .film-book:hover { box-shadow: inset 0 0 0 100vmax rgb(32 20 4 / .16); }
+}
+@keyframes film-book {
+  from { opacity: 0; visibility: hidden; transform: translate3d(-50%, 14px, 0); }
+  to { opacity: 1; visibility: visible; transform: translate3d(-50%, 0, 0); }
+}
+
+/* ---------- captions: always on, in step with her ---------- */
+.film-bottom { position: relative; padding: .5rem max(1.25rem, env(safe-area-inset-right)) max(1.75rem, calc(env(safe-area-inset-bottom) + 1rem)) max(1.25rem, env(safe-area-inset-left)); }
+.film-caps { position: relative; max-width: 36rem; height: 4.2em; margin: 0 auto; font-size: 1.125rem; line-height: 1.38; text-align: center; }
+.film-cap {
+  position: absolute;
+  inset: 0 0 auto;
+  margin: 0;
+  text-wrap: balance;
+  animation: film-cap var(--len) linear var(--from) both;
+}
+@keyframes film-cap {
+  0% { opacity: 0; transform: translate3d(0, .3em, 0); }
+  6%, 94% { opacity: 1; transform: none; }
+  100% { opacity: 0; transform: none; }
+}
+@keyframes film-window { 0%, 100% { opacity: 0; } 8%, 92% { opacity: 1; } }
+@media (min-width: 768px) {
+  .film-caps { font-size: 1.375rem; }
+}
+
+/* A hairline of gold along the foot: how far in. */
+.film-progress { position: absolute; inset: auto 0 0; height: 2px; background: rgb(244 241 234 / .08); }
+.film-progress i { display: block; height: 100%; background: var(--gold-hi); transform-origin: left; animation: film-progress var(--total) linear 0s both; }
+@keyframes film-progress { from { transform: scaleX(0); } }
+/* The clock the film's end is read from. */
+.film-clock { position: absolute; width: 0; height: 0; animation: film-clock var(--total) linear 0s both; }
+@keyframes film-clock { from { opacity: 0; } to { opacity: 0; } }
+
+.film-sr { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+/* ---------- reduced motion: the same scenes, as gentle fades ----------
+   No camera, no drawing, nothing shakes, rings or travels: each picture
+   fades in at its beat in its finished state, and the panels of "and the
+   rest" take turns in one place instead of panning. */
+@media (prefers-reduced-motion: reduce) {
+  .film-lens, .film-drift, .film-scene:last-of-type .film-lens { animation: none; }
+  .film .fx-rise, .film .fx-pop, .film .fx-focus, .film .fx-open, .film .fx-draw, .film .fx-grow, .film .fx-glow { animation-name: fx-fade; }
+  .film .fx-draw { stroke-dasharray: none; }
+  .film .fx-undraw { animation-name: fx-out; stroke-dasharray: none; }
+  .film .fx-slide, .film .fx-shake, .film .fx-blink, .film .fx-press { animation-name: none; }
+  .film .fx-ring, .film .fx-flow { animation: none; opacity: 0; }
+  .film .fx.fx-pan { animation: none; transform: none; }
+  .film-strip { width: 100%; }
+  .film-panel { position: absolute; inset: 0; width: 100%; }
+  .film .fx-panel1, .film .fx-panel2, .film .fx-panel3 { animation-duration: var(--d); animation-delay: var(--s); animation-timing-function: linear; }
+  .film .fx-panel1 { animation-name: film-panel1; }
+  .film .fx-panel2 { animation-name: film-panel2; }
+  .film .fx-panel3 { animation-name: film-panel3; }
+  .film-scene[data-scene="more"] .film-drift { -webkit-mask-image: none; mask-image: none; }
+  @keyframes film-panel1 { 0%, 31% { opacity: 1; } 37.5%, 100% { opacity: 0; } }
+  @keyframes film-panel2 { 0%, 31% { opacity: 0; } 37.5%, 55% { opacity: 1; } 61.5%, 100% { opacity: 0; } }
+  @keyframes film-panel3 { 0%, 55% { opacity: 0; } 61.5%, 100% { opacity: 1; } }
+  .film-cap { animation-name: film-window; }
+  .film-book { animation-name: film-book-still; }
+  /* app/globals.css cuts every animation to nothing under reduced motion.
+     Here they're the film's timing (when a scene, a line, a caption shows),
+     not motion, so they keep their lengths. */
+  .film-reel { animation-duration: .8s !important; }
+  .film-scene { animation-duration: 1.2s, 1.1s !important; }
+  .film-scene:last-of-type { animation-duration: 1.2s !important; }
+  .film .fx { animation-duration: var(--len, .9s) !important; }
+  .film .fx-panel1, .film .fx-panel2, .film .fx-panel3 { animation-duration: var(--d) !important; }
+  .film-cap, .film-label { animation-duration: var(--len) !important; }
+  .film-book { animation-duration: .9s !important; }
+  .film-progress i, .film-clock { animation-duration: var(--total) !important; }
+  /* The two calendars become one where it ends up, in a cut rather than a slide. */
+  .film .fx-moveto { animation-duration: .01s !important; }
+  @keyframes film-book-still {
+    from { opacity: 0; visibility: hidden; transform: translate3d(-50%, 0, 0); }
+    to { opacity: 1; visibility: visible; transform: translate3d(-50%, 0, 0); }
+  }
+}

@@ -14,6 +14,7 @@ npm run render       # every project's videos, posters and stills → ../public/
 npm run build        # capture, then render
 npm run pearls       # pearls-d.mp4 and its SD cut, from pearlsfarminc.com
 npm run pearls-drone # Pearls' Photo & video loops and posters, from its hero video
+npm run film-voice   # the /film narration's placeholder voice (macOS `say`), from its script
 npm run sd           # SD cuts of Pearls' phone loop and Cubic Ship's
 npm run studio       # preview and scrub the compositions in the browser
 ```
