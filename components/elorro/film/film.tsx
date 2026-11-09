@@ -30,6 +30,8 @@ const CAPTIONS = captions();
 const LAST = parts[parts.length - 1];
 /** The button to book a call comes up as she says so, the film's last line. */
 const BOOK_AT = LAST.start + (LAST.scene.lines[LAST.scene.lines.length - 1]?.at ?? 0);
+/** The longest the pictures wait for a stalled voice, in ms, before going on without it. */
+const STALL_MS = 2000;
 /** Keys that would scroll the page under the film. */
 const SCROLL_KEYS = new Set([" ", "PageDown", "PageUp", "Home", "End", "ArrowDown", "ArrowUp", "ArrowLeft", "ArrowRight"]);
 
@@ -183,19 +185,42 @@ function Film({
       }
     };
 
-    const leads = () => !!a && !!voice.src && !a.paused && !a.ended;
+    /** The voice stalled for longer than the pictures will wait: they go on, and it catches up when it can. */
+    let stalled = false;
+    let waiting = false;
+    let stall = 0;
+    const leads = () => !!a && !!voice.src && !a.paused && !a.ended && !stalled;
     if (run) runAt(leads() ? a!.currentTime : at);
     else pauseAt(at);
     if (clock) clock.onfinish = () => setEnded(true);
 
-    // One file: the pictures follow it, and wait for it if it stalls.
-    const onWaiting = () => leads() && pauseAt(now());
-    const onPlaying = () => leads() && runAt(a!.currentTime);
+    // One file: the pictures follow it, and wait for it if it stalls, for STALL_MS at most.
+    const onWaiting = () => {
+      if (!leads()) return;
+      waiting = true;
+      pauseAt(now());
+      clearTimeout(stall);
+      stall = window.setTimeout(() => {
+        stalled = true;
+        waiting = false;
+        runAt(now());
+      }, STALL_MS);
+    };
+    const onPlaying = () => {
+      clearTimeout(stall);
+      waiting = false;
+      if (stalled && a) {
+        stalled = false;
+        a.currentTime = now();
+      }
+      if (leads()) runAt(a!.currentTime);
+    };
     // One file per scene: each starts with its scene.
     let scene = 0;
     const tick = () => {
-      if (leads()) runAt(a!.currentTime);
-      else if (a && !voice.src) {
+      if (leads()) {
+        if (!waiting) runAt(a!.currentTime);
+      } else if (a && !voice.src) {
         const t = now();
         let i = 0;
         while (i + 1 < parts.length && parts[i + 1].start <= t) i++;
@@ -216,6 +241,7 @@ function Film({
     }
     return () => {
       clearInterval(timer);
+      clearTimeout(stall);
       a?.removeEventListener("waiting", onWaiting);
       a?.removeEventListener("playing", onPlaying);
       if (clock) clock.onfinish = null;
