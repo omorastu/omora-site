@@ -30,6 +30,13 @@ export type Scene = {
   voice?: string;
 };
 
+/**
+ * Elora on screen (elora.tsx): drawn for now. Give her a `video` (a talking
+ * avatar, square, her face in the middle) and it takes her place, played in
+ * step with the film; give it her voice too and point `voice.src` at it.
+ */
+export const elora: { video?: string; poster?: string } = {};
+
 export const voice: { src?: string; cues?: number[] } = {
   // A stand-in, read by macOS's Samantha (video/scripts/film-voice.mjs).
   src: "/m/film/elora-placeholder.m4a",
@@ -57,12 +64,12 @@ export const scenes: Scene[] = [
   {
     id: "problem",
     label: "02 · What’s really going on",
-    duration: 14,
+    duration: 16,
     lines: [
       { text: "Then they find what’s really going on.", at: 0.6 },
-      { text: "The same job, typed into two calendars.", at: 3.4 },
-      { text: "Calls nobody had a free hand to answer.", at: 6.9 },
-      { text: "A good business that’s hard to find online.", at: 10 },
+      { text: "A tasting and a consult, each booked twice for the same hour.", at: 3.2 },
+      { text: "Calls the front desk was too busy to answer.", at: 7.2 },
+      { text: "A good winery, or a good orthodontist, that’s hard to find online.", at: 10.4 },
     ],
   },
   {
