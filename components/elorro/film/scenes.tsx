@@ -2,14 +2,13 @@ import { createContext, useContext, useLayoutEffect, useRef, type CSSProperties,
 import type { SceneId } from "@/components/elorro/film/script";
 
 /**
- * The film's pictures. Each scene fills the frame in three layers, which the
- * camera moves at different speeds (film.css, "camera"), so they read as
- * depth:
- * - far: the backdrop, edge to edge, all soft light: gradients only, no blur
- *   filters (they're costly on a phone);
+ * The film's pictures. Each scene fills the frame in layers, which the camera
+ * moves at different speeds (film.css, "camera"), so they read as depth:
+ * - far: the backdrop, edge to edge, soft light only: gradients, no blur
+ *   filters (they're costly on a phone), and nothing floating in it;
  * - mid: the scene itself, on a set as big as the screen allows, its big
  *   words in HTML so a shine can cross them like the logo's;
- * - near: out-of-focus gold, drifting past.
+ * - near (Elora's scene and the close only): a sweep of light, once.
  *
  * Two shapes of set. Wide (desktop, tablets, a phone on its side): a square,
  * 1000 × 1000. Tall (a phone upright, film.css "phones first"): 1000 × 1100,
@@ -23,17 +22,29 @@ import type { SceneId } from "@/components/elorro/film/script";
  * script.ts keeps its choreography in step. A thing that moves never carries
  * a transform attribute of its own: its effect goes on a wrapping <g>.
  *
- * A gold thread runs through it: the rule under the logo, the thread Elora
- * leaves as she goes to her corner (Handoff), the call, the knot of the
- * three problems pulled straight, one thread at a time, into the lines of the
- * plan, the rule under the two of them. The two businesses
- * are the ones Elorro works for: a winery and an orthodontist. The winery is
- * the one followed onto its website. "And the rest" shows two pieces of
- * Elorro's real work, playing (Clip).
+ * The story runs outside in, the way a customer meets a business: being
+ * found, the website, booking, a call; then behind the scenes, the office and
+ * the photos; then the plan they'd get. Each is a problem, then the fix,
+ * quickly: a scene's stages (Stage) give way to one another on the set, the
+ * problem in paper and grey, the fix arriving in gold. The winery is the
+ * business for being found, its website and its bookings; the orthodontist
+ * for calls and the office. Three scenes play Elorro's real work (Clip):
+ * Prosperando's site, Clinical Scribe and the Pearls drone footage.
  */
 
 /** Each scene's length as designed, in seconds: its beats are shares of it. */
-export const DESIGN: Record<SceneId, number> = { elora: 9, call: 9.5, problem: 16, plan: 9.5, web: 14.5, more: 15.5, close: 10.5 };
+export const DESIGN: Record<SceneId, number> = {
+  elora: 9,
+  call: 8.5,
+  found: 12.5,
+  site: 9.5,
+  booking: 8.5,
+  calls: 9.5,
+  office: 12,
+  photo: 5.5,
+  plan: 9,
+  close: 10.5,
+};
 
 type Vars = CSSProperties & Record<`--${string}`, string | number>;
 type Opts = { len?: number; n?: number; dx?: number; dy?: number; cls?: string };
@@ -64,20 +75,19 @@ const wave = (x0: number, x1: number, y: number, amp: number, len: number) => {
 const ring = (cx: number, cy: number, r: number) => `M ${cx - r} ${cy} a ${r} ${r} 0 1 0 ${2 * r} 0 a ${r} ${r} 0 1 0 ${-2 * r} 0`;
 /** The same from its right, down and round the other way. */
 const ringR = (cx: number, cy: number, r: number) => `M ${cx + r} ${cy} a ${r} ${r} 0 1 1 ${-2 * r} 0 a ${r} ${r} 0 1 1 ${2 * r} 0`;
+/** A magnifying glass at (cx, cy), its lens r. */
+const lens = (cx: number, cy: number, r: number) => `${ring(cx, cy, r)} M ${cx + r * 0.75} ${cy + r * 0.8} L ${cx + r * 1.75} ${cy + r * 1.8}`;
+/** A four-pointed sparkle at (cx, cy), r to its points: the usual sign of an AI answer. */
+const sparkle = (cx: number, cy: number, r: number) =>
+  `M ${cx} ${cy - r} Q ${cx} ${cy} ${cx + r} ${cy} Q ${cx} ${cy} ${cx} ${cy + r} Q ${cx} ${cy} ${cx - r} ${cy} Q ${cx} ${cy} ${cx} ${cy - r} Z`;
 const HANDSET = "q 10 -18 22 -6 l 8 8 q 6 8 -2 16 q 10 18 26 26 q 8 -8 16 -2 l 8 8 q 12 12 -6 22 q -38 6 -72 -72 z";
 const STAR = "l 5.5 11 l 12 1.6 l -8.8 8.6 l 2.4 12 l -11.1 -5.6 l -11.1 5.6 l 2.4 -12 l -8.8 -8.6 l 12 -1.6 z";
 const sec = (t: number) => `${t.toFixed(3)}s`;
 
-/** A drawing on the set. With `smil` (its scene's designed length), it holds SMIL animations, whose clock film.tsx keeps on the film's. */
-function Art({ tall, smil, children }: { tall: boolean; smil?: number; children: ReactNode }) {
+/** A drawing on the set. */
+function Art({ tall, children }: { tall: boolean; children: ReactNode }) {
   return (
-    <svg
-      className={smil ? "film-art film-smil" : "film-art"}
-      data-design={smil}
-      viewBox={`0 0 1000 ${tall ? 1100 : 1000}`}
-      aria-hidden="true"
-      focusable="false"
-    >
+    <svg className="film-art" viewBox={`0 0 1000 ${tall ? 1100 : 1000}`} aria-hidden="true" focusable="false">
       {children}
     </svg>
   );
@@ -87,6 +97,20 @@ function Far({ children }: { children: ReactNode }) {
     <svg className="film-far-art" viewBox="0 0 1600 1000" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false">
       {children}
     </svg>
+  );
+}
+/** A soft light in a backdrop, at (cx, cy) in % of it, reaching `r` %: one gradient, nothing else. */
+function Glow({ id, cx, cy, r, o, color = "#D9B66A" }: { id: string; cx: number; cy: number; r: number; o: number; color?: string }) {
+  return (
+    <>
+      <defs>
+        <radialGradient id={id} cx={`${cx}%`} cy={`${cy}%`} r={`${r}%`}>
+          <stop offset="0" stopColor={color} stopOpacity={o} />
+          <stop offset="1" stopColor="#0C0A08" stopOpacity="0" />
+        </radialGradient>
+      </defs>
+      <rect width="1600" height="1000" fill={`url(#${id})`} />
+    </>
   );
 }
 
@@ -105,12 +129,13 @@ function Gold({ d, fx, thin }: { d: string; fx?: Beat; thin?: boolean }) {
   );
 }
 
-/** A big word, in HTML on the set: `x`, `y` in % of the set, `size` a share of its width. */
+/** A big word, in HTML on the set: `x`, `y` in % of the set, `size` a share of its width; `tracked`, its letters spaced like the wordmark's. */
 function Word({
   x,
   y,
   size,
   tone = "gold",
+  tracked,
   rise,
   shine,
   D,
@@ -120,6 +145,7 @@ function Word({
   y: number;
   size: number;
   tone?: "gold" | "paper" | "label" | "note";
+  tracked?: boolean;
   rise: number;
   shine?: number;
   D: number;
@@ -133,68 +159,96 @@ function Word({
     "--sh": shine === undefined ? 3 : +(shine / D).toFixed(4),
   };
   return (
-    <p className={`film-word film-word--${tone}`} style={style}>
+    <p className={`film-word film-word--${tone}${tracked ? " film-word--tracked" : ""}`} style={style}>
       {children}
     </p>
   );
 }
 
-/** Soft gold lights out of focus: [x %, y %, size in vmin, strength]. */
-function Bokeh({ dots }: { dots: [number, number, number, number][] }) {
+/** One stage of a scene, over the whole set: coming in at `from` (or there from the start), giving way at `to` (or staying to the end). */
+function Stage({ b, from, to, children }: { b: Beats; from?: number; to?: number; children: ReactNode }) {
+  const inner =
+    from === undefined ? <div className="film-layer">{children}</div> : <div {...b("come", from, { len: 1, cls: "film-layer" })}>{children}</div>;
+  return to === undefined ? inner : <div {...b("pass", to, { len: 0.8, cls: "film-layer" })}>{inner}</div>;
+}
+
+/** Text typed a letter at a time, from `at`, `step` apart (inside a <text>). */
+function Typed({ text, at, b, step = 0.055 }: { text: string; at: number; b: Beats; step?: number }) {
   return (
     <>
-      {dots.map(([x, y, s, o], i) => (
-        <i key={i} className="film-bokeh" style={{ left: `${x}%`, top: `${y}%`, width: `${s}vmin`, height: `${s}vmin`, opacity: o }} />
+      {[...text].map((ch, i) => (
+        <tspan key={i} {...b("fade", at + i * step, { len: 0.1 })}>
+          {ch}
+        </tspan>
       ))}
     </>
   );
 }
-const NEAR_A: [number, number, number, number][] = [[8, 18, 16, 0.22], [86, 12, 9, 0.3], [78, 74, 22, 0.16], [14, 82, 11, 0.26], [52, 6, 6, 0.35]];
-const NEAR_B: [number, number, number, number][] = [[90, 30, 18, 0.2], [6, 50, 12, 0.24], [70, 88, 10, 0.3], [30, 10, 24, 0.12], [44, 92, 7, 0.34]];
+
+/** A count going up in place: each value at its time, giving way to the next; the last stays. */
+function Count({ values, at, x, y, size, cls, b }: { values: string[]; at: number[]; x: number; y: number; size: number; cls: string; b: Beats }) {
+  return (
+    <>
+      {values.map((v, i) => {
+        const t = (
+          <text className={cls} x={x} y={y} fontSize={size}>
+            {v}
+          </text>
+        );
+        return (
+          <g key={v} {...b("fade", at[i], { len: 0.2 })}>
+            {i < values.length - 1 ? <g {...b("out", at[i + 1], { len: 0.15 })}>{t}</g> : t}
+          </g>
+        );
+      })}
+    </>
+  );
+}
+
+/** A tick in a gold circle at (cx, cy). */
+function Tick({ cx, cy, r }: { cx: number; cy: number; r: number }) {
+  return (
+    <>
+      <circle className="f-gold" cx={cx} cy={cy} r={r} />
+      <path className="s-ink" style={{ strokeWidth: +(r * 0.16).toFixed(1) }} d={`M ${cx - r * 0.46} ${cy + r * 0.02} l ${r * 0.3} ${r * 0.3} l ${r * 0.62} ${-r * 0.64}`} />
+    </>
+  );
+}
 
 /* ── Real work, playing ────────────────────────────────────────────────── */
 
-export type ClipId = "clinical" | "pearls";
+export type ClipId = "prosperando" | "clinical" | "pearls";
 type Cuts = { desktop: string; mobile: string; desktopSd: string; mobileSd: string };
+const cuts = (name: string): Cuts => ({
+  desktop: `/m/work/${name}-d.mp4`,
+  mobile: `/m/work/${name}-m.mp4`,
+  desktopSd: `/m/work/${name}-d-sd.mp4`,
+  mobileSd: `/m/work/${name}-m-sd.mp4`,
+});
+const posters = (name: string) => ({ desktop: `/m/work/${name}-d-poster.jpg`, mobile: `/m/work/${name}-m-poster.jpg` });
 /**
- * Two of Elorro's own loops (the Work page's), shown in "And the rest": its
- * still first, the loop over it once it plays. `at` and `until` are when it
- * plays, in seconds into its scene as designed; `offset`, where in the loop
- * it starts. film.tsx loads it shortly before (never at the film's start),
- * plays it in step with the film, and leaves it on its still under reduced
- * motion or on a connection too slow for it.
+ * Three of Elorro's own loops (the Work page's), each in its scene: its still
+ * first, the loop over it once it plays. `at` and `until` are when it plays,
+ * in seconds into its scene as designed; `offset`, where in the loop it
+ * starts. The tall layout plays the phone cut, the wide one the desktop cut.
+ * film.tsx loads each shortly before (never at the film's start), plays it in
+ * step with the film, and leaves it on its still under reduced motion or on a
+ * connection too slow for it.
  */
 export const CLIPS: Record<ClipId, { scene: SceneId; at: number; until: number; offset: number; cuts: Cuts; poster: { desktop: string; mobile: string } }> = {
+  // Prosperando's site, which Elorro built: its opening (the crest over the vines), then on down to a vineyard's page; on a phone, the phone opening.
+  prosperando: { scene: "site", at: 3.9, until: 10.1, offset: 0, cuts: cuts("prosperando"), poster: posters("prosperando") },
   // Clinical Scribe: a consult recorded, then written up. Made-up demo data.
-  clinical: {
-    scene: "more",
-    at: 1.7,
-    until: 6,
-    offset: 1.8,
-    cuts: { desktop: "/m/work/clinical-d.mp4", mobile: "/m/work/clinical-m.mp4", desktopSd: "/m/work/clinical-d-sd.mp4", mobileSd: "/m/work/clinical-m-sd.mp4" },
-    poster: { desktop: "/m/work/clinical-d-poster.jpg", mobile: "/m/work/clinical-m-poster.jpg" },
-  },
+  clinical: { scene: "office", at: 8.2, until: 12.6, offset: 1.8, cuts: cuts("clinical"), poster: posters("clinical") },
   // Pearls: the drone over the vines.
-  pearls: {
-    scene: "more",
-    at: 6.6,
-    until: 9.7,
-    offset: 0,
-    cuts: {
-      desktop: "/m/work/pearls-drone-d.mp4",
-      mobile: "/m/work/pearls-drone-m.mp4",
-      desktopSd: "/m/work/pearls-drone-d-sd.mp4",
-      mobileSd: "/m/work/pearls-drone-m-sd.mp4",
-    },
-    poster: { desktop: "/m/work/pearls-drone-d-poster.jpg", mobile: "/m/work/pearls-drone-m-poster.jpg" },
-  },
+  pearls: { scene: "photo", at: 1.2, until: 6.1, offset: 0, cuts: cuts("pearls-drone"), poster: posters("pearls-drone") },
 };
 
 /** Where film.tsx puts a loop's video once its scene is in the page (null as it leaves). */
 export const ClipContext = createContext<((id: ClipId, slot: HTMLElement | null) => void) | null>(null);
 
-/** A loop on the set, in its box (set units): its still, and a place for its video, fading in at `fx`. */
-function Clip({ id, tall, box: [x, y, w, h], fx, top }: { id: ClipId; tall: boolean; box: Box; fx: Beat; top?: boolean }) {
+/** A loop on the set, in its box (set units): its still, and a place for its video, fading in at `fx`. `clean`: no darkening at its edges. */
+function Clip({ id, tall, box: [x, y, w, h], fx, top, clean }: { id: ClipId; tall: boolean; box: Box; fx: Beat; top?: boolean; clean?: boolean }) {
   const attach = useContext(ClipContext);
   const slot = useRef<HTMLDivElement>(null);
   useLayoutEffect(() => {
@@ -205,10 +259,9 @@ function Clip({ id, tall, box: [x, y, w, h], fx, top }: { id: ClipId; tall: bool
   const c = CLIPS[id];
   const style: Vars = { ...fx.style, left: `${x / 10}%`, top: `${(y / V) * 100}%`, width: `${w / 10}%`, height: `${(h / V) * 100}%` };
   return (
-    <div className={`${fx.className} film-clip${top ? " film-clip--top" : ""}`} style={style}>
+    <div className={`${fx.className} film-clip${top ? " film-clip--top" : ""}${clean ? " film-clip--clean" : ""}`} style={style}>
       <picture>
-        <source media="(max-width: 1023px)" srcSet={c.poster.mobile} />
-        <img src={c.poster.desktop} alt="" decoding="async" />
+        <img src={tall ? c.poster.mobile : c.poster.desktop} alt="" decoding="async" />
       </picture>
       <div ref={slot} className="film-clip-slot" />
     </div>
@@ -248,7 +301,7 @@ export function Handoff({ tall, thread, title, gone }: { tall: boolean; thread: 
   );
 }
 
-/* ── 0. Elora ──────────────────────────────────────────────────────────── */
+/* ── Elora ─────────────────────────────────────────────────────────────── */
 
 function Elora(tall: boolean): SceneArt {
   const D = DESIGN.elora;
@@ -258,19 +311,8 @@ function Elora(tall: boolean): SceneArt {
   return {
     far: (
       <Far>
-        <defs>
-          <radialGradient id="far-elora-spot" cx="50%" cy="34%" r="58%">
-            <stop offset="0" stopColor="#E8C27A" stopOpacity=".34" />
-            <stop offset=".5" stopColor="#A8802F" stopOpacity=".1" />
-            <stop offset="1" stopColor="#0C0A08" stopOpacity="0" />
-          </radialGradient>
-          <radialGradient id="far-elora-floor" cx="50%" cy="100%" r="60%">
-            <stop offset="0" stopColor="#BE9645" stopOpacity=".2" />
-            <stop offset="1" stopColor="#0C0A08" stopOpacity="0" />
-          </radialGradient>
-        </defs>
-        <rect width="1600" height="1000" fill="url(#far-elora-spot)" />
-        <rect width="1600" height="1000" fill="url(#far-elora-floor)" />
+        <Glow id="far-elora-spot" cx={50} cy={34} r={58} o={0.24} color="#E8C27A" />
+        <Glow id="far-elora-floor" cx={50} cy={100} r={60} o={0.12} color="#BE9645" />
       </Far>
     ),
     mid: (
@@ -288,7 +330,7 @@ function Elora(tall: boolean): SceneArt {
           </g>
         </Art>
         <div {...b("out", 7.5, { len: 0.8, cls: "film-out" })}>
-          <Word x={50} y={tall ? 72 : 71} size={tall ? 0.13 : 0.11} rise={1.9} shine={2.6} D={D}>
+          <Word x={50} y={tall ? 72 : 71} size={tall ? 0.13 : 0.11} tracked rise={1.9} shine={2.6} D={D}>
             Elora
           </Word>
           <Word x={50} y={tall ? 81 : 78.5} size={tall ? 0.036 : 0.03} tone="label" rise={2.6} D={D}>
@@ -297,16 +339,32 @@ function Elora(tall: boolean): SceneArt {
         </div>
       </>
     ),
-    near: (
-      <>
-        <Bokeh dots={NEAR_A} />
-        <i {...b("sweep", 0.7, { len: 1.8, cls: "film-sweep" })} />
-      </>
-    ),
+    near: <i {...b("sweep", 0.7, { len: 1.8, cls: "film-sweep" })} />,
   };
 }
 
-/* ── 1. The call ───────────────────────────────────────────────────────── */
+/* ── The call ──────────────────────────────────────────────────────────── */
+
+/** The owners, side by side in the film's line: a woman and a man, head and shoulders, centred on (0, 0). */
+function Owners() {
+  return (
+    <>
+      {/* Her: hair to her shoulders, parted to one side. */}
+      <g transform="translate(-62 4)">
+        <path className="s-paper" d="M -21 -50 C -22 -24, -12 -11, 0 -11 C 12 -11, 22 -24, 21 -50" />
+        <path className="s-paper" d="M -37 8 C -30 -6, -32 -26, -32 -46 C -32 -72, -17 -84, 0 -84 C 17 -84, 32 -72, 32 -46 C 32 -26, 30 -6, 37 8" />
+        <path className="s-paper" d="M -21 -50 C -6 -52, 8 -60, 16 -74 M 21 -50 C 20 -60, 18 -68, 16 -74" />
+        <path className="s-paper" d="M -58 66 C -56 34, -40 16, -14 9 M 14 9 C 40 16, 56 34, 58 66 M -9 -10 V 6 M 9 -10 V 6" />
+      </g>
+      {/* Him: short hair, an open collar. */}
+      <g transform="translate(62 4)">
+        <path className="s-paper" d="M -25 -48 C -26 -20, -14 -8, 0 -8 C 14 -8, 26 -20, 25 -48" />
+        <path className="s-paper" d="M -25 -48 C -29 -72, -12 -82, 3 -80 C 19 -79, 30 -68, 25 -48 C 19 -58, 9 -62, -2 -58 C -10 -55, -18 -54, -25 -48 Z" />
+        <path className="s-paper" d="M -62 66 C -60 30, -42 14, -16 8 L 0 26 L 16 8 C 42 14, 60 30, 62 66 M -10 -8 V 7 M 10 -8 V 7" />
+      </g>
+    </>
+  );
+}
 
 function Call(tall: boolean): SceneArt {
   const D = DESIGN.call;
@@ -321,28 +379,20 @@ function Call(tall: boolean): SceneArt {
     far: (
       <Far>
         <defs>
-          <radialGradient id="far-call-you" cx="34%" cy="52%" r="40%">
-            <stop offset="0" stopColor="#F4F1EA" stopOpacity=".1" />
-            <stop offset="1" stopColor="#0C0A08" stopOpacity="0" />
-          </radialGradient>
-          <radialGradient id="far-call-us" cx="66%" cy="52%" r="44%">
-            <stop offset="0" stopColor="#D9B66A" stopOpacity=".3" />
-            <stop offset="1" stopColor="#0C0A08" stopOpacity="0" />
-          </radialGradient>
           <linearGradient id="far-call-line" x1="0" x2="1">
             <stop offset="0" stopColor="#BE9645" stopOpacity="0" />
-            <stop offset=".5" stopColor="#BE9645" stopOpacity=".35" />
+            <stop offset=".5" stopColor="#BE9645" stopOpacity=".22" />
             <stop offset="1" stopColor="#BE9645" stopOpacity="0" />
           </linearGradient>
         </defs>
-        <rect width="1600" height="1000" fill="url(#far-call-you)" />
-        <rect width="1600" height="1000" fill="url(#far-call-us)" />
+        <Glow id="far-call-you" cx={34} cy={52} r={40} o={0.07} color="#F4F1EA" />
+        <Glow id="far-call-us" cx={66} cy={52} r={44} o={0.2} />
         <rect x="0" y="719" width="1600" height="2" fill="url(#far-call-line)" />
       </Far>
     ),
     mid: (
       <>
-        <Word x={50} y={tall ? 14 : 15} size={tall ? 0.13 : 0.11} rise={5.0} shine={5.7} D={D}>
+        <Word x={50} y={tall ? 14 : 15} size={tall ? 0.13 : 0.11} rise={4.6} shine={5.3} D={D}>
           Listen.
         </Word>
         <Art tall={tall}>
@@ -351,12 +401,11 @@ function Call(tall: boolean): SceneArt {
               <rect x={you + r + 2} y={cy - 60} width={us - you - 2 * r - 4} height="120" />
             </clipPath>
           </defs>
-          {/* You: drawn on from the thread's end. */}
+          {/* You, the owners, both of you: drawn on from the thread's end. */}
           <path pathLength={1} d={ringR(you, cy, r)} {...b("draw", 0.9, { len: 1.3, cls: "s-paper-soft" })} />
           <g {...b("fade", 1.5, { len: 1 })}>
-            <g transform={`translate(${you} ${cy}) scale(${tall ? 2.15 : 1.7}) translate(-250 -470)`}>
-              <path className="s-paper" d="M 196 446 H 304 L 296 418 H 204 Z M 196 446 q 9 14 18 0 q 9 14 18 0 q 9 14 18 0 q 9 14 18 0 q 9 14 18 0 q 9 14 18 0" />
-              <path className="s-paper" d="M 206 458 V 522 H 294 V 458 M 234 522 V 486 H 262 V 522" />
+            <g transform={`translate(${you} ${cy}) scale(${((r / 150) * 1.06).toFixed(3)})`}>
+              <Owners />
             </g>
           </g>
           <text x={you} y={label} fontSize={tall ? 38 : 30} {...b("fade", 1.6, { cls: "t-small" })}>
@@ -375,778 +424,1189 @@ function Call(tall: boolean): SceneArt {
           {/* The call, and your voice coming down it. */}
           <Gold d={`M ${you + r + 2} ${cy} H ${us - r - 2}`} fx={b("fade", 1.3, { len: 0.6 })} />
           <g clipPath="url(#film-call-line)">
-            <g {...b("fade", 2.9, { len: 0.5 })}>
-              <g {...b("out", 7.6, { len: 0.6 })}>
-                <path d={wave(you, us - 90, cy, 30, 72)} {...b("flow", 2.9, { len: 0.75, n: 6, dx: 72, cls: "g-glow thin" })} />
-                <path d={wave(you, us - 90, cy, 30, 72)} {...b("flow", 2.9, { len: 0.75, n: 6, dx: 72, cls: "g-core thin" })} />
+            <g {...b("fade", 2.6, { len: 0.5 })}>
+              <g {...b("out", 7, { len: 0.6 })}>
+                <path d={wave(you, us - 90, cy, 30, 72)} {...b("flow", 2.6, { len: 0.75, n: 6, dx: 72, cls: "g-glow thin" })} />
+                <path d={wave(you, us - 90, cy, 30, 72)} {...b("flow", 2.6, { len: 0.75, n: 6, dx: 72, cls: "g-core thin" })} />
               </g>
             </g>
           </g>
           {/* And they listen. */}
-          <circle cx={us} cy={cy} r={r} {...b("ring", 3.3, { len: 1.6, n: 3, cls: "s-gold-thin" })} />
-          <circle cx={us} cy={cy} r={r} {...b("ring", 3.8, { len: 1.6, n: 3, cls: "s-gold-thin" })} />
+          <circle cx={us} cy={cy} r={r} {...b("ring", 3, { len: 1.6, n: 3, cls: "s-gold-thin" })} />
+          <circle cx={us} cy={cy} r={r} {...b("ring", 3.5, { len: 1.6, n: 3, cls: "s-gold-thin" })} />
         </Art>
       </>
     ),
-    near: <Bokeh dots={NEAR_B} />,
   };
 }
 
-/* ── 2. What's really going on: three panels, the camera moving across ─── */
+/* ── Getting found: page two, the top, and the answer an AI gives ──────── */
 
-/** One business's day, as laid out: the card, its title, hours and lines, the two bookings and the ×2. */
-type Cal = { x: number; y: number; w: number; h: number; title: [number, number, number]; hours: [x: number, y: number, dy: number, size: number]; line: [number, number]; a: Box; b: Box; size: number; badge: [cx: number, cy: number, r: number, size: number] };
-const calWide = (x: number): Cal => ({ x, y: 180, w: 400, h: 540, title: [32, 68, 26], hours: [34, 168, 120, 28], line: [112, 372], a: [112, 190, 260, 66], b: [96, 244, 260, 66], size: 28, badge: [366, 250, 34, 30] });
-const calTall = (y: number): Cal => ({ x: 40, y, w: 920, h: 470, title: [40, 72, 34], hours: [44, 170, 120, 36], line: [150, 880], a: [150, 214, 500, 78], b: [200, 288, 500, 78], size: 42, badge: [800, 290, 46, 42] });
+/** The search, as laid out: its bar, the results, page two's divider, the winery's result, and how far each moves. */
+const FIND_WIDE = {
+  x: 70, w: 860, bar: [76, 96], mag: [130, 122, 16], q: [180, 141, 46],
+  res: { y: 222, h: 104, gap: 124, l1: 38, l2: 74, w1: 400, w2: 700, k: 104 },
+  page: [612, 24, 90], you: { y: 640, h: 120, title: [36, 56, 46], star: [40, 77, 1], sub: [220, 99, 24] },
+};
+const FIND_TALL = {
+  x: 40, w: 920, bar: [50, 120], mag: [108, 106, 20], q: [166, 130, 56],
+  res: { y: 230, h: 136, gap: 160, l1: 50, l2: 96, w1: 460, w2: 780, k: 84 },
+  page: [732, 30, 110], you: { y: 770, h: 150, title: [40, 70, 56], star: [44, 92, 1.3], sub: [260, 122, 30] },
+};
+const QUERY = "winery napa";
 
-/** A day's bookings at one business, two of them in the same hour. */
-function Booked({ c, title, hours, a, b2, fx, t0 }: { c: Cal; title: string; hours: string[]; a: string; b2: string; fx: Beats; t0: number }) {
-  const at = `translate(${c.x} ${c.y})`;
-  const [hx, hy, hdy, hs] = c.hours;
-  const [bx, by, br, bs] = c.badge;
-  const chip = ([x, y, w, h]: Box, cls: string, tcls: string, text: string) => (
-    <g transform={at}>
-      <rect className={cls} x={x} y={y} width={w} height={h} rx="12" />
-      <text className={`${tcls} t-left`} x={x + c.size * 0.7} y={y + h / 2 + c.size * 0.36} fontSize={c.size}>
-        {text}
-      </text>
-    </g>
-  );
-  return (
-    <g {...fx("rise", t0, { len: 1 })}>
-      <g transform={at}>
-        <rect className="card" width={c.w} height={c.h} rx="26" />
-        <text className="t-small t-gold-text t-left" x={c.title[0]} y={c.title[1]} fontSize={c.title[2]}>
-          {title}
-        </text>
-        {hours.map((h, i) => (
-          <g key={h}>
-            <text className="t-faint t-left" x={hx} y={hy + i * hdy} fontSize={hs}>
-              {h}
-            </text>
-            <path className="s-soft" d={`M ${c.line[0]} ${hy + 10 + i * hdy} H ${c.line[1]}`} />
-          </g>
-        ))}
-      </g>
-      <g {...fx("rise", t0 + 1, { len: 0.8 })}>{chip(c.a, "chip", "t-ink", a)}</g>
-      <g {...fx("rise", t0 + 2.4, { len: 0.8 })}>{chip(c.b, "chip chip--clash", "t-gold-text", b2)}</g>
-      <g {...fx("pop", t0 + 3.2, { len: 0.6 })}>
-        <g transform={at}>
-          <circle className="f-gold" cx={bx} cy={by} r={br} />
-          <text className="t-ink t-strong" x={bx} y={by + bs * 0.36} fontSize={bs}>
-            ×2
-          </text>
-        </g>
-      </g>
-    </g>
-  );
-}
-
-/** The two searches, as laid out: where each sits, its bar, the results under it, and where the business is. */
-const SEARCH_WIDE = { ys: [90, 450], x: 70, w: 860, bar: 88, mag: [130, 42, 15], q: [180, 58, 42], res: [90, 140, 62, 520, 60, 170, 840, 40], you: [240, 66, 30, 44, 32, 26] };
-const SEARCH_TALL = { ys: [50, 590], x: 40, w: 920, bar: 110, mag: [105, 55, 19], q: [160, 73, 52], res: [60, 175, 70, 560, 70, 205, 900, 50], you: [300, 90, 36, 59, 44, 34] };
-
-function Problem(tall: boolean): SceneArt {
-  const D = DESIGN.problem;
+function Found(tall: boolean): SceneArt {
+  const D = DESIGN.found;
   const b = beats(D);
-  const S = tall ? SEARCH_TALL : SEARCH_WIDE;
+  const S = tall ? FIND_TALL : FIND_WIDE;
+  const [barY, barH] = S.bar;
+  const [py, ps, pgap] = S.page;
+  const Y = S.you;
+  // The winery's result moves to the top as she says so; the others make way.
+  const MOVE = 5.1;
+  const AI = 7.4;
+  const stars = (cls: string) => (
+    <g className={cls} transform={`translate(${S.x + Y.star[0]} ${Y.y + Y.star[1]}) scale(${Y.star[2]})`}>
+      {[0, 1, 2, 3, 4].map((s) => (
+        <path key={s} d={`M ${12 + s * 30} 0 ${STAR}`} />
+      ))}
+    </g>
+  );
+  const result = (gold: boolean) => (
+    <>
+      <rect className={`card card--deep ${gold ? "s-gold-edge" : "s-paper-soft"}`} x={S.x} y={Y.y} width={S.w} height={Y.h} rx="18" />
+      <text className={`t-disp t-left ${gold ? "t-gold" : "t-faint"}`} x={S.x + Y.title[0]} y={Y.y + Y.title[1]} fontSize={Y.title[2]}>
+        Your winery
+      </text>
+      {stars(gold ? "f-gold" : "s-faint-star")}
+      <text className="t-small t-left" x={S.x + Y.sub[0]} y={Y.y + Y.sub[1]} fontSize={Y.sub[2]}>
+        Napa · Tastings daily
+      </text>
+    </>
+  );
   return {
     far: (
       <Far>
-        <defs>
-          <radialGradient id="far-problem-a" cx="50%" cy="46%" r="52%">
-            <stop offset="0" stopColor="#BE9645" stopOpacity=".2" />
-            <stop offset="1" stopColor="#0C0A08" stopOpacity="0" />
-          </radialGradient>
-          <radialGradient id="far-problem-b" cx="50%" cy="90%" r="60%">
-            <stop offset="0" stopColor="#D9B66A" stopOpacity=".26" />
-            <stop offset="1" stopColor="#0C0A08" stopOpacity="0" />
-          </radialGradient>
-          <radialGradient id="far-problem-c" cx="50%" cy="40%" r="62%">
-            <stop offset="0" stopColor="#F4F1EA" stopOpacity=".1" />
-            <stop offset="1" stopColor="#0C0A08" stopOpacity="0" />
-          </radialGradient>
-          <pattern id="far-problem-grid" width="80" height="80" patternUnits="userSpaceOnUse">
-            <path d="M 80 0 H 0 V 80" fill="none" stroke="#BE9645" strokeOpacity=".07" strokeWidth="2" />
-          </pattern>
-        </defs>
-        <g {...b("panelA1", 0)}>
-          <rect width="1600" height="1000" fill="url(#far-problem-grid)" />
-          <rect width="1600" height="1000" fill="url(#far-problem-a)" />
-        </g>
-        <g {...b("panelA2", 0)}>
-          <rect width="1600" height="1000" fill="url(#far-problem-b)" />
-        </g>
-        <g {...b("panelA3", 0)}>
-          <rect width="1600" height="1000" fill="url(#far-problem-c)" />
+        <Glow id="far-found-a" cx={50} cy={42} r={56} o={0.15} />
+        <g {...b("fade", AI, { len: 1.2 })}>
+          <Glow id="far-found-b" cx={50} cy={52} r={62} o={0.08} color="#F4F1EA" />
         </g>
       </Far>
     ),
     mid: (
-      <div {...b("pan2", 0, { cls: "film-strip" })}>
-        {/* A tasting and a consult, each booked twice: side by side, or one above the other on a phone. */}
-        <div {...b("panelA1", 0, { cls: "film-panel" })}>
+      <>
+        <Stage b={b} to={AI - 0.1}>
           <Art tall={tall}>
-            <Booked c={tall ? calTall(60) : calWide(70)} title="Winery · Sat" hours={["1pm", "2pm", "3pm"]} a="Tasting · 6 guests" b2="Tasting · 4 guests" fx={b} t0={0.9} />
-            <Booked c={tall ? calTall(570) : calWide(530)} title="Orthodontist · Tue" hours={["8am", "9am", "10am"]} a="Consult · Ana" b2="Consult · Ben" fx={b} t0={1.5} />
-          </Art>
-        </div>
-        {/* The front desk, too busy to answer. */}
-        <div {...b("panelA2", 0, { cls: "film-panel" })}>
-          <Art tall={tall}>
-            <g transform={tall ? "translate(500 560) scale(1.3) translate(-500 -440)" : undefined}>
-              <g {...b("rise", 7.2, { len: 0.9 })}>
-                <g {...b("shake", 7.8, { len: 0.7, n: 4 })}>
-                  <rect className="s-paper-soft card" x="330" y="120" width="340" height="680" rx="56" />
-                  <text className="t-small t-gold-text" x="500" y="236" fontSize="30">
-                    Front desk
-                  </text>
-                  <g transform="translate(500 450) scale(2.4) translate(-300 -486)">
-                    <path className="s-paper" d={`M 262 450 ${HANDSET}`} />
-                  </g>
-                  <text className="t-faint" x="500" y="690" fontSize="34">
-                    Missed calls
-                  </text>
-                </g>
-              </g>
-              <g {...b("fade", 7.6, { len: 0.3 })}>
-                <g {...b("blink", 7.8, { len: 0.7, n: 4 })}>
-                  <Gold d="M 712 380 q 30 50 0 100 M 744 350 q 52 80 0 160 M 288 380 q -30 50 0 100 M 256 350 q -52 80 0 160" thin />
-                </g>
-              </g>
-              <g {...b("pop", 8.1, { len: 0.5 })}>
-                <circle className="f-gold" cx="664" cy="132" r="52" />
-              </g>
-              {["1", "2", "3"].map((n, i) => (
-                <g key={n} {...b("fade", 8.1 + i * 0.6, { len: 0.2 })}>
-                  {i < 2 ? (
-                    <g {...b("out", 8.7 + i * 0.6, { len: 0.15 })}>
-                      <text className="t-ink t-strong" x="664" y="150" fontSize="50">
-                        {n}
-                      </text>
-                    </g>
-                  ) : (
-                    <text className="t-ink t-strong" x="664" y="150" fontSize="50">
-                      {n}
-                    </text>
-                  )}
-                </g>
-              ))}
+            {/* The search. */}
+            <g {...b("rise", 0.15, { len: 1 })}>
+              <rect className="card card--deep s-paper-soft" x={S.x} y={barY} width={S.w} height={barH} rx={barH / 2} />
+              <path className="s-paper" d={lens(S.mag[0], S.mag[1], S.mag[2])} />
             </g>
-          </Art>
-        </div>
-        {/* Two good businesses, on page two. */}
-        <div {...b("panelA3", 0, { cls: "film-panel" })}>
-          <Art tall={tall}>
-            {[
-              { y: S.ys[0], q: "winery napa", you: "Your winery", t: 10.6 },
-              { y: S.ys[1], q: "orthodontist san ramon", you: "Your practice", t: 12.3 },
-            ].map(({ y, q, you, t }) => {
-              const [mx, my, mr] = S.mag;
-              const [rx, r1, rdy, rw1, rk1, r2, rw2, rk2] = S.res;
-              const [yy, yh, yx, yt, ys, ps] = S.you;
+            <text className="t-body t-left" x={S.q[0]} y={S.q[1]} fontSize={S.q[2]}>
+              <Typed text={QUERY} at={0.5} b={b} step={0.07} />
+            </text>
+            {[0, 1, 2].map((i) => {
+              const y = S.res.y + i * S.res.gap;
               return (
-                <g key={q}>
-                  <g {...b("rise", t - 0.2, { len: 0.8 })}>
-                    <rect className="card s-paper-soft" x={S.x} y={y} width={S.w} height={S.bar} rx={S.bar / 2} />
-                    <path className="s-paper" d={`${ring(mx, y + my, mr)} M ${mx + mr * 0.75} ${y + my + mr * 0.8} L ${mx + mr * 1.75} ${y + my + mr * 1.8}`} />
-                  </g>
-                  <text className="t-body t-left" x={S.q[0]} y={y + S.q[1]} fontSize={S.q[2]}>
-                    {[...q].map((ch, i) => (
-                      <tspan key={i} {...b("fade", t + i * 0.05, { len: 0.1 })}>
-                        {ch}
-                      </tspan>
-                    ))}
-                  </text>
-                  {[0, 1].map((i) => (
-                    <g key={i} {...b("rise", t + 1 + i * 0.15, { len: 0.7 })}>
-                      <path className="s-dim thick" d={`M ${rx} ${y + r1 + i * rdy} H ${rw1 - i * rk1}`} />
-                      <path className="s-soft" d={`M ${rx} ${y + r2 + i * rdy} H ${rw2 - i * rk2}`} />
-                    </g>
-                  ))}
-                  <g {...b("fade", t + 1.5, { len: 1 })}>
-                    <rect className="s-gold-faint" x={S.x} y={y + yy} width={S.w} height={yh} rx="14" />
-                    <text className="t-gold-text t-left" x={S.x + yx} y={y + yy + yt} fontSize={ys}>
-                      {you}
-                    </text>
-                    <text className="t-small t-right" x={S.x + S.w - yx} y={y + yy + yt} fontSize={ps}>
-                      Page 2
-                    </text>
+                <g key={i} {...b("moveto", MOVE, { len: 1.3, dy: S.res.gap })}>
+                  <g {...b("rise", 1.4 + i * 0.15, { len: 0.8 })}>
+                    <rect className="card card--deep" x={S.x} y={y} width={S.w} height={S.res.h} rx="16" />
+                    <path className="s-dim thick" d={`M ${S.x + 34} ${y + S.res.l1} h ${S.res.w1 - i * 40}`} />
+                    <path className="s-soft" d={`M ${S.x + 34} ${y + S.res.l2} h ${S.res.w2 - i * 30}`} />
                   </g>
                 </g>
               );
             })}
-          </Art>
-        </div>
-      </div>
-    ),
-    near: <Bokeh dots={NEAR_A} />,
-  };
-}
-
-/* ── 3. Sorting it out: the knot, pulled straight into the plan ────────── */
-
-/**
- * One thread, tangled and pulled straight: the same six curves both ways, so
- * one turns into the other. From x0 to x1 along y when straight; tangled, it
- * dips and loops across the rows around it (g apart), the way thread `i`
- * does, so the three cross into a knot.
- */
-function thread(x0: number, x1: number, y: number, g: number, i: number) {
-  const N = 6;
-  const step = (x1 - x0) / N;
-  const O = [
-    [0, 0.4, 1.1, 0.6, 1.25, 0.3, 0],
-    [0, -0.55, 0.5, -0.4, 0.6, -0.45, 0],
-    [0, -0.3, -1.15, -0.35, -1.1, -0.4, 0],
-  ][i];
-  const r = (n: number) => +n.toFixed(1);
-  const pts = O.map((o, k) => [x0 + k * step, y + o * g]);
-  let tangled = `M ${r(x0)} ${r(y)}`;
-  let straight = tangled;
-  for (let k = 1; k <= N; k++) {
-    const [xa, ya] = pts[k - 1];
-    const [xb, yb] = pts[k];
-    // Every other inner curve doubles back on itself (its handles reach past each other, on the same side): a curl.
-    const loop = k > 1 && k < N && (k + i) % 2 === 1;
-    const s = (i % 2 ? -1 : 1) * (k % 2 ? 1 : -1);
-    const h = g * 0.5;
-    const reach = loop ? 1.9 : 0.45;
-    tangled += ` C ${r(xa + step * reach)} ${r(ya - s * h)} ${r(xb - step * reach)} ${r(loop ? ya - s * h : yb + s * h * 0.6)} ${r(xb)} ${r(yb)}`;
-    straight += ` C ${r(xa + step / 3)} ${r(y)} ${r(xb - step / 3)} ${r(y)} ${r(xb)} ${r(y)}`;
-  }
-  return { tangled, straight };
-}
-
-/**
- * A thread in the film's gold, drawn on tangled and pulled straight `at`
- * seconds into its scene (as designed), over `len`. The pull is SMIL, the
- * one way a path's shape can move in every browser; film.tsx keeps its
- * picture's clock on the film's (Art `smil`). Under reduced motion (`calm`)
- * it's only ever straight, fading in as it would have pulled straight.
- */
-function Thread({ paths, at, len, draw, calm }: { paths: { tangled: string; straight: string }; at: number; len: number; draw: Beat; calm: boolean }) {
-  return (
-    <>
-      {["g-halo", "g-glow", "g-core"].map((c) => (
-        <path key={c} d={calm ? paths.straight : paths.tangled} pathLength={1} className={`${draw.className} ${c}`} style={draw.style}>
-          {!calm && (
-            <animate
-              attributeName="d"
-              values={`${paths.tangled};${paths.straight}`}
-              keyTimes="0;1"
-              calcMode="spline"
-              keySplines=".6 0 .2 1"
-              begin={`${at}s`}
-              dur={`${len}s`}
-              fill="freeze"
-            />
-          )}
-        </path>
-      ))}
-    </>
-  );
-}
-
-/** The three problems from the scene before, each where its thread starts: a 220 × 110 tag, resolved `at`. */
-function Problem3({ kind, x, y, k, at, b }: { kind: 0 | 1 | 2; x: number; y: number; k: number; at: number; b: Beats }) {
-  const badge = ["×2", "3", "2"][kind];
-  return (
-    <g transform={`translate(${x} ${y}) scale(${k})`}>
-      <rect className="card" width="220" height="110" rx="14" />
-      <text className="t-small t-gold-text t-left" x="18" y="30" fontSize="16">
-        {["Sat · 2pm", "Front desk", "Search"][kind]}
-      </text>
-      {kind === 0 && (
-        <>
-          <rect className="chip" x="18" y="44" width="150" height="30" rx="7" />
-          <text className="t-ink t-left" x="30" y="65" fontSize="18">
-            Tasting
-          </text>
-          {/* The second booking slides onto the first and is gone: one calendar. */}
-          <g {...b("moveto", at - 0.5, { len: 0.5, dx: -10, dy: -14 })}>
-            <g {...b("out", at - 0.1, { len: 0.3 })}>
-              <rect className="chip chip--clash" x="28" y="58" width="150" height="30" rx="7" />
-              <text className="t-gold-text t-left" x="40" y="79" fontSize="18">
-                Tasting
-              </text>
+            {/* Page two, where the winery is. */}
+            <g {...b("out", MOVE - 0.2, { len: 0.4 })}>
+              <g {...b("fade", 2.2, { len: 0.6 })}>
+                <path className="s-soft" d={`M ${S.x} ${py} H ${500 - pgap} M ${500 + pgap} ${py} H ${S.x + S.w}`} />
+                <text className="t-small" x="500" y={py + ps * 0.36} fontSize={ps}>
+                  Page 2
+                </text>
+              </g>
             </g>
-          </g>
-        </>
-      )}
-      {kind === 1 && (
-        <>
-          <g transform="translate(46 72) scale(.5) translate(-300 -486)">
-            <path className="s-paper" d={`M 262 450 ${HANDSET}`} />
-          </g>
-          <text className="t-faint t-left" x="84" y="80" fontSize="20">
-            Missed
-          </text>
-        </>
-      )}
-      {kind === 2 && (
-        <>
-          <path className="s-paper thin-line" d={`${ring(30, 62, 9)} M 37 69 L 45 77`} />
-          <text className="t-body t-left" x="54" y="69" fontSize="18">
-            Your winery
-          </text>
-          <g {...b("out", at, { len: 0.3 })}>
-            <text className="t-faint t-left" x="54" y="96" fontSize="16">
-              Page 2
-            </text>
-          </g>
-          <g {...b("fade", at + 0.2, { len: 0.4 })}>
-            <text className="t-gold-text t-left" x="54" y="96" fontSize="16">
-              Page 1
-            </text>
-          </g>
-        </>
-      )}
-      <g {...b("out", at, { len: 0.3 })}>
-        <circle className="f-gold" cx="192" cy="28" r="18" />
-        <text className="t-ink t-strong" x="192" y="34" fontSize="16">
-          {badge}
-        </text>
-      </g>
-      <g {...b("pop", at + 0.1, { len: 0.5 })}>
-        <circle className="f-gold" cx="192" cy="28" r="18" />
-        <path className="s-ink thin-ink" d="M 184 28 l 6 6 l 12 -13" />
-      </g>
-    </g>
-  );
-}
-
-function Plan(tall: boolean, calm: boolean): SceneArt {
-  const D = DESIGN.plan;
-  const b = beats(D);
-  // The page, its rows, and where each thread runs along its row.
-  const L = tall
-    ? { page: [30, 40, 940, 1020] as Box, title: [160, 96], rule: [110, 210, 890], rows: [470, 700, 930], g: 230, tag: [60, -140, 1.45], x0: 379, x1: 930, text: [404, -34, 54] }
-    : { page: [70, 90, 860, 800] as Box, title: [205, 84], rule: [150, 250, 850], rows: [430, 600, 770], g: 170, tag: [110, -96, 1], x0: 330, x1: 880, text: [372, -24, 44] };
-  // Each pulled straight in turn: when it starts, and when its row is written.
-  const PULL = [1.5, 2.8, 4.1];
-  const LEN = 1;
-  const rows = ["One calendar", "Every call answered", "Found on Google"];
-  const [px, py, pw, ph] = L.page;
-  return {
-    far: (
-      <Far>
-        <defs>
-          <linearGradient id="far-plan-ray" x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0" stopColor="#E8C27A" stopOpacity="0" />
-            <stop offset=".5" stopColor="#E8C27A" stopOpacity=".13" />
-            <stop offset="1" stopColor="#E8C27A" stopOpacity="0" />
-          </linearGradient>
-          <radialGradient id="far-plan-glow" cx="50%" cy="48%" r="48%">
-            <stop offset="0" stopColor="#F4F1EA" stopOpacity=".12" />
-            <stop offset="1" stopColor="#0C0A08" stopOpacity="0" />
-          </radialGradient>
-        </defs>
-        <g {...b("fade", 4.6, { len: 2.4 })}>
-          {[260, 620, 980, 1300].map((x, i) => (
-            <path key={x} d={`M ${x} -100 l 220 0 l ${-260 - i * 40} 1200 l -220 0 z`} fill="url(#far-plan-ray)" />
-          ))}
-          <rect width="1600" height="1000" fill="url(#far-plan-glow)" />
-        </g>
-      </Far>
-    ),
-    mid: (
-      <Art tall={tall} smil={D}>
-        {/* The page, and the three problems at the head of its rows. */}
-        <g {...b("rise", 0.1, { len: 1 })}>
-          <rect className="card card--deep s-paper-soft" x={px} y={py} width={pw} height={ph} rx="22" />
-          <text className="t-disp" x="500" y={L.title[0]} fontSize={L.title[1]}>
-            The plan
-          </text>
-          <path className="s-soft" d={`M ${L.rule[0]} ${L.rule[1]} H ${L.rule[2]}`} />
-        </g>
-        <g {...b("fade", 5.4, { len: 1 })}>
-          <rect className="s-gold-edge" fill="none" x={px} y={py} width={pw} height={ph} rx="22" />
-        </g>
-        {L.rows.map((y, i) => (
-          <g key={y} {...b("pop", 0.35 + i * 0.15, { len: 0.6 })}>
-            <Problem3 kind={i as 0 | 1 | 2} x={L.tag[0]} y={y + L.tag[1]} k={L.tag[2]} at={PULL[i] + LEN * 0.8} b={b} />
-          </g>
-        ))}
-        {/* What each becomes in the plan, written as its thread pulls straight. */}
-        {rows.map((t, i) => (
-          <text key={t} x={L.text[0]} y={L.rows[i] + L.text[1]} fontSize={L.text[2]} {...b("rise", PULL[i] + LEN * 0.75, { len: 0.8, cls: "t-body t-left" })}>
-            {t}
-          </text>
-        ))}
-        {/* The knot: one thread from each problem, pulled straight one at a time, each becoming the line under its row. */}
-        {L.rows.map((y, i) => (
-          <Thread
-            key={y}
-            paths={thread(L.x0, L.x1, y, L.g, i)}
-            at={PULL[i]}
-            len={LEN}
-            calm={calm}
-            draw={calm ? b("fade", PULL[i] + LEN * 0.6, { len: 0.6 }) : b("draw", 0.3 + i * 0.12, { len: 1.1 })}
-          />
-        ))}
-        {/* A glint along each, as it comes straight. */}
-        {L.rows.map((y, i) => (
-          <path key={y} d={`M ${L.x0} ${y} H ${L.x1}`} pathLength={1} {...b("glint", PULL[i] + LEN * 0.8, { len: 0.7, cls: "g-glint" })} />
-        ))}
-      </Art>
-    ),
-    near: (
-      <>
-        <Bokeh dots={NEAR_B} />
-        <i {...b("sweep", 5.6, { len: 1.8, cls: "film-sweep" })} />
+            <g {...b("moveto", MOVE, { len: 1.3, dy: S.res.y - Y.y })}>
+              <g {...b("rise", 2.4, { len: 0.9 })}>{result(false)}</g>
+              {/* At the top, in gold. */}
+              <g {...b("fade", MOVE + 0.6, { len: 0.8 })}>{result(true)}</g>
+            </g>
+          </Art>
+        </Stage>
+        <Stage b={b}>{tall ? <AnswersTall b={b} at={AI} /> : <AnswersWide b={b} at={AI} />}</Stage>
       </>
     ),
   };
 }
 
-/* ── 4. Websites & getting found: the winery ───────────────────────────── */
-
-const QUERY = "winery napa";
-
-function Web(tall: boolean): SceneArt {
-  const D = DESIGN.web;
-  const b = beats(D);
-  const rows = Array.from({ length: 15 }, (_, i) => -560 + i * 80);
-  return {
-    far: (
-      <Far>
-        <defs>
-          <linearGradient id="far-web-sky" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stopColor="#0C0A08" />
-            <stop offset=".42" stopColor="#3A2A14" />
-            <stop offset=".56" stopColor="#7A5A26" />
-            <stop offset=".6" stopColor="#2A1F12" />
-            <stop offset="1" stopColor="#0C0A08" />
-          </linearGradient>
-          <radialGradient id="far-web-sun" cx="50%" cy="56%" r="34%">
-            <stop offset="0" stopColor="#F6E2AE" stopOpacity=".75" />
-            <stop offset=".25" stopColor="#D9B66A" stopOpacity=".35" />
-            <stop offset="1" stopColor="#0C0A08" stopOpacity="0" />
-          </radialGradient>
-          <linearGradient id="far-web-row" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stopColor="#BE9645" stopOpacity="0" />
-            <stop offset="1" stopColor="#BE9645" stopOpacity=".42" />
-          </linearGradient>
-        </defs>
-        <rect width="1600" height="1000" fill="url(#far-web-sky)" opacity=".85" />
-        <rect width="1600" height="1000" fill="url(#far-web-sun)" />
-        <path d="M 0 560 C 220 500, 420 540, 640 512 S 1060 470, 1260 520 S 1520 540, 1600 520 L 1600 1000 L 0 1000 Z" fill="#14100C" />
-        <path d="M 0 600 C 300 570, 600 600, 900 580 S 1400 560, 1600 590 L 1600 1000 L 0 1000 Z" fill="#0E0B09" />
-        {rows.map((x) => (
-          <path key={x} d={`M 800 585 L ${800 + x * 2.2} 1000`} stroke="url(#far-web-row)" strokeWidth="5" fill="none" />
-        ))}
-      </Far>
-    ),
-    mid: tall ? <WebTall b={b} /> : <WebWide b={b} />,
-    near: <Bokeh dots={NEAR_A} />,
-  };
-}
-
-function WebWide({ b }: { b: Beats }) {
+/**
+ * The newer way to look: ask an AI. Two answer panels, side by side, both
+ * naming the winery: an AI answer on a search page and a chat. Generic UI in
+ * the film's own hand, the services' names in plain text, no logos.
+ */
+function AnswersWide({ b, at }: { b: Beats; at: number }) {
   return (
     <Art tall={false}>
-      <g {...b("out", 6.8, { len: 0.8 })}>
-        <g {...b("rise", 0.3, { len: 1 })}>
-          <rect className="card card--deep s-paper-soft" x="70" y="100" width="860" height="104" rx="52" />
-          <path className="s-paper" d={`${ring(134, 152, 17)} M 147 166 L 165 184`} />
-        </g>
-        <text className="t-body t-left" x="190" y="170" fontSize="52">
-          {[...QUERY].map((ch, i) => (
-            <tspan key={i} {...b("fade", 0.9 + i * 0.07, { len: 0.12 })}>
-              {ch}
-            </tspan>
-          ))}
+      {/* An AI answer, at the top of a search page. */}
+      <g {...b("drop", at + 0.2, { len: 0.9, dy: -50 })}>
+        <rect className="page" x="50" y="110" width="440" height="650" rx="20" />
+        <text className="t-ink t-left t-name" x="82" y="170" fontSize="30">
+          Google
         </text>
-        {[0, 1, 2].map((i) => (
-          <g key={i} {...b("slide", 3.7, { len: 1.3, dy: -134 })}>
-            <g {...b("rise", 2.2 + i * 0.15, { len: 0.8 })}>
-              <rect className="card card--deep" x="70" y={404 + i * 134} width="860" height="112" rx="16" />
-              <path className="s-dim thick" d={`M 104 ${444 + i * 134} H ${470 - i * 40}`} />
-              <path className="s-soft" d={`M 104 ${484 + i * 134} H ${820 - i * 30}`} />
-            </g>
-          </g>
+        <rect className="s-ink-line" fill="none" x="82" y="192" width="376" height="52" rx="26" />
+        <path className="s-ink-mid" d={lens(108, 216, 8)} />
+        <text className="t-ink-soft t-left" x="130" y="225" fontSize="19">
+          winery tasting napa
+        </text>
+        {["All", "Maps", "Images"].map((t, i) => (
+          <text key={t} className={`t-left ${i ? "t-ink-soft" : "t-ink t-strong"}`} x={82 + [0, 54, 124][i]} y="284" fontSize="16">
+            {t}
+          </text>
         ))}
-        <g {...b("slide", 3.6, { len: 1.5, dy: 402 })}>
-          <g {...b("glow", 3.6, { len: 1.5 })}>
-            <rect className="card card--deep s-gold-edge" x="70" y="250" width="860" height="124" rx="18" />
-            <text className="t-disp t-gold t-left" x="106" y="312" fontSize="52">
-              Your winery
-            </text>
-            <g className="f-gold">
-              {[0, 1, 2, 3, 4].map((s) => (
-                <path key={s} d={`M ${110 + s * 30} 330 ${STAR}`} />
-              ))}
-            </g>
-            <text className="t-small t-left" x="290" y="352" fontSize="26">
-              Napa · Tastings daily
-            </text>
-          </g>
+        <path className="s-ink-line" d="M 82 298 H 458" />
+        <path className="s-ink" style={{ strokeWidth: 3 }} d="M 82 298 H 104" />
+        <g {...b("fade", at + 1.7, { len: 0.6 })}>
+          <path className="s-ink-line thick" d="M 82 662 H 320" />
+          <path className="s-ink-line" d="M 82 694 H 444" />
+          <path className="s-ink-line" d="M 82 720 H 400" />
         </g>
       </g>
-
-      {/* The top result opens into the site, which puts itself together. */}
-      <g {...b("open", 7, { len: 1.2 })}>
-        <rect className="card card--site s-paper-soft" x="50" y="80" width="900" height="740" rx="24" />
-        <path className="s-soft" d="M 50 150 H 950" />
-        <g className="f-dim">
-          <circle cx="92" cy="116" r="9" />
-          <circle cx="122" cy="116" r="9" />
-          <circle cx="152" cy="116" r="9" />
-        </g>
+      <g {...b("rise", at + 0.8, { len: 0.8 })}>
+        <rect className="f-ai" x="82" y="318" width="376" height="300" rx="16" />
+        <path className="f-gold" d={sparkle(106, 352, 10)} />
+        <text className="t-ink t-left t-strong" x="124" y="359" fontSize="19">
+          AI answer
+        </text>
       </g>
-      <g {...b("fade", 7.7, { len: 0.7 })}>
-        <text className="t-disp t-gold t-left" x="100" y="222" fontSize="42">
+      <g {...b("fade", at + 1.2, { len: 0.6 })}>
+        <text className="t-ink t-left" x="104" y="410" fontSize="21">
+          For a tasting near Napa, try
+        </text>
+      </g>
+      <g {...b("fade", at + 1.45, { len: 0.6 })}>
+        <text className="t-gold-deep t-left t-strong" x="104" y="454" fontSize="28">
           Your winery
         </text>
-        <path className="s-soft thick" d="M 640 208 H 710 M 740 208 H 810 M 840 208 H 900" />
-      </g>
-      <g {...b("rise", 8.1, { len: 0.9 })}>
-        <text className="t-disp t-left" x="100" y="350" fontSize="96">
-          Taste
+        <text className="t-ink-soft t-left" x="104" y="496" fontSize="19">
+          Small-batch tastings, booked
         </text>
-        <text className="t-disp t-left" x="100" y="442" fontSize="96">
-          the valley.
+        <text className="t-ink-soft t-left" x="104" y="524" fontSize="19">
+          online, open daily.
         </text>
-        <path className="s-soft" d="M 100 490 H 440 M 100 524 H 390" />
       </g>
-      <g {...b("rise", 8.5, { len: 1 })}>
-        <rect className="f-gold-dim" x="590" y="250" width="310" height="380" rx="14" />
-        <Gold d={ring(800, 340, 36)} thin />
-        <path className="s-gold-soft" d="M 590 470 C 650 440, 720 456, 770 446 S 860 430, 900 446" />
-        {[-140, -90, -45, 0, 45, 90, 140].map((dx) => (
-          <path key={dx} className="s-gold-soft" d={`M ${745 + dx * 0.12} 470 L ${745 + dx} 630`} />
+      <path pathLength={1} d="M 104 466 H 262" {...b("draw", at + 2.3, { len: 0.6, cls: "s-gold" })} />
+
+      {/* And asked of a chat. */}
+      <g {...b("drop", at + 0.5, { len: 0.9, dy: -50 })}>
+        <rect className="page" x="510" y="110" width="440" height="650" rx="20" />
+        <text className="t-ink t-left t-name" x="542" y="168" fontSize="26">
+          ChatGPT
+        </text>
+        <path className="s-ink-mid" d="M 660 156 l 6 6 l 6 -6" />
+        <rect className="s-ink-line" fill="none" x="542" y="684" width="376" height="56" rx="28" />
+        <text className="t-ink-faint t-left" x="568" y="719" fontSize="19">
+          Ask anything
+        </text>
+        <circle className="f-ink" cx="890" cy="712" r="18" />
+        <path className="s-paper-on-ink" d="M 890 720 V 704 M 883 711 l 7 -7 l 7 7" />
+      </g>
+      <g {...b("slide-in", at + 0.9, { len: 0.7, dx: 40 })}>
+        <rect className="f-ink-soft" x="630" y="204" width="288" height="96" rx="30" />
+        <text className="t-ink t-left" x="654" y="244" fontSize="21">
+          Best winery for a
+        </text>
+        <text className="t-ink t-left" x="654" y="274" fontSize="21">
+          tasting near Napa?
+        </text>
+      </g>
+      <g {...b("fade", at + 1.5, { len: 0.6 })}>
+        <text className="t-ink t-left" x="542" y="364" fontSize="21">
+          I’d go with
+        </text>
+      </g>
+      <g {...b("fade", at + 1.75, { len: 0.6 })}>
+        <text className="t-gold-deep t-left t-strong" x="542" y="408" fontSize="28">
+          Your winery
+        </text>
+        {["Small-batch tastings", "Booked online", "Open daily"].map((t, i) => (
+          <text key={t} className="t-ink-soft t-left" x="542" y={452 + i * 32} fontSize="19">
+            •&#8194;{t}
+          </text>
         ))}
       </g>
-      <g {...b("press", 10.3, { len: 0.5 })}>
-        <g {...b("pop", 8.9, { len: 0.7 })}>
-          <rect className="f-gold-v" x="100" y="560" width="340" height="84" rx="8" />
-          <text className="t-ink t-caps" x="270" y="613" fontSize="28">
-            Book a tasting
-          </text>
-        </g>
-      </g>
-      {["Tastings", "Wine club", "Visit us"].map((f, i) => (
-        <g key={f} {...b("rise", 9.3 + i * 0.2, { len: 0.8 })}>
-          <rect className="s-soft card" x={100 + i * 276} y="676" width="248" height="112" rx="12" />
-          <text className="t-body t-left" x={126 + i * 276} y="726" fontSize="32">
-            {f}
-          </text>
-          <path className="s-soft" d={`M ${126 + i * 276} 760 H ${300 + i * 276}`} />
-        </g>
-      ))}
-      <circle cx="270" cy="602" r="50" {...b("ring", 10.3, { len: 0.9, n: 1, cls: "s-gold-thin" })} />
-      {/* A booking comes in. */}
-      <g {...b("rise", 10.9, { len: 1 })}>
-        <rect className="page" x="460" y="640" width="500" height="160" rx="18" />
-        <circle className="f-gold" cx="504" cy="698" r="13" />
-        <text className="t-ink t-left t-strong" x="532" y="712" fontSize="38">
-          New booking
-        </text>
-        <text className="t-ink-soft t-left" x="490" y="770" fontSize="30">
-          Tasting for 4 · Sat 2pm
-        </text>
-      </g>
+      <path pathLength={1} d="M 542 420 H 700" {...b("draw", at + 2.45, { len: 0.6, cls: "s-gold" })} />
     </Art>
   );
 }
 
-/** The same, on a phone upright: the search and the site each the whole width, the site's picture under its words. */
-function WebTall({ b }: { b: Beats }) {
+/** The same on a phone upright: the two answers one above the other. */
+function AnswersTall({ b, at }: { b: Beats; at: number }) {
   return (
     <Art tall>
-      <g {...b("out", 6.8, { len: 0.8 })}>
-        <g {...b("rise", 0.3, { len: 1 })}>
-          <rect className="card card--deep s-paper-soft" x="40" y="60" width="920" height="130" rx="65" />
-          <path className="s-paper" d={`${ring(110, 125, 22)} M 126 141 L 148 163`} />
-        </g>
-        <text className="t-body t-left" x="172" y="146" fontSize="60">
-          {[...QUERY].map((ch, i) => (
-            <tspan key={i} {...b("fade", 0.9 + i * 0.07, { len: 0.12 })}>
-              {ch}
-            </tspan>
-          ))}
+      <g {...b("drop", at + 0.2, { len: 0.9, dy: -50 })}>
+        <rect className="page" x="40" y="30" width="920" height="510" rx="26" />
+        <text className="t-ink t-left t-name" x="84" y="100" fontSize="44">
+          Google
         </text>
-        {[0, 1, 2].map((i) => (
-          <g key={i} {...b("slide", 3.7, { len: 1.3, dy: -170 })}>
-            <g {...b("rise", 2.2 + i * 0.15, { len: 0.8 })}>
-              <rect className="card card--deep" x="40" y={430 + i * 170} width="920" height="140" rx="18" />
-              <path className="s-dim thick" d={`M 84 ${482 + i * 170} H ${540 - i * 50}`} />
-              <path className="s-soft" d={`M 84 ${528 + i * 170} H ${880 - i * 40}`} />
-            </g>
-          </g>
+        <rect className="s-ink-line" fill="none" x="84" y="124" width="832" height="70" rx="35" />
+        <path className="s-ink-mid" d={lens(122, 156, 11)} />
+        <text className="t-ink-soft t-left" x="152" y="170" fontSize="30">
+          winery tasting napa
+        </text>
+        {["All", "Maps", "Images"].map((t, i) => (
+          <text key={t} className={`t-left ${i ? "t-ink-soft" : "t-ink t-strong"}`} x={84 + [0, 76, 182][i]} y="240" fontSize="26">
+            {t}
+          </text>
         ))}
-        <g {...b("slide", 3.6, { len: 1.5, dy: 510 })}>
-          <g {...b("glow", 3.6, { len: 1.5 })}>
-            <rect className="card card--deep s-gold-edge" x="40" y="250" width="920" height="150" rx="20" />
-            <text className="t-disp t-gold t-left" x="80" y="322" fontSize="62">
-              Your winery
-            </text>
-            <g className="f-gold" transform="translate(84 340) scale(1.3)">
-              {[0, 1, 2, 3, 4].map((s) => (
-                <path key={s} d={`M ${s * 30} 0 ${STAR}`} />
-              ))}
-            </g>
-            <text className="t-small t-left" x="300" y="372" fontSize="30">
-              Napa · Tastings daily
-            </text>
-          </g>
-        </g>
+        <path className="s-ink-line" d="M 84 258 H 916" />
+        <path className="s-ink" style={{ strokeWidth: 3.5 }} d="M 84 258 H 122" />
       </g>
-
-      <g {...b("open", 7, { len: 1.2 })}>
-        <rect className="card card--site s-paper-soft" x="30" y="30" width="940" height="1000" rx="26" />
-        <path className="s-soft" d="M 30 104 H 970" />
-        <g className="f-dim">
-          <circle cx="74" cy="67" r="10" />
-          <circle cx="106" cy="67" r="10" />
-          <circle cx="138" cy="67" r="10" />
-        </g>
+      <g {...b("rise", at + 0.8, { len: 0.8 })}>
+        <rect className="f-ai" x="84" y="276" width="832" height="236" rx="20" />
+        <path className="f-gold" d={sparkle(118, 318, 13)} />
+        <text className="t-ink t-left t-strong" x="142" y="328" fontSize="28">
+          AI answer
+        </text>
       </g>
-      <g {...b("fade", 7.7, { len: 0.7 })}>
-        <text className="t-disp t-gold t-left" x="72" y="176" fontSize="46">
+      <g {...b("fade", at + 1.2, { len: 0.6 })}>
+        <text className="t-ink t-left" x="114" y="380" fontSize="30">
+          For a tasting near Napa, try
+        </text>
+      </g>
+      <g {...b("fade", at + 1.45, { len: 0.6 })}>
+        <text className="t-gold-deep t-left t-strong" x="114" y="432" fontSize="40">
           Your winery
         </text>
-        <path className="s-soft thick" d="M 660 162 H 730 M 760 162 H 830 M 860 162 H 920" />
-      </g>
-      <g {...b("rise", 8.1, { len: 0.9 })}>
-        <text className="t-disp t-left" x="70" y="300" fontSize="112">
-          Taste
-        </text>
-        <text className="t-disp t-left" x="70" y="408" fontSize="112">
-          the valley.
-        </text>
-        <path className="s-soft" d="M 72 462 H 540 M 72 498 H 460" />
-      </g>
-      <g {...b("rise", 8.5, { len: 1 })}>
-        <rect className="f-gold-dim" x="70" y="530" width="860" height="240" rx="14" />
-        <Gold d={ring(790, 600, 34)} thin />
-        <path className="s-gold-soft" d="M 70 680 C 200 650, 360 668, 500 660 S 800 640, 930 656" />
-        {[-180, -120, -60, 0, 60, 120, 180].map((dx) => (
-          <path key={dx} className="s-gold-soft" d={`M ${500 + dx * 0.12} 680 L ${500 + dx * 2.3} 770`} />
-        ))}
-      </g>
-      <g {...b("press", 10.3, { len: 0.5 })}>
-        <g {...b("pop", 8.9, { len: 0.7 })}>
-          <rect className="f-gold-v" x="70" y="805" width="380" height="92" rx="8" />
-          <text className="t-ink t-caps" x="260" y="862" fontSize="30">
-            Book a tasting
-          </text>
-        </g>
-      </g>
-      {["Tastings", "Wine club", "Visit us"].map((f, i) => (
-        <g key={f} {...b("rise", 9.3 + i * 0.2, { len: 0.8 })}>
-          <rect className="s-soft card" x={70 + i * 290} y="925" width="270" height="80" rx="12" />
-          <text className="t-body t-left" x={96 + i * 290} y="976" fontSize="30">
-            {f}
-          </text>
-        </g>
-      ))}
-      <circle cx="260" cy="851" r="56" {...b("ring", 10.3, { len: 0.9, n: 1, cls: "s-gold-thin" })} />
-      <g {...b("rise", 10.9, { len: 1 })}>
-        <rect className="page" x="440" y="830" width="520" height="175" rx="18" />
-        <circle className="f-gold" cx="482" cy="888" r="14" />
-        <text className="t-ink t-left t-strong" x="510" y="902" fontSize="42">
-          New booking
-        </text>
-        <text className="t-ink-soft t-left" x="470" y="968" fontSize="34">
-          Tasting for 4 · Sat 2pm
+        <text className="t-ink-soft t-left" x="114" y="484" fontSize="28">
+          Small-batch tastings, booked online, open daily.
         </text>
       </g>
+      <path pathLength={1} d="M 114 446 H 340" {...b("draw", at + 2.3, { len: 0.6, cls: "s-gold" })} />
+
+      <g {...b("drop", at + 0.5, { len: 0.9, dy: -50 })}>
+        <rect className="page" x="40" y="570" width="920" height="500" rx="26" />
+        <text className="t-ink t-left t-name" x="84" y="636" fontSize="38">
+          ChatGPT
+        </text>
+        <path className="s-ink-mid" d="M 246 620 l 9 9 l 9 -9" />
+        <rect className="s-ink-line" fill="none" x="84" y="964" width="832" height="74" rx="37" />
+        <text className="t-ink-faint t-left" x="120" y="1011" fontSize="28">
+          Ask anything
+        </text>
+        <circle className="f-ink" cx="874" cy="1001" r="26" />
+        <path className="s-paper-on-ink" d="M 874 1013 V 990 M 864 1000 l 10 -10 l 10 10" />
+      </g>
+      <g {...b("slide-in", at + 0.9, { len: 0.7, dx: 40 })}>
+        <rect className="f-ink-soft" x="318" y="662" width="598" height="78" rx="39" />
+        <text className="t-ink t-left" x="350" y="711" fontSize="28">
+          Best winery for a tasting near Napa?
+        </text>
+      </g>
+      <g {...b("fade", at + 1.5, { len: 0.6 })}>
+        <text className="t-ink t-left" x="84" y="806" fontSize="32">
+          I’d go with
+        </text>
+      </g>
+      <g {...b("fade", at + 1.75, { len: 0.6 })}>
+        <text className="t-gold-deep t-left t-strong" x="262" y="806" fontSize="40">
+          Your winery
+        </text>
+        <text className="t-ink-soft t-left" x="84" y="866" fontSize="28">
+          •&#8194;Small-batch tastings&#8194;•&#8194;Booked online
+        </text>
+        <text className="t-ink-soft t-left" x="84" y="910" fontSize="28">
+          •&#8194;Open daily
+        </text>
+      </g>
+      <path pathLength={1} d="M 262 820 H 488" {...b("draw", at + 2.45, { len: 0.6, cls: "s-gold" })} />
     </Art>
   );
 }
 
-/* ── 5. And the rest: three panels, panned across ──────────────────────── */
+/* ── The website: a dated one, then one they built ─────────────────────── */
 
-const WAVE = [22, 48, 30, 70, 44, 90, 56, 34, 80, 62, 40, 96, 52, 28, 74, 58, 36, 86, 46, 64, 30, 78, 50, 38, 68, 26];
+const SITE_WIDE = { frame: [70, 100, 860, 596] as Box, bar: 56, url: 20, pill: [300, 110, 400, 36] as Box, body: [72, 158, 856, 536] as Box };
+const SITE_TALL = { frame: [130, 40, 740, 1014] as Box, bar: 90, url: 26, pill: [190, 60, 620, 50] as Box, body: [132, 132, 736, 920] as Box };
 
-function More(tall: boolean): SceneArt {
-  const D = DESIGN.more;
+function Site(tall: boolean): SceneArt {
+  const D = DESIGN.site;
   const b = beats(D);
-  const rows = [-300, -200, -100, 0, 100, 200, 300];
-  // Custom tools: the consult-notes window, its title bar, and its body, where the gold sketch turns into the real thing.
-  const W = tall ? { win: [40, 190, 920, 850] as Box, bar: 70, title: 122, size: 92, rec: 236 } : { win: [70, 210, 860, 600] as Box, bar: 74, title: 150, size: 88, rec: 210 };
-  const [wx, wy, ww, wh] = W.win;
-  const body: Box = [wx + 2, wy + W.bar + 2, ww - 4, wh - W.bar - 4];
-  const waveY = tall ? 470 : 420;
-  const waveX = (i: number) => (tall ? 92 + i * 32 : 124 + i * 29);
-  const waveK = tall ? 1.9 : 1.4;
-  // Photo & video: the viewfinder, and the footage inside it.
-  const V = tall
-    ? { c: [40, 190, 960, 1030], clip: [60, 210, 880, 800] as Box, rec: [100, 262], hill: "M 60 640 C 260 520, 420 590, 540 560 S 800 500, 940 580", sun: [720, 430, 66], row: [640, 1000], focus: [410, 690, 180, 140] }
-    : { c: [70, 210, 930, 820], clip: [90, 230, 820, 570] as Box, rec: [132, 272], hill: "M 90 560 C 260 450, 400 510, 520 480 S 800 420, 910 500", sun: [720, 380, 58], row: [560, 800], focus: [420, 600, 160, 120] };
-  const [c0, c1, c2, c3] = V.c;
+  const L = tall ? SITE_TALL : SITE_WIDE;
+  const [fx, fy, fw, fh] = L.frame;
+  const [px, py, pw, ph] = L.pill;
+  const urlY = py + ph / 2 + L.url * 0.36;
+  const NEW = 3.6;
   return {
     far: (
       <Far>
-        <defs>
-          <linearGradient id="far-more-window" x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0" stopColor="#F4F1EA" stopOpacity="0" />
-            <stop offset=".5" stopColor="#F4F1EA" stopOpacity=".08" />
-            <stop offset="1" stopColor="#F4F1EA" stopOpacity="0" />
-          </linearGradient>
-          <radialGradient id="far-more-dawn" cx="50%" cy="72%" r="60%">
-            <stop offset="0" stopColor="#E8C27A" stopOpacity=".34" />
-            <stop offset="1" stopColor="#0C0A08" stopOpacity="0" />
-          </radialGradient>
-          <radialGradient id="far-more-lamp" cx="30%" cy="18%" r="62%">
-            <stop offset="0" stopColor="#D9B66A" stopOpacity=".26" />
-            <stop offset="1" stopColor="#0C0A08" stopOpacity="0" />
-          </radialGradient>
-        </defs>
-        <g {...b("panel1", 0)}>
-          {[280, 560, 840, 1120].map((x) => (
-            <rect key={x} x={x} y="-50" width="180" height="1100" fill="url(#far-more-window)" />
-          ))}
-        </g>
-        <g {...b("panel2", 0)}>
-          <rect width="1600" height="1000" fill="url(#far-more-dawn)" />
-        </g>
-        <g {...b("panel3", 0)}>
-          <rect width="1600" height="1000" fill="url(#far-more-lamp)" />
+        <Glow id="far-site-a" cx={50} cy={46} r={58} o={0.13} color="#F4F1EA" />
+        <g {...b("fade", NEW, { len: 1.4 })}>
+          <Glow id="far-site-b" cx={50} cy={50} r={60} o={0.16} />
         </g>
       </Far>
     ),
     mid: (
-      <div {...b("pan", 0, { cls: "film-strip" })}>
-        {/* Custom tools: an orthodontist's consult, recorded and written up. The gold sketch of it gives way to the real tool, Clinical Scribe. */}
-        <div {...b("panel1", 0, { cls: "film-panel" })}>
+      <div {...b("rise", 0.1, { len: 1, cls: "film-layer" })}>
+        {/* A browser: the same frame for the old site and the new. */}
+        <Art tall={tall}>
+          <rect className="card card--site s-paper-soft" x={fx} y={fy} width={fw} height={fh} rx={tall ? 44 : 18} />
+          {!tall && (
+            <g className="f-dim">
+              <circle cx={fx + 32} cy={fy + L.bar / 2} r="7" />
+              <circle cx={fx + 56} cy={fy + L.bar / 2} r="7" />
+              <circle cx={fx + 80} cy={fy + L.bar / 2} r="7" />
+            </g>
+          )}
+          <rect className="f-url" x={px} y={py} width={pw} height={ph} rx={ph / 2} />
+        </Art>
+        {/* Prosperando's site, which they built, playing in it. */}
+        <Clip id="prosperando" tall={tall} box={L.body} fx={b("fade", NEW + 0.2, { len: 0.6 })} clean />
+        {/* Over it, until it gives way: the old one. */}
+        <div {...b("pass", NEW, { len: 0.8, cls: "film-layer" })}>
           <Art tall={tall}>
-            <text x="500" y={W.title} fontSize={W.size} {...b("rise", 0.4, { len: 1.2, cls: "t-disp" })}>
+            {tall ? <DatedTall b={b} body={L.body} /> : <DatedWide b={b} body={L.body} />}
+            <text className="t-faint" x="500" y={urlY} fontSize={L.url}>
+              yourwinery.com
+            </text>
+          </Art>
+        </div>
+        <Art tall={tall}>
+          <text x="500" y={urlY} fontSize={L.url} {...b("fade", NEW + 0.3, { len: 0.6, cls: "t-body" })}>
+            prosperandovineyards.com
+          </text>
+          <g {...b("fade", NEW + 0.9, { len: 1 })}>
+            <rect className="s-gold-edge" fill="none" x={fx} y={fy} width={fw} height={fh} rx={tall ? 44 : 18} />
+          </g>
+        </Art>
+      </div>
+    ),
+  };
+}
+
+/** A dated, cluttered winery site, in its box: a shouting banner, a wall of links, a broken picture, a visitor counter. */
+function DatedWide({ b, body: [x, y, w, h] }: { b: Beats; body: Box }) {
+  const bar = (bx: number, by: number, bw: number) => <rect className="f-old-text" x={bx} y={by} width={bw} height="8" rx="2" />;
+  return (
+    <>
+      <rect className="f-old-page" x={x} y={y} width={w} height={h} />
+      <g {...b("pop", 0.2, { len: 0.4 })}>
+        <rect className="f-old-banner" x={x + 16} y={y + 14} width={w - 32} height="70" />
+        <text className="t-old t-old-yellow t-strong" x="500" y={y + 61} fontSize="32">
+          WELCOME TO OUR WINERY!!!
+        </text>
+      </g>
+      <text x="500" y={y + 112} fontSize="16" {...b("fade", 0.35, { len: 0.2, cls: "t-old t-old-link" })}>
+        Home | About Us | Our Wines | Events | Gift Shop | Guestbook | Links
+      </text>
+      <g {...b("pop", 0.5, { len: 0.4 })}>
+        <rect className="f-old-box" x={x + 16} y={y + 130} width="170" height="380" />
+        {["» Specials", "» Wine Club", "» Gift Shop", "» Directions", "» Guestbook", "» Newsletter", "» Awards", "» Photos", "» Links"].map((t, i) => (
+          <text key={t} className="t-old t-old-link t-left" x={x + 30} y={y + 162 + i * 38} fontSize="16">
+            {t}
+          </text>
+        ))}
+      </g>
+      <g {...b("pop", 0.6, { len: 0.4 })}>
+        <rect className="f-old-img" x={x + 202} y={y + 130} width="250" height="170" />
+        <path className="s-old" d={`M ${x + 202} ${y + 130} l 250 170 M ${x + 452} ${y + 130} l -250 170`} />
+      </g>
+      <g {...b("fade", 0.7, { len: 0.3 })}>
+        {[0, 1, 2, 3, 4, 5].map((i) => bar(x + 466, y + 136 + i * 26, [170, 150, 176, 120, 160, 96][i]))}
+        {[0, 1, 2, 3, 4, 5].map((i) => bar(x + 202, y + 322 + i * 24, [436, 410, 438, 380, 420, 260][i]))}
+      </g>
+      <g {...b("blink", 1.4, { len: 0.6, n: 4 })}>
+        <text className="t-old t-old-link t-left" x={x + 202} y={y + 492} fontSize="20">
+          Click HERE to book a tasting!!
+        </text>
+        <path className="s-old-link" d={`M ${x + 202} ${y + 497} H ${x + 478}`} />
+      </g>
+      <g {...b("pop", 0.8, { len: 0.4 })}>
+        <rect className="f-old-news" x={x + 656} y={y + 130} width="184" height="150" />
+        <text className="t-old t-old-maroon t-strong" x={x + 748} y={y + 164} fontSize="22">
+          NEWS!!!
+        </text>
+        {[0, 1, 2].map((i) => bar(x + 674, y + 190 + i * 24, [148, 130, 110][i]))}
+      </g>
+      <g {...b("pop", 0.9, { len: 0.4 })}>
+        <rect className="f-old-hazard" x={x + 656} y={y + 296} width="184" height="56" />
+        <rect className="f-old-page" x={x + 670} y={y + 310} width="156" height="28" />
+        <text className="t-old t-old-grey t-strong" x={x + 748} y={y + 330} fontSize="13">
+          UNDER CONSTRUCTION
+        </text>
+      </g>
+      <g {...b("pop", 1, { len: 0.4 })}>
+        <text className="t-old t-old-grey" x={x + 748} y={y + 386} fontSize="14">
+          You are visitor no.
+        </text>
+        <rect className="f-old-counter" x={x + 672} y={y + 398} width="152" height="46" />
+        <text className="t-mono t-old-green" x={x + 748} y={y + 430} fontSize="26">
+          004217
+        </text>
+      </g>
+      <text x="500" y={y + h - 14} fontSize="13" {...b("fade", 1.1, { len: 0.2, cls: "t-old t-old-grey" })}>
+        Best viewed at 800 × 600
+      </text>
+    </>
+  );
+}
+
+/** The same, on a phone: a desktop page squeezed small, as such sites are. */
+function DatedTall({ b, body: [x, y, w] }: { b: Beats; body: Box }) {
+  const bar = (bx: number, by: number, bw: number) => <rect className="f-old-text" x={bx} y={by} width={bw} height="11" rx="3" />;
+  return (
+    <>
+      <rect className="f-old-page" x={x} y={y} width={w} height="920" />
+      <g {...b("pop", 0.2, { len: 0.4 })}>
+        <rect className="f-old-banner" x={x + 14} y={y + 14} width={w - 28} height="116" />
+        <text className="t-old t-old-yellow t-strong" x="500" y={y + 64} fontSize="38">
+          WELCOME TO OUR
+        </text>
+        <text className="t-old t-old-yellow t-strong" x="500" y={y + 110} fontSize="38">
+          WINERY!!!
+        </text>
+      </g>
+      <g {...b("fade", 0.35, { len: 0.2 })}>
+        <text className="t-old t-old-link" x="500" y={y + 170} fontSize="24">
+          Home | About Us | Our Wines | Events
+        </text>
+        <text className="t-old t-old-link" x="500" y={y + 204} fontSize="24">
+          Gift Shop | Guestbook | Links
+        </text>
+      </g>
+      <g {...b("pop", 0.5, { len: 0.4 })}>
+        <rect className="f-old-box" x={x + 14} y={y + 228} width="220" height="440" />
+        {["» Specials", "» Wine Club", "» Gift Shop", "» Directions", "» Guestbook", "» Newsletter", "» Awards", "» Photos"].map((t, i) => (
+          <text key={t} className="t-old t-old-link t-left" x={x + 30} y={y + 274 + i * 52} fontSize="23">
+            {t}
+          </text>
+        ))}
+      </g>
+      <g {...b("pop", 0.6, { len: 0.4 })}>
+        <rect className="f-old-img" x={x + 250} y={y + 228} width="472" height="236" />
+        <path className="s-old" d={`M ${x + 250} ${y + 228} l 472 236 M ${x + 722} ${y + 228} l -472 236`} />
+      </g>
+      <g {...b("pop", 0.8, { len: 0.4 })}>
+        <rect className="f-old-news" x={x + 250} y={y + 480} width="472" height="188" />
+        <text className="t-old t-old-maroon t-strong" x={x + 486} y={y + 528} fontSize="32">
+          NEWS!!!
+        </text>
+        {[0, 1, 2].map((i) => bar(x + 280, y + 560 + i * 30, [412, 380, 300][i]))}
+      </g>
+      <g {...b("fade", 0.7, { len: 0.3 })}>{[0, 1, 2, 3].map((i) => bar(x + 14, y + 692 + i * 30, [708, 660, 690, 520][i]))}</g>
+      <g {...b("blink", 1.4, { len: 0.6, n: 4 })}>
+        <text className="t-old t-old-link t-left" x={x + 14} y={y + 872} fontSize="26">
+          Click HERE to book!!
+        </text>
+        <path className="s-old-link" d={`M ${x + 14} ${y + 878} H ${x + 254}`} />
+      </g>
+      <g {...b("pop", 1, { len: 0.4 })}>
+        <rect className="f-old-counter" x={x + 470} y={y + 838} width="252" height="56" />
+        <text className="t-mono t-old-green" x={x + 596} y={y + 878} fontSize="32">
+          004217
+        </text>
+      </g>
+    </>
+  );
+}
+
+/* ── Booking: an inbox of requests, then a click ───────────────────────── */
+
+const TEXTS = ["Can I book Saturday at 2?", "Is 4 still open?", "Any room for 6 on Sunday?", "Did you get my text?", "Can we do 3 instead?"];
+const MAILS: [string, string][] = [
+  ["Booking request", "Hi, is Saturday at 2 free?"],
+  ["Re: Tasting for 6", "Following up on my email…"],
+  ["Fwd: Saturday?", "Can you fit us in…"],
+  ["Group of 8", "Any time this weekend?"],
+  ["Re: Re: Booking", "Just checking again…"],
+];
+
+function Booking(tall: boolean): SceneArt {
+  const D = DESIGN.booking;
+  const b = beats(D);
+  const FIX = 3.9;
+  return {
+    far: (
+      <Far>
+        <Glow id="far-booking-a" cx={50} cy={46} r={56} o={0.11} color="#F4F1EA" />
+        <g {...b("fade", FIX, { len: 1.4 })}>
+          <Glow id="far-booking-b" cx={50} cy={44} r={58} o={0.17} />
+        </g>
+      </Far>
+    ),
+    mid: (
+      <>
+        <Stage b={b} to={FIX - 0.1}>{tall ? <InboxTall b={b} /> : <InboxWide b={b} />}</Stage>
+        <Stage b={b} from={FIX}>{tall ? <BookTall b={b} /> : <BookWide b={b} />}</Stage>
+      </>
+    ),
+  };
+}
+
+function InboxWide({ b }: { b: Beats }) {
+  return (
+    <Art tall={false}>
+      {/* Texts, one after another. */}
+      <g {...b("rise", 0.1, { len: 0.9 })}>
+        <rect className="card" x="70" y="110" width="400" height="640" rx="40" />
+        <text className="t-small t-left" x="108" y="170" fontSize="20">
+          Messages
+        </text>
+        <path className="s-soft" d="M 70 196 H 470" />
+      </g>
+      {TEXTS.map((t, i) => (
+        <g key={t} {...b("pop", 0.35 + i * 0.5, { len: 0.5 })}>
+          <rect className="bubble" x="96" y={222 + i * 98} width={Math.min(348, t.length * 11.6 + 46)} height="72" rx="26" />
+          <text className="t-body t-left" x="120" y={266 + i * 98} fontSize="23">
+            {t}
+          </text>
+        </g>
+      ))}
+      {/* And emails, piling up. */}
+      <g {...b("rise", 0.25, { len: 0.9 })}>
+        <rect className="card" x="510" y="110" width="420" height="640" rx="26" />
+        <text className="t-small t-left" x="546" y="170" fontSize="20">
+          Inbox
+        </text>
+        <path className="s-soft" d="M 510 196 H 930" />
+        <circle className="f-paper" cx="886" cy="162" r="24" />
+      </g>
+      <Count values={["3", "8", "14"]} at={[0.6, 1.5, 2.4]} x={886} y={170} size={22} cls="t-ink t-strong" b={b} />
+      {MAILS.map(([from, subject], i) => (
+        <g key={from} {...b("rise", 0.6 + i * 0.45, { len: 0.6 })}>
+          <circle className="f-paper" cx="544" cy={240 + i * 100} r="6" />
+          <text className="t-body t-left t-strong" x="564" y={248 + i * 100} fontSize="24">
+            {from}
+          </text>
+          <text className="t-faint t-left" x="564" y={282 + i * 100} fontSize="20">
+            {subject}
+          </text>
+          {i < MAILS.length - 1 && <path className="s-soft" d={`M 544 ${308 + i * 100} H 900`} />}
+        </g>
+      ))}
+    </Art>
+  );
+}
+
+function InboxTall({ b }: { b: Beats }) {
+  return (
+    <Art tall>
+      <g {...b("rise", 0.1, { len: 0.9 })}>
+        <rect className="card" x="40" y="30" width="920" height="500" rx="44" />
+        <text className="t-small t-left" x="84" y="94" fontSize="28">
+          Messages
+        </text>
+        <path className="s-soft" d="M 40 124 H 960" />
+      </g>
+      {TEXTS.slice(0, 4).map((t, i) => (
+        <g key={t} {...b("pop", 0.35 + i * 0.55, { len: 0.5 })}>
+          <rect className="bubble" x="76" y={148 + i * 92} width={t.length * 16.2 + 64} height="76" rx="34" />
+          <text className="t-body t-left" x="108" y={198 + i * 92} fontSize="32">
+            {t}
+          </text>
+        </g>
+      ))}
+      <g {...b("rise", 0.25, { len: 0.9 })}>
+        <rect className="card" x="40" y="560" width="920" height="520" rx="30" />
+        <text className="t-small t-left" x="84" y="624" fontSize="28">
+          Inbox
+        </text>
+        <path className="s-soft" d="M 40 654 H 960" />
+        <circle className="f-paper" cx="900" cy="614" r="32" />
+      </g>
+      <Count values={["3", "8", "14"]} at={[0.6, 1.5, 2.4]} x={900} y={624} size={30} cls="t-ink t-strong" b={b} />
+      {MAILS.slice(0, 4).map(([from, subject], i) => (
+        <g key={from} {...b("rise", 0.6 + i * 0.5, { len: 0.6 })}>
+          <circle className="f-paper" cx="86" cy={692 + i * 100} r="8" />
+          <text className="t-body t-left t-strong" x="112" y={704 + i * 100} fontSize="32">
+            {from}
+          </text>
+          <text className="t-faint t-left" x="112" y={744 + i * 100} fontSize="27">
+            {subject}
+          </text>
+          {i < 3 && <path className="s-soft" d={`M 84 ${770 + i * 100} H 916`} />}
+        </g>
+      ))}
+    </Art>
+  );
+}
+
+/** A choice on the booking form: picked (gold) from `pick`, if it's the one. */
+function Choice({ x, y, w, h, size, text, pick, b }: { x: number; y: number; w: number; h: number; size: number; text: string; pick?: number; b: Beats }) {
+  return (
+    <>
+      <rect className="card s-paper-soft" x={x} y={y} width={w} height={h} rx="10" />
+      <text className="t-body" x={x + w / 2} y={y + h / 2 + size * 0.36} fontSize={size}>
+        {text}
+      </text>
+      {pick !== undefined && (
+        <g {...b("pop", pick, { len: 0.4 })}>
+          <rect className="f-gold-v" x={x} y={y} width={w} height={h} rx="10" />
+          <text className="t-ink t-strong" x={x + w / 2} y={y + h / 2 + size * 0.36} fontSize={size}>
+            {text}
+          </text>
+        </g>
+      )}
+    </>
+  );
+}
+
+function BookWide({ b }: { b: Beats }) {
+  return (
+    <Art tall={false}>
+      {/* The winery's own booking, on its site. */}
+      <rect className="card card--deep s-paper-soft" x="250" y="96" width="500" height="490" rx="24" />
+      <text className="t-disp t-gold t-left" x="290" y="168" fontSize="48">
+        Your winery
+      </text>
+      <text className="t-small t-left" x="292" y="210" fontSize="19">
+        Book a tasting · Saturday
+      </text>
+      {["Fri", "Sat", "Sun"].map((d, i) => (
+        <Choice key={d} x={290 + i * 145} y={238} w={130} h={64} size={24} text={d} pick={i === 1 ? 4.4 : undefined} b={b} />
+      ))}
+      {["12pm", "2pm", "4pm"].map((t, i) => (
+        <Choice key={t} x={290 + i * 145} y={318} w={130} h={64} size={24} text={t} pick={i === 1 ? 4.7 : undefined} b={b} />
+      ))}
+      <text className="t-faint t-left" x="290" y="428" fontSize="22">
+        Guests
+      </text>
+      <text className="t-body t-right" x="710" y="428" fontSize="26">
+        4
+      </text>
+      <path className="s-soft" d="M 290 448 H 710" />
+      <g {...b("press", 5.2, { len: 0.5 })}>
+        <rect className="f-gold-v" x="290" y="478" width="420" height="76" rx="8" />
+        <text className="t-ink t-caps" x="500" y="525" fontSize="24">
+          Book a tasting
+        </text>
+      </g>
+      <circle cx="500" cy="516" r="44" {...b("ring", 5.2, { len: 0.9, n: 1, cls: "s-gold-thin" })} />
+      {/* It comes in, confirmed, with nobody sorting it. */}
+      <g {...b("slide-in", 5.8, { len: 0.9, dx: 80 })}>
+        <rect className="page" x="250" y="620" width="500" height="160" rx="18" />
+        <circle className="f-gold" cx="290" cy="668" r="12" />
+        <text className="t-ink t-left t-strong" x="314" y="680" fontSize="32">
+          New booking
+        </text>
+        <text className="t-ink-soft t-left" x="290" y="740" fontSize="26">
+          Tasting for 4 · Sat 2pm
+        </text>
+      </g>
+      <g {...b("pop", 6.6, { len: 0.5 })}>
+        <text className="t-gold-deep t-right t-strong t-caps" x="674" y="676" fontSize="17">
+          Confirmed
+        </text>
+        <Tick cx={708} cy={670} r={22} />
+      </g>
+    </Art>
+  );
+}
+
+function BookTall({ b }: { b: Beats }) {
+  return (
+    <Art tall>
+      <rect className="card card--deep s-paper-soft" x="40" y="30" width="920" height="600" rx="30" />
+      <text className="t-disp t-gold t-left" x="84" y="120" fontSize="62">
+        Your winery
+      </text>
+      <text className="t-small t-left" x="86" y="174" fontSize="27">
+        Book a tasting · Saturday
+      </text>
+      {["Fri", "Sat", "Sun"].map((d, i) => (
+        <Choice key={d} x={84 + i * 284} y={210} w={264} h={84} size={34} text={d} pick={i === 1 ? 4.4 : undefined} b={b} />
+      ))}
+      {["12pm", "2pm", "4pm"].map((t, i) => (
+        <Choice key={t} x={84 + i * 284} y={312} w={264} h={84} size={34} text={t} pick={i === 1 ? 4.7 : undefined} b={b} />
+      ))}
+      <text className="t-faint t-left" x="84" y="448" fontSize="30">
+        Guests
+      </text>
+      <text className="t-body t-right" x="916" y="448" fontSize="36">
+        4
+      </text>
+      <path className="s-soft" d="M 84 472 H 916" />
+      <g {...b("press", 5.2, { len: 0.5 })}>
+        <rect className="f-gold-v" x="84" y="500" width="832" height="96" rx="10" />
+        <text className="t-ink t-caps" x="500" y="560" fontSize="34">
+          Book a tasting
+        </text>
+      </g>
+      <circle cx="500" cy="548" r="58" {...b("ring", 5.2, { len: 0.9, n: 1, cls: "s-gold-thin" })} />
+      <g {...b("slide-in", 5.8, { len: 0.9, dx: 80 })}>
+        <rect className="page" x="40" y="680" width="920" height="230" rx="24" />
+        <circle className="f-gold" cx="96" cy="750" r="16" />
+        <text className="t-ink t-left t-strong" x="128" y="766" fontSize="46">
+          New booking
+        </text>
+        <text className="t-ink-soft t-left" x="84" y="850" fontSize="38">
+          Tasting for 4 · Sat 2pm
+        </text>
+      </g>
+      <g {...b("pop", 6.6, { len: 0.5 })}>
+        <text className="t-gold-deep t-right t-strong t-caps" x="836" y="760" fontSize="26">
+          Confirmed
+        </text>
+        <Tick cx={884} cy={750} r={34} />
+      </g>
+    </Art>
+  );
+}
+
+/* ── Calls: the front desk, too busy; then every call answered ─────────── */
+
+/** The caller, the same on both layouts: a made-up patient of the orthodontist's (and, later, in its office). */
+const CALLER = { name: "Sofia Park", initials: "SP" };
+
+/** The answer button's handset, in ink, at (cx, cy). */
+const Handset = ({ cx, cy, k, cls = "s-ink" }: { cx: number; cy: number; k: number; cls?: string }) => (
+  <g transform={`translate(${cx} ${cy}) scale(${k}) translate(-300 -486)`}>
+    <path className={cls} d={`M 262 450 ${HANDSET}`} />
+  </g>
+);
+
+/** A call coming in to the front desk, at (cx, cy): the caller's circle, ringing from `at`, until it's answered. */
+function Ringing({ cx, cy, r, at, b }: { cx: number; cy: number; r: number; at: number; b: Beats }) {
+  return (
+    <>
+      <circle cx={cx} cy={cy} r={r} {...b("ring", at, { len: 1, n: 1, cls: "s-gold-thin" })} />
+      <circle cx={cx} cy={cy} r={r} {...b("ring", at + 0.45, { len: 1, n: 1, cls: "s-gold-thin" })} />
+      <circle className="f-gold-dim s-gold-edge" cx={cx} cy={cy} r={r} />
+      <text className="t-disp" x={cx} y={cy + r * 0.27} fontSize={r * 0.78}>
+        {CALLER.initials}
+      </text>
+    </>
+  );
+}
+
+function Calls(tall: boolean): SceneArt {
+  const D = DESIGN.calls;
+  const b = beats(D);
+  const FIX = 4.5;
+  return {
+    far: (
+      <Far>
+        <Glow id="far-calls-a" cx={50} cy={48} r={54} o={0.1} color="#F4F1EA" />
+        <g {...b("fade", FIX, { len: 1.4 })}>
+          <Glow id="far-calls-b" cx={40} cy={46} r={60} o={0.17} />
+        </g>
+      </Far>
+    ),
+    mid: (
+      <>
+        {/* The front desk's phone, ringing and ringing, the missed calls counting up. */}
+        <Stage b={b} to={FIX - 0.1}>
+          <Art tall={tall}>
+            <g transform={tall ? "translate(500 560) scale(1.3) translate(-500 -440)" : "translate(500 430) scale(.97) translate(-500 -460)"}>
+              <g {...b("rise", 0.15, { len: 0.9 })}>
+                <rect className="s-paper-soft card" x="330" y="120" width="340" height="680" rx="56" />
+                <text className="t-small" x="500" y="236" fontSize="30">
+                  Front desk
+                </text>
+                <g transform="translate(500 450) scale(2.4) translate(-300 -486)">
+                  <path className="s-paper" d={`M 262 450 ${HANDSET}`} />
+                </g>
+                <text className="t-faint" x="500" y="690" fontSize="34">
+                  Missed calls
+                </text>
+              </g>
+              <g {...b("fade", 0.5, { len: 0.3 })}>
+                <g {...b("blink", 0.6, { len: 0.6, n: 6 })}>
+                  <path className="s-dim thin-ring" d="M 712 380 q 30 50 0 100 M 744 350 q 52 80 0 160 M 288 380 q -30 50 0 100 M 256 350 q -52 80 0 160" />
+                </g>
+              </g>
+              <g {...b("pop", 0.8, { len: 0.5 })}>
+                <circle className="f-paper" cx="664" cy="132" r="52" />
+              </g>
+              <Count values={["1", "2", "3", "4", "5"]} at={[0.8, 1.35, 1.9, 2.45, 3]} x={664} y={150} size={50} cls="t-ink t-strong" b={b} />
+            </g>
+          </Art>
+        </Stage>
+        {/* Then a call comes in, and it's answered, booked and followed up. */}
+        <Stage b={b} from={FIX}>{tall ? <AnsweredTall b={b} /> : <AnsweredWide b={b} />}</Stage>
+      </>
+    ),
+  };
+}
+
+function AnsweredWide({ b }: { b: Beats }) {
+  return (
+    <Art tall={false}>
+      {/* The front desk's phone: a call coming in, then answered. */}
+      <g {...b("rise", 4.6, { len: 0.8 })}>
+        <rect className="card s-paper-soft" x="70" y="230" width="290" height="560" rx="44" />
+        <path className="s-soft thick" d="M 190 262 H 240" />
+        <text className="t-small t-gold-text" x="215" y="322" fontSize="22">
+          Front desk
+        </text>
+        <Ringing cx={215} cy={450} r={58} at={4.8} b={b} />
+        <text className="t-body" x="215" y="566" fontSize="32">
+          {CALLER.name}
+        </text>
+      </g>
+      <g {...b("out", 5.8, { len: 0.3 })}>
+        <text x="215" y="602" fontSize="22" {...b("fade", 4.8, { cls: "t-faint" })}>
+          Incoming call
+        </text>
+        <circle fill="none" cx="160" cy="700" r="36" {...b("fade", 4.8, { cls: "s-paper-soft" })} />
+        <path d="M 148 688 l 24 24 M 172 688 l -24 24" {...b("fade", 4.8, { cls: "s-paper-soft" })} />
+        <g {...b("press", 5.5, { len: 0.4 })}>
+          <g {...b("fade", 4.8)}>
+            <circle className="f-gold-v" cx="270" cy="700" r="36" />
+            <Handset cx={270} cy={702} k={0.42} />
+          </g>
+        </g>
+      </g>
+      <g {...b("pop", 5.9, { len: 0.6 })}>
+        <text className="t-faint" x="215" y="602" fontSize="22">
+          On the call · 0:04
+        </text>
+        <rect className="f-gold-v" x="110" y="668" width="210" height="64" rx="32" />
+        <text className="t-ink t-caps" x="215" y="709" fontSize="22">
+          Answered
+        </text>
+      </g>
+      {/* Thursday fills in. */}
+      <g {...b("rise", 6.2, { len: 0.9 })}>
+        <rect className="card card--deep s-paper-soft" x="410" y="230" width="520" height="320" rx="20" />
+        <text className="t-small t-gold-text t-left" x="444" y="292" fontSize="28">
+          Thursday
+        </text>
+        <path className="s-soft" d="M 444 330 H 896 M 444 412 H 896 M 444 494 H 896" />
+      </g>
+      <g {...b("grow", 6.8, { len: 0.7 })}>
+        <rect className="f-gold-v" x="444" y="344" width="452" height="58" rx="8" />
+      </g>
+      <text x="464" y="382" fontSize="26" {...b("fade", 7.2, { cls: "t-ink t-left" })}>
+        Consult · 10am · {CALLER.name}
+      </text>
+      {/* And the follow-up goes out. */}
+      <g {...b("slide-in", 7.8, { len: 0.9, dx: 80 })}>
+        <path className="page" d="M 430 600 h 480 a 22 22 0 0 1 22 22 v 120 a 22 22 0 0 1 -22 22 h -420 l -34 34 v -34 h -26 a 22 22 0 0 1 -22 -22 v -120 a 22 22 0 0 1 22 -22 z" />
+        <text className="t-ink t-left" x="442" y="672" fontSize="34">
+          Thanks, see you Thursday.
+        </text>
+        <text className="t-ink-soft t-left" x="442" y="724" fontSize="28">
+          Follow-up · sent
+        </text>
+      </g>
+      <g {...b("pop", 8.6, { len: 0.5 })}>
+        <circle className="f-gold" cx="914" cy="600" r="28" />
+        <path className="s-ink" d="M 901 601 l 9 9 l 17 -18" />
+      </g>
+    </Art>
+  );
+}
+
+/** On a phone upright: the call across the top, the Thursday card under it, the follow-up under that. */
+function AnsweredTall({ b }: { b: Beats }) {
+  return (
+    <Art tall>
+      <g {...b("rise", 4.6, { len: 0.8 })}>
+        <rect className="card s-paper-soft" x="40" y="130" width="920" height="230" rx="60" />
+        <Ringing cx={156} cy={245} r={64} at={4.8} b={b} />
+        <text className="t-small t-gold-text t-left" x="256" y="216" fontSize="26">
+          Front desk
+        </text>
+        <text className="t-body t-left" x="256" y="272" fontSize="46">
+          {CALLER.name}
+        </text>
+      </g>
+      <g {...b("out", 5.8, { len: 0.3 })}>
+        <text x="256" y="316" fontSize="28" {...b("fade", 4.8, { cls: "t-faint t-left" })}>
+          Incoming call
+        </text>
+        <circle fill="none" cx="766" cy="245" r="46" {...b("fade", 4.8, { cls: "s-paper-soft" })} />
+        <path d="M 751 230 l 30 30 M 781 230 l -30 30" {...b("fade", 4.8, { cls: "s-paper-soft" })} />
+        <g {...b("press", 5.5, { len: 0.4 })}>
+          <g {...b("fade", 4.8)}>
+            <circle className="f-gold-v" cx="884" cy="245" r="46" />
+            <Handset cx={884} cy={247} k={0.54} />
+          </g>
+        </g>
+      </g>
+      <g {...b("pop", 5.9, { len: 0.6 })}>
+        <text className="t-faint t-left" x="256" y="316" fontSize="28">
+          On the call · 0:04
+        </text>
+        <rect className="f-gold-v" x="660" y="209" width="270" height="72" rx="36" />
+        <text className="t-ink t-caps" x="795" y="255" fontSize="26">
+          Answered
+        </text>
+      </g>
+      <g {...b("rise", 6.2, { len: 0.9 })}>
+        <rect className="card card--deep s-paper-soft" x="40" y="400" width="920" height="330" rx="22" />
+        <text className="t-small t-gold-text t-left" x="84" y="466" fontSize="34">
+          Thursday
+        </text>
+        <path className="s-soft" d="M 84 508 H 916 M 84 606 H 916 M 84 694 H 916" />
+      </g>
+      <g {...b("grow", 6.8, { len: 0.7 })}>
+        <rect className="f-gold-v" x="84" y="522" width="832" height="72" rx="10" />
+      </g>
+      <text x="112" y="571" fontSize="36" {...b("fade", 7.2, { cls: "t-ink t-left" })}>
+        Consult · 10am · {CALLER.name}
+      </text>
+      <g {...b("slide-in", 7.8, { len: 0.9, dx: 80 })}>
+        <path className="page" d="M 62 770 h 876 a 22 22 0 0 1 22 22 v 130 a 22 22 0 0 1 -22 22 h -800 l -34 34 v -34 h -42 a 22 22 0 0 1 -22 -22 v -130 a 22 22 0 0 1 22 -22 z" />
+        <text className="t-ink t-left" x="80" y="842" fontSize="44">
+          Thanks, see you Thursday.
+        </text>
+        <text className="t-ink-soft t-left" x="80" y="904" fontSize="32">
+          Follow-up · sent
+        </text>
+      </g>
+      <g {...b("pop", 8.6, { len: 0.5 })}>
+        <circle className="f-gold" cx="928" cy="772" r="34" />
+        <path className="s-ink" d="M 912 773 l 11 11 l 21 -22" />
+      </g>
+    </Art>
+  );
+}
+
+/* ── Behind the scenes: the same details three times, then once; then a tool of their own ── */
+
+type Win = { x: number; w: number; h: number; bar: number; ys: number[]; title: number; label: number; value: number; k: number };
+const DESK_WIDE: Win = { x: 330, w: 600, h: 200, bar: 50, ys: [110, 330, 550], title: 17, label: 20, value: 26, k: 1 };
+const DESK_TALL: Win = { x: 90, w: 870, h: 270, bar: 64, ys: [210, 500, 790], title: 26, label: 28, value: 36, k: 1.4 };
+const APPS = ["Booking system", "Spreadsheet", "Email"];
+/** When each app gets the patient typed in by hand; and, once there's one entry, filled in on its own. */
+const TYPE_AT = [0.7, 1.8, 2.9];
+const FILL_AT = 5.55;
+
+/**
+ * One of the office's apps with the patient in it: typed by hand (`typed`,
+ * from its time), or filled in on its own from the one entry.
+ */
+function AppFields({ i, W, wy, b, typed }: { i: number; W: Win; wy: number; b: Beats; typed: boolean }) {
+  const x = W.x;
+  const k = W.k;
+  const name = (cls: string, nx: number, ny: number, size: number) => (
+    <text className={`${cls} t-left`} x={nx} y={ny} fontSize={size}>
+      {typed ? <Typed text={CALLER.name} at={TYPE_AT[i]} b={b} /> : CALLER.name}
+    </text>
+  );
+  const rest = (node: ReactNode) => (typed ? <g {...b("fade", TYPE_AT[i] + 0.65, { len: 0.3 })}>{node}</g> : node);
+  const val = typed ? "t-body" : "t-gold-text";
+  if (i === 0)
+    return (
+      <>
+        {name(val, x + 170 * k, wy + 104 * k, W.value)}
+        {rest(
+          <text className={`${val} t-left`} x={x + 170 * k} y={wy + 158 * k} fontSize={W.value}>
+            Consult · Thu 10am
+          </text>
+        )}
+      </>
+    );
+  if (i === 1)
+    return (
+      <>
+        {name(val, x + 32 * k, wy + 154 * k, W.value - 2)}
+        {rest(
+          <>
+            <text className={`${val} t-left`} x={x + 226 * k} y={wy + 154 * k} fontSize={W.value - 4}>
+              415 555 0142
+            </text>
+            <text className={`${val} t-left`} x={x + 420 * k} y={wy + 154 * k} fontSize={W.value - 4}>
+              Thu 10am
+            </text>
+          </>
+        )}
+      </>
+    );
+  return (
+    <>
+      {name(val, x + 92 * k, wy + 104 * k, W.value)}
+      {rest(
+        <text className={`${val} t-left`} x={x + 92 * k} y={wy + 158 * k} fontSize={W.value - 2}>
+          Your consult, Thu 10am
+        </text>
+      )}
+    </>
+  );
+}
+
+/** An app's window, its labels and lines, empty. */
+function AppWindow({ i, W, wy }: { i: number; W: Win; wy: number }) {
+  const x = W.x;
+  const k = W.k;
+  const label = (t: string, lx: number, ly: number) => (
+    <text className="t-faint t-left" x={lx} y={ly} fontSize={W.label}>
+      {t}
+    </text>
+  );
+  return (
+    <>
+      <rect className="card card--deep s-paper-soft" x={x} y={wy} width={W.w} height={W.h} rx="18" />
+      <path className="s-soft" d={`M ${x} ${wy + W.bar} H ${x + W.w}`} />
+      <g className="f-dim">
+        {[0, 1, 2].map((d) => (
+          <circle key={d} cx={x + 26 + d * 20 * k} cy={wy + W.bar / 2} r={5 * k} />
+        ))}
+      </g>
+      <text className="t-small t-left" x={x + 26 + 66 * k} y={wy + W.bar / 2 + W.title * 0.36} fontSize={W.title}>
+        {APPS[i]}
+      </text>
+      {i === 0 && (
+        <>
+          {label("Patient", x + 32 * k, wy + 104 * k)}
+          {label("Visit", x + 32 * k, wy + 158 * k)}
+        </>
+      )}
+      {i === 1 && (
+        <>
+          {label("Name", x + 32 * k, wy + 98 * k)}
+          {label("Phone", x + 226 * k, wy + 98 * k)}
+          {label("Visit", x + 420 * k, wy + 98 * k)}
+          <path className="s-soft" d={`M ${x} ${wy + 114 * k} H ${x + W.w} M ${x + 210 * k} ${wy + W.bar} V ${wy + W.h} M ${x + 404 * k} ${wy + W.bar} V ${wy + W.h}`} />
+        </>
+      )}
+      {i === 2 && (
+        <>
+          {label("To", x + 32 * k, wy + 104 * k)}
+          {label("Re", x + 32 * k, wy + 158 * k)}
+        </>
+      )}
+    </>
+  );
+}
+
+function Office(tall: boolean): SceneArt {
+  const D = DESIGN.office;
+  const b = beats(D);
+  const W = tall ? DESK_TALL : DESK_WIDE;
+  const ONE = 4.4;
+  const TOOL = 6.9;
+  // The card beside them: hours lost to typing, then the one entry.
+  const side = tall ? ([40, 30, 920, 150] as Box) : ([70, 300, 200, 260] as Box);
+  const [sx, sy, sw, sh] = side;
+  const mid = (wy: number) => wy + W.h / 2;
+  // From the one entry into each app: down the left of them on a phone; across, then up or down, on a wide screen.
+  const feed = (wy: number) => {
+    const m = mid(wy);
+    if (tall) return `M 56 ${sy + sh} V ${m - 10} Q 56 ${m} 66 ${m} H ${W.x}`;
+    const from = sy + sh / 2;
+    if (m === from) return `M ${sx + sw} ${from} H ${W.x}`;
+    const s = m > from ? 1 : -1;
+    return `M ${sx + sw} ${from} H 292 Q 300 ${from} 300 ${from + 8 * s} V ${m - 8 * s} Q 300 ${m} 308 ${m} H ${W.x}`;
+  };
+  // Custom tools: the consult-notes window, its title bar, and its body, where the gold sketch turns into the real thing.
+  const T = tall ? { win: [40, 190, 920, 850] as Box, bar: 70, title: 122, size: 92, rec: 236 } : { win: [70, 210, 860, 600] as Box, bar: 74, title: 150, size: 88, rec: 210 };
+  const [wx, wy, ww, wh] = T.win;
+  const body: Box = [wx + 2, wy + T.bar + 2, ww - 4, wh - T.bar - 4];
+  const waveY = tall ? 470 : 420;
+  const waveX = (i: number) => (tall ? 92 + i * 32 : 124 + i * 29);
+  const waveK = tall ? 1.9 : 1.4;
+  return {
+    far: (
+      <Far>
+        <Glow id="far-office-a" cx={50} cy={40} r={58} o={0.1} color="#F4F1EA" />
+        <g {...b("fade", ONE, { len: 1.2 })}>
+          <Glow id="far-office-b" cx={36} cy={30} r={64} o={0.16} />
+        </g>
+      </Far>
+    ),
+    mid: (
+      <>
+        <Stage b={b} to={TOOL}>
+          <Art tall={tall}>
+            {W.ys.map((y, i) => (
+              <g key={y} {...b("rise", 0.2 + i * 0.2, { len: 0.8 })}>
+                <AppWindow i={i} W={W} wy={y} />
+              </g>
+            ))}
+            {/* Typed by hand, one app after another, the hours adding up. */}
+            <g {...b("out", ONE, { len: 0.35 })}>
+              {W.ys.map((y, i) => (
+                <AppFields key={y} i={i} W={W} wy={y} b={b} typed />
+              ))}
+              <g {...b("rise", 0.4, { len: 0.8 })}>
+                <rect className="card s-paper-soft" x={sx} y={sy} width={sw} height={sh} rx="20" />
+                <text className="t-small t-left" x={tall ? 84 : sx + 28} y={tall ? sy + 62 : sy + 50} fontSize={tall ? 26 : 18}>
+                  By hand
+                </text>
+                <text className="t-faint t-left" x={tall ? 84 : sx + 28} y={tall ? sy + 114 : sy + 222} fontSize={tall ? 30 : 20}>
+                  hours a week
+                </text>
+              </g>
+              <Count
+                values={["2", "4", "6"]}
+                at={TYPE_AT.map((t) => t + 0.7)}
+                x={tall ? 916 : sx + 26}
+                y={tall ? sy + 122 : sy + 178}
+                size={tall ? 120 : 112}
+                cls={`t-disp ${tall ? "t-right" : "t-left"}`}
+                b={b}
+              />
+            </g>
+            {/* Then once: one entry, and all three fill in on their own. */}
+            <g {...b("fade", ONE + 0.2, { len: 0.6 })}>
+              <rect className="card card--deep s-gold-edge" x={sx} y={sy} width={sw} height={sh} rx="20" />
+              <text className="t-small t-gold-text t-left" x={tall ? 84 : sx + 28} y={tall ? sy + 62 : sy + 50} fontSize={tall ? 26 : 18}>
+                One entry
+              </text>
+              {!tall && (
+                <text className="t-faint t-left" x={sx + 28} y={sy + 196} fontSize={20}>
+                  Thu 10am
+                </text>
+              )}
+            </g>
+            <text className="t-disp t-gold t-left" x={tall ? 84 : sx + 26} y={tall ? sy + 122 : sy + 150} fontSize={tall ? 52 : 36}>
+              <Typed text={tall ? `${CALLER.name} · Thu 10am` : CALLER.name} at={ONE + 0.45} b={b} step={0.04} />
+            </text>
+            {W.ys.map((y) => (
+              <Gold key={y} d={feed(y)} fx={b("draw", 5.1, { len: 0.5 })} thin />
+            ))}
+            {W.ys.map((y, i) => (
+              <g key={y}>
+                <g {...b("fade", FILL_AT + i * 0.1, { len: 0.3 })}>
+                  <AppFields i={i} W={W} wy={y} b={b} typed={false} />
+                </g>
+                <g {...b("pop", FILL_AT + 0.3 + i * 0.1, { len: 0.4 })}>
+                  <Tick cx={W.x + W.w - 30 * W.k} cy={y + W.bar / 2} r={15 * W.k} />
+                </g>
+              </g>
+            ))}
+          </Art>
+        </Stage>
+
+        {/* And a tool built around how they work: an orthodontist's consult, recorded and written up. The gold sketch of it gives way to the real tool, Clinical Scribe. */}
+        <Stage b={b} from={TOOL}>
+          <Art tall={tall}>
+            <text x="500" y={T.title} fontSize={T.size} {...b("rise", TOOL, { len: 1.2, cls: "t-disp" })}>
               Custom tools
             </text>
           </Art>
-          <div {...b("rise", 0.7, { len: 1.1, cls: "film-layer" })}>
+          <div {...b("rise", 7.2, { len: 1.1, cls: "film-layer" })}>
             <Art tall={tall}>
               <rect className="card card--deep" x={wx} y={wy} width={ww} height={wh} rx="22" />
-              <path className="s-soft" d={`M ${wx} ${wy + W.bar} H ${wx + ww}`} />
-              <text className="t-body t-left" x={wx + 36} y={wy + W.bar * 0.66} fontSize={tall ? 34 : 30}>
+              <path className="s-soft" d={`M ${wx} ${wy + T.bar} H ${wx + ww}`} />
+              <text className="t-body t-left" x={wx + 36} y={wy + T.bar * 0.66} fontSize={tall ? 34 : 30}>
                 Consult notes
               </text>
-              <g {...b("blink", 1, { len: 1.2, n: 4 })}>
-                <circle className="f-gold" cx={wx + ww - W.rec} cy={wy + W.bar / 2} r="9" />
+              <g {...b("blink", 7.5, { len: 1.2, n: 4 })}>
+                <circle className="f-gold" cx={wx + ww - T.rec} cy={wy + T.bar / 2} r="9" />
               </g>
-              <text className="t-small t-left" x={wx + ww - W.rec + 22} y={wy + W.bar * 0.62} fontSize={tall ? 26 : 22}>
+              <text className="t-small t-left" x={wx + ww - T.rec + 22} y={wy + T.bar * 0.62} fontSize={tall ? 26 : 22}>
                 Recording
               </text>
-              <g {...b("out", 1.7, { len: 0.8 })}>
+              <g {...b("out", 8.2, { len: 0.8 })}>
                 {WAVE.map((h, i) => (
-                  <path key={i} d={`M ${waveX(i)} ${waveY - (h * waveK) / 2} V ${waveY + (h * waveK) / 2}`} {...b("tall", 0.9 + i * 0.022, { len: 0.4, cls: "g-core thin" })} />
+                  <path key={i} d={`M ${waveX(i)} ${waveY - (h * waveK) / 2} V ${waveY + (h * waveK) / 2}`} {...b("tall", 7.4 + i * 0.022, { len: 0.4, cls: "g-core thin" })} />
                 ))}
                 {[0, 1, 2, 3].map((i) => (
                   <path
                     key={i}
                     d={`M ${wx + 70} ${waveY + (tall ? 170 : 130) + i * (tall ? 70 : 52)} H ${wx + ww - 70 - i * 80}`}
-                    {...b("grow", 1.15 + i * 0.12, { len: 0.5, cls: "s-gold thick" })}
+                    {...b("grow", 7.65 + i * 0.12, { len: 0.5, cls: "s-gold thick" })}
                   />
                 ))}
               </g>
             </Art>
-            <Clip id="clinical" tall={tall} box={body} fx={b("fade", 1.7, { len: 0.8 })} top />
+            <Clip id="clinical" tall={tall} box={body} fx={b("fade", 8.2, { len: 0.8 })} top />
             <Art tall={tall}>
               <rect className="s-gold-edge" fill="none" x={wx} y={wy} width={ww} height={wh} rx="22" />
-              <g {...b("pop", 4, { len: 0.7 })}>
+              <g {...b("pop", 10.5, { len: 0.7 })}>
                 <g transform={tall ? "translate(500 972) scale(1.2) translate(-500 -734)" : undefined}>
                   <rect className="f-gold-v" x="340" y="696" width="320" height="76" rx="10" />
                   <text className="t-ink t-caps" x="500" y="744" fontSize="24">
@@ -1158,209 +1618,174 @@ function More(tall: boolean): SceneArt {
               </g>
             </Art>
           </div>
-        </div>
-        {/* Photo & video: the vineyard drawn in gold, then filmed: our drone footage for Pearls. */}
-        <div {...b("panel2", 0, { cls: "film-panel" })}>
-          <Art tall={tall}>
-            <text x="500" y={W.title} fontSize={W.size} {...b("rise", 5.6, { len: 1.2, cls: "t-disp" })}>
-              Photo &amp; video
-            </text>
-            <g {...b("out", 6.6, { len: 0.8 })}>
-              <path pathLength={1} d={V.hill} {...b("draw", 5.6, { len: 1, cls: "s-paper-soft" })} />
-              <Gold d={ring(V.sun[0], V.sun[1], V.sun[2])} fx={b("draw", 5.7, { len: 0.9 })} />
-              {rows.map((dx, i) => (
-                <Gold key={dx} d={`M ${500 + dx * 0.12} ${V.row[0]} L ${500 + dx * 1.45} ${V.row[1]}`} fx={b("draw", 5.75 + i * 0.07, { len: 0.8 })} thin />
-              ))}
-            </g>
-          </Art>
-          <Clip id="pearls" tall={tall} box={V.clip} fx={b("fade", 6.6, { len: 0.8 })} />
-          <Art tall={tall}>
-            <path d={`M ${c0} ${c1 + 60} V ${c1} H ${c0 + 70} M ${c2 - 70} ${c1} H ${c2} V ${c1 + 60} M ${c2} ${c3 - 60} V ${c3} H ${c2 - 70} M ${c0 + 70} ${c3} H ${c0} V ${c3 - 60}`} {...b("fade", 5.6, { cls: "s-paper thick-ish" })} />
-            <g {...b("blink", 6, { len: 0.8, n: 4 })}>
-              <circle className="f-gold" cx={V.rec[0]} cy={V.rec[1]} r={tall ? 13 : 12} />
-            </g>
-            <text x={V.rec[0] + 24} y={V.rec[1] + 10} fontSize={tall ? 32 : 28} {...b("fade", 6, { cls: "t-small t-left t-on-film" })}>
-              Rec
-            </text>
-            <g {...b("focus", 7.1, { len: 0.9 })}>
-              <rect className="s-paper" x={V.focus[0]} y={V.focus[1]} width={V.focus[2]} height={V.focus[3]} />
-            </g>
-          </Art>
-        </div>
-        {/* Phones, booking and follow-up: the orthodontist's front desk, handled. */}
-        <div {...b("panel3", 0, { cls: "film-panel" })}>{tall ? <PhonesTall b={b} /> : <PhonesWide b={b} />}</div>
-      </div>
+        </Stage>
+      </>
     ),
-    near: <Bokeh dots={NEAR_B} />,
   };
 }
 
-/** The caller, the same on both layouts: a made-up patient of the orthodontist's. */
-const CALLER = { name: "Sofia Park", initials: "SP" };
+const WAVE = [22, 48, 30, 70, 44, 90, 56, 34, 80, 62, 40, 96, 52, 28, 74, 58, 36, 86, 46, 64, 30, 78, 50, 38, 68, 26];
 
-/** The answer button's handset, in ink, at (cx, cy). */
-const Handset = ({ cx, cy, k, cls = "s-ink" }: { cx: number; cy: number; k: number; cls?: string }) => (
-  <g transform={`translate(${cx} ${cy}) scale(${k}) translate(-300 -486)`}>
-    <path className={cls} d={`M 262 450 ${HANDSET}`} />
-  </g>
-);
+/* ── Photo & video: the vineyard drawn in gold, then filmed ────────────── */
 
-/** A call coming in to the front desk, at (cx, cy): the caller's circle, ringing, until it's answered. */
-function Ringing({ cx, cy, r, b }: { cx: number; cy: number; r: number; b: Beats }) {
-  return (
-    <>
-      <circle cx={cx} cy={cy} r={r} {...b("ring", 9.6, { len: 1, n: 1, cls: "s-gold-thin" })} />
-      <circle cx={cx} cy={cy} r={r} {...b("ring", 10.05, { len: 1, n: 1, cls: "s-gold-thin" })} />
-      <circle className="f-gold-dim s-gold-edge" cx={cx} cy={cy} r={r} />
-      <text className="t-disp" x={cx} y={cy + r * 0.27} fontSize={r * 0.78}>
-        {CALLER.initials}
-      </text>
-    </>
-  );
+function Photo(tall: boolean): SceneArt {
+  const D = DESIGN.photo;
+  const b = beats(D);
+  const rows = [-300, -200, -100, 0, 100, 200, 300];
+  const T = tall ? { title: 122, size: 92 } : { title: 150, size: 88 };
+  // The viewfinder, and the footage inside it: our drone footage for Pearls.
+  const V = tall
+    ? { c: [40, 190, 960, 1030], clip: [60, 210, 880, 800] as Box, rec: [100, 262], hill: "M 60 640 C 260 520, 420 590, 540 560 S 800 500, 940 580", sun: [720, 430, 66], row: [640, 1000], focus: [410, 690, 180, 140] }
+    : { c: [70, 210, 930, 820], clip: [90, 230, 820, 570] as Box, rec: [132, 272], hill: "M 90 560 C 260 450, 400 510, 520 480 S 800 420, 910 500", sun: [720, 380, 58], row: [560, 800], focus: [420, 600, 160, 120] };
+  const [c0, c1, c2, c3] = V.c;
+  return {
+    far: (
+      <Far>
+        <Glow id="far-photo-dawn" cx={50} cy={72} r={60} o={0.22} color="#E8C27A" />
+      </Far>
+    ),
+    mid: (
+      <>
+        <Art tall={tall}>
+          <text x="500" y={T.title} fontSize={T.size} {...b("rise", 0.2, { len: 1.2, cls: "t-disp" })}>
+            Photo &amp; video
+          </text>
+          <g {...b("out", 1.2, { len: 0.8 })}>
+            <path pathLength={1} d={V.hill} {...b("draw", 0.2, { len: 1, cls: "s-paper-soft" })} />
+            <Gold d={ring(V.sun[0], V.sun[1], V.sun[2])} fx={b("draw", 0.3, { len: 0.9 })} />
+            {rows.map((dx, i) => (
+              <Gold key={dx} d={`M ${500 + dx * 0.12} ${V.row[0]} L ${500 + dx * 1.45} ${V.row[1]}`} fx={b("draw", 0.35 + i * 0.07, { len: 0.8 })} thin />
+            ))}
+          </g>
+        </Art>
+        <Clip id="pearls" tall={tall} box={V.clip} fx={b("fade", 1.2, { len: 0.8 })} />
+        <Art tall={tall}>
+          <path d={`M ${c0} ${c1 + 60} V ${c1} H ${c0 + 70} M ${c2 - 70} ${c1} H ${c2} V ${c1 + 60} M ${c2} ${c3 - 60} V ${c3} H ${c2 - 70} M ${c0 + 70} ${c3} H ${c0} V ${c3 - 60}`} {...b("fade", 0.2, { cls: "s-paper thick-ish" })} />
+          <g {...b("blink", 0.6, { len: 0.8, n: 4 })}>
+            <circle className="f-gold" cx={V.rec[0]} cy={V.rec[1]} r={tall ? 13 : 12} />
+          </g>
+          <text x={V.rec[0] + 24} y={V.rec[1] + 10} fontSize={tall ? 32 : 28} {...b("fade", 0.6, { cls: "t-small t-left t-on-film" })}>
+            Rec
+          </text>
+          <g {...b("focus", 1.7, { len: 0.9 })}>
+            <rect className="s-paper" x={V.focus[0]} y={V.focus[1]} width={V.focus[2]} height={V.focus[3]} />
+          </g>
+        </Art>
+      </>
+    ),
+  };
 }
 
-function PhonesWide({ b }: { b: Beats }) {
-  return (
-    <Art tall={false}>
-      <text x="500" y="150" fontSize="80" {...b("rise", 9.2, { len: 1.2, cls: "t-disp" })}>
-        Phones &amp; booking
-      </text>
-      {/* The front desk's phone: a call coming in, then answered. */}
-      <g {...b("rise", 9.4, { len: 0.8 })}>
-        <rect className="card s-paper-soft" x="70" y="230" width="290" height="560" rx="44" />
-        <path className="s-soft thick" d="M 190 262 H 240" />
-        <text className="t-small t-gold-text" x="215" y="322" fontSize="22">
-          Front desk
-        </text>
-        <Ringing cx={215} cy={450} r={58} b={b} />
-        <text className="t-body" x="215" y="566" fontSize="32">
-          {CALLER.name}
-        </text>
-      </g>
-      <g {...b("out", 10.6, { len: 0.3 })}>
-        <text x="215" y="602" fontSize="22" {...b("fade", 9.6, { cls: "t-faint" })}>
-          Incoming call
-        </text>
-        <circle fill="none" cx="160" cy="700" r="36" {...b("fade", 9.6, { cls: "s-paper-soft" })} />
-        <path d="M 148 688 l 24 24 M 172 688 l -24 24" {...b("fade", 9.6, { cls: "s-paper-soft" })} />
-        <g {...b("press", 10.3, { len: 0.4 })}>
-          <g {...b("fade", 9.6)}>
-            <circle className="f-gold-v" cx="270" cy="700" r="36" />
-            <Handset cx={270} cy={702} k={0.42} />
+/* ── The plan: the page they'd get after the first call ────────────────── */
+
+/** The five things from the film, as the plan has them: what, and a line of what that means. */
+const PLAN = [
+  ["Get found on Google and in AI search", "At the top of search, and in AI answers"],
+  ["A new site", "Clear, quick and easy to use"],
+  ["Book online", "Tastings booked in a click, confirmed"],
+  ["Every call answered", "Booked in and followed up"],
+  ["One entry, no double work", "Typed once, filled in everywhere"],
+];
+const PAGE_WIDE = {
+  page: [190, 40, 620, 790] as Box, m: 52, mark: [104, 24], date: 16, rule: 128, title: [196, 46], by: [228, 17],
+  items: [290, 84], indent: 48, num: 24, what: 21, why: [17, 27], tick: [-16, -7, 15], line: 46, sep: 684,
+  field: { label: 718, size: 13, y: 732, h: 24, w: 230, dx: 286 }, foot: [802, 14],
+};
+const PAGE_TALL = {
+  page: [50, 30, 900, 1040] as Box, m: 60, mark: [106, 34], date: 24, rule: 140, title: [220, 62], by: [262, 26],
+  items: [350, 118], indent: 66, num: 34, what: 31, why: [28, 40], tick: [-24, -10, 22], line: 70, sep: 914,
+  field: { label: 956, size: 22, y: 974, h: 34, w: 370, dx: 410 }, foot: [1050, 22],
+};
+
+function Plan(tall: boolean): SceneArt {
+  const D = DESIGN.plan;
+  const b = beats(D);
+  const P = tall ? PAGE_TALL : PAGE_WIDE;
+  const [x, y, w, h] = P.page;
+  const l = x + P.m;
+  const r = x + w - P.m;
+  const F = P.field;
+  const itemY = (i: number) => P.items[0] + i * P.items[1];
+  const tick = (i: number) => ({ cx: r + P.tick[0], cy: itemY(i) + P.tick[1], r: P.tick[2] });
+  // Ticked in turn, as she runs through it.
+  const TICK = [2, 2.75, 3.5, 4.25, 5];
+  const date = new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+  return {
+    far: (
+      <Far>
+        <Glow id="far-plan-warm" cx={50} cy={46} r={50} o={0.16} color="#E8C27A" />
+        <Glow id="far-plan-paper" cx={50} cy={48} r={40} o={0.07} color="#F4F1EA" />
+      </Far>
+    ),
+    mid: (
+      <Art tall={tall}>
+        {/* (On a wide screen, a touch smaller and lower: clear of the top bar and the captions.) */}
+        <g transform={tall ? undefined : "translate(500 455) scale(.95) translate(-500 -435)"}>
+          <g {...b("rise", 0.2, { len: 1.2 })}>
+            <rect className="doc-shadow" x={x + 6} y={y + 14} width={w} height={h} rx="6" />
+            <rect className="page" x={x} y={y} width={w} height={h} rx="6" />
+            {/* Its head: the wordmark, the date, whose plan it is. */}
+            <text className="t-mark t-left" x={l} y={P.mark[0]} fontSize={P.mark[1]}>
+              Elorro
+            </text>
+            <text className="t-ink-soft t-right" x={r} y={P.mark[0]} fontSize={P.date}>
+              {date}
+            </text>
+            <path className="s-gold-hair" d={`M ${l} ${P.rule} H ${r}`} />
+            <text className="t-disp t-ink t-left" x={l} y={P.title[0]} fontSize={P.title[1]}>
+              Plan for Your winery
+            </text>
+            <text className="t-ink-soft t-left" x={l} y={P.by[0]} fontSize={P.by[1]}>
+              Prepared by Ashan &amp; Jordan, after your first call
+            </text>
+            {/* The five things, in order. */}
+            {PLAN.map(([what, why], i) => (
+              <g key={what}>
+                <text className="t-disp t-gold-deep t-left" x={l} y={itemY(i)} fontSize={P.num}>
+                  {`0${i + 1}`}
+                </text>
+                <text className="t-ink t-left t-strong" x={l + P.indent} y={itemY(i)} fontSize={P.what}>
+                  {what}
+                </text>
+                <text className="t-ink-soft t-left" x={l + P.indent} y={itemY(i) + P.why[1]} fontSize={P.why[0]}>
+                  {why}
+                </text>
+                {i < PLAN.length - 1 && <path className="s-ink-line" d={`M ${l} ${itemY(i) + P.line} H ${r}`} />}
+                <circle className="s-ink-line" fill="none" {...tick(i)} />
+              </g>
+            ))}
+            {/* How long, and the investment: placeholders, left to the call itself. */}
+            <path className="s-ink-line" d={`M ${l} ${P.sep} H ${r}`} />
+            {["Timeline", "Investment"].map((t, i) => (
+              <g key={t}>
+                <text className="t-ink-soft t-left t-caps" x={l + i * F.dx} y={F.label} fontSize={F.size}>
+                  {t}
+                </text>
+                <rect className="f-ink-soft" x={l + i * F.dx} y={F.y} width={F.w} height={F.h} rx={F.h / 2} />
+              </g>
+            ))}
+            <text className="t-ink-faint" x={x + w / 2} y={P.foot[0]} fontSize={P.foot[1]}>
+              elorro.com · Bay Area
+            </text>
+          </g>
+          {PLAN.map(([what], i) => (
+            <g key={what} {...b("pop", TICK[i], { len: 0.5 })}>
+              <Tick {...tick(i)} />
+            </g>
+          ))}
+          {/* The two fields, lit as she says how long it takes. */}
+          <g {...b("fade", 6.2, { len: 0.8 })}>
+            {[0, 1].map((i) => (
+              <rect key={i} className="s-gold-faint" x={l + i * F.dx} y={F.y} width={F.w} height={F.h} rx={F.h / 2} />
+            ))}
           </g>
         </g>
-      </g>
-      <g {...b("pop", 10.7, { len: 0.6 })}>
-        <text className="t-faint" x="215" y="602" fontSize="22">
-          On the call · 0:04
-        </text>
-        <rect className="f-gold-v" x="110" y="668" width="210" height="64" rx="32" />
-        <text className="t-ink t-caps" x="215" y="709" fontSize="22">
-          Answered
-        </text>
-      </g>
-      {/* Thursday fills in. */}
-      <g {...b("rise", 11, { len: 0.9 })}>
-        <rect className="card card--deep s-paper-soft" x="410" y="230" width="520" height="320" rx="20" />
-        <text className="t-small t-gold-text t-left" x="444" y="292" fontSize="28">
-          Thursday
-        </text>
-        <path className="s-soft" d="M 444 330 H 896 M 444 412 H 896 M 444 494 H 896" />
-      </g>
-      <g {...b("grow", 11.6, { len: 0.7 })}>
-        <rect className="f-gold-v" x="444" y="344" width="452" height="58" rx="8" />
-      </g>
-      <text x="464" y="382" fontSize="26" {...b("fade", 12, { cls: "t-ink t-left" })}>
-        Consult · 10am · {CALLER.name}
-      </text>
-      {/* And the follow-up goes out. */}
-      <g {...b("slide-in", 12.6, { len: 0.9, dx: 80 })}>
-        <path className="page" d="M 430 600 h 480 a 22 22 0 0 1 22 22 v 120 a 22 22 0 0 1 -22 22 h -420 l -34 34 v -34 h -26 a 22 22 0 0 1 -22 -22 v -120 a 22 22 0 0 1 22 -22 z" />
-        <text className="t-ink t-left" x="442" y="672" fontSize="34">
-          Thanks, see you Thursday.
-        </text>
-        <text className="t-ink-soft t-left" x="442" y="724" fontSize="28">
-          Follow-up · sent
-        </text>
-      </g>
-      <g {...b("pop", 13.4, { len: 0.5 })}>
-        <circle className="f-gold" cx="914" cy="600" r="28" />
-        <path className="s-ink" d="M 901 601 l 9 9 l 17 -18" />
-      </g>
-    </Art>
-  );
+      </Art>
+    ),
+  };
 }
 
-/** On a phone upright: the call across the top, the Thursday card under it, the follow-up under that. */
-function PhonesTall({ b }: { b: Beats }) {
-  return (
-    <Art tall>
-      <text x="500" y="112" fontSize="84" {...b("rise", 9.2, { len: 1.2, cls: "t-disp" })}>
-        Phones &amp; booking
-      </text>
-      <g {...b("rise", 9.4, { len: 0.8 })}>
-        <rect className="card s-paper-soft" x="40" y="170" width="920" height="230" rx="60" />
-        <Ringing cx={156} cy={285} r={64} b={b} />
-        <text className="t-small t-gold-text t-left" x="256" y="256" fontSize="26">
-          Front desk
-        </text>
-        <text className="t-body t-left" x="256" y="312" fontSize="46">
-          {CALLER.name}
-        </text>
-      </g>
-      <g {...b("out", 10.6, { len: 0.3 })}>
-        <text x="256" y="356" fontSize="28" {...b("fade", 9.6, { cls: "t-faint t-left" })}>
-          Incoming call
-        </text>
-        <circle fill="none" cx="766" cy="285" r="46" {...b("fade", 9.6, { cls: "s-paper-soft" })} />
-        <path d="M 751 270 l 30 30 M 781 270 l -30 30" {...b("fade", 9.6, { cls: "s-paper-soft" })} />
-        <g {...b("press", 10.3, { len: 0.4 })}>
-          <g {...b("fade", 9.6)}>
-            <circle className="f-gold-v" cx="884" cy="285" r="46" />
-            <Handset cx={884} cy={287} k={0.54} />
-          </g>
-        </g>
-      </g>
-      <g {...b("pop", 10.7, { len: 0.6 })}>
-        <text className="t-faint t-left" x="256" y="356" fontSize="28">
-          On the call · 0:04
-        </text>
-        <rect className="f-gold-v" x="660" y="249" width="270" height="72" rx="36" />
-        <text className="t-ink t-caps" x="795" y="295" fontSize="26">
-          Answered
-        </text>
-      </g>
-      <g {...b("rise", 11, { len: 0.9 })}>
-        <rect className="card card--deep s-paper-soft" x="40" y="440" width="920" height="330" rx="22" />
-        <text className="t-small t-gold-text t-left" x="84" y="506" fontSize="34">
-          Thursday
-        </text>
-        <path className="s-soft" d="M 84 548 H 916 M 84 646 H 916 M 84 734 H 916" />
-      </g>
-      <g {...b("grow", 11.6, { len: 0.7 })}>
-        <rect className="f-gold-v" x="84" y="562" width="832" height="72" rx="10" />
-      </g>
-      <text x="112" y="611" fontSize="36" {...b("fade", 12, { cls: "t-ink t-left" })}>
-        Consult · 10am · {CALLER.name}
-      </text>
-      <g {...b("slide-in", 12.6, { len: 0.9, dx: 80 })}>
-        <path className="page" d="M 62 810 h 876 a 22 22 0 0 1 22 22 v 130 a 22 22 0 0 1 -22 22 h -800 l -34 34 v -34 h -42 a 22 22 0 0 1 -22 -22 v -130 a 22 22 0 0 1 22 -22 z" />
-        <text className="t-ink t-left" x="80" y="882" fontSize="44">
-          Thanks, see you Thursday.
-        </text>
-        <text className="t-ink-soft t-left" x="80" y="944" fontSize="32">
-          Follow-up · sent
-        </text>
-      </g>
-      <g {...b("pop", 13.4, { len: 0.5 })}>
-        <circle className="f-gold" cx="928" cy="812" r="34" />
-        <path className="s-ink" d="M 912 813 l 11 11 l 21 -22" />
-      </g>
-    </Art>
-  );
-}
-
-/* ── 6. One plan ───────────────────────────────────────────────────────── */
+/* ── One plan ──────────────────────────────────────────────────────────── */
 
 function Close(tall: boolean): SceneArt {
   const D = DESIGN.close;
@@ -1370,14 +1795,7 @@ function Close(tall: boolean): SceneArt {
   return {
     far: (
       <Far>
-        <defs>
-          <radialGradient id="far-close-glow" cx="50%" cy="44%" r="50%">
-            <stop offset="0" stopColor="#E8C27A" stopOpacity=".3" />
-            <stop offset=".5" stopColor="#A8802F" stopOpacity=".08" />
-            <stop offset="1" stopColor="#0C0A08" stopOpacity="0" />
-          </radialGradient>
-        </defs>
-        <rect width="1600" height="1000" fill="url(#far-close-glow)" />
+        <Glow id="far-close-glow" cx={50} cy={44} r={50} o={0.22} color="#E8C27A" />
       </Far>
     ),
     mid: (
@@ -1397,39 +1815,39 @@ function Close(tall: boolean): SceneArt {
         </Word>
       </>
     ),
-    near: (
-      <>
-        <Bokeh dots={NEAR_A} />
-        <i {...b("sweep", 1.4, { len: 2, cls: "film-sweep" })} />
-      </>
-    ),
+    near: <i {...b("sweep", 1.4, { len: 2, cls: "film-sweep" })} />,
   };
 }
 
-/** Each scene's pictures: tall for a phone upright, calm under reduced motion (where only Plan differs: its threads are only ever straight). */
-export const SCENE_ART: Record<SceneId, (tall: boolean, calm: boolean) => SceneArt> = {
+/** Each scene's pictures, tall for a phone upright. */
+export const SCENE_ART: Record<SceneId, (tall: boolean) => SceneArt> = {
   elora: Elora,
   call: Call,
-  problem: Problem,
+  found: Found,
+  site: Site,
+  booking: Booking,
+  calls: Calls,
+  office: Office,
+  photo: Photo,
   plan: Plan,
-  web: Web,
-  more: More,
   close: Close,
 };
 
 /**
  * How the camera moves through each scene: the set's drift (x, y, a share of
- * it), its push (scale from, to) and its turn; the out-of-focus lights in
- * front drift further (nx, ny, in screen units), the backdrop less. On a
+ * it), its push (scale from, to) and its turn; the backdrop drifts less. On a
  * phone upright the push is halved (film.css, --zk), so the set's edges stay
  * on screen.
  */
-export const CAMERA: Record<SceneId, { px: string; py: string; z0: number; z1: number; ry: string; nx: string; ny: string }> = {
-  elora: { px: "0%", py: "-1.2%", z0: 1.02, z1: 1.1, ry: "0deg", nx: "0vw", ny: "-5vh" },
-  call: { px: "-1.6%", py: "0%", z0: 1.02, z1: 1.07, ry: "5deg", nx: "-7vw", ny: "0vh" },
-  problem: { px: "1.2%", py: "0.8%", z0: 1.02, z1: 1.06, ry: "-3deg", nx: "6vw", ny: "2vh" },
-  plan: { px: "0%", py: "-1.6%", z0: 1.1, z1: 1, ry: "0deg", nx: "0vw", ny: "-6vh" },
-  web: { px: "-1.6%", py: "-1%", z0: 1, z1: 1.07, ry: "4deg", nx: "-6vw", ny: "-2vh" },
-  more: { px: "0%", py: "0%", z0: 1.02, z1: 1.05, ry: "0deg", nx: "-9vw", ny: "0vh" },
-  close: { px: "0%", py: "-2%", z0: 1.1, z1: 1, ry: "0deg", nx: "0vw", ny: "-7vh" },
+export const CAMERA: Record<SceneId, { px: string; py: string; z0: number; z1: number; ry: string }> = {
+  elora: { px: "0%", py: "-1.2%", z0: 1.02, z1: 1.1, ry: "0deg" },
+  call: { px: "-1.6%", py: "0%", z0: 1.02, z1: 1.07, ry: "5deg" },
+  found: { px: "-1%", py: "0%", z0: 1.02, z1: 1.06, ry: "2deg" },
+  site: { px: "0%", py: "-0.8%", z0: 1, z1: 1.05, ry: "0deg" },
+  booking: { px: "1%", py: "0%", z0: 1.02, z1: 1.06, ry: "-2deg" },
+  calls: { px: "-1%", py: "0.5%", z0: 1.02, z1: 1.06, ry: "2deg" },
+  office: { px: "1%", py: "0%", z0: 1.02, z1: 1.05, ry: "-2deg" },
+  photo: { px: "0%", py: "0%", z0: 1.02, z1: 1.06, ry: "0deg" },
+  plan: { px: "0%", py: "-1.2%", z0: 1.06, z1: 1, ry: "0deg" },
+  close: { px: "0%", py: "-2%", z0: 1.1, z1: 1, ry: "0deg" },
 };

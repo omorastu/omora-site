@@ -16,7 +16,7 @@
  * - One file per scene: give each scene its `voice`, starting with its scene.
  */
 
-export type SceneId = "elora" | "call" | "problem" | "plan" | "web" | "more" | "close";
+export type SceneId = "elora" | "call" | "found" | "site" | "booking" | "calls" | "office" | "photo" | "plan" | "close";
 
 export type Line = { text: string; at: number };
 
@@ -55,50 +55,73 @@ export const scenes: Scene[] = [
   {
     id: "call",
     label: "01 · The call",
-    duration: 9.5,
+    duration: 8.5,
     lines: [
       { text: "It starts with a call.", at: 0.8 },
-      { text: "You tell them about your business, and they listen. Mostly, they just listen.", at: 2.9 },
+      { text: "You tell them about your business, and they listen. Mostly, they just listen.", at: 2.6 },
+    ],
+  },
+  // From here, outside in: what a customer meets first, then what happens behind the scenes. Each problem, then the fix.
+  {
+    id: "found",
+    label: "02 · Getting found",
+    duration: 12.5,
+    lines: [
+      { text: "Say you run a winery, and you’re on page two, where no one looks.", at: 0.6 },
+      { text: "They get you to the top when people search,", at: 5.1 },
+      { text: "and into the answer when people ask AI, which more and more of them do.", at: 7.7 },
     ],
   },
   {
-    id: "problem",
-    label: "02 · What’s really going on",
-    duration: 16,
+    id: "site",
+    label: "03 · The website",
+    duration: 9.5,
     lines: [
-      { text: "Then they find what’s really going on.", at: 0.6 },
-      { text: "A tasting and a consult, each booked twice for the same hour.", at: 3.2 },
-      { text: "Calls the front desk was too busy to answer.", at: 7.2 },
-      { text: "A good winery, or a good orthodontist, that’s hard to find online.", at: 10.4 },
+      { text: "If your website’s dated and cluttered, people leave.", at: 0.5 },
+      { text: "They build one that’s clear and easy to use, like this one for Prosperando.", at: 3.9 },
     ],
+  },
+  {
+    id: "booking",
+    label: "04 · Booking",
+    duration: 8.5,
+    lines: [
+      { text: "Booking by text and email means sorting it all by hand.", at: 0.5 },
+      { text: "Now guests book in a click, and it’s confirmed on its own.", at: 4.0 },
+    ],
+  },
+  {
+    id: "calls",
+    label: "05 · Calls",
+    duration: 9.5,
+    lines: [
+      { text: "Or say you’re an orthodontist, and the front desk is too busy to pick up.", at: 0.5 },
+      { text: "Now every call is answered, booked in and followed up.", at: 5.0 },
+    ],
+  },
+  {
+    id: "office",
+    label: "06 · Behind the scenes",
+    duration: 12,
+    lines: [
+      { text: "Behind the scenes, the same patient gets typed in three times.", at: 0.5 },
+      { text: "They make one entry fill in all three,", at: 4.7 },
+      { text: "and build tools around how you work, like one that writes up each consult.", at: 7.0 },
+    ],
+  },
+  {
+    id: "photo",
+    label: "07 · Photo & video",
+    duration: 5.5,
+    lines: [{ text: "And photos and video that show what you do.", at: 0.6 }],
   },
   {
     id: "plan",
-    label: "03 · Sorting it out",
-    duration: 9.5,
+    label: "08 · The plan",
+    duration: 9,
     lines: [
-      { text: "They untangle it, one thread at a time,", at: 1 },
-      { text: "until it’s a plan that fits on one page.", at: 4 },
-    ],
-  },
-  {
-    id: "web",
-    label: "04 · Websites & getting found",
-    duration: 14.5,
-    lines: [
-      { text: "Often it starts with your website.", at: 0.8 },
-      { text: "One that shows up when people search for what you do,", at: 3.4 },
-      { text: "and one that’s clear and easy to use, so the people who find you get in touch.", at: 7 },
-    ],
-  },
-  {
-    id: "more",
-    label: "05 · And the rest",
-    duration: 15.5,
-    lines: [
-      { text: "Sometimes it’s a tool built around the way you work.", at: 1 },
-      { text: "Photos and video that show what you do.", at: 5.2 },
-      { text: "Or phones that get answered, and bookings and follow-ups that happen without you chasing them.", at: 8.8 },
+      { text: "After the first call, you get it all on one page:", at: 0.5 },
+      { text: "what they’ll do, in what order, and how long it takes.", at: 3.9 },
     ],
   },
   {

@@ -27,12 +27,13 @@ import "@/components/elorro/film/film.css";
  * Only the scenes near the moment are in the page at all (WINDOW), which
  * keeps a phone's memory and work to two scenes at most.
  *
- * Two of the scenes play Elorro's own loops (scenes.tsx, CLIPS). Their
+ * Three of the scenes play Elorro's own loops (scenes.tsx, CLIPS). Their
  * videos are made, and started and stopped at once, inside the same click:
  * an iPhone in Low Power Mode lets a video play on its own later only if it
  * was started in a gesture (as work-video.tsx does on the pages). Each loads
  * only shortly before its scene, plays in step with the film, and stays on
- * its still under reduced motion or on a connection too slow for it.
+ * its still under reduced motion or on a connection too slow for it. A
+ * phone upright gets each loop's phone cut, anything else its desktop cut.
  *
  * On a phone upright the scenes are laid out tall (TALL, scenes.tsx); the
  * film follows the screen if it turns.
@@ -242,8 +243,6 @@ function Film({
   const tall = useTall();
   // The loops stay on their stills under reduced motion, and on a connection too slow for them.
   const [still] = useState(() => reducedMotion() || budget() === "none");
-  // Reduced motion, for the one picture CSS can't calm by itself (Plan's threads, SMIL).
-  const [calm] = useState(reducedMotion);
   const sound = review ? null : audio;
 
   /** A loop's place on the set, as its scene comes in (or null, as it goes): its video goes in, or comes out. */
@@ -321,15 +320,19 @@ function Film({
       for (const c of CLIP_AT) {
         const v = clips.current?.[c.id];
         if (!v) continue;
-        if (!v.dataset.src) {
-          if (t < c.from - PREFETCH || t > c.to) continue;
+        // Its cut for the layout, from shortly before it plays; and the other cut, should the screen turn meanwhile.
+        if (t >= c.from - PREFETCH && t <= c.to) {
           const cut = CLIPS[c.id].cuts;
-          const small = window.matchMedia("(max-width: 1023px)").matches;
-          const src = budget() === "sd" ? (small ? cut.mobileSd : cut.desktopSd) : small ? cut.mobile : cut.desktop;
-          v.dataset.src = src;
-          v.preload = "auto";
-          v.src = src;
+          const upright = window.matchMedia(TALL).matches;
+          const src = budget() === "sd" ? (upright ? cut.mobileSd : cut.desktopSd) : upright ? cut.mobile : cut.desktop;
+          if (v.dataset.src !== src) {
+            v.dataset.src = src;
+            v.classList.remove("is-on");
+            v.preload = "auto";
+            v.src = src;
+          }
         }
+        if (!v.dataset.src) continue;
         const dur = Number.isFinite(v.duration) ? v.duration : 0;
         const want = Math.max(0, t - c.from) + c.offset;
         const pos = dur ? want % dur : want;
@@ -345,23 +348,6 @@ function Film({
         } else if (Math.min(off, dur ? dur - off : off) > 1) v.currentTime = pos;
       }
     };
-    /**
-     * Pictures that move by SMIL (Plan's threads: a path's shape can't move by
-     * CSS in every browser), at `t`: each such drawing's own clock set to its
-     * scene's time (in seconds as designed), and run or stopped with the rest.
-     */
-    const keepSmil = (t: number, moving: boolean) => {
-      for (const svg of el.querySelectorAll<SVGSVGElement>("svg.film-smil")) {
-        const scene = svg.closest<HTMLElement>(".film-scene");
-        if (!scene) continue;
-        const s = parseFloat(scene.style.getPropertyValue("--s"));
-        const d = parseFloat(scene.style.getPropertyValue("--d"));
-        const local = Math.max(0, ((t - s) * Number(svg.dataset.design)) / d);
-        if (moving) svg.unpauseAnimations();
-        else svg.pauseAnimations();
-        if (Math.abs(svg.getCurrentTime() - local) > 0.05) svg.setCurrentTime(local);
-      }
-    };
     /** All running at `t`: set by their start time, so none that has finished starts over. */
     const runAt = (t: number) => {
       const base = Number(document.timeline.currentTime ?? 0) - t * 1000;
@@ -371,7 +357,6 @@ function Film({
       }
       keepFace(t);
       keepClips(t, true);
-      keepSmil(t, true);
     };
     /** All stopped at `t`. */
     const pauseAt = (t: number) => {
@@ -381,7 +366,6 @@ function Film({
       }
       keepFace(t);
       keepClips(t, false);
-      keepSmil(t, false);
     };
 
     /** The voice stalled for longer than the pictures will wait: they go on, and it catches up when it can. */
@@ -438,7 +422,6 @@ function Film({
         }
         keepFace(t);
         keepClips(t, true);
-        keepSmil(t, true);
       }
     };
     a?.addEventListener("waiting", onWaiting);
@@ -533,7 +516,7 @@ function Film({
         <ClipContext.Provider value={attach}>
         {parts.map(({ scene, start, duration }, i) => {
           if (!near.includes(i)) return null;
-          const art = SCENE_ART[scene.id](tall, calm);
+          const art = SCENE_ART[scene.id](tall);
           const cam = CAMERA[scene.id];
           return (
             <section
@@ -550,8 +533,6 @@ function Film({
                   "--z0": cam.z0,
                   "--z1": cam.z1,
                   "--ry": cam.ry,
-                  "--nx": cam.nx,
-                  "--ny": cam.ny,
                 } as Vars
               }
             >
@@ -560,7 +541,7 @@ function Film({
                 <div className="film-mid">
                   <div className="film-orbit">{art.mid}</div>
                 </div>
-                <div className="film-near">{art.near}</div>
+                {art.near && <div className="film-near">{art.near}</div>}
               </div>
             </section>
           );
