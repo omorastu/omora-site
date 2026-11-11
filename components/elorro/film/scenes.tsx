@@ -24,8 +24,9 @@ import type { SceneId } from "@/components/elorro/film/script";
  * a transform attribute of its own: its effect goes on a wrapping <g>.
  *
  * A gold thread runs through it: the rule under the logo, the thread Elora
- * leaves as she goes to her corner (Handoff), the call, the tangle pulled
- * straight into the plan, the rule under the two of them. The two businesses
+ * leaves as she goes to her corner (Handoff), the call, the knot of the
+ * three problems pulled straight, one thread at a time, into the lines of the
+ * plan, the rule under the two of them. The two businesses
  * are the ones Elorro works for: a winery and an orthodontist. The winery is
  * the one followed onto its website. "And the rest" shows two pieces of
  * Elorro's real work, playing (Clip).
@@ -67,9 +68,16 @@ const HANDSET = "q 10 -18 22 -6 l 8 8 q 6 8 -2 16 q 10 18 26 26 q 8 -8 16 -2 l 8
 const STAR = "l 5.5 11 l 12 1.6 l -8.8 8.6 l 2.4 12 l -11.1 -5.6 l -11.1 5.6 l 2.4 -12 l -8.8 -8.6 l 12 -1.6 z";
 const sec = (t: number) => `${t.toFixed(3)}s`;
 
-function Art({ tall, children }: { tall: boolean; children: ReactNode }) {
+/** A drawing on the set. With `smil` (its scene's designed length), it holds SMIL animations, whose clock film.tsx keeps on the film's. */
+function Art({ tall, smil, children }: { tall: boolean; smil?: number; children: ReactNode }) {
   return (
-    <svg className="film-art" viewBox={`0 0 1000 ${tall ? 1100 : 1000}`} aria-hidden="true" focusable="false">
+    <svg
+      className={smil ? "film-art film-smil" : "film-art"}
+      data-design={smil}
+      viewBox={`0 0 1000 ${tall ? 1100 : 1000}`}
+      aria-hidden="true"
+      focusable="false"
+    >
       {children}
     </svg>
   );
@@ -576,30 +584,150 @@ function Problem(tall: boolean): SceneArt {
   };
 }
 
-/* ── 3. Sorting it out ─────────────────────────────────────────────────── */
+/* ── 3. Sorting it out: the knot, pulled straight into the plan ────────── */
 
-function Plan(tall: boolean): SceneArt {
-  const D = DESIGN.plan;
-  const b = beats(D);
-  /** A business's own calendar, one booking on it. */
-  const small = ([x, y, w, h]: Box, s: number, title: string, chip: string) => (
-    <g transform={`translate(${x} ${y})`}>
-      <rect className="card" width={w} height={h} rx="20" />
-      <text className="t-small t-gold-text t-left" x={s} y={s * 2.05} fontSize={s}>
-        {title}
+/**
+ * One thread, tangled and pulled straight: the same six curves both ways, so
+ * one turns into the other. From x0 to x1 along y when straight; tangled, it
+ * dips and loops across the rows around it (g apart), the way thread `i`
+ * does, so the three cross into a knot.
+ */
+function thread(x0: number, x1: number, y: number, g: number, i: number) {
+  const N = 6;
+  const step = (x1 - x0) / N;
+  const O = [
+    [0, 0.4, 1.1, 0.6, 1.25, 0.3, 0],
+    [0, -0.55, 0.5, -0.4, 0.6, -0.45, 0],
+    [0, -0.3, -1.15, -0.35, -1.1, -0.4, 0],
+  ][i];
+  const r = (n: number) => +n.toFixed(1);
+  const pts = O.map((o, k) => [x0 + k * step, y + o * g]);
+  let tangled = `M ${r(x0)} ${r(y)}`;
+  let straight = tangled;
+  for (let k = 1; k <= N; k++) {
+    const [xa, ya] = pts[k - 1];
+    const [xb, yb] = pts[k];
+    // Every other inner curve doubles back on itself (its handles reach past each other, on the same side): a curl.
+    const loop = k > 1 && k < N && (k + i) % 2 === 1;
+    const s = (i % 2 ? -1 : 1) * (k % 2 ? 1 : -1);
+    const h = g * 0.5;
+    const reach = loop ? 1.9 : 0.45;
+    tangled += ` C ${r(xa + step * reach)} ${r(ya - s * h)} ${r(xb - step * reach)} ${r(loop ? ya - s * h : yb + s * h * 0.6)} ${r(xb)} ${r(yb)}`;
+    straight += ` C ${r(xa + step / 3)} ${r(y)} ${r(xb - step / 3)} ${r(y)} ${r(xb)} ${r(y)}`;
+  }
+  return { tangled, straight };
+}
+
+/**
+ * A thread in the film's gold, drawn on tangled and pulled straight `at`
+ * seconds into its scene (as designed), over `len`. The pull is SMIL, the
+ * one way a path's shape can move in every browser; film.tsx keeps its
+ * picture's clock on the film's (Art `smil`). Under reduced motion (`calm`)
+ * it's only ever straight, fading in as it would have pulled straight.
+ */
+function Thread({ paths, at, len, draw, calm }: { paths: { tangled: string; straight: string }; at: number; len: number; draw: Beat; calm: boolean }) {
+  return (
+    <>
+      {["g-halo", "g-glow", "g-core"].map((c) => (
+        <path key={c} d={calm ? paths.straight : paths.tangled} pathLength={1} className={`${draw.className} ${c}`} style={draw.style}>
+          {!calm && (
+            <animate
+              attributeName="d"
+              values={`${paths.tangled};${paths.straight}`}
+              keyTimes="0;1"
+              calcMode="spline"
+              keySplines=".6 0 .2 1"
+              begin={`${at}s`}
+              dur={`${len}s`}
+              fill="freeze"
+            />
+          )}
+        </path>
+      ))}
+    </>
+  );
+}
+
+/** The three problems from the scene before, each where its thread starts: a 220 × 110 tag, resolved `at`. */
+function Problem3({ kind, x, y, k, at, b }: { kind: 0 | 1 | 2; x: number; y: number; k: number; at: number; b: Beats }) {
+  const badge = ["×2", "3", "2"][kind];
+  return (
+    <g transform={`translate(${x} ${y}) scale(${k})`}>
+      <rect className="card" width="220" height="110" rx="14" />
+      <text className="t-small t-gold-text t-left" x="18" y="30" fontSize="16">
+        {["Sat · 2pm", "Front desk", "Search"][kind]}
       </text>
-      <rect className="chip" x={s} y={s * 3.7} width={w - 2 * s} height={s * 2.6} rx="10" />
-      <text className="t-ink t-left" x={s * 1.7} y={s * 5.42} fontSize={s * 1.1}>
-        {chip}
-      </text>
+      {kind === 0 && (
+        <>
+          <rect className="chip" x="18" y="44" width="150" height="30" rx="7" />
+          <text className="t-ink t-left" x="30" y="65" fontSize="18">
+            Tasting
+          </text>
+          {/* The second booking slides onto the first and is gone: one calendar. */}
+          <g {...b("moveto", at - 0.5, { len: 0.5, dx: -10, dy: -14 })}>
+            <g {...b("out", at - 0.1, { len: 0.3 })}>
+              <rect className="chip chip--clash" x="28" y="58" width="150" height="30" rx="7" />
+              <text className="t-gold-text t-left" x="40" y="79" fontSize="18">
+                Tasting
+              </text>
+            </g>
+          </g>
+        </>
+      )}
+      {kind === 1 && (
+        <>
+          <g transform="translate(46 72) scale(.5) translate(-300 -486)">
+            <path className="s-paper" d={`M 262 450 ${HANDSET}`} />
+          </g>
+          <text className="t-faint t-left" x="84" y="80" fontSize="20">
+            Missed
+          </text>
+        </>
+      )}
+      {kind === 2 && (
+        <>
+          <path className="s-paper thin-line" d={`${ring(30, 62, 9)} M 37 69 L 45 77`} />
+          <text className="t-body t-left" x="54" y="69" fontSize="18">
+            Your winery
+          </text>
+          <g {...b("out", at, { len: 0.3 })}>
+            <text className="t-faint t-left" x="54" y="96" fontSize="16">
+              Page 2
+            </text>
+          </g>
+          <g {...b("fade", at + 0.2, { len: 0.4 })}>
+            <text className="t-gold-text t-left" x="54" y="96" fontSize="16">
+              Page 1
+            </text>
+          </g>
+        </>
+      )}
+      <g {...b("out", at, { len: 0.3 })}>
+        <circle className="f-gold" cx="192" cy="28" r="18" />
+        <text className="t-ink t-strong" x="192" y="34" fontSize="16">
+          {badge}
+        </text>
+      </g>
+      <g {...b("pop", at + 0.1, { len: 0.5 })}>
+        <circle className="f-gold" cx="192" cy="28" r="18" />
+        <path className="s-ink thin-ink" d="M 184 28 l 6 6 l 12 -13" />
+      </g>
     </g>
   );
-  // The plan's page: where it sits, its title, and its three lines.
-  const P = tall
-    ? { page: [60, 50, 880, 1000] as Box, title: [210, 104], rule: [140, 270, 860], n: [150, 440, 200, 100], t: [250, 428, 54] }
-    : { page: [200, 110, 600, 700] as Box, title: [236, 80], rule: [260, 280, 740], n: [262, 404, 128, 76], t: [330, 394, 42] };
-  const one = tall ? { x: 100, y: 100, w: 800, s: 36, chip: 110, gap: 140 } : { x: 300, y: 80, w: 400, s: 26, chip: 68, gap: 88 };
-  const ruleY = tall ? 780 : 580;
+}
+
+function Plan(tall: boolean, calm: boolean): SceneArt {
+  const D = DESIGN.plan;
+  const b = beats(D);
+  // The page, its rows, and where each thread runs along its row.
+  const L = tall
+    ? { page: [30, 40, 940, 1020] as Box, title: [160, 96], rule: [110, 210, 890], rows: [470, 700, 930], g: 230, tag: [60, -140, 1.45], x0: 379, x1: 930, text: [404, -34, 54] }
+    : { page: [70, 90, 860, 800] as Box, title: [205, 84], rule: [150, 250, 850], rows: [430, 600, 770], g: 170, tag: [110, -96, 1], x0: 330, x1: 880, text: [372, -24, 44] };
+  // Each pulled straight in turn: when it starts, and when its row is written.
+  const PULL = [1.5, 2.8, 4.1];
+  const LEN = 1;
+  const rows = ["One calendar", "Every call answered", "Found on Google"];
+  const [px, py, pw, ph] = L.page;
   return {
     far: (
       <Far>
@@ -614,7 +742,7 @@ function Plan(tall: boolean): SceneArt {
             <stop offset="1" stopColor="#0C0A08" stopOpacity="0" />
           </radialGradient>
         </defs>
-        <g {...b("fade", 2.6, { len: 2.4 })}>
+        <g {...b("fade", 4.6, { len: 2.4 })}>
           {[260, 620, 980, 1300].map((x, i) => (
             <path key={x} d={`M ${x} -100 l 220 0 l ${-260 - i * 40} 1200 l -220 0 z`} fill="url(#far-plan-ray)" />
           ))}
@@ -623,85 +751,50 @@ function Plan(tall: boolean): SceneArt {
       </Far>
     ),
     mid: (
-      <Art tall={tall}>
-        {/* Two calendars become one: side by side, or one above the other on a phone. */}
-        <g {...b("out", 2.2, { len: 0.6 })}>
-          {tall ? (
-            <>
-              <g {...b("moveto", 0.8, { len: 1.5, dy: 145 })}>{small([180, 40, 640, 210], 32, "Winery", "Tasting · Sat 2pm")}</g>
-              <g {...b("moveto", 0.8, { len: 1.5, dy: -145 })}>{small([180, 330, 640, 210], 32, "Orthodontist", "Consult · Tue 9am")}</g>
-            </>
-          ) : (
-            <>
-              <g {...b("moveto", 0.8, { len: 1.5, dx: 165 })}>{small([40, 110, 330, 230], 24, "Winery", "Tasting · Sat 2pm")}</g>
-              <g {...b("moveto", 0.8, { len: 1.5, dx: -165 })}>{small([630, 110, 330, 230], 24, "Orthodontist", "Consult · Tue 9am")}</g>
-            </>
-          )}
-        </g>
-        <g {...b("out", 3.6, { len: 0.7 })}>
-          <g {...b("pop", 2.1, { len: 0.8 })}>
-            <g transform={`translate(${one.x} ${one.y})`}>
-              <rect className="card s-gold-edge" width={one.w} height={one.s * 5.55 + one.gap + one.chip} rx="22" />
-              <text className="t-small t-gold-text t-left" x={one.s * 1.15} y={one.s * 2.2} fontSize={one.s}>
-                One calendar
-              </text>
-              {["Tasting · Sat 2pm", "Consult · Tue 9am"].map((t, i) => (
-                <g key={t}>
-                  <rect className={i ? "chip chip--paper" : "chip"} x={one.s * 1.15} y={one.s * 3.7 + i * one.gap} width={one.w - one.s * 2.3} height={one.chip} rx="10" />
-                  <text className="t-ink t-left" x={one.s * 1.9} y={one.s * 3.7 + i * one.gap + one.chip / 2 + one.s * 0.42} fontSize={one.s * 1.1}>
-                    {t}
-                  </text>
-                </g>
-              ))}
-            </g>
-          </g>
-          <g {...b("pop", 2.7, { len: 0.6 })}>
-            {tall ? (
-              <>
-                <circle className="f-gold" cx="880" cy="112" r="40" />
-                <path className="s-ink" d="M 861 113 l 12.5 12.5 l 26 -27.5" />
-              </>
-            ) : (
-              <>
-                <circle className="f-gold" cx="690" cy="92" r="32" />
-                <path className="s-ink" d="M 675 93 l 10 10 l 21 -22" />
-              </>
-            )}
-          </g>
-          {/* The tangle, pulled straight. */}
-          <g transform={tall ? "translate(0 200)" : undefined}>
-            <Gold
-              d="M 120 560 C 200 420, 330 700, 400 520 S 600 400, 560 600 S 300 660, 420 480 S 760 520, 660 640 S 420 720, 520 520 S 760 440, 880 560"
-              fx={b("undraw", 1.2, { len: 1.8 })}
-            />
-          </g>
-          <Gold d={`M 500 ${ruleY} H ${tall ? 100 : 130}`} fx={b("draw", 1.6, { len: 1.6 })} />
-          <Gold d={`M 500 ${ruleY} H ${tall ? 900 : 870}`} fx={b("draw", 1.6, { len: 1.6 })} />
-        </g>
-        {/* The plan, on one page. */}
-        <g {...b("rise", 3.9, { len: 1.3 })}>
-          <rect className="page" x={P.page[0]} y={P.page[1]} width={P.page[2]} height={P.page[3]} rx="16" />
-          <text className="t-disp t-ink" x="500" y={P.title[0]} fontSize={P.title[1]}>
+      <Art tall={tall} smil={D}>
+        {/* The page, and the three problems at the head of its rows. */}
+        <g {...b("rise", 0.1, { len: 1 })}>
+          <rect className="card card--deep s-paper-soft" x={px} y={py} width={pw} height={ph} rx="22" />
+          <text className="t-disp" x="500" y={L.title[0]} fontSize={L.title[1]}>
             The plan
           </text>
-          <path className="s-ink-soft" d={`M ${P.rule[0]} ${P.rule[1]} H ${P.rule[2]}`} />
+          <path className="s-soft" d={`M ${L.rule[0]} ${L.rule[1]} H ${L.rule[2]}`} />
         </g>
-        {["One calendar", "Every call answered", "Found on Google"].map((item, i) => (
-          <g key={item} {...b("rise", 4.7 + i * 0.6, { len: 0.9 })}>
-            <text className="t-disp t-gold-deep t-left" x={P.n[0]} y={P.n[1] + i * P.n[2]} fontSize={P.n[3]}>
-              {i + 1}
-            </text>
-            <text className="t-ink t-left" x={P.t[0]} y={P.t[1] + i * P.n[2]} fontSize={P.t[2]}>
-              {item}
-            </text>
+        <g {...b("fade", 5.4, { len: 1 })}>
+          <rect className="s-gold-edge" fill="none" x={px} y={py} width={pw} height={ph} rx="22" />
+        </g>
+        {L.rows.map((y, i) => (
+          <g key={y} {...b("pop", 0.35 + i * 0.15, { len: 0.6 })}>
+            <Problem3 kind={i as 0 | 1 | 2} x={L.tag[0]} y={y + L.tag[1]} k={L.tag[2]} at={PULL[i] + LEN * 0.8} b={b} />
           </g>
+        ))}
+        {/* What each becomes in the plan, written as its thread pulls straight. */}
+        {rows.map((t, i) => (
+          <text key={t} x={L.text[0]} y={L.rows[i] + L.text[1]} fontSize={L.text[2]} {...b("rise", PULL[i] + LEN * 0.75, { len: 0.8, cls: "t-body t-left" })}>
+            {t}
+          </text>
+        ))}
+        {/* The knot: one thread from each problem, pulled straight one at a time, each becoming the line under its row. */}
+        {L.rows.map((y, i) => (
+          <Thread
+            key={y}
+            paths={thread(L.x0, L.x1, y, L.g, i)}
+            at={PULL[i]}
+            len={LEN}
+            calm={calm}
+            draw={calm ? b("fade", PULL[i] + LEN * 0.6, { len: 0.6 }) : b("draw", 0.3 + i * 0.12, { len: 1.1 })}
+          />
+        ))}
+        {/* A glint along each, as it comes straight. */}
+        {L.rows.map((y, i) => (
+          <path key={y} d={`M ${L.x0} ${y} H ${L.x1}`} pathLength={1} {...b("glint", PULL[i] + LEN * 0.8, { len: 0.7, cls: "g-glint" })} />
         ))}
       </Art>
     ),
     near: (
       <>
         <Bokeh dots={NEAR_B} />
-        <i {...b("sweep", 2.4, { len: 1.8, cls: "film-sweep" })} />
+        <i {...b("sweep", 5.6, { len: 1.8, cls: "film-sweep" })} />
       </>
     ),
   };
@@ -1102,24 +1195,71 @@ function More(tall: boolean): SceneArt {
   };
 }
 
+/** The caller, the same on both layouts: a made-up patient of the orthodontist's. */
+const CALLER = { name: "Sofia Park", initials: "SP" };
+
+/** The answer button's handset, in ink, at (cx, cy). */
+const Handset = ({ cx, cy, k, cls = "s-ink" }: { cx: number; cy: number; k: number; cls?: string }) => (
+  <g transform={`translate(${cx} ${cy}) scale(${k}) translate(-300 -486)`}>
+    <path className={cls} d={`M 262 450 ${HANDSET}`} />
+  </g>
+);
+
+/** A call coming in to the front desk, at (cx, cy): the caller's circle, ringing, until it's answered. */
+function Ringing({ cx, cy, r, b }: { cx: number; cy: number; r: number; b: Beats }) {
+  return (
+    <>
+      <circle cx={cx} cy={cy} r={r} {...b("ring", 9.6, { len: 1, n: 1, cls: "s-gold-thin" })} />
+      <circle cx={cx} cy={cy} r={r} {...b("ring", 10.05, { len: 1, n: 1, cls: "s-gold-thin" })} />
+      <circle className="f-gold-dim s-gold-edge" cx={cx} cy={cy} r={r} />
+      <text className="t-disp" x={cx} y={cy + r * 0.27} fontSize={r * 0.78}>
+        {CALLER.initials}
+      </text>
+    </>
+  );
+}
+
 function PhonesWide({ b }: { b: Beats }) {
   return (
     <Art tall={false}>
       <text x="500" y="150" fontSize="80" {...b("rise", 9.2, { len: 1.2, cls: "t-disp" })}>
         Phones &amp; booking
       </text>
-      <g {...b("shake", 9.5, { len: 0.6, n: 2 })}>
+      {/* The front desk's phone: a call coming in, then answered. */}
+      <g {...b("rise", 9.4, { len: 0.8 })}>
         <rect className="card s-paper-soft" x="70" y="230" width="290" height="560" rx="44" />
-        <g transform="translate(215 470) scale(1.9) translate(-300 -486)">
-          <path className="s-paper" d={`M 262 450 ${HANDSET}`} />
+        <path className="s-soft thick" d="M 190 262 H 240" />
+        <text className="t-small t-gold-text" x="215" y="322" fontSize="22">
+          Front desk
+        </text>
+        <Ringing cx={215} cy={450} r={58} b={b} />
+        <text className="t-body" x="215" y="566" fontSize="32">
+          {CALLER.name}
+        </text>
+      </g>
+      <g {...b("out", 10.6, { len: 0.3 })}>
+        <text x="215" y="602" fontSize="22" {...b("fade", 9.6, { cls: "t-faint" })}>
+          Incoming call
+        </text>
+        <circle fill="none" cx="160" cy="700" r="36" {...b("fade", 9.6, { cls: "s-paper-soft" })} />
+        <path d="M 148 688 l 24 24 M 172 688 l -24 24" {...b("fade", 9.6, { cls: "s-paper-soft" })} />
+        <g {...b("press", 10.3, { len: 0.4 })}>
+          <g {...b("fade", 9.6)}>
+            <circle className="f-gold-v" cx="270" cy="700" r="36" />
+            <Handset cx={270} cy={702} k={0.42} />
+          </g>
         </g>
       </g>
-      <g {...b("pop", 10.5, { len: 0.6 })}>
-        <rect className="f-gold-v" x="94" y="660" width="242" height="70" rx="35" />
-        <text className="t-ink t-caps" x="215" y="705" fontSize="24">
+      <g {...b("pop", 10.7, { len: 0.6 })}>
+        <text className="t-faint" x="215" y="602" fontSize="22">
+          On the call · 0:04
+        </text>
+        <rect className="f-gold-v" x="110" y="668" width="210" height="64" rx="32" />
+        <text className="t-ink t-caps" x="215" y="709" fontSize="22">
           Answered
         </text>
       </g>
+      {/* Thursday fills in. */}
       <g {...b("rise", 11, { len: 0.9 })}>
         <rect className="card card--deep s-paper-soft" x="410" y="230" width="520" height="320" rx="20" />
         <text className="t-small t-gold-text t-left" x="444" y="292" fontSize="28">
@@ -1130,10 +1270,11 @@ function PhonesWide({ b }: { b: Beats }) {
       <g {...b("grow", 11.6, { len: 0.7 })}>
         <rect className="f-gold-v" x="444" y="344" width="452" height="58" rx="8" />
       </g>
-      <text x="464" y="383" fontSize="30" {...b("fade", 12, { cls: "t-ink t-left" })}>
-        Consult · 10am
+      <text x="464" y="382" fontSize="26" {...b("fade", 12, { cls: "t-ink t-left" })}>
+        Consult · 10am · {CALLER.name}
       </text>
-      <g {...b("rise", 12.6, { len: 0.9 })}>
+      {/* And the follow-up goes out. */}
+      <g {...b("slide-in", 12.6, { len: 0.9, dx: 80 })}>
         <path className="page" d="M 430 600 h 480 a 22 22 0 0 1 22 22 v 120 a 22 22 0 0 1 -22 22 h -420 l -34 34 v -34 h -26 a 22 22 0 0 1 -22 -22 v -120 a 22 22 0 0 1 22 -22 z" />
         <text className="t-ink t-left" x="442" y="672" fontSize="34">
           Thanks, see you Thursday.
@@ -1150,25 +1291,42 @@ function PhonesWide({ b }: { b: Beats }) {
   );
 }
 
-/** On a phone upright: the phone on its side across the top, the Thursday card under it, the follow-up under that. */
+/** On a phone upright: the call across the top, the Thursday card under it, the follow-up under that. */
 function PhonesTall({ b }: { b: Beats }) {
   return (
     <Art tall>
       <text x="500" y="112" fontSize="84" {...b("rise", 9.2, { len: 1.2, cls: "t-disp" })}>
         Phones &amp; booking
       </text>
-      <g {...b("shake", 9.5, { len: 0.6, n: 2 })}>
+      <g {...b("rise", 9.4, { len: 0.8 })}>
         <rect className="card s-paper-soft" x="40" y="170" width="920" height="230" rx="60" />
-        <g transform="translate(170 285) scale(1.7) translate(-300 -486)">
-          <path className="s-paper" d={`M 262 450 ${HANDSET}`} />
-        </g>
-        <text className="t-small t-gold-text t-left" x="300" y="262" fontSize="28">
+        <Ringing cx={156} cy={285} r={64} b={b} />
+        <text className="t-small t-gold-text t-left" x="256" y="256" fontSize="26">
           Front desk
         </text>
+        <text className="t-body t-left" x="256" y="312" fontSize="46">
+          {CALLER.name}
+        </text>
       </g>
-      <g {...b("pop", 10.5, { len: 0.6 })}>
-        <rect className="f-gold-v" x="300" y="292" width="300" height="72" rx="36" />
-        <text className="t-ink t-caps" x="450" y="338" fontSize="26">
+      <g {...b("out", 10.6, { len: 0.3 })}>
+        <text x="256" y="356" fontSize="28" {...b("fade", 9.6, { cls: "t-faint t-left" })}>
+          Incoming call
+        </text>
+        <circle fill="none" cx="766" cy="285" r="46" {...b("fade", 9.6, { cls: "s-paper-soft" })} />
+        <path d="M 751 270 l 30 30 M 781 270 l -30 30" {...b("fade", 9.6, { cls: "s-paper-soft" })} />
+        <g {...b("press", 10.3, { len: 0.4 })}>
+          <g {...b("fade", 9.6)}>
+            <circle className="f-gold-v" cx="884" cy="285" r="46" />
+            <Handset cx={884} cy={287} k={0.54} />
+          </g>
+        </g>
+      </g>
+      <g {...b("pop", 10.7, { len: 0.6 })}>
+        <text className="t-faint t-left" x="256" y="356" fontSize="28">
+          On the call · 0:04
+        </text>
+        <rect className="f-gold-v" x="660" y="249" width="270" height="72" rx="36" />
+        <text className="t-ink t-caps" x="795" y="295" fontSize="26">
           Answered
         </text>
       </g>
@@ -1182,10 +1340,10 @@ function PhonesTall({ b }: { b: Beats }) {
       <g {...b("grow", 11.6, { len: 0.7 })}>
         <rect className="f-gold-v" x="84" y="562" width="832" height="72" rx="10" />
       </g>
-      <text x="112" y="611" fontSize="40" {...b("fade", 12, { cls: "t-ink t-left" })}>
-        Consult · 10am
+      <text x="112" y="611" fontSize="36" {...b("fade", 12, { cls: "t-ink t-left" })}>
+        Consult · 10am · {CALLER.name}
       </text>
-      <g {...b("rise", 12.6, { len: 0.9 })}>
+      <g {...b("slide-in", 12.6, { len: 0.9, dx: 80 })}>
         <path className="page" d="M 62 810 h 876 a 22 22 0 0 1 22 22 v 130 a 22 22 0 0 1 -22 22 h -800 l -34 34 v -34 h -42 a 22 22 0 0 1 -22 -22 v -130 a 22 22 0 0 1 22 -22 z" />
         <text className="t-ink t-left" x="80" y="882" fontSize="44">
           Thanks, see you Thursday.
@@ -1248,7 +1406,8 @@ function Close(tall: boolean): SceneArt {
   };
 }
 
-export const SCENE_ART: Record<SceneId, (tall: boolean) => SceneArt> = {
+/** Each scene's pictures: tall for a phone upright, calm under reduced motion (where only Plan differs: its threads are only ever straight). */
+export const SCENE_ART: Record<SceneId, (tall: boolean, calm: boolean) => SceneArt> = {
   elora: Elora,
   call: Call,
   problem: Problem,

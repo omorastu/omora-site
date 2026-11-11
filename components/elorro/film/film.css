@@ -409,6 +409,10 @@
 .film-art .s-ink { fill: none; stroke: var(--ink); stroke-width: 5; stroke-linecap: round; stroke-linejoin: round; }
 .film-art .s-ink-soft { fill: none; stroke: rgb(22 19 15 / .2); stroke-width: 2; }
 .film-art .thick { stroke-width: 12; }
+.film-art .thin-line { stroke-width: 3; }
+.film-art .thin-ink { stroke-width: 3.5; }
+/* A glint running along a thread as it comes straight: one short bright dash, moved along. */
+.film-art .g-glint { fill: none; stroke: #FFF4DC; stroke-width: 6; stroke-linecap: round; stroke-dasharray: .07 1.2; stroke-dashoffset: .07; }
 .film-art .thick-ish { stroke-width: 7; }
 .film-art .f-gold, .film-art .f-gold-v { fill: url(#film-gold-v); }
 .film-art .f-paper { fill: var(--paper); }
@@ -445,6 +449,8 @@
 .film .fx-grow { animation-name: fx-grow; transform-origin: left center; }
 .film .fx-tall { animation-name: fx-tall; }
 .film .fx-focus { animation-name: fx-focus; }
+.film .fx-glint { animation-name: fx-glint; animation-timing-function: cubic-bezier(.4, 0, .6, 1); }
+.film .fx-slide-in { animation-name: fx-slide-in; }
 
 @keyframes fx-fade { from { opacity: 0; } }
 @keyframes fx-out { to { opacity: 0; } }
@@ -473,6 +479,8 @@
 @keyframes fx-grow { from { transform: scaleX(0); } }
 @keyframes fx-tall { from { transform: scaleY(0); } }
 @keyframes fx-focus { from { opacity: 0; transform: scale(1.6); } }
+@keyframes fx-glint { from { stroke-dashoffset: .07; } to { stroke-dashoffset: -1; } }
+@keyframes fx-slide-in { from { opacity: 0; transform: translate3d(var(--dx, 0), 0, 0); } }
 
 /* ---------- Elora ----------
    Full size in her scene, then to her corner, scaled down (so she's drawn
@@ -707,6 +715,12 @@
   100% { opacity: 0; transform: none; }
 }
 @keyframes film-window { 0%, 100% { opacity: 0; } 8%, 92% { opacity: 1; } }
+/* Her last line stays on the final frame, as readable as every other. */
+.film-cap.film-cap--last { animation-name: film-cap-last; }
+@keyframes film-cap-last {
+  0% { opacity: 0; transform: translate3d(0, .25em, 0); }
+  6%, 100% { opacity: 1; transform: none; }
+}
 
 /* A hairline of gold along the foot: how far in. */
 .film-progress { position: absolute; z-index: 5; inset: auto 0 0; height: 2px; background: rgb(244 241 234 / .08); }
@@ -730,6 +744,8 @@
   .film .fx-draw { stroke-dasharray: none; }
   .film .fx-undraw { animation-name: fx-out; stroke-dasharray: none; }
   .film .fx-slide, .film .fx-shake, .film .fx-blink, .film .fx-press { animation-name: none; }
+  .film .fx-slide-in { animation-name: fx-fade; }
+  .film .fx-glint { animation: none; opacity: 0; }
   .film .fx-ring, .film .fx-flow { animation: none; opacity: 0; }
   .film .fx.fx-pan, .film .fx.fx-pan2 { animation: none; transform: none; }
   .film-strip { width: 100%; }
@@ -744,6 +760,8 @@
   .film-word--label, .film-word--note { animation-name: word-fade; }
   @keyframes word-fade { from { opacity: 0; transform: translate(-50%, -50%); } to { opacity: 1; transform: translate(-50%, -50%); } }
   .film-cap { animation-name: film-window; }
+  .film-cap.film-cap--last { animation-name: film-cap-last-still; }
+  @keyframes film-cap-last-still { 0% { opacity: 0; } 8%, 100% { opacity: 1; } }
   .film-book, .film-stay { animation-name: film-book-still; }
   @keyframes film-book-still {
     from { opacity: 0; visibility: hidden; }

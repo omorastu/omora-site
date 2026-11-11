@@ -130,8 +130,9 @@ export function timeline() {
 /**
  * Every caption, with when it shows and goes, in seconds into the film. A
  * caption stays up until her next line, even across a change of scene, so
- * none fades while the pictures move on (`to`); `said` is when it would end
- * within its own scene, which is what her glow follows (elora.tsx).
+ * none fades while the pictures move on, and the last stays to the end (`to`);
+ * `said` is when it would end within its own scene, which is what her glow
+ * follows (elora.tsx).
  */
 export function captions() {
   const { parts, total } = timeline();
@@ -145,7 +146,8 @@ export function captions() {
   );
   all.forEach((c, i) => {
     const next = all[i + 1];
-    c.to = next ? next.from - 0.15 : total - 0.25;
+    // The last stays on the final frame (film.css, .film-cap--last).
+    c.to = next ? next.from - 0.15 : total;
   });
   return all;
 }

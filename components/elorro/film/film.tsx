@@ -7,6 +7,7 @@ import { EloraAvatar } from "@/components/elorro/film/elora";
 import { CAMERA, CLIPS, ClipContext, DESIGN, Handoff, SCENE_ART, type ClipId } from "@/components/elorro/film/scenes";
 import { captions, scenes, timeline, voice } from "@/components/elorro/film/script";
 import { budget } from "@/components/elorro/work-video";
+import { hero } from "@/lib/elorro";
 import { cn } from "@/lib/utils";
 import "@/components/elorro/film/film.css";
 
@@ -241,6 +242,8 @@ function Film({
   const tall = useTall();
   // The loops stay on their stills under reduced motion, and on a connection too slow for them.
   const [still] = useState(() => reducedMotion() || budget() === "none");
+  // Reduced motion, for the one picture CSS can't calm by itself (Plan's threads, SMIL).
+  const [calm] = useState(reducedMotion);
   const sound = review ? null : audio;
 
   /** A loop's place on the set, as its scene comes in (or null, as it goes): its video goes in, or comes out. */
@@ -342,6 +345,23 @@ function Film({
         } else if (Math.min(off, dur ? dur - off : off) > 1) v.currentTime = pos;
       }
     };
+    /**
+     * Pictures that move by SMIL (Plan's threads: a path's shape can't move by
+     * CSS in every browser), at `t`: each such drawing's own clock set to its
+     * scene's time (in seconds as designed), and run or stopped with the rest.
+     */
+    const keepSmil = (t: number, moving: boolean) => {
+      for (const svg of el.querySelectorAll<SVGSVGElement>("svg.film-smil")) {
+        const scene = svg.closest<HTMLElement>(".film-scene");
+        if (!scene) continue;
+        const s = parseFloat(scene.style.getPropertyValue("--s"));
+        const d = parseFloat(scene.style.getPropertyValue("--d"));
+        const local = Math.max(0, ((t - s) * Number(svg.dataset.design)) / d);
+        if (moving) svg.unpauseAnimations();
+        else svg.pauseAnimations();
+        if (Math.abs(svg.getCurrentTime() - local) > 0.05) svg.setCurrentTime(local);
+      }
+    };
     /** All running at `t`: set by their start time, so none that has finished starts over. */
     const runAt = (t: number) => {
       const base = Number(document.timeline.currentTime ?? 0) - t * 1000;
@@ -351,6 +371,7 @@ function Film({
       }
       keepFace(t);
       keepClips(t, true);
+      keepSmil(t, true);
     };
     /** All stopped at `t`. */
     const pauseAt = (t: number) => {
@@ -360,6 +381,7 @@ function Film({
       }
       keepFace(t);
       keepClips(t, false);
+      keepSmil(t, false);
     };
 
     /** The voice stalled for longer than the pictures will wait: they go on, and it catches up when it can. */
@@ -416,6 +438,7 @@ function Film({
         }
         keepFace(t);
         keepClips(t, true);
+        keepSmil(t, true);
       }
     };
     a?.addEventListener("waiting", onWaiting);
@@ -510,7 +533,7 @@ function Film({
         <ClipContext.Provider value={attach}>
         {parts.map(({ scene, start, duration }, i) => {
           if (!near.includes(i)) return null;
-          const art = SCENE_ART[scene.id](tall);
+          const art = SCENE_ART[scene.id](tall, calm);
           const cam = CAMERA[scene.id];
           return (
             <section
@@ -553,7 +576,7 @@ function Film({
         <div className="film-frame">
           <div className="film-end" style={{ "--from": sec(BOOK_AT) } as Vars}>
             <a ref={book} className="film-book" href="#contact" onClick={() => onLeave(false)}>
-              Book a call
+              {hero.cta.label}
             </a>
             <button type="button" className="film-stay" onClick={() => onLeave()}>
               Or keep looking around
@@ -589,8 +612,8 @@ function Film({
         </div>
 
         <div className="film-caps" aria-hidden="true">
-          {CAPTIONS.map((c) => (
-            <p key={c.from} className="film-cap" style={{ "--from": sec(c.from), "--len": sec(c.to - c.from) } as Vars}>
+          {CAPTIONS.map((c, i) => (
+            <p key={c.from} className={cn("film-cap", i === CAPTIONS.length - 1 && "film-cap--last")} style={{ "--from": sec(c.from), "--len": sec(c.to - c.from) } as Vars}>
               <span>{c.text}</span>
             </p>
           ))}
