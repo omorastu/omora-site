@@ -23,14 +23,18 @@
   --gold-lo: #876122;
   --film-ease: cubic-bezier(.33, 0, .15, 1);
   --camera: cubic-bezier(.4, 0, .6, 1);
+  /* The film's own size unit: the site's root (its "poster" scaling) on
+     desktops and phones upright, but never the 31–42px that root reaches
+     between 768 and 1023px wide, or on a phone on its side. */
+  --fr: 1rem;
   --display: var(--font-logo), Georgia, "Times New Roman", serif;
   --text: var(--font-hanken), "Helvetica Neue", Arial, sans-serif;
   /* The set: square, as big as the screen's short side (a little wider on a phone, its edges let go). */
   --sq: min(118vw, 100svh);
   --sq-y: 50%;
   /* Captions. */
-  --cap-size: 1.875rem;
-  --cap-w: min(70vw, 58rem);
+  --cap-size: calc(2.125 * var(--fr));
+  --cap-w: min(70vw, calc(58 * var(--fr)));
   --cap-b: 5svh;
   /* Elora: full size (--ef) centred at --ey, then to her corner (--ec across, --ek her scale there). */
   --ef: 360px;
@@ -53,7 +57,7 @@
   .film {
     --sq: min(108vw, 100svh);
     --sq-y: 45%;
-    --cap-size: 1.25rem;
+    --cap-size: calc(1.25 * var(--fr));
     --cap-w: 92vw;
     --cap-b: 108px;
     --ef: 220px;
@@ -64,13 +68,17 @@
     --eb: 16px;
   }
 }
+@media (min-width: 768px) and (max-width: 1023px) {
+  .film { --fr: 15px; }
+}
 /* Short, wide screens (a phone on its side): the set takes the height. */
 @media (max-height: 560px) and (min-aspect-ratio: 1/1) {
   .film {
+    --fr: min(1rem, 22px);
     --sq: 100svh;
     --sq-y: 50%;
-    --cap-size: 1.0625rem;
-    --cap-w: min(80vw, 46rem);
+    --cap-size: calc(1.0625 * var(--fr));
+    --cap-w: min(80vw, calc(46 * var(--fr)));
     --cap-b: 14px;
     --ef: 200px;
     --ey: 46svh;
@@ -79,6 +87,23 @@
     --ex: 12px;
     --eb: 12px;
   }
+}
+/* Phones first: a phone upright gets a tall set, 1000 × 1100 (scenes.tsx),
+   the whole width and the height between the top bar and two lines of
+   caption; the camera's push is halved so the set's edges stay on screen.
+   (The same query as film.tsx's TALL.) */
+@media (max-width: 767px) and (max-aspect-ratio: 3/4) {
+  .film {
+    --top: calc(56px + env(safe-area-inset-top));
+    --bot: calc(var(--cap-b) + 3 * var(--cap-size) + 8px);
+    --band: calc(100svh - var(--top) - var(--bot));
+    --sw: min(100vw, var(--band) / 1.1);
+    --sh: calc(var(--sw) * 1.1);
+    --sq: var(--sw);
+    --sq-y: calc(var(--top) + var(--band) / 2);
+    --zk: .5;
+  }
+  .film-logo-wrap { left: 8%; width: 84%; top: 32.5%; height: 12.93%; }
 }
 .film.is-closing { opacity: 0; pointer-events: none; }
 .film *, .film *::before, .film *::after { box-sizing: border-box; }
@@ -133,13 +158,13 @@
   from { transform: translate3d(calc(var(--px) * .35), calc(var(--py) * .35), 0) scale(calc(1 + (var(--z0) - 1) * .35)); }
   to { transform: translate3d(calc(var(--px) * -.35), calc(var(--py) * -.35), 0) scale(calc(1 + (var(--z1) - 1) * .35)); }
 }
-.film-mid {
+.film-mid, .film-frame, .film-handoff {
   position: absolute;
   left: 50%;
   top: var(--sq-y);
-  width: var(--sq);
-  height: var(--sq);
-  margin: calc(var(--sq) / -2) 0 0 calc(var(--sq) / -2);
+  width: var(--sw, var(--sq));
+  height: var(--sh, var(--sq));
+  margin: calc(var(--sh, var(--sq)) / -2) 0 0 calc(var(--sw, var(--sq)) / -2);
 }
 .film-orbit {
   position: absolute;
@@ -147,11 +172,53 @@
   animation: cam-mid calc(var(--d) + 2s) var(--camera) calc(var(--s) - 1s) both;
 }
 @keyframes cam-mid {
-  from { transform: perspective(1800px) translate3d(var(--px), var(--py), 0) rotateY(var(--ry)) scale(var(--z0)); }
-  to { transform: perspective(1800px) translate3d(calc(var(--px) * -1), calc(var(--py) * -1), 0) rotateY(calc(var(--ry) * -1)) scale(var(--z1)); }
+  from { transform: perspective(1800px) translate3d(var(--px), var(--py), 0) rotateY(var(--ry)) scale(calc(1 + (var(--z0) - 1) * var(--zk, 1))); }
+  to { transform: perspective(1800px) translate3d(calc(var(--px) * -1), calc(var(--py) * -1), 0) rotateY(calc(var(--ry) * -1)) scale(calc(1 + (var(--z1) - 1) * var(--zk, 1))); }
 }
 .film-near { position: absolute; inset: 0; pointer-events: none; }
-.film-art { display: block; width: 100%; height: 100%; overflow: visible; }
+/* Each drawing fills its set (or its panel); a panel may lay several over each other, with a loop between. */
+.film-art { position: absolute; inset: 0; display: block; width: 100%; height: 100%; overflow: visible; }
+.film-layer { position: absolute; inset: 0; }
+
+/* A loop of our real work, on the set: its still, then the loop over it once it has a frame to show. */
+.film-clip { position: absolute; overflow: hidden; background: var(--night); isolation: isolate; }
+.film-clip img, .film-clip-video {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.film-clip--top img, .film-clip--top .film-clip-video { object-position: 50% 0; }
+.film-clip-slot { position: absolute; inset: 0; }
+.film-clip-video { opacity: 0; transition: opacity .5s ease; }
+.film-clip-video.is-on { opacity: 1; }
+/* A little of the film's dark over its edges, so the gold drawn on top still reads. */
+.film-clip::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    linear-gradient(rgb(12 10 8 / .42), rgb(12 10 8 / 0) 22%, rgb(12 10 8 / 0) 78%, rgb(12 10 8 / .3)),
+    radial-gradient(ellipse 80% 80% at 50% 50%, rgb(12 10 8 / 0) 60%, rgb(12 10 8 / .3));
+}
+
+/* Between Elora and the call: the thread she leaves, drawn out both ways,
+   held, then gathered to the call's length (--keep), handing over to it. */
+.film-handoff { pointer-events: none; }
+.film-handoff .h-thread {
+  stroke-dasharray: 1 1;
+  animation: handoff-thread 2.6s linear var(--from) both;
+}
+@keyframes handoff-thread {
+  0% { stroke-dashoffset: 1; animation-timing-function: cubic-bezier(.3, 0, .2, 1); }
+  42% { stroke-dashoffset: 0; }
+  65% { stroke-dashoffset: 0; animation-timing-function: cubic-bezier(.6, 0, .3, 1); }
+  100% { stroke-dashoffset: var(--keep); }
+}
 
 /* Gold out of focus, each light its own small layer, drifting past. */
 .film-bokeh {
@@ -310,6 +377,7 @@
 .film-art .t-gold-text { fill: #DDBB73; }
 .film-art .t-gold-deep { fill: var(--gold-lo); }
 .film-art .t-strong { font-weight: 600; }
+.film-art .t-on-film { fill: var(--paper); paint-order: stroke; stroke: rgb(12 10 8 / .55); stroke-width: 6px; stroke-linejoin: round; }
 
 /* Gold lines: a wide faint halo, a softer glow, the metal. */
 .film-art .g-halo, .film-art .g-glow, .film-art .g-core { fill: none; stroke-linecap: round; stroke-linejoin: round; }
@@ -483,13 +551,13 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 1rem;
-  min-height: 4rem;
-  padding: max(.75rem, env(safe-area-inset-top)) max(.75rem, env(safe-area-inset-right)) 1.25rem max(1.25rem, env(safe-area-inset-left));
+  gap: var(--fr);
+  min-height: calc(4 * var(--fr));
+  padding: max(calc(.75 * var(--fr)), env(safe-area-inset-top)) max(calc(.75 * var(--fr)), env(safe-area-inset-right)) calc(1.25 * var(--fr)) max(calc(1.25 * var(--fr)), env(safe-area-inset-left));
   background: linear-gradient(rgb(12 10 8 / .55), rgb(12 10 8 / 0));
 }
 /* Labels and captions are only to read: taps go through them, to the buttons. */
-.film-labels { position: relative; flex: 1; min-width: 0; height: 1.5em; font-size: max(.875rem, 11px); pointer-events: none; }
+.film-labels { position: relative; flex: 1; min-width: 0; height: 1.5em; font-size: max(calc(.875 * var(--fr)), 11px); pointer-events: none; }
 .film-label {
   position: absolute;
   inset: 0 auto auto 0;
@@ -505,10 +573,10 @@
   animation: film-window var(--len) linear var(--from) both;
 }
 @media (max-width: 767px) {
-  .film-labels { font-size: max(.75rem, 11px); }
+  .film-labels { font-size: max(calc(.75 * var(--fr)), 11px); }
   .film-label { letter-spacing: .14em; }
 }
-.film-ctls { display: flex; gap: .25rem; }
+.film-ctls { display: flex; gap: calc(.25 * var(--fr)); }
 .film-ctl {
   display: grid;
   place-items: center;
@@ -529,31 +597,33 @@
 }
 
 /* ---------- the end: book a call, on the set ---------- */
-.film-frame {
+.film-frame { z-index: 4; pointer-events: none; }
+/* The site's hero button, as big as it is there (components/elorro/elorro.css,
+   .act: the same type, padding and gold, and the hero's width), with a soft
+   glow; under it, quietly, a way back to the page. */
+.film-end {
   position: absolute;
-  z-index: 4;
   left: 50%;
-  top: var(--sq-y);
-  width: var(--sq);
-  height: var(--sq);
-  margin: calc(var(--sq) / -2) 0 0 calc(var(--sq) / -2);
-  pointer-events: none;
+  top: 73%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(.375 * var(--fr));
+  transform: translateX(-50%);
 }
 .film-book {
-  position: absolute;
-  left: 50%;
-  top: 80%;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 3.5rem;
-  padding: 0 2rem;
+  min-width: calc(15.75 * var(--fr));
+  min-height: calc(3.25 * var(--fr));
+  padding: var(--fr) calc(1.75 * var(--fr));
   background: var(--gold);
   background-image: linear-gradient(180deg, var(--gold-hi), #886826 36%, #6D4F1C);
-  box-shadow: 0 0 2.5rem rgb(190 150 69 / .3);
+  box-shadow: 0 0 calc(2.75 * var(--fr)) rgb(190 150 69 / .36), 0 0 calc(.875 * var(--fr)) rgb(232 190 110 / .22);
   color: var(--paper);
   font-family: var(--text);
-  font-size: max(.875rem, 12px);
+  font-size: max(calc(.8125 * var(--fr)), 12px);
   font-weight: 600;
   letter-spacing: .14em;
   line-height: 1;
@@ -564,12 +634,41 @@
   animation: film-book .9s var(--film-ease) var(--from) both;
 }
 .film-book:focus-visible { outline: 2px solid var(--paper); outline-offset: 3px; }
+.film-stay {
+  min-height: 44px;
+  padding: calc(.5 * var(--fr)) var(--fr);
+  border: 0;
+  background: none;
+  color: rgb(244 241 234 / .68);
+  font-family: var(--text);
+  font-size: max(calc(.875 * var(--fr)), 13px);
+  font-weight: 500;
+  letter-spacing: .01em;
+  text-decoration: underline;
+  text-decoration-color: rgb(244 241 234 / .25);
+  text-underline-offset: .3em;
+  white-space: nowrap;
+  cursor: pointer;
+  pointer-events: auto;
+  animation: film-book .9s var(--film-ease) calc(var(--from) + .5s) both;
+  transition: color .2s ease, text-decoration-color .2s ease;
+}
+.film-stay:focus-visible { outline: 2px solid var(--gold-hi); outline-offset: 2px; color: var(--paper); }
 @media (hover: hover) {
-  .film-book:hover { box-shadow: inset 0 0 0 100vmax rgb(32 20 4 / .16), 0 0 2.5rem rgb(190 150 69 / .3); }
+  .film-book:hover { box-shadow: inset 0 0 0 100vmax rgb(32 20 4 / .16), 0 0 calc(2.75 * var(--fr)) rgb(190 150 69 / .36), 0 0 calc(.875 * var(--fr)) rgb(232 190 110 / .22); }
+  .film-stay:hover { color: var(--paper); text-decoration-color: rgb(244 241 234 / .6); }
+}
+/* A phone on its side has no room for the hero's size: the two side by side, at a phone's size,
+   where the closing note was (she says it anyway). */
+@media (max-height: 560px) and (min-aspect-ratio: 1/1) {
+  .film-word--note { display: none; }
+  .film-end { top: 66%; flex-direction: row; gap: 12px; }
+  .film-book { min-width: 0; min-height: 44px; padding: 0 22px; font-size: 12px; }
+  .film-stay { font-size: 13px; }
 }
 @keyframes film-book {
-  from { opacity: 0; visibility: hidden; transform: translate3d(-50%, 14px, 0); }
-  to { opacity: 1; visibility: visible; transform: translate3d(-50%, 0, 0); }
+  from { opacity: 0; visibility: hidden; transform: translate3d(0, 14px, 0); }
+  to { opacity: 1; visibility: visible; transform: none; }
 }
 
 /* ---------- captions: always on, big, on a soft dark band ---------- */
@@ -578,7 +677,7 @@
   z-index: 4;
   pointer-events: none;
   left: 50%;
-  bottom: max(var(--cap-b), calc(env(safe-area-inset-bottom) + 1rem));
+  bottom: max(var(--cap-b), calc(env(safe-area-inset-bottom) + var(--fr)));
   width: var(--cap-w);
   height: 0;
   margin-left: calc(var(--cap-w) / -2);
@@ -645,11 +744,14 @@
   .film-word--label, .film-word--note { animation-name: word-fade; }
   @keyframes word-fade { from { opacity: 0; transform: translate(-50%, -50%); } to { opacity: 1; transform: translate(-50%, -50%); } }
   .film-cap { animation-name: film-window; }
-  .film-book { animation-name: film-book-still; }
+  .film-book, .film-stay { animation-name: film-book-still; }
   @keyframes film-book-still {
-    from { opacity: 0; visibility: hidden; transform: translate3d(-50%, 0, 0); }
-    to { opacity: 1; visibility: visible; transform: translate3d(-50%, 0, 0); }
+    from { opacity: 0; visibility: hidden; }
+    to { opacity: 1; visibility: visible; }
   }
+  /* The thread she leaves fades in at the call's length, between where its circles come. */
+  .film-handoff .h-thread { stroke-dashoffset: var(--keep); animation-name: handoff-still; }
+  @keyframes handoff-still { from { opacity: 0; } 30%, to { opacity: 1; } }
   .elora { animation-name: elora-fade, elora-corner; }
   @keyframes elora-fade { from { opacity: 0; } }
   /* app/globals.css cuts every animation to nothing under reduced motion.
@@ -662,7 +764,8 @@
   .film .fx.fx-panel1, .film .fx.fx-panel2, .film .fx.fx-panel3, .film .fx.fx-panelA1, .film .fx.fx-panelA2, .film .fx.fx-panelA3 { animation-duration: var(--d) !important; }
   .film-word { animation-duration: 1.3s !important; }
   .film-cap, .film-label, .elora-voice { animation-duration: var(--len) !important; }
-  .film-book { animation-duration: .9s !important; }
+  .film-book, .film-stay { animation-duration: .9s !important; }
+  .film-handoff .h-thread { animation-duration: 2.6s !important; }
   .film-progress i, .film-clock { animation-duration: var(--total) !important; }
   .elora { animation-duration: 1.6s, .01s !important; }
   /* The two calendars become one where it ends up, in a cut rather than a slide. */

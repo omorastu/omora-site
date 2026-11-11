@@ -127,15 +127,25 @@ export function timeline() {
   return { parts, total: t };
 }
 
-/** Every caption, with when it shows and goes, in seconds into the film. */
+/**
+ * Every caption, with when it shows and goes, in seconds into the film. A
+ * caption stays up until her next line, even across a change of scene, so
+ * none fades while the pictures move on (`to`); `said` is when it would end
+ * within its own scene, which is what her glow follows (elora.tsx).
+ */
 export function captions() {
-  const { parts } = timeline();
-  return parts.flatMap(({ scene, start, duration }) =>
+  const { parts, total } = timeline();
+  const all = parts.flatMap(({ scene, start, duration }) =>
     scene.lines.map((line, i) => {
       const next = scene.lines[i + 1];
       const from = start + line.at;
-      const to = next ? start + next.at - 0.15 : start + duration - 0.25;
-      return { text: line.text, from, to, scene: scene.id };
+      const said = next ? start + next.at - 0.15 : start + duration - 0.25;
+      return { text: line.text, from, to: said, said, scene: scene.id };
     })
   );
+  all.forEach((c, i) => {
+    const next = all[i + 1];
+    c.to = next ? next.from - 0.15 : total - 0.25;
+  });
+  return all;
 }

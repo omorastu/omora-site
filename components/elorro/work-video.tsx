@@ -40,8 +40,8 @@ type Connection = { saveData?: boolean; effectiveType?: string; downlink?: numbe
 const MAX_LOADING = 2;
 const STALL_MS = 3000;
 
-/** What the connection can take: the full cut, the light one, or none. */
-function budget(): "hd" | "sd" | "none" {
+/** What the connection can take: the full cut, the light one, or none. (The film's loops follow it too.) */
+export function budget(): "hd" | "sd" | "none" {
   const c = (navigator as Navigator & { connection?: Connection }).connection;
   if (!c) return "hd";
   if (c.effectiveType === "slow-2g" || c.effectiveType === "2g") return "none";
