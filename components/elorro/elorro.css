@@ -1,32 +1,28 @@
 /* =====================================================================
-   ELORRO · the site · "Names on the door"
-   Ported rule for rule from the first static preview's tokens.css and
-   brand.css. Four decisions, kept from the original, and a fifth since:
-   1. Concept: the door of a two-partner firm. Two names joined by an
-      ampersand, a seam down the middle between them. The seam runs the
-      hero only; below it the page is one left-aligned editorial grid
-      ("below the hero").
-   2. Black, gold and the paper. The ink is black; the gold is the logo's,
-      kept for a few things: the wordmark and the two rings, the
-      ampersand between the names, the picked name and the send button.
-      The two people share both. Nothing decorative.
-   3. Cormorant Garamond, the wordmark's family, for every heading and
-      display line (names ~3x a normal h1), in 500 and 600 + Hanken
-      Grotesk for everything else (text, wide-caps labels, fields, buttons).
-   4. Photo direction: real screens of real projects, unframed, square,
-      one hairline; no portraits for now (lib/elorro.ts).
-   5. The paper runs edge to edge: no frame, no card, nothing behind it.
+   ELORRO · the site · layout B, "The conversation"
+   The same studio, words and work as the live site, laid out afresh: the
+   site reads the way the two of us would walk an owner through it.
+   1. The door is black: the gold logo (the runners in its R's) and what Elorro
+      means, set like a dictionary's entry (the intro's idea, kept as the
+      front door). Contact and the foot close on the same black.
+   2. In between, the warm paper, in two tones taking turns, one chapter
+      each: who you'd be talking to, what we do, the film, the work, how it
+      starts, the questions people ask before the call.
+   3. Every chapter is marked the same way: its number and name between
+      two fine gold rules, centred. Below the mark the chapter keeps its own
+      shape: a letter, an index, pieces of work down the page, a line with
+      three stops, a conversation.
+   4. Gold is the logo's, kept for the marks, the rings, the call to book
+      and the film's way in. Cormorant for everything said large, Hanken for
+      the rest.
+   5. Phones first: every chapter is one column there, screens running the
+      phone's full width; nothing pins, nothing swipes sideways.
 
-   Scoping. Every rule hangs off .elo, the page root: the home page's is
-   rendered by components/elorro/hands.tsx, every other page's by
-   components/elorro/page.tsx. Rules that have to sit on <html> (the fluid
-   root size, the paper behind overscroll) use html:has(.elo): they apply
-   exactly while a page is mounted, server render included. Tokens are
-   declared on both, so a page still renders correctly in a browser without
-   :has() — only the fluid root is lost there.
-
-   The home page's sections come first; the other pages' own parts follow,
-   from "inner pages" down.
+   Scoping. Every rule hangs off .elo, the page root (app/page.tsx for the
+   home page, components/elorro/page.tsx for every other). Rules that have
+   to sit on <html> (the fluid root size, the paper behind overscroll) use
+   html:has(.elo). The tokens, the root and the base below are the live
+   site's, unchanged: the film's sizes are worked out from this root.
    ===================================================================== */
 
 /* ---------- tokens ---------- */
@@ -214,151 +210,247 @@ html:has(.elo) body {
   .elo a[href], .elo button, .elo label, .elo summary, .elo select, .elo [role="button"] { cursor: pointer; }
   .elo input:not([type="radio"], [type="checkbox"], [type="submit"], [type="button"]), .elo textarea { cursor: text; }
 }
-/* And behind the rings as the mouse moves, a fine gold thread (trail.tsx),
-   over everything, the intro's black too, and never in the way: on the
-   paper it multiplies, so it tints the paper and leaves the ink as it is;
-   over the intro's black, and over the header's bar once it has turned
-   black (a second canvas, drawn only there), it's laid on as it is. */
-.elo .trail {
-  position: fixed;
-  inset: 0;
-  z-index: 1001;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  mix-blend-mode: multiply;
+
+/* ---------- layout B's own tokens ---------- */
+.elo {
+  /* The film's black, and the paper's two tones. */
+  --night: #0C0A08;
+  --paper-2: #ECE6DA;
+  /* On the black: secondary text, and its hairlines. */
+  --on-night: rgb(244 241 234 / .72);
+  --hair-night: rgb(244 241 234 / .16);
+  --ink-12: color-mix(in srgb, var(--ink) 12%, transparent);
+  --measure: 34rem;
+  --wrap: 84rem;
+  --chap: 8.5rem;                    /* a chapter's space above and below */
 }
-.elo .trail--night,
-html:has(#elo-intro-boot) .elo .trail { mix-blend-mode: normal; }
-@media not (pointer: fine), (prefers-reduced-motion: reduce) {
-  .elo .trail { display: none; }
+@media (max-width: 1023px) {
+  .elo { --chap: 5rem; }
 }
 
-/* Shared things cross the seam: they sit on paper so the seam breaks around them. */
-.elo .across {
+/* ---------- the frame ---------- */
+.elo .wrap {
+  width: 100%;
+  max-width: calc(var(--wrap) + 2 * var(--pad));
+  margin-inline: auto;
+  padding-inline: var(--pad);
+}
+.elo .chap { padding-block: var(--chap); }
+/* Cormorant's figures are old-style by default; numbering takes the lining ones. */
+.elo :is(.mark-n, .index-n, .how-dot, .svc-n, .step-n, .contents-n, .cs-step-n span, .cs-figure-n) { font-variant-numeric: lining-nums; }
+.elo .statement {
+  max-width: 22em;
+  margin-inline: auto;
+  font-family: var(--font-display);
+  font-size: 3.25rem;
+  font-weight: 500;
+  line-height: 1.1;
+  letter-spacing: -.012em;
+  text-align: center;
+  text-wrap: balance;
+}
+/* A whole row (or card) is the way to where its title links. */
+.elo .card-link { position: relative; }
+.elo .card-link :is(h2, h3) a::after { content: ""; position: absolute; inset: 0; }
+
+/* The one action: gold, square, its capitals in the paper (the solid mid
+   gold where a gradient can't be drawn). Hovered or focused, a deeper gold. */
+.elo .act {
   position: relative;
   z-index: 1;
-  background: var(--paper);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 3.25rem;
+  padding: 1rem 1.75rem;
+  background: var(--gold);
+  background-image: var(--gold-button);
+  color: var(--paper);
+  font-family: var(--font-label);
+  font-weight: 600;
+  font-size: max(.8125rem, 12px);
+  letter-spacing: .14em;
+  line-height: 1;
+  text-transform: uppercase;
+  white-space: nowrap;
+  transition: box-shadow .25s var(--ease);
+}
+.elo .act[aria-disabled="true"] { cursor: progress; }
+.elo .act:focus-visible { outline-color: currentColor; box-shadow: inset 0 0 0 100vmax rgb(32 20 4 / .18); }
+@media (hover: hover) {
+  .elo .act:hover:not([aria-disabled="true"]) { box-shadow: inset 0 0 0 100vmax rgb(32 20 4 / .18); }
 }
 
-/* ---------- header: the door plate ----------
-   At the top of the page, the gold rings and wordmark on the left and the
-   menu button on the right, on the paper. Once the names on the door have
-   gone under it (header.tsx adds .is-dark), it turns black from edge to
-   edge: the two names fade in on the seam, the gold stays gold and
-   everything else turns paper. (On phones the names come in as initials,
-   in the wordmark's place: see "phones".) The black is a layer of its own
-   over the header's paper. */
-.elo .top {
+/* A way on: the words over a fine gold line, and an arrow (↗ for another site). */
+.elo .go {
+  display: inline-flex;
+  align-items: center;
+  gap: .45rem;
+  min-height: 44px;
+  font-weight: 500;
+  text-decoration: underline;
+  text-decoration-color: var(--gold);
+  text-decoration-thickness: 1px;
+  text-underline-offset: .35em;
+}
+.elo .go::after { content: "→"; color: var(--gold-text); transition: transform .3s var(--ease); }
+.elo .go--out::after { content: "↗"; }
+@media (hover: hover) {
+  .elo .go:hover::after { transform: translateX(.25rem); }
+  .elo .go--out:hover::after { transform: translate(.15rem, -.15rem); }
+}
+.elo .more { margin-top: 4.5rem; }
+.elo .more--center { text-align: center; }
+.elo .more a {
+  display: inline-flex;
+  align-items: center;
+  gap: .6rem;
+  min-height: 44px;
+  font-family: var(--font-label);
+  font-weight: 600;
+  font-size: max(.75rem, 11px);
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  text-decoration: underline;
+  text-decoration-color: var(--gold);
+  text-underline-offset: .6em;
+}
+.elo .more a::after { content: "→"; color: var(--gold-text); font-size: 1.1em; letter-spacing: 0; }
+
+/* What comes with something: short lines, each after a small gold ring. */
+.elo .ticks { display: grid; gap: .55rem; }
+.elo .ticks li { position: relative; padding-left: 1.5rem; line-height: 1.4; }
+.elo .ticks li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: .42em;
+  width: .6rem;
+  height: .6rem;
+  border: 1.5px solid var(--gold);
+  border-radius: 50%;
+}
+
+/* ---------- marks: the gold rule ----------
+   A chapter's number and name between two fine gold rules, centred, as the
+   intro's line once sat under the logo (marks.tsx). */
+.elo .mark {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.25rem;
+  margin-bottom: 4.5rem;
+}
+.elo .mark-run {
+  flex: 0 1 8rem;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold) 70%);
+}
+.elo .mark-run:last-child { background: linear-gradient(90deg, var(--gold) 30%, transparent); }
+.elo .mark-label {
+  display: inline-flex;
+  align-items: baseline;
+  gap: .75rem;
+  color: var(--ink);
+  white-space: nowrap;
+}
+.elo .mark-n {
+  font-family: var(--font-display);
+  font-size: 1.375rem;
+  font-weight: 600;
+  letter-spacing: 0;
+  color: var(--gold-text);
+}
+.elo .mark--night .mark-label { color: var(--paper); }
+.elo .mark--night .mark-n { color: var(--gold-hi); }
+
+/* A play button: a gold ring with its triangle. */
+.elo .play-icon { flex: none; width: 2.75rem; height: 2.75rem; }
+.elo .play-icon circle { fill: none; stroke: var(--gold); stroke-width: 1.5; }
+.elo .play-icon path { fill: var(--gold); }
+.elo .play {
+  display: inline-flex;
+  align-items: center;
+  gap: .85rem;
+  min-height: 44px;
+  font-weight: 500;
+}
+.elo .play-len { margin-left: .35rem; color: var(--on-night); font-variant-numeric: tabular-nums; }
+@media (hover: hover) {
+  .elo .play .play-icon circle { transition: fill .3s var(--ease); }
+  .elo .play:hover .play-icon circle { fill: rgb(190 150 69 / .16); }
+}
+
+/* ---------- the bar along the top ----------
+   The rings and the wordmark; the chapters, the film and "Book a call" on
+   wide screens; the film and Menu on phones. Over the home page's opening
+   it's clear, on the black (.is-over); otherwise paper, with a hairline. */
+.elo .bar {
   position: sticky;
   top: 0;
   z-index: 100;
   height: var(--header-h);
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
+  display: flex;
   align-items: center;
+  justify-content: space-between;
+  gap: 2rem;
   padding-inline: var(--pad);
   background: var(--paper);
   border-bottom: 1px solid var(--ink-20);
   color: var(--ink);
-  transition: transform .45s var(--ease), color .25s ease, border-color .25s ease;
+  transition: transform .45s var(--ease), background-color .3s ease, color .3s ease, border-color .3s ease;
 }
-.elo .top::before {
-  content: "";
-  position: absolute;
-  inset: 0 0 -1px;
-  z-index: -1;
-  background: var(--ink);
-  opacity: 0;
-  transition: opacity .25s ease;
-  pointer-events: none;
-}
-.elo .top.is-dark { color: var(--paper); border-bottom-color: transparent; }
-.elo .top.is-dark::before { opacity: 1; }
-/* min-height: the old Fraunces lockup's line box (1.375rem × 1.45), so the
-   header rows stand where they did; it only bites at tablet widths. */
+.elo .bar.is-over { background: transparent; color: var(--paper); border-bottom-color: transparent; }
+.elo .bar.is-hidden { transform: translateY(-100%); }
 .elo .brand {
-  grid-area: 1 / 1;
-  justify-self: start;
   display: inline-flex;
   align-items: center;
   gap: .72rem;
-  min-height: max(44px, calc(1.375rem * 1.45));
+  min-height: 44px;
 }
-.elo .brand img { width: 2.15rem; height: auto; }
-.elo .brand .wordmark { font-size: 1.725rem; line-height: 1; }
-
-/* The wordmark, here and in the footer, in the logo's gold (.gold): set a
-   weight up from the plain wordmark's 500 and a little tighter, so the
-   thin gold holds together at this size. */
+.elo .brand img { width: 2rem; height: auto; }
 .elo .brand .wordmark,
-.elo .foot-l .wordmark {
-  font-weight: 600;
-  letter-spacing: .36em;
-  margin-right: -.36em;
-}
-
-/* The names, on the seam, only while the header is black. Hidden, they
-   leave the tab order and the accessibility tree too. Each carries its
-   initial as well, for phones; here only the name shows. */
-.elo .who {
+.elo .menu .brand .wordmark { font-size: 1.5rem; line-height: 1; font-weight: 600; letter-spacing: .36em; margin-right: -.36em; }
+.elo .bar-nav ul { display: flex; gap: 2.25rem; }
+.elo .bar-nav a,
+.elo .bar-film {
   display: inline-flex;
   align-items: center;
-  font-family: var(--font-display);
-  font-size: 1.5rem;
-  font-weight: 600;
-  line-height: 1;
   min-height: 44px;
-  padding-inline: .25rem;
-}
-.elo .who-initial { display: none; }
-.elo .who--a { grid-area: 1 / 1; justify-self: end; }
-.elo .who--j { grid-area: 1 / 3; justify-self: start; }
-.elo .top-amp {
-  grid-area: 1 / 2;
-  padding-inline: .5rem;
-  font-family: var(--font-display);
-  font-size: 1.5rem;
+  font-size: max(.9375rem, 14px);
   font-weight: 500;
-  line-height: 1;
-}
-.elo .top .who,
-.elo .top .top-amp {
-  opacity: 0;
-  visibility: hidden;
-  transition: opacity .25s ease, visibility 0s .25s, translate .55s var(--spring-soft);
-}
-.elo .top.is-dark .who,
-.elo .top.is-dark .top-amp {
-  opacity: 1;
-  visibility: visible;
-  transition: opacity .25s ease, visibility 0s, translate .55s var(--spring-soft);
-}
-.elo .who[aria-pressed="true"] {
   text-decoration: underline;
-  text-decoration-thickness: 1px;
-  text-underline-offset: .22em;
+  text-decoration-color: transparent;
+  text-underline-offset: .45em;
+  transition: text-decoration-color .25s ease;
 }
-
-/* The menu button: three lines in the header's ink, black on the paper and
-   paper on the black. A 44px target, set so its lines end on the margin. */
-.elo .menu-btn {
-  grid-area: 1 / 3;
-  justify-self: end;
-  display: inline-grid;
-  place-items: center;
-  width: 44px;
-  height: 44px;
-  margin-right: calc((1.5rem - 44px) / 2);
+@media (hover: hover) {
+  .elo .bar-nav a:hover, .elo .bar-film:hover { text-decoration-color: var(--gold); }
 }
-.elo .menu-btn svg,
-.elo .menu-close svg { width: 1.5rem; height: auto; fill: none; stroke: currentColor; stroke-width: 1.5; }
+.elo .bar-acts { display: flex; align-items: center; gap: 1.75rem; }
+.elo .bar-film { gap: .55rem; }
+.elo .bar-film .play-icon { width: 1.75rem; height: 1.75rem; }
+.elo .bar-book {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.5rem;
+  padding: .55rem 1.1rem;
+  background: var(--gold);
+  background-image: var(--gold-button);
+  color: var(--paper);
+  font-family: var(--font-label);
+  font-weight: 600;
+  font-size: max(.6875rem, 11px);
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.elo .bar-menu { display: none; min-height: 44px; padding-inline: .5rem; margin-right: -.5rem; }
 
-/* ---------- the menu ----------
-   The whole screen in the paper (components/elorro/menu.tsx, a modal
-   <dialog>): a bar like the header's, with Close where the menu button was,
-   then the home page's sections large down the page's grid and the two
-   pages under them. The page behind doesn't scroll while it's open
+/* ---------- the menu (phones and tablets) ----------
+   The whole screen in the black (menu.tsx, a modal <dialog>): the bar
+   again, with Close where Menu was, then the home page's chapters large
+   and the pages under them. The page behind doesn't scroll while it's open
    (menu.tsx, by script: html[data-menu] only marks it). */
 .elo .menu {
   position: fixed;
@@ -370,8 +462,8 @@ html:has(#elo-intro-boot) .elo .trail { mix-blend-mode: normal; }
   margin: 0;
   padding: 0;
   border: 0;
-  background: var(--paper);
-  color: var(--ink);
+  background: var(--night);
+  color: var(--paper);
   overflow-y: auto;
   overscroll-behavior: contain;
 }
@@ -384,530 +476,497 @@ html:has(#elo-intro-boot) .elo .trail { mix-blend-mode: normal; }
   align-items: center;
   justify-content: space-between;
   padding-inline: var(--pad);
-  border-bottom: 1px solid var(--ink-20);
+  border-bottom: 1px solid var(--hair-night);
 }
-.elo .menu-close {
-  display: inline-flex;
-  align-items: center;
-  gap: .625rem;
-  min-height: 44px;
-  margin-right: calc((1.5rem - 44px) / 2);
-  padding-inline: .625rem calc((44px - 1.5rem) / 2);
-}
-.elo .menu-close svg { width: 1.375rem; }
-.elo .menu-body {
-  flex: 1 0 auto;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  padding: 3rem var(--pad) 4rem;
-}
-.elo .menu-body > * { width: 100%; max-width: 75rem; margin-inline: auto; }
+.elo .menu-close { display: inline-flex; align-items: center; gap: .625rem; min-height: 44px; padding-inline: .5rem; margin-right: -.5rem; }
+.elo .menu-close svg { width: 1.375rem; stroke: currentColor; }
+.elo .menu-body { flex: 1 0 auto; display: flex; flex-direction: column; justify-content: center; padding: 2.5rem var(--pad) 3.5rem; }
 .elo .menu-links a {
   display: inline-block;
-  padding-block: .125rem;
+  padding-block: .2rem;
   font-family: var(--font-display);
-  font-size: 5rem;
+  font-size: 3rem;
   font-weight: 500;
-  line-height: 1.04;
-  letter-spacing: -.015em;
+  line-height: 1.1;
 }
-.elo .menu-pages-label { margin-top: 3.5rem; color: var(--ink-65); }
-.elo .menu-pages { display: flex; flex-wrap: wrap; gap: .5rem 2.5rem; margin-top: 1rem; }
+.elo .menu-pages-label { margin-top: 2.75rem; color: var(--gold-hi); }
+.elo .menu-pages { display: grid; gap: .1rem; margin-top: .9rem; }
 .elo .menu-pages a {
   display: inline-flex;
   align-items: center;
   min-height: 44px;
   font-family: var(--font-display);
-  font-size: 2rem;
+  font-size: 1.625rem;
   font-weight: 500;
-  line-height: 1.1;
+  color: var(--on-night);
 }
-.elo .menu-body a {
-  text-decoration: underline;
-  text-decoration-color: transparent;
-  text-decoration-thickness: .04em;
-  text-underline-offset: .14em;
-  transition: text-decoration-color .25s ease;
-}
-.elo .menu-body a[aria-current="page"] { text-decoration-color: currentColor; }
-@media (hover: hover) {
-  .elo .menu-body a:hover { text-decoration-color: currentColor; }
-}
+.elo .menu-body a { text-decoration: underline; text-decoration-color: transparent; text-underline-offset: .18em; text-decoration-thickness: 1px; }
+.elo .menu-body a[aria-current="page"] { text-decoration-color: var(--gold); }
 
-/* ---------- the seam (desktop only) ---------- */
-.elo main { position: relative; }
-.elo .seam {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 50%;
-  width: 1px;
-  margin-left: -.5px;
-  background: var(--ink-50);
-  transform-origin: 50% 0;
-  pointer-events: none;
-  z-index: 0;
-}
-.elo main > section { position: relative; z-index: 1; }
-
-/* ---------- hero ---------- */
-.elo .hero {
-  min-height: calc(100svh - var(--header-h));
+/* ---------- the opening ----------
+   The door, on the black, from under the clear bar: the logo, what the word
+   means, a line on what we do and the two ways in; our footage beside it.
+   It comes in on its own, in CSS alone: the logo, then the meaning burning
+   in from left to right as the intro's line did, then the rest. */
+.elo-home .open { margin-top: calc(-1 * var(--header-h)); }
+.elo .open {
   display: grid;
-  align-content: center;
-  justify-items: center;
-  padding: 2rem var(--pad) 5rem;
-}
-.elo .names {
-  --names-size: 14rem;
-  --last-size: 2.375rem;
-  width: 100%;
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
-  align-items: baseline;
-  font-family: var(--font-display);
-  font-size: var(--names-size);
-  font-weight: 500;
-  line-height: .9;
-  letter-spacing: -.02em;
-}
-.elo .name { font: inherit; letter-spacing: inherit; line-height: inherit; color: var(--ink); }
-.elo .name--a { justify-self: end; }
-.elo .name--j { justify-self: start; }
-.elo .name-first { display: block; }
-/* The last name, under the first: the lede's size, in the display face's
-   bold. margin-top: close under the first name, but clear of its picked
-   band (which ends .04 of the names' size above the line's foot) by about
-   a third of the last name's size. */
-.elo .name-last {
-  display: block;
-  margin-top: calc(.16em - var(--names-size) * .04);
-  font-family: var(--font-display-bold), var(--font-display);
-  font-size: var(--last-size);
-  font-weight: 700;
-  line-height: 1;
-  letter-spacing: 0;
-}
-/* Side by side, each last name is centred in its half of the hero: Fernando
-   between the hero's left edge and the seam, Lopez between the seam and the
-   right edge. It's taken out of the line and placed against the hero itself
-   (left and width), at the height it had in the line (top left at auto); the
-   button keeps that room for it. (Stacked, on phones, they're mirrored
-   under the first names instead: see "phones".) */
-@media (min-width: 1024px) {
-  .elo .name { padding-bottom: calc(var(--last-size) * 1.16 - var(--names-size) * .04); }
-  .elo .name-last { position: absolute; width: 50%; text-align: center; }
-  .elo .name--a .name-last { left: 0; }
-  .elo .name--j .name-last { left: 50%; }
-}
-/* Picked, a name lights up: a band of gold laid under the first name, run
-   out from the seam. Nothing else on the page changes. */
-.elo .name-first {
-  background: linear-gradient(var(--lit), var(--lit)) no-repeat;
-  background-size: 0% .3em;
-  transition: background-size .6s var(--ease);
-  --lit: color-mix(in srgb, var(--gold) 26%, transparent);
-}
-.elo .name--a .name-first { background-position: right 0 bottom .04em; }
-.elo .name--j .name-first { background-position: left 0 bottom .04em; }
-.elo .name[aria-pressed="true"] .name-first { background-size: 100% .3em; }
-/* The ampersand, in gold, on a patch of paper so the seam breaks around it. */
-.elo .name-amp {
-  position: relative;
-  z-index: 1;
-  display: inline-block;
-  padding-inline: .16em;
-  background: var(--paper);
-  font-weight: 500;
-}
-.elo .name-amp .gold { display: inline-block; }
-.elo .hint {
-  margin-top: 2.75rem;
-  padding: .25rem .5rem;
-  color: var(--ink-65);
-}
-/* The picked person's line: shut until a name is picked, then open under the
-   hint, on that person's side of the seam. Both lines hold the space, so
-   going from one name to the other moves nothing. */
-.elo .picked {
-  display: grid;
-  grid-template-rows: 0fr;
-  width: 100%;
-  transition: grid-template-rows .55s var(--ease);
-}
-.elo[data-view] .picked { grid-template-rows: 1fr; }
-.elo .picked-in {
-  min-height: 0;
-  overflow: hidden;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  column-gap: var(--gap);
-}
-.elo .picked-line {
-  grid-row: 1;
-  align-self: start;
-  max-width: 30rem;
-  margin-top: 1.75rem;
-  font-size: 1.25rem;
-  line-height: 1.42;
-  opacity: 0;
-  visibility: hidden;
-  transition: opacity .3s var(--ease), visibility 0s .3s;
-}
-.elo .picked-line--a { grid-column: 1; justify-self: end; text-align: right; }
-.elo .picked-name { color: var(--gold-text); font-weight: 600; }
-.elo .picked-line--j { grid-column: 2; justify-self: start; }
-.elo[data-view="a"] .picked-line--a,
-.elo[data-view="j"] .picked-line--j {
-  opacity: 1;
-  visibility: visible;
-  transition: opacity .45s var(--ease) .1s, visibility 0s;
-}
-.elo .lede {
-  margin-top: 1.5rem;
-  max-width: 50rem;
-  padding-block: .5rem;
-  font-family: var(--font-display);
-  font-size: 2.375rem;
-  font-weight: 500;
-  line-height: 1.16;
-  letter-spacing: -.005em;
-  text-align: center;
-  text-wrap: balance;
-}
-
-/* The one action: gold, square, its capitals in the paper (the solid mid
-   gold where a gradient can't be drawn). Hovered or focused, a deeper gold. */
-.elo .act {
-  position: relative;
-  z-index: 1;
-  display: inline-flex;
   align-items: center;
-  justify-content: center;
-  min-height: 3.25rem;
-  margin-top: 2.25rem;
-  padding: 1rem 1.75rem;
-  background: var(--gold);
-  background-image: var(--gold-button);
+  min-height: 100svh;
+  padding-block: calc(var(--header-h) + 4rem) 5rem;
+  background: radial-gradient(ellipse 60% 70% at 72% 45%, rgb(190 150 69 / .1), transparent 70%), var(--night);
   color: var(--paper);
-  font-family: var(--font-label);
-  font-weight: 600;
-  font-size: max(.8125rem, 12px);
-  letter-spacing: .14em;
-  line-height: 1;
-  text-transform: uppercase;
-  white-space: nowrap;
-  transition: letter-spacing .6s var(--spring-soft), box-shadow .25s var(--ease);
 }
-.elo .act[aria-disabled="true"] { cursor: progress; }
-/* Keyboard focus: the deeper gold, and a thin ink ring just clear of it. */
-.elo .act:focus-visible { outline-color: var(--ink); box-shadow: inset 0 0 0 100vmax rgb(32 20 4 / .16); }
-@media (hover: hover) {
-  .elo .act:hover:not([aria-disabled="true"]) { box-shadow: inset 0 0 0 100vmax rgb(32 20 4 / .16); }
-}
-@media (hover: hover) and (prefers-reduced-motion: no-preference) {
-  .elo .act:hover:not([aria-disabled="true"]) { letter-spacing: .22em; }
-}
-
-/* ---------- below the hero: one grid ----------
-   The seam stops with the hero. Every section under it sits on one
-   12-column grid, 75rem wide (1200px in the 1440 frame) and left-aligned:
-   its label top left, headings on the left, running text held to a reading
-   measure (--measure). Rules divide sections and items; nothing sits on one. */
-.elo .sec {
-  border-top: 1px solid var(--ink-20);
-  padding: 5rem var(--pad);
-}
-.elo .wrap {
-  --measure: 62ch;
+.elo .open-grid {
   display: grid;
   grid-template-columns: repeat(12, minmax(0, 1fr));
   column-gap: 2rem;
-  align-items: start;
-  max-width: 75rem;
-  margin-inline: auto;
-}
-.elo .wrap > * { grid-column: 1 / -1; }
-.elo .sec-h {
-  margin-top: 1.25rem;
-  font-family: var(--font-display);
-  font-size: 3.625rem;
-  font-weight: 500;
-  line-height: 1.04;
-  letter-spacing: -.015em;
-  text-wrap: balance;
-}
-/* The way on from a home section to its own page, under it. */
-.elo .more {
-  margin-top: 2rem;
-  font-family: var(--font-label);
-  font-weight: 600;
-  font-size: max(.8125rem, 12px);
-  letter-spacing: .14em;
-  line-height: 1.3;
-  text-transform: uppercase;
-}
-.elo .more a {
-  display: inline-flex;
   align-items: center;
-  min-height: 44px;
-  text-decoration: underline;
-  text-decoration-thickness: 1px;
-  text-underline-offset: .3em;
 }
-
-/* ---------- us ----------
-   The line and where on the left; under them the promises, and level with
-   them on the right, the two people side by side, each under a short gold
-   rule on the line of the promises' first hairline. */
-.elo .us-head { grid-column: 1 / span 5; grid-row: 1; }
-.elo .where {
-  margin-top: 2rem;
+.elo .open-text { grid-column: 1 / span 7; }
+.elo .open-logo img { width: min(34rem, 100%); height: auto; }
+.elo .define {
+  margin-top: 3.25rem;
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+}
+.elo .define-say { font-family: var(--font-display); font-size: 1.5rem; font-weight: 500; color: var(--on-night); letter-spacing: .02em; }
+.elo .define-kind {
+  font-family: var(--font-label);
+  font-size: max(.75rem, 11px);
+  font-weight: 600;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--gold-hi);
+}
+.elo .define-meaning {
+  max-width: 16em;
+  margin-top: .75rem;
   font-family: var(--font-display);
-  font-size: 1.8125rem;
+  font-size: 3.25rem;
   font-weight: 500;
-  line-height: 1.2;
-}
-.elo .promises { margin-top: 1.75rem; border-top: 1px solid var(--ink-20); }
-.elo .us .promises { grid-column: 1 / span 5; grid-row: 2; }
-.elo .promises li {
-  padding-block: .875rem;
-  border-bottom: 1px solid var(--ink-20);
-  font-family: var(--font-display);
-  font-size: 1.5rem;
-  font-weight: 500;
-  line-height: 1.2;
-  text-wrap: pretty;
-}
-.elo .pair {
-  grid-column: 7 / -1;
-  grid-row: 2;
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  column-gap: 2rem;
-  margin-top: 1.75rem;
-}
-/* A short gold rule over each, the gold beside the hero's picked line on phones. */
-.elo .person::before {
-  content: "";
-  display: block;
-  width: 2.5rem;
-  height: 2px;
-  background: var(--gold);
-}
-/* In the promises' type, so the two sides read as one. */
-.elo .person-line {
-  padding-top: .875rem;
-  font-family: var(--font-display);
-  font-size: 1.5rem;
-  font-weight: 500;
-  line-height: 1.25;
-  text-wrap: pretty;
-}
-.elo .person-line b { font-weight: 600; }
-
-/* ---------- what we do ----------
-   The home page's four, two by two: the title and a line under it, each
-   card the way to its service's page. */
-.elo .do-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 2.5rem 2rem;
-  margin-top: 2rem;
-}
-.elo .svc-card { padding-top: 1.5rem; border-top: 1px solid var(--ink-20); }
-.elo .svc-card-title {
-  font-family: var(--font-display);
-  font-size: 2.75rem;
-  font-weight: 500;
-  line-height: 1;
-  letter-spacing: -.01em;
+  line-height: 1.1;
+  letter-spacing: -.012em;
   text-wrap: balance;
 }
-.elo .svc-card-text {
-  max-width: var(--measure);
-  margin-top: 1rem;
-  font-size: max(1.125rem, 15px);
-  line-height: 1.45;
-  text-wrap: pretty;
+.elo .open-lede { max-width: var(--measure); margin-top: 2rem; font-size: max(1.1875rem, 16px); line-height: 1.5; color: var(--on-night); }
+.elo .open-acts { display: flex; flex-wrap: wrap; align-items: center; gap: 1.25rem 2.25rem; margin-top: 2.75rem; }
+.elo .open-reel { grid-column: 9 / span 4; position: relative; }
+/* A fine gold frame a little off the footage, as a print is mounted. */
+.elo .open-reel::before {
+  content: "";
+  position: absolute;
+  inset: -.85rem;
+  border: 1px solid rgb(190 150 69 / .45);
+  pointer-events: none;
 }
-/* A card that is one link: the title's, stretched over the whole card.
-   Pointed at, the title underlines. */
-.elo .card-link { position: relative; }
-.elo .card-link h2 a::after,
-.elo .card-link h3 a::after { content: ""; position: absolute; inset: 0; z-index: 1; }
-.elo .card-link h2 a,
-.elo .card-link h3 a {
-  text-decoration: underline;
-  text-decoration-color: transparent;
-  text-decoration-thickness: .04em;
-  text-underline-offset: .14em;
-  transition: text-decoration-color .25s ease;
+.elo .open-reel-cap { margin-top: 1.6rem; color: var(--on-night); }
+
+@media (prefers-reduced-motion: no-preference) {
+  .elo .open-logo { animation: open-rise 1.1s var(--ease) .1s both; }
+  .elo .define { animation: open-fade .8s ease .55s both; }
+  .elo .define-meaning {
+    -webkit-mask-image: linear-gradient(90deg, #000 48%, transparent 60%);
+    mask-image: linear-gradient(90deg, #000 48%, transparent 60%);
+    -webkit-mask-size: 230% 100%;
+    mask-size: 230% 100%;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    animation: open-burn 1.5s cubic-bezier(.45, .05, .35, 1) .7s both;
+  }
+  .elo .open-lede, .elo .open-acts { animation: open-rise 1s var(--ease) 1.45s both; }
+  .elo .open-reel { animation: open-fade 1.4s ease .9s both; }
 }
-@media (hover: hover) {
-  .elo .card-link:hover h2 a,
-  .elo .card-link:hover h3 a { text-decoration-color: currentColor; }
+@keyframes open-rise { from { opacity: 0; transform: translate3d(0, 1rem, 0); } }
+@keyframes open-fade { from { opacity: 0; } }
+@keyframes open-burn {
+  from { -webkit-mask-position: 100% 0; mask-position: 100% 0; }
+  to { -webkit-mask-position: 0 0; mask-position: 0 0; }
 }
 
-/* ---------- work ----------
-   Two across, every card the same: the screen at 16:10 (4:5 on phones),
-   then the name, where and how it stands, the line and the link. */
-.elo .work-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 3.5rem 2rem;
-  margin-top: 2rem;
-}
-.elo .proj-media {
+/* ---------- the live screens ----------
+   A project's still, and its loop over it once it plays (work-video.tsx):
+   16:10 from 1024px up, 4:5 under it, square, one hairline. */
+.elo .screen {
   position: relative;
-  aspect-ratio: 16 / 10;
   overflow: hidden;
-  margin: 0;
+  aspect-ratio: 16 / 10;
   background: var(--frame);
-  border: 1px solid var(--ink-20);
+  box-shadow: 0 0 0 1px var(--ink-12);
 }
-.elo .proj-media img,
-.elo .proj-media video {
+.elo .screen--portrait { aspect-ratio: 4 / 5; box-shadow: none; background: #17130F; }
+.elo .screen img,
+.elo .screen video {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: 50% 0;
 }
-.elo .proj-media video { opacity: 0; transition: opacity .5s var(--ease); }
-/* The home page's grid on phones (under 768px): one row to swipe through,
-   each card 85% of the frame's width so the next one shows at its edge.
-   (Two classes, to win over the phone block's one-column grid further down.) */
-@media (max-width: 767px) {
-  .elo .work-grid.work-grid--swipe {
-    grid-template-columns: none;
-    grid-auto-flow: column;
-    grid-auto-columns: calc(.85 * (100vw - 2 * var(--edge)));
-    gap: 1rem;
-    margin-inline: calc(-1 * var(--pad));
-    padding-inline: var(--pad);
-    scroll-padding-inline: var(--pad);
-    overflow-x: auto;
-    overscroll-behavior-x: contain;
-    scroll-snap-type: x mandatory;
-    scrollbar-width: none;
-  }
-  .elo .work-grid.work-grid--swipe::-webkit-scrollbar { display: none; }
-  .elo .work-grid--swipe > .proj { scroll-snap-align: start; }
-}
+.elo .screen video { opacity: 0; transition: opacity .5s var(--ease); }
+.elo .screen video.is-on { opacity: 1; }
 
-/* ---------- work, pinned (phones) ----------
-   Under 768px the home page's row is pinned (components/elorro/work-pin.tsx):
-   once the section reaches the top of the screen, its stage sticks there
-   and each swipe moves the row one card along, to the middle, with a line
-   beside the label for where you are; after the last card it lets go. The
-   pin is as tall as that takes: the stage, plus a --step of scroll per card
-   after the first, each card's stop. The card is sized to fit the screen's
-   height as well as its width. Under reduced motion, or without scripting,
-   the row stays a row to swipe; at 768px and up the pin and its stage step
-   aside and the grid is the grid. */
-.elo .work-pin,
-.elo .work-stage { display: contents; }
-.elo .work-stage > * { grid-column: 1 / -1; }
-.elo .work-progress { display: none; }
-@media (max-width: 767px) and (prefers-reduced-motion: no-preference) and (scripting: enabled) {
-  .elo .work.sec { padding-top: 0; }
-  .elo .work-pin {
-    --step: 70svh;
-    /* 4:5, so the card's screen is 1.25× its width; about 17rem for the
-       label and the card's text. */
-    --card-w: min(85vw, calc((100svh - var(--header-h) - 17rem) * .8));
-    --card-gap: 1rem;
-    display: block;
-    position: relative;
-    height: calc(100svh + (var(--cards) - 1) * var(--step));
-  }
-  .elo .work-stage {
-    position: sticky;
-    top: 0;
-    height: 100svh;
-    display: grid;
-    grid-template-columns: 1fr auto;
-    align-content: center;
-    margin-inline: calc(-1 * var(--pad));
-    padding: var(--header-h) var(--pad) 1rem;
-    overflow-x: clip;
-  }
-  .elo .work-grid.work-grid--swipe {
-    grid-auto-columns: var(--card-w);
-    gap: var(--card-gap);
-    padding-inline: calc((100vw - var(--card-w)) / 2);
-    overflow: visible;
-    scroll-snap-type: none;
-    translate: calc(var(--x, 0) * -1 * (var(--card-w) + var(--card-gap))) 0;
-  }
-  .elo .work-grid--swipe > .proj { scroll-snap-align: none; }
-  .elo .work-stage > .sec-label { grid-area: 1 / 1; }
-  .elo .work-stage > .work-grid { grid-area: 2 / 1 / 3 / 3; }
-  .elo .work-progress {
-    grid-area: 1 / 2;
-    align-self: center;
-    display: block;
-    position: relative;
-    width: 4.5rem;
-    height: 2px;
-    background: var(--ink-20);
-  }
-  .elo .work-progress span {
-    position: absolute;
-    inset: 0 auto 0 0;
-    width: calc(100% / var(--cards));
-    background: var(--ink);
-    translate: calc(var(--x, 0) * 100%) 0;
-  }
+/* ---------- 01 · us ----------
+   A letter's opening: the line about who does the work, large and centred;
+   the two of us under it, each by our initial in a gold ring; the three
+   promises; where we are. */
+.elo .us { background: var(--paper); }
+.elo .us-two {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4rem;
+  max-width: 64rem;
+  margin: 5rem auto 0;
 }
-.elo .proj-media video.is-on { opacity: 1; }
-.elo .proj-body { margin-top: 1.25rem; }
-.elo .proj-name {
+.elo .person { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 1.5rem; align-items: start; }
+.elo .ring {
+  display: grid;
+  place-items: center;
+  width: 4.75rem;
+  height: 4.75rem;
+  border: 1.5px solid var(--gold);
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 .3rem var(--paper), inset 0 0 0 calc(.3rem + 1px) rgb(168 128 47 / .45);
   font-family: var(--font-display);
   font-size: 2.25rem;
   font-weight: 500;
   line-height: 1;
-  letter-spacing: -.01em;
+  color: var(--gold-text);
 }
-.elo .proj-meta { margin-top: .625rem; color: var(--ink-65); }
-.elo .proj-line {
-  max-width: var(--measure);
-  margin-top: .75rem;
-  font-size: max(1.0625rem, 15px);
-  line-height: 1.45;
-  text-wrap: pretty;
+.elo .person-name { font-family: var(--font-display); font-size: 1.875rem; font-weight: 500; line-height: 1.1; }
+.elo .person-line { margin-top: .6rem; max-width: var(--measure); }
+.elo .promises {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 2.5rem;
+  max-width: 64rem;
+  margin: 5rem auto 0;
 }
-.elo .proj-site { margin-top: .625rem; }
-.elo .proj-link {
+.elo .promises li {
+  position: relative;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--ink-20);
+  font-family: var(--font-display);
+  font-size: 1.375rem;
   font-weight: 500;
-  text-decoration: underline;
-  text-decoration-thickness: 1px;
-  text-underline-offset: .22em;
+  line-height: 1.25;
+}
+.elo .promises li::before {
+  content: "";
+  position: absolute;
+  top: -4px;
+  left: 0;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--gold);
+}
+.elo .us-where { margin-top: 3.5rem; text-align: center; color: var(--ink-65); }
+
+/* ---------- 02 · what we do: an index ---------- */
+.elo .do { background: var(--paper-2); }
+.elo .index { max-width: 72rem; margin-inline: auto; border-top: 1px solid var(--ink-20); }
+.elo .index-row {
+  display: grid;
+  grid-template-columns: 3.5rem minmax(0, 6.5fr) minmax(0, 5.5fr) 2rem;
+  column-gap: 2rem;
+  align-items: baseline;
+  padding-block: 2.5rem;
+  border-bottom: 1px solid var(--ink-20);
+}
+.elo .index-n { font-family: var(--font-display); font-size: 1.375rem; font-weight: 600; color: var(--gold-text); }
+.elo .index-title { font-family: var(--font-display); font-size: 2.5rem; font-weight: 500; line-height: 1.05; letter-spacing: -.01em; }
+.elo .index-title a { transition: color .3s var(--ease); }
+.elo .index-text { max-width: var(--measure); }
+.elo .index-body .ticks { margin-top: 1.1rem; font-size: max(.9375rem, 14px); color: var(--ink-65); }
+.elo .index-go { justify-self: end; font-family: var(--font-display); font-size: 1.75rem; color: var(--gold-text); transition: transform .3s var(--ease); }
+@media (hover: hover) {
+  .elo .index-row:hover .index-title a { color: var(--gold-text); }
+  .elo .index-row:hover .index-go { transform: translateX(.35rem); }
 }
 
-/* ---------- contact ----------
-   The line and the promise on the left; the form on the right, in two
-   columns: the three short fields, and the message beside them. */
-.elo .contact-head { grid-column: 1 / span 5; }
-.elo .contact-lede {
-  max-width: var(--measure);
-  margin-top: 1.25rem;
-  font-size: max(1.125rem, 15px);
+/* ---------- the film's way in ---------- */
+.elo .film-band {
+  padding-block: 7rem;
+  background: var(--night);
+  color: var(--paper);
+}
+.elo .film-band-grid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  column-gap: 2rem;
+  align-items: center;
+}
+.elo .film-poster {
+  grid-column: 1 / span 6;
+  position: relative;
+  display: grid;
+  place-items: center;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  background: radial-gradient(circle at 50% 44%, rgb(232 194 122 / .2), rgb(232 194 122 / 0) 58%), #0F0C09;
+  box-shadow: 0 0 0 1px var(--hair-night);
+}
+.elo .film-poster-ring {
+  display: grid;
+  place-items: center;
+  width: 9.5rem;
+  height: 9.5rem;
+  border: 2px solid var(--gold-hi);
+  border-radius: 50%;
+  box-shadow: 0 0 3.5rem rgb(190 150 69 / .3), inset 0 0 0 .55rem #0F0C09, inset 0 0 0 calc(.55rem + 1px) rgb(190 150 69 / .4);
+  transition: box-shadow .5s var(--ease);
+}
+.elo .film-poster-e {
+  font-family: var(--font-display);
+  font-size: 5.25rem;
+  font-weight: 500;
+  line-height: 1;
+  color: var(--gold-hi);
+}
+@supports (-webkit-background-clip: text) or (background-clip: text) {
+  .elo .film-poster-e {
+    background: linear-gradient(180deg, #F6E2AE 20%, #D9B66A 55%, #9C7630 85%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+}
+.elo .film-poster .play-icon { position: absolute; left: 1.5rem; bottom: 1.5rem; width: 3rem; height: 3rem; }
+.elo .film-poster-len { position: absolute; right: 1.5rem; bottom: 2.15rem; color: var(--on-night); }
+@media (hover: hover) {
+  .elo .film-poster:hover .film-poster-ring { box-shadow: 0 0 5rem rgb(190 150 69 / .5), inset 0 0 0 .55rem #0F0C09, inset 0 0 0 calc(.55rem + 1px) rgb(190 150 69 / .55); }
+}
+.elo .film-band-text { grid-column: 8 / span 5; }
+.elo .film-band-eyebrow { color: var(--gold-hi); }
+.elo .film-band-h { margin-top: .75rem; font-family: var(--font-display); font-size: 3.5rem; font-weight: 500; line-height: 1.05; }
+.elo .film-band-note { max-width: 28rem; margin-top: 1.25rem; color: var(--on-night); }
+.elo .play--big { margin-top: 2rem; font-size: max(1.0625rem, 15px); }
+.elo .play--big .play-icon { width: 3.25rem; height: 3.25rem; }
+
+/* ---------- 03 · work: pieces down the page ---------- */
+.elo .work { background: var(--paper); }
+.elo .pieces { display: grid; row-gap: 8rem; }
+.elo .piece {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  column-gap: 2rem;
+  align-items: end;
+}
+.elo .piece-media { grid-column: 1 / span 7; grid-row: 1; }
+.elo .piece-text { grid-column: 9 / span 4; grid-row: 1; padding-bottom: .25rem; }
+.elo .piece--flip .piece-media { grid-column: 6 / span 7; }
+.elo .piece--flip .piece-text { grid-column: 1 / span 4; }
+.elo .pieces--large .piece-media { grid-column: 1 / span 8; }
+.elo .pieces--large .piece-text { grid-column: 9 / span 4; padding-left: 1rem; }
+.elo .pieces--large .piece--flip .piece-media { grid-column: 5 / span 8; }
+.elo .pieces--large .piece--flip .piece-text { grid-column: 1 / span 4; padding-left: 0; padding-right: 1rem; }
+.elo .piece--text .piece-text { grid-column: 1 / span 6; }
+.elo .piece-meta { color: var(--ink-65); }
+.elo .piece-name { margin-top: .85rem; font-family: var(--font-display); font-size: 2.625rem; font-weight: 500; line-height: 1.05; letter-spacing: -.01em; }
+.elo .piece-line { max-width: 26rem; margin-top: 1rem; }
+.elo .piece-site { margin-top: 1rem; }
+
+/* ---------- 04 · how it starts: one line, three stops ---------- */
+.elo .how { background: var(--paper-2); }
+.elo .how-line {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 3rem;
+  max-width: 72rem;
+  margin-inline: auto;
+}
+.elo .how-stop { position: relative; }
+.elo .how-stop:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  top: 1.5rem;
+  left: 3.75rem;
+  right: -2.25rem;
+  height: 1px;
+  background: var(--gold);
+}
+.elo .how-dot {
+  display: grid;
+  place-items: center;
+  width: 3rem;
+  height: 3rem;
+  border: 1.5px solid var(--gold);
+  border-radius: 50%;
+  font-family: var(--font-display);
+  font-size: 1.375rem;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--gold-text);
+}
+.elo .how-title { margin-top: 1.5rem; font-family: var(--font-display); font-size: 2rem; font-weight: 500; line-height: 1.1; }
+.elo .how-text { max-width: 22rem; margin-top: .6rem; }
+.elo .how-note { max-width: 36rem; margin: 4.5rem auto 0; text-align: center; color: var(--ink-65); text-wrap: balance; }
+.elo .how-act { margin-top: 2rem; text-align: center; }
+
+/* ---------- 05 · questions: a conversation ----------
+   The questions to tap as pills, centred, the field to ask your own under
+   them, and the exchange under that in a window of its own that keeps the
+   newest in view (faq.tsx). On phones each exchange opens in the page's
+   flow, under its question, or under the field for what's typed. */
+.elo .faq { background: var(--paper); }
+.elo .faq .wrap { max-width: calc(52rem + 2 * var(--pad)); }
+.elo .faq-head { text-align: center; }
+.elo .faq-lede { margin-top: 1.1rem; color: var(--ink-65); }
+.elo .faq-ask { margin-top: 3rem; }
+.elo .faq-chips { display: flex; flex-wrap: wrap; justify-content: center; gap: .65rem; }
+.elo .faq-chip {
+  min-height: max(2.75rem, 44px);
+  padding: .4rem 1.15rem .5rem;
+  border: 1px solid var(--ink-20);
+  border-radius: 999px;
+  background: var(--paper);
+  font-family: var(--font-display);
+  font-size: 1.3125rem;
+  font-weight: 500;
+  line-height: 1.15;
+  transition: border-color .25s var(--ease), color .25s var(--ease), background-color .25s var(--ease);
+}
+.elo .faq-chip.is-asked { color: var(--ink-65); border-color: var(--ink-12); background: var(--paper-2); }
+@media (hover: hover) {
+  .elo .faq-chip:hover { border-color: var(--gold); }
+}
+.elo .faq-form {
+  display: flex;
+  align-items: flex-end;
+  gap: 1rem;
+  max-width: 40rem;
+  margin: 2.25rem auto 0;
+}
+.elo .faq-form .field { flex: 1 1 auto; min-width: 0; }
+.elo .faq-send {
+  flex: none;
+  min-height: 3rem;
+  padding: .85rem 1.6rem;
+  border-radius: 999px;
+  background: var(--ink);
+  color: var(--paper);
+  font-family: var(--font-label);
+  font-weight: 600;
+  font-size: max(.75rem, 11px);
+  letter-spacing: .14em;
+  line-height: 1;
+  text-transform: uppercase;
+  transition: background-color .25s var(--ease);
+}
+@media (hover: hover) {
+  .elo .faq-send:hover { background: color-mix(in srgb, var(--ink) 82%, var(--paper)); }
+}
+.elo .faq-thread {
+  display: grid;
+  gap: 1.25rem;
+  align-content: start;
+  max-height: min(30rem, calc(100svh - var(--header-h) - 4rem));
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--ink-20) transparent;
+}
+.elo .faq-thread:not(:empty) {
+  margin-top: 2.5rem;
+  padding: 1.75rem;
+  border: 1px solid var(--ink-12);
+  border-radius: 1.25rem;
+  background: var(--paper-2);
+}
+.elo .faq-turn { display: grid; gap: .65rem; }
+.elo .faq-you {
+  justify-self: end;
+  max-width: 85%;
+  padding: .5rem 1rem .6rem;
+  border-radius: 1.1rem 1.1rem .3rem 1.1rem;
+  background: var(--ink);
+  color: var(--paper);
+  font-family: var(--font-display);
+  font-size: 1.3125rem;
+  font-weight: 500;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+.elo .faq-you::selection, .elo .faq-you ::selection { background: var(--paper); color: var(--ink); }
+.elo .faq-us { display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: .7rem; align-items: start; }
+.elo .faq-mark {
+  display: grid;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border: 1px solid var(--gold);
+  border-radius: 50%;
+  font-family: var(--font-display);
+  font-size: .9375rem;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+}
+.elo .faq-mark .gold { margin-inline: .04em; }
+.elo .faq-reply {
+  justify-self: start;
+  min-width: 0;
+  padding: .75rem 1.05rem .85rem;
+  border-radius: 1.1rem 1.1rem 1.1rem .3rem;
+  background: var(--paper);
+  box-shadow: 0 0 0 1px var(--ink-12);
   line-height: 1.45;
 }
-.elo .form { grid-column: 7 / -1; }
+.elo .faq-reply .act { margin-top: .875rem; padding-inline: 1.125rem; }
+.elo .faq-you, .elo .faq-us { animation: faq-in .25s var(--ease) both; }
+.elo .faq-word { animation: faq-word .18s var(--ease) both; }
+.elo .faq-dots { display: flex; align-items: center; gap: .3125rem; height: 1.45em; }
+.elo .faq-dots i { width: .375rem; height: .375rem; border-radius: 50%; background: var(--ink); animation: faq-dot .9s ease-in-out infinite; }
+.elo .faq-dots i:nth-child(2) { animation-delay: .15s; }
+.elo .faq-dots i:nth-child(3) { animation-delay: .3s; }
+@keyframes faq-in { from { opacity: 0; transform: translateY(.375rem); } }
+@keyframes faq-word { from { opacity: 0; } }
+@keyframes faq-dot { 0%, 100% { opacity: .2; } 40% { opacity: 1; } }
+/* The questions and answers as plain text: only with scripting off. */
+.elo .faq-all { display: none; }
+@media (scripting: none) {
+  .elo .faq-ask, .elo .faq-lede, .elo .faq-thread { display: none; }
+  .elo .faq-all { display: grid; row-gap: 1.75rem; margin-top: 3rem; }
+  .elo .faq-all dt { font-family: var(--font-display); font-size: 1.625rem; font-weight: 500; line-height: 1.15; }
+  .elo .faq-all dd { margin-top: .375rem; max-width: var(--measure); }
+}
+.elo .faq--page { padding-top: 5rem; }
+
+/* ---------- 06 · contact, on the black ---------- */
+.elo .contact {
+  padding-block: var(--chap) 6rem;
+  background: var(--night);
+  color: var(--paper);
+}
+.elo .contact-grid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  column-gap: 2rem;
+  align-items: start;
+}
+.elo .contact-head { grid-column: 1 / span 5; }
+.elo .contact-h { font-family: var(--font-display); font-size: 3.75rem; font-weight: 500; line-height: 1.04; letter-spacing: -.012em; text-wrap: balance; }
+.elo .contact-lede { max-width: 26rem; margin-top: 1.4rem; font-size: max(1.1875rem, 16px); color: var(--on-night); }
+.elo .contact-sign {
+  margin-top: 2.75rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid rgb(190 150 69 / .5);
+  display: inline-block;
+  font-family: var(--font-display);
+  font-size: 1.75rem;
+  font-weight: 500;
+}
+.elo .form { grid-column: 7 / span 6; }
 .elo .fields {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  column-gap: 2rem;
-  row-gap: 1.75rem;
+  gap: 2rem;
 }
-.elo .field { grid-column: 1; display: grid; align-content: start; gap: .5rem; }
-/* The message beside the first two, its line level with the second's. */
-.elo .field--msg { grid-column: 2; grid-row: 1 / span 2; grid-template-rows: auto 1fr; align-content: stretch; }
+.elo .field { display: grid; align-content: start; gap: .5rem; }
+.elo .contact .field:nth-child(3),
+.elo .field--msg { grid-column: 1 / -1; }
+.elo .contact .field .label { color: var(--on-night); }
 .elo .field input,
 .elo .field textarea {
   width: 100%;
@@ -918,727 +977,324 @@ html:has(#elo-intro-boot) .elo .trail { mix-blend-mode: normal; }
   font-size: max(1.125rem, 16px);
   line-height: 1.3;
 }
+.elo .contact .field input,
+.elo .contact .field textarea { border-bottom-color: rgb(244 241 234 / .38); transition: border-color .25s ease; }
+.elo .contact .field input:focus,
+.elo .contact .field textarea:focus { border-bottom-color: var(--gold-hi); outline: none; }
+.elo .contact .field input:focus-visible,
+.elo .contact .field textarea:focus-visible { box-shadow: 0 1px 0 var(--gold-hi); }
+.elo .contact .field input:-webkit-autofill { -webkit-text-fill-color: var(--paper); box-shadow: inset 0 0 0 100px var(--night); }
 .elo .field textarea { resize: vertical; min-height: 6.5rem; }
-/* Server-side field errors from /api/lead. One ink, like everything else:
-   the line under the field and the sentence say it, not a colour. */
 .elo .field [aria-invalid="true"] { border-bottom-width: 2px; padding-bottom: calc(.625rem - 1px); }
 .elo .field-error { font-size: max(.875rem, 13px); line-height: 1.3; }
+.elo .reply-note { margin-top: 2.25rem; font-family: var(--font-display); font-size: 1.5rem; font-weight: 500; line-height: 1.25; text-wrap: pretty; }
+.elo .send-row { display: flex; flex-wrap: wrap; align-items: center; gap: 1rem 1.75rem; margin-top: 1.75rem; }
+.elo .form-status { order: 1; flex-basis: 100%; max-width: var(--measure); }
+.elo .form-status:empty { display: none; }
+.elo .contact .form-status, .elo .contact .or { color: var(--on-night); }
+.elo .or a { color: var(--paper); text-decoration: underline; text-decoration-color: var(--gold); text-decoration-thickness: 1px; text-underline-offset: .22em; }
 
-/* Who writes back, under the fields. */
-.elo .reply-note {
-  margin-top: 2.25rem;
-  font-family: var(--font-display);
-  font-size: 1.5rem;
-  font-weight: 500;
-  line-height: 1.25;
-  text-wrap: pretty;
+/* ---------- the foot, on the same black ---------- */
+.elo .foot {
+  padding-block: 1rem 2.5rem;
+  background: var(--night);
+  color: var(--paper);
 }
-
-/* The button and the email beside it; what the form says back, under both. */
-.elo .send-row {
+.elo .foot-logo { padding-block: 4rem 4.5rem; border-top: 1px solid var(--hair-night); }
+.elo .foot-logo img { width: min(40rem, 100%); height: auto; margin-inline: auto; }
+.elo .foot-cols {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 2rem;
+  padding-top: 2.5rem;
+  border-top: 1px solid var(--hair-night);
+}
+.elo .foot-col .label { color: var(--gold-hi); }
+.elo .foot-col ul { display: grid; gap: .1rem; margin-top: 1rem; }
+.elo .foot-col li { display: flex; align-items: center; min-height: 40px; color: var(--on-night); }
+.elo .foot-col a { color: var(--on-night); transition: color .2s ease; }
+@media (hover: hover) {
+  .elo .foot-col a:hover, .elo .foot-base a:hover { color: var(--paper); }
+}
+.elo .foot-base {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 1rem 1.75rem;
-  margin-top: 1.75rem;
+  gap: .5rem 2rem;
+  margin-top: 3rem;
+  font-size: max(.8125rem, 12px);
+  color: var(--on-night);
 }
-.elo .send-row .act { margin-top: 0; }
-.elo .form-status { order: 1; flex-basis: 100%; max-width: var(--measure); }
-.elo .form-status:empty { display: none; }
-.elo .or a { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: .22em; }
+.elo .foot-base a { display: inline-flex; align-items: center; min-height: 44px; color: var(--on-night); }
 
-/* ---------- footer ---------- */
-.elo .foot {
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
-  align-items: center;
-  column-gap: var(--gap);
-  padding: 2rem var(--pad);
-  border-top: 1px solid var(--ink-20);
-  font-size: max(.875rem, 13px);
-}
-/* min-height keeps the line box the old Fraunces lockup had (1.125rem × 1.45),
-   so the footer stands as tall as it did. */
-.elo .foot-l { display: inline-flex; align-items: center; gap: .575rem; min-height: calc(1.125rem * 1.45); }
-.elo .foot-l img { width: 1.725rem; height: auto; }
-.elo .foot-l .wordmark { font-size: 1.4375rem; line-height: 1; }
-.elo .foot-c { font-family: var(--font-display); font-size: 1.25rem; font-weight: 500; }
-.elo .foot-c b { font-weight: 600; }
-.elo .foot-r { justify-self: end; text-align: right; }
-.elo .foot-r a { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: .22em; }
-
-/* ---------- the hero's entrance ----------
-   The ampersand, the names and the lines under them wait for hands.tsx,
-   which brings them in (the ampersand, then both names writing themselves
-   in together, the lines under them rising in as the last names start) and
-   adds .is-in. They hold their places meanwhile, so nothing moves when they
-   appear. If the script never gets that far they show anyway after 2.5s
-   (later while the intro is up: intro.tsx sets --elo-wait); with scripting
-   off the page's <noscript> shows them at once. */
-.elo:not(.is-in) :is(.name, .name-amp, .hero .hint, .lede, .hero > .act) {
-  opacity: 0;
-  animation: elo-hero-fallback .45s var(--ease) var(--elo-wait, 2.5s) forwards;
-}
-@keyframes elo-hero-fallback { from { opacity: 0; } to { opacity: 1; } }
-
-/* The seam waits too, at no length, so the first anyone sees of it is
-   hands.tsx drawing it down with the names. It doesn't share their 2.5s: on
-   a slow connection it would show, then be taken back to be drawn. If the
-   script never comes it shows at the hold's limit (hold.ts, HOLD_MAX: keep in
-   step). With scripting off or under reduced motion it never waits. */
-@media (min-width: 1024px) and (prefers-reduced-motion: no-preference) and (scripting: enabled) {
-  .elo:not(.is-in) .seam {
-    scale: 1 0;
-    animation: elo-seam-fallback .45s var(--ease) 12s forwards;
-  }
-}
-@keyframes elo-seam-fallback { to { scale: 1 1; } }
-
-/* ---------- hover: the names lean toward the seam ---------- */
-@media (hover: hover) and (prefers-reduced-motion: no-preference) {
-  /* The hero's names lean line by line, not as whole buttons: moving the
-     button would make it the box its last name is placed against. */
-  .elo .name-first { transition: background-size .6s var(--ease), translate .55s var(--spring-soft); }
-  .elo .name-last { transition: translate .55s var(--spring-soft); }
-  /* Only the home page's names are buttons; elsewhere they're just names. */
-  .elo button.who--a:hover { translate: .25rem 0; }
-  .elo button.who--j:hover { translate: -.25rem 0; }
-  .elo .name--a:hover :is(.name-first, .name-last) { translate: calc(var(--names-size) * .035) 0; }
-  .elo .name--j:hover :is(.name-first, .name-last) { translate: calc(var(--names-size) * -.035) 0; }
-}
-
-/* ---------- scroll: the seam draws ----------
-   The seam finishes drawing at --seam-end, the scroll at which its tip
-   reaches the bottom of the hero (components/elorro/seam.tsx). */
-@media (min-width: 1024px) and (prefers-reduced-motion: no-preference) {
-  @supports (animation-timeline: view()) {
-    .elo .seam {
-      animation: elo-seam-draw linear both;
-      animation-timeline: scroll(root block);
-      animation-range: 0 var(--seam-end, 100%);
-    }
-  }
-}
-@keyframes elo-seam-draw {
-  from { transform: scaleY(var(--seam-from, .14)); }
-  to { transform: scaleY(1); }
-}
-
-/* =====================================================================
-   inner pages — /services, /work, the case studies, legal, not found.
-   Same frame as the home page (components/elorro/page.tsx) and, for
-   /services, /work and the case studies, the same grid. The seam is the
-   home page's hero's alone.
-   ===================================================================== */
-
-/* A page's title: a label over the first section, as the home page labels
-   its sections. */
-.elo .page-top { padding: 4rem var(--pad) 2rem; }
-
-/* ---------- /services ----------
-   Each service a section, and the way to its page: the title and text on
-   the left over a preview of its work, what's included as a ruled list on
-   the right. Then how a project starts. */
-.elo .svc-head { grid-column: 1 / span 5; grid-row: 1; }
-.elo .svc-title { margin-top: 0; }
-.elo .svc-text {
-  max-width: var(--measure);
-  margin-top: 1.25rem;
-  font-size: max(1.125rem, 15px);
-  line-height: 1.45;
-  text-wrap: pretty;
-}
-.elo .incl { grid-column: 7 / -1; grid-row: 1 / span 2; border-top: 1px solid var(--ink-20); }
-/* Where a service's work will show, once there is some: for now a plain
-   plate (.placeholder) the shape of a Work card's screen. */
-.elo .svc-preview { grid-column: 1 / span 5; grid-row: 2; margin-top: 2rem; aspect-ratio: 16 / 10; }
-.elo .placeholder { background: var(--frame); border: 1px solid var(--ink-20); }
-.elo .incl li {
-  padding-block: .875rem;
-  border-bottom: 1px solid var(--ink-20);
+/* ---------- inner pages: their heads ---------- */
+.elo .page-head { padding-block: 6.5rem 4.5rem; background: var(--paper); }
+.elo .page-title {
   font-family: var(--font-display);
-  font-size: 1.5rem;
+  font-size: 5.5rem;
   font-weight: 500;
-  line-height: 1.2;
-  text-wrap: pretty;
+  line-height: 1;
+  letter-spacing: -.015em;
+  text-wrap: balance;
 }
-
-.elo .start-h { margin-top: 0; }
-.elo .steps {
+.elo .contents {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .25rem 2.5rem;
+  margin-top: 2.75rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--ink-20);
+}
+.elo .contents a { display: inline-flex; align-items: baseline; gap: .6rem; min-height: 44px; align-items: center; font-weight: 500; }
+.elo .contents-n { font-family: var(--font-display); font-size: 1.25rem; font-weight: 600; color: var(--gold-text); }
+@media (hover: hover) {
+  .elo .contents a:hover { text-decoration: underline; text-decoration-color: var(--gold); text-underline-offset: .4em; }
+}
+.elo .crumb { margin-bottom: 1.5rem; color: var(--ink-65); }
+.elo .crumb a { text-decoration: underline; text-decoration-color: var(--gold); text-underline-offset: .4em; }
+.elo .svc-intro-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(12, minmax(0, 1fr));
   column-gap: 2rem;
-  margin-top: 2.5rem;
+  margin-top: 2.75rem;
 }
-.elo .step { padding-top: 1.5rem; border-top: 1px solid var(--ink-20); }
-.elo .step-n { color: var(--ink-65); }
-.elo .step-title {
+.elo .svc-intro { grid-column: 1 / span 6; font-size: max(1.25rem, 16px); line-height: 1.5; }
+.elo .svc-intro-grid .ticks { grid-column: 8 / span 5; align-self: start; }
+.elo .page-end { padding-block: 2rem 7rem; text-align: center; background: var(--paper); }
+.elo .work-group { background: var(--paper); }
+.elo .work-group:nth-of-type(even) { background: var(--paper-2); }
+
+/* /services: a chapter for each service, its work on alternate sides. */
+.elo .svc { background: var(--paper-2); }
+.elo .svc--flip { background: var(--paper); }
+.elo .svc-grid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  column-gap: 2rem;
+  align-items: center;
+}
+.elo .svc-text { grid-column: 1 / span 5; grid-row: 1; }
+.elo .svc-media { grid-column: 7 / span 6; grid-row: 1; }
+.elo .svc--flip .svc-text { grid-column: 8 / span 5; }
+.elo .svc--flip .svc-media { grid-column: 1 / span 6; }
+.elo .svc-n { font-family: var(--font-display); font-size: 1.5rem; font-weight: 600; color: var(--gold-text); }
+.elo .svc-title { margin-top: .5rem; font-family: var(--font-display); font-size: 3.5rem; font-weight: 500; line-height: 1.04; letter-spacing: -.012em; }
+.elo .svc-line { max-width: var(--measure); margin-top: 1.25rem; font-size: max(1.125rem, 15px); }
+.elo .svc-text .ticks { margin-top: 1.75rem; }
+.elo .svc-go { margin-top: 1.75rem; }
+.elo .svc-media-cap { margin-top: 1rem; color: var(--ink-65); }
+
+/* A service's page: how we do it, step by step down the page. */
+.elo .steps { background: var(--paper-2); }
+.elo .steps-list { max-width: 64rem; margin-inline: auto; }
+.elo .step {
+  display: grid;
+  grid-template-columns: 7rem minmax(0, 1fr);
+  column-gap: 2rem;
+  padding-block: 2.75rem;
+  border-top: 1px solid var(--ink-20);
+}
+.elo .step:last-child { border-bottom: 1px solid var(--ink-20); }
+.elo .step-n { font-family: var(--font-display); font-size: 3.75rem; font-weight: 500; line-height: .9; color: var(--gold-text); }
+.elo .step-kind { color: var(--gold-text); }
+.elo .step-h { margin-top: .6rem; font-family: var(--font-display); font-size: 2.25rem; font-weight: 500; line-height: 1.1; }
+.elo .step-body { max-width: 40rem; margin-top: .9rem; }
+.elo .svc-work { background: var(--paper); }
+
+/* ---------- case study (/work/<slug>), and /film's head ---------- */
+.elo .cs-head { padding-block: 6.5rem 5rem; background: var(--paper); }
+.elo .cs-head > .wrap {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  column-gap: 2rem;
+  row-gap: 4rem;
+  align-items: end;
+}
+.elo .cs-intro { grid-column: 1 / span 7; }
+.elo .cs-eyebrow { color: var(--gold-text); }
+.elo .cs-eyebrow a { text-decoration: underline; text-underline-offset: .4em; }
+.elo .cs-title {
   margin-top: 1rem;
   font-family: var(--font-display);
-  font-size: 2.25rem;
-  font-weight: 500;
-  line-height: 1.04;
-  letter-spacing: -.01em;
-  text-wrap: balance;
-}
-.elo .step-text {
-  max-width: var(--measure);
-  margin-top: .75rem;
-  font-size: max(1.125rem, 15px);
-  line-height: 1.45;
-  text-wrap: pretty;
-}
-.elo .start-note {
-  max-width: 40rem;
-  margin-top: 3.5rem;
-  font-family: var(--font-display);
-  font-size: 1.8125rem;
-  font-weight: 500;
-  line-height: 1.25;
-  text-wrap: pretty;
-}
-.elo .start-act .act { margin-top: 2rem; }
-
-/* ---------- /work ----------
-   The home page's Work grid with every project, under the page's label. */
-.elo .work--page { padding: 4rem var(--pad) 6rem; }
-.elo .page-end { margin-top: 4.5rem; }
-.elo .page-end .act { margin-top: 0; }
-
-/* ---------- case study (/work/<slug>) ----------
-   A reading page on the home page's grid: the head and the live card, then
-   the long text in one left-aligned column. */
-.elo .cs-head { padding: 5rem var(--pad) 5rem; }
-.elo .cs-intro { grid-column: 1 / span 9; }
-.elo .cs-eyebrow { color: var(--ink-65); }
-.elo .cs-title {
-  margin-top: 1.5rem;
-  font-family: var(--font-display);
-  font-size: 4.5rem;
-  font-weight: 500;
-  line-height: 1.04;
-  letter-spacing: -.015em;
-  text-wrap: balance;
-}
-.elo .cs-sub {
-  max-width: 44rem;
-  margin-top: 1.5rem;
-  font-family: var(--font-display);
-  font-size: 1.8125rem;
-  font-weight: 500;
-  line-height: 1.25;
-  text-wrap: pretty;
-}
-.elo .cs-facts { display: flex; gap: 4rem; margin-top: 2.5rem; }
-.elo .cs-facts dt { color: var(--ink-65); }
-.elo .cs-facts dd { margin-top: .5rem; font-size: 1.25rem; line-height: 1.3; }
-.elo .cs-caps {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  margin-top: 3rem;
-  border-block: 1px solid var(--ink-20);
-}
-.elo .cs-caps li {
-  padding: 1.5rem 2rem 1.5rem 0;
-  font-size: 1.25rem;
-  line-height: 1.42;
-  text-wrap: pretty;
-}
-.elo .cs-caps li + li { padding-left: 2rem; border-left: 1px solid var(--ink-20); }
-/* The live card, as on /work, and its caption. */
-.elo .cs-live { grid-column: 1 / span 10; margin-top: 3.5rem; }
-.elo .cs-caption {
-  max-width: var(--measure);
-  margin-top: .875rem;
-  color: var(--ink-65);
-  font-size: max(1rem, 14px);
-  line-height: 1.45;
-  text-wrap: pretty;
-}
-.elo .cs-demo { margin-right: .375rem; color: var(--ink); }
-.elo .cs-fig { margin-top: 2.5rem; }
-.elo .cs-fig-frame { border: 1px solid var(--ink-20); background: var(--frame); }
-.elo .cs-fig-frame img { width: 100%; height: auto; }
-.elo .cs-shot {
-  position: relative;
-  width: min(100%, 60rem);
-  aspect-ratio: 16 / 10;
-  margin-top: 4rem;
-  overflow: hidden;
-  background: var(--frame);
-  border: 1px solid var(--ink-20);
-}
-.elo .cs-shot img, .elo .cs-shot video {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-.elo .cs-step .cs-shot { width: 100%; margin-top: 2.5rem; }
-
-.elo .cs-steps, .elo .cs-notes { border-top: 1px solid var(--ink-20); padding: 5rem var(--pad); }
-.elo .cs-steps ol { grid-column: 1 / span 8; display: grid; row-gap: 5rem; }
-.elo .cs-step-n {
-  display: flex;
-  gap: .875rem;
-  padding-top: 1.25rem;
-  border-top: 1px solid var(--ink);
-  color: var(--ink-65);
-}
-.elo .cs-step-n span { color: var(--ink); }
-.elo .cs-step-h {
-  margin-top: 1.5rem;
-  font-family: var(--font-display);
-  font-size: 3.125rem;
-  font-weight: 500;
-  line-height: 1.06;
-  letter-spacing: -.012em;
-  text-wrap: balance;
-}
-.elo .cs-body { margin-top: 1.5rem; font-size: 1.25rem; line-height: 1.55; text-wrap: pretty; }
-.elo .cs-figure { margin-top: 2.5rem; }
-.elo .cs-figure-n {
-  font-family: var(--font-display);
-  font-size: 6.75rem;
+  font-size: 5rem;
   font-weight: 500;
   line-height: 1;
   letter-spacing: -.015em;
+  text-wrap: balance;
 }
-.elo .cs-figure .label { margin-top: .75rem; color: var(--ink-65); }
-
-.elo .cs-note { grid-column: 1 / span 8; }
-.elo .cs-notes--two .cs-note { grid-column: 1 / span 6; }
-.elo .cs-notes--two .cs-note--data { grid-column: 8 / -1; }
-.elo .cs-note h2 { color: var(--ink-65); }
-.elo .cs-note .cs-body { margin-top: 1.25rem; }
-.elo .cs-note--data ul { margin-top: 1.25rem; border-top: 1px solid var(--ink-20); }
-.elo .cs-note--data li {
-  padding-block: 1rem;
-  border-bottom: 1px solid var(--ink-20);
-  font-size: 1.0625rem;
-  line-height: 1.5;
-  text-wrap: pretty;
+.elo .cs-sub { max-width: var(--measure); margin-top: 1.5rem; font-size: max(1.25rem, 16px); line-height: 1.5; }
+.elo .cs-intro .act { margin-top: 2.25rem; }
+.elo .cs-facts { display: flex; flex-wrap: wrap; gap: 1.5rem 3.5rem; margin-top: 2.25rem; }
+.elo .cs-facts dt { color: var(--ink-65); }
+.elo .cs-facts dd { margin-top: .35rem; font-family: var(--font-display); font-size: 1.375rem; font-weight: 500; }
+.elo .cs-caps { grid-column: 9 / span 4; display: grid; }
+.elo .cs-caps li {
+  padding-block: .9rem;
+  border-top: 1px solid var(--ink-20);
+  font-family: var(--font-display);
+  font-size: 1.3125rem;
+  font-weight: 500;
+  line-height: 1.25;
 }
-
-/* ---------- a service's page (/services/<slug>) ----------
-   The case study's head and steps (above), with what's included in place
-   of its capabilities, one across for each (three or four), "What we do"
-   over the steps, and a slot for the work: two plates where its cards
-   will go, the Work grid's shape. */
-.elo .svc-caps { grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); }
-.elo .svc-steps-label { margin-bottom: 2.5rem; }
-.elo .svc-work-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 2rem;
-  margin-top: 2rem;
-}
-.elo .svc-work-grid .placeholder { aspect-ratio: 16 / 10; }
+.elo .cs-live, .elo .cs-head .cs-shot { grid-column: 1 / -1; }
+.elo .cs-caption { margin-top: 1rem; font-size: max(.875rem, 13px); color: var(--ink-65); }
+.elo .cs-demo { margin-right: .5rem; color: var(--gold-text); }
+.elo .cs-shot { position: relative; aspect-ratio: 16 / 10; overflow: hidden; margin-top: 2rem; background: var(--frame); }
+.elo .cs-shot img, .elo .cs-shot video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.elo .cs-steps { padding-block: var(--chap); background: var(--paper-2); }
+.elo .cs-steps ol { max-width: 64rem; margin-inline: auto; }
+.elo .cs-step { padding-block: 2.75rem; border-top: 1px solid var(--ink-20); }
+.elo .cs-step-n { color: var(--gold-text); }
+.elo .cs-step-n span { margin-right: .5rem; font-family: var(--font-display); font-size: 1.375rem; font-weight: 600; letter-spacing: 0; }
+.elo .cs-step-h { margin-top: .75rem; font-family: var(--font-display); font-size: 2.5rem; font-weight: 500; line-height: 1.08; }
+.elo .cs-body { max-width: 40rem; margin-top: 1rem; }
+.elo .cs-figure { margin-top: 2rem; }
+.elo .cs-figure-n { font-family: var(--font-display); font-size: 4rem; font-weight: 500; line-height: 1; color: var(--gold-text); }
+.elo .cs-fig { margin-top: 2.25rem; }
+.elo .cs-fig-frame { box-shadow: 0 0 0 1px var(--ink-12); }
+.elo .cs-fig-frame img { width: 100%; height: auto; }
+.elo .cs-notes { padding-block: var(--chap); background: var(--paper); }
+.elo .cs-notes > .wrap { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: 2rem; row-gap: 3rem; }
+.elo .cs-note { grid-column: 1 / span 6; }
+.elo .cs-notes--two .cs-note--data { grid-column: 8 / span 5; }
+.elo .cs-note .label { color: var(--gold-text); }
+.elo .cs-note .cs-body { font-size: max(1.125rem, 15px); }
+.elo .cs-note ul { margin-top: 1rem; }
+.elo .cs-note li { padding-block: .7rem; border-top: 1px solid var(--ink-20); font-size: max(.9375rem, 14px); }
 
 /* ---------- reading pages: legal, not found ---------- */
-.elo .read {
-  max-width: calc(46rem + 2 * var(--pad));
-  margin-inline: auto;
-  padding: 7rem var(--pad) 8rem;
-}
-.elo .read-head > .label:first-child { color: var(--ink-65); }
-.elo .read-title {
-  margin-top: 1.25rem;
-  font-family: var(--font-display);
-  font-size: 5.25rem;
-  font-weight: 500;
-  line-height: 1.02;
-  letter-spacing: -.015em;
-  text-wrap: balance;
-}
-.elo .read-date { margin-top: 1.5rem; color: var(--ink-65); }
-.elo .read-part { margin-top: 3.5rem; padding-top: 1.5rem; border-top: 1px solid var(--ink-20); }
-.elo .read-part h2 {
-  font-family: var(--font-display);
-  font-size: 2.25rem;
-  font-weight: 500;
-  line-height: 1.1;
-  letter-spacing: -.01em;
-}
-.elo .read-body { margin-top: 1rem; font-size: 1.25rem; line-height: 1.55; text-wrap: pretty; }
-.elo .read--short .read-body { margin-top: 2.5rem; }
-/* Links set in the page bodies themselves carry V3's colour classes; one ink here. */
-.elo .read-body a {
-  color: inherit;
-  text-decoration: underline;
-  text-decoration-color: currentColor;
-  text-decoration-thickness: 1px;
-  text-underline-offset: .22em;
-}
+.elo .read { width: 100%; max-width: calc(42rem + 2 * var(--pad)); margin-inline: auto; padding: 6.5rem var(--pad) 7rem; }
+.elo .read-head .label { color: var(--gold-text); }
+.elo .read-title { margin-top: 1rem; font-family: var(--font-display); font-size: 4.25rem; font-weight: 500; line-height: 1; letter-spacing: -.015em; }
+.elo .read-date { margin-top: 1.25rem; color: var(--ink-65); }
+.elo .read-part { margin-top: 3rem; padding-top: 1.75rem; border-top: 1px solid var(--ink-20); }
+.elo .read-part h2 { font-family: var(--font-display); font-size: 1.875rem; font-weight: 500; line-height: 1.15; }
+.elo .read-body { margin-top: .9rem; }
+.elo .read-body p + p, .elo .read-body ul { margin-top: .9rem; }
+.elo .read-body ul { list-style: disc; padding-left: 1.25rem; }
+.elo .read-body a { text-decoration: underline; text-decoration-color: var(--gold); text-underline-offset: .22em; }
+.elo .read--short .read-body { margin-top: 2rem; font-size: max(1.125rem, 15px); }
 
-/* ---------- phones: one column; in the hero, the seam becomes a rule beside the picked line ---------- */
+/* ---------- phones and tablets: one column ---------- */
 @media (max-width: 1023px) {
-  /* The header, one row: the rings, then the wordmark or, on the black, the
-     initials in its place ("A & J", the names' weights), then the menu
-     button at the end. The brand's link runs on under the initials, which
-     sit over it once they show; its name stays for screen readers. */
-  .elo .top { grid-template-columns: calc(2.15rem + .72rem) auto auto auto 1fr auto; }
-  .elo .brand { grid-area: 1 / 1 / 2 / 6; }
-  .elo .brand .wordmark { font-size: 1.3rem; transition: opacity .25s ease; }
-  .elo .top.is-dark > .brand .wordmark { opacity: 0; }
-  .elo .who--a { grid-area: 1 / 2; justify-self: start; }
-  .elo .top-amp { grid-area: 1 / 3; padding-inline: .1875rem; }
-  .elo .who--j { grid-area: 1 / 4; justify-self: start; }
-  .elo .menu-btn { grid-area: 1 / 6; }
-  .elo .who, .elo .top-amp { font-size: 1.75rem; }
-  .elo .who { min-width: 24px; justify-content: center; padding-inline: .125rem; }
-  .elo .who-name {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip-path: inset(50%);
-    white-space: nowrap;
-  }
-  .elo .who-initial { display: inline; }
-  .elo .top.is-hidden { transform: translateY(-100%); }
-  .elo .menu-body { padding-block: 2rem 3rem; }
-  .elo .menu-links a { font-size: 3.25rem; }
-  .elo .menu-pages-label { margin-top: 2.5rem; }
-  .elo .menu-pages { column-gap: 1.75rem; margin-top: .5rem; }
-  .elo .menu-pages a { font-size: 1.625rem; }
+  /* Cormorant's figures are old-style by default; numbering takes the lining ones. */
+.elo :is(.mark-n, .index-n, .how-dot, .svc-n, .step-n, .contents-n, .cs-step-n span, .cs-figure-n) { font-variant-numeric: lining-nums; }
+.elo .statement { font-size: 2.125rem; line-height: 1.12; }
+  .elo .mark { gap: .9rem; margin-bottom: 3rem; }
+  .elo .mark-run { flex-basis: 3.5rem; }
+  .elo .more { margin-top: 3rem; }
 
-  .elo .seam { display: none; }
+  .elo .bar { gap: 1rem; }
+  .elo .bar-nav, .elo .bar-book { display: none; }
+  .elo .bar-menu { display: inline-flex; align-items: center; }
+  .elo .bar-acts { gap: .5rem; }
+  .elo .bar-film { min-width: 44px; justify-content: center; }
+  .elo .bar-film-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .elo .brand .wordmark, .elo .menu .brand .wordmark { font-size: 1.3rem; }
+  .elo .brand img { width: 1.85rem; }
 
-  .elo .hero {
-    min-height: auto;
-    justify-items: start;
-    padding: 3rem var(--pad) 4.5rem;
-  }
-  .elo .names {
-    --names-size: 7rem;
-    grid-template-columns: 1fr;
-    line-height: .92;
-  }
-  /* The last names, mirrored under the first: Fernando starts where Ashan
-     starts, Lopez ends where Jordan ends, ink on ink. The margins make up
-     for each line's side bearings (measured from the fonts, at their own
-     sizes): A in 500 -.0047em (its foot reaches past its box), F in 700
-     .031em on the left; n in 500 .0173em (plus the first name's tracking)
-     and z in 700 .026em on the right. */
-  .elo .names { --last-size: 1.6875rem; }
-  .elo .name--a .name-last {
-    text-align: left;
-    margin-left: calc(var(--names-size) * -.0047 - .031em);
-  }
-  .elo .name--j .name-last {
-    text-align: right;
-    margin-right: calc(var(--names-size) * (.0173 + -.02) - .026em);
-  }
-  .elo .name--a { justify-self: start; }
-  .elo .name--a .name-first { background-position: left 0 bottom .04em; }
-  .elo .name-amp { justify-self: center; padding-inline: 0; font-size: .8em; line-height: .9; }
-  .elo .name--j { justify-self: end; }
-  .elo .name--j .name-first { background-position: right 0 bottom .04em; }
-  .elo .hint { margin-top: 2.25rem; padding: 0; }
-  .elo .picked-in { grid-template-columns: 1fr; }
-  .elo .picked-line, .elo .picked-line--a, .elo .picked-line--j {
-    grid-area: 1 / 1;
-    justify-self: stretch;
-    max-width: none;
-    margin-top: 1.25rem;
-    font-size: 1.125rem;
-    text-align: left;
-  }
-  .elo .lede {
-    margin-top: 1.25rem;
-    padding-block: 0;
-    font-size: 1.6875rem;
-    line-height: 1.2;
-    text-align: left;
-  }
-  .elo .act { margin-top: 2rem; }
+  .elo .open { min-height: 0; padding-block: calc(var(--header-h) + 2.5rem) 3.5rem; background: radial-gradient(ellipse 90% 50% at 50% 78%, rgb(190 150 69 / .12), transparent 70%), var(--night); }
+  .elo .open-grid { display: block; }
+  .elo .open-logo img { width: 86%; }
+  .elo .define { margin-top: 2.25rem; }
+  .elo .define-say { font-size: 1.25rem; }
+  .elo .define-meaning { margin-top: .5rem; font-size: 2.125rem; line-height: 1.12; }
+  .elo .open-lede { margin-top: 1.5rem; font-size: 1.0625rem; }
+  .elo .open-acts { flex-direction: column; align-items: flex-start; gap: 1rem; margin-top: 2rem; }
+  .elo .open-reel { margin-top: 3.5rem; margin-inline: .85rem; }
 
-  /* below the hero: one column */
-  .elo .sec { padding: 3rem var(--pad); }
-  .elo .wrap { grid-template-columns: minmax(0, 1fr); column-gap: 0; }
-  .elo .wrap > *,
-  .elo .us-head, .elo .pair, .elo .contact-head, .elo .form, .elo .svc-head, .elo .incl, .elo .svc-preview,
-  .elo .cs-intro, .elo .cs-live, .elo .cs-steps ol,
-  .elo .cs-note, .elo .cs-notes--two .cs-note, .elo .cs-notes--two .cs-note--data { grid-column: 1 / -1; }
-  .elo .sec-h { margin-top: .875rem; font-size: 2.375rem; }
-  .elo .more { margin-top: 1.75rem; }
+  .elo .us-two { grid-template-columns: minmax(0, 1fr); gap: 2.25rem; margin-top: 3rem; }
+  .elo .person { gap: 1.1rem; }
+  .elo .ring { width: 3.75rem; height: 3.75rem; font-size: 1.75rem; }
+  .elo .person-name { font-size: 1.625rem; }
+  .elo .promises { grid-template-columns: minmax(0, 1fr); gap: 1.5rem; margin-top: 3rem; }
+  .elo .promises li { font-size: 1.25rem; }
+  .elo .us-where { margin-top: 2.5rem; }
 
-  /* The picked line, a gold rule beside it. */
-  .elo .picked-line { position: relative; padding-left: 1.125rem; }
-  .elo .picked-line::before {
-    content: "";
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    width: 3px;
-    background: var(--gold);
-  }
+  .elo .index-row { grid-template-columns: 2.25rem minmax(0, 1fr); row-gap: 1rem; padding-block: 2rem; }
+  .elo .index-title { font-size: 2rem; }
+  .elo .index-body { grid-column: 1 / -1; }
+  .elo .index-go { display: none; }
 
-  .elo .where { margin-top: 1.5rem; font-size: 1.5rem; }
-  .elo .promises { margin-top: 1.25rem; }
-  .elo .promises li { padding-block: .75rem; font-size: 1.375rem; }
-  /* The two people under the promises, one above the other. */
-  .elo .us-head, .elo .pair { grid-row: auto; }
-  .elo .us .promises { grid-column: 1 / -1; grid-row: auto; }
-  .elo .pair { grid-template-columns: minmax(0, 1fr); row-gap: 1.75rem; margin-top: 2.25rem; }
-  .elo .person-line { padding-top: .75rem; font-size: 1.375rem; }
+  .elo .film-band { padding-block: 4.5rem; }
+  .elo .film-band-grid { display: block; }
+  .elo .film-poster-ring { width: 7rem; height: 7rem; }
+  .elo .film-poster-e { font-size: 3.75rem; }
+  .elo .film-poster .play-icon { left: 1rem; bottom: 1rem; width: 2.5rem; height: 2.5rem; }
+  .elo .film-poster-len { right: 1rem; bottom: 1.5rem; }
+  .elo .film-band-text { margin-top: 2.25rem; }
+  .elo .film-band-h { font-size: 2.5rem; }
 
-  .elo .do-grid { grid-template-columns: minmax(0, 1fr); gap: 1.75rem; margin-top: 1.25rem; }
-  .elo .svc-card { padding-top: 1.25rem; }
-  .elo .svc-card-title { font-size: 2.25rem; }
-  .elo .svc-card-text { margin-top: .75rem; font-size: 1.0625rem; }
+  .elo .pieces { row-gap: 4.5rem; }
+  .elo .piece, .elo .pieces--large .piece { display: block; }
+  /* Each screen the phone's full width. */
+  .elo .piece-media { margin-inline: calc(-1 * var(--pad)); }
+  .elo .screen { aspect-ratio: 4 / 5; box-shadow: none; }
+  .elo .piece-text, .elo .pieces--large .piece-text, .elo .pieces--large .piece--flip .piece-text { margin-top: 1.5rem; padding: 0; }
+  .elo .piece-name { margin-top: .6rem; font-size: 2.125rem; }
 
-  .elo .work-grid { grid-template-columns: minmax(0, 1fr); gap: 2.25rem; margin-top: 1.25rem; }
-  .elo .proj-media { aspect-ratio: 4 / 5; }
-  /* Only bites on a still taller than 4:5: show it from just below the top. */
-  .elo .proj-media img { object-position: 50% 12%; }
-  .elo .proj-body { margin-top: 1rem; }
-  .elo .proj-name { font-size: 2rem; }
-  .elo .proj-line { margin-top: .625rem; }
+  .elo .how-line { grid-template-columns: minmax(0, 1fr); gap: 2.5rem; }
+  .elo .how-stop { padding-left: 4.5rem; }
+  .elo .how-dot { position: absolute; left: 0; top: 0; }
+  .elo .how-stop:not(:last-child)::after { top: 3.4rem; bottom: -2.1rem; left: 1.5rem; right: auto; width: 1px; height: auto; }
+  .elo .how-title { margin-top: .4rem; font-size: 1.75rem; }
+  .elo .how-note { margin-top: 3rem; }
 
-  .elo .contact-lede { margin-top: 1rem; font-size: 1.0625rem; }
-  .elo .form { margin-top: 2rem; }
-  .elo .fields { grid-template-columns: minmax(0, 1fr); row-gap: 1.5rem; }
-  .elo .field, .elo .field--msg { grid-column: 1; grid-row: auto; }
-  .elo .reply-note { margin-top: 2rem; font-size: 1.375rem; }
-  .elo .send-row { margin-top: 1.5rem; }
-
-  .elo .foot { grid-template-columns: 1fr; row-gap: .75rem; padding-block: 2rem 2.5rem; }
-  .elo .foot-r { justify-self: start; text-align: left; }
-
-  /* inner pages */
-  .elo .page-top { padding: 2.5rem var(--pad) 1.25rem; }
-
-  .elo .svc-text { margin-top: .875rem; font-size: 1.0625rem; }
-  .elo .incl { grid-row: auto; margin-top: 1.75rem; }
-  .elo .svc-head, .elo .svc-preview { grid-row: auto; }
-  .elo .svc-preview { margin-top: 1.75rem; }
-  .elo .incl li { padding-block: .75rem; font-size: 1.375rem; }
-
-  .elo .steps { grid-template-columns: minmax(0, 1fr); row-gap: 1.75rem; margin-top: 1.5rem; }
-  .elo .step { padding-top: 1.25rem; }
-  .elo .step-title { margin-top: .625rem; font-size: 2rem; }
-  .elo .step-text { margin-top: .625rem; font-size: 1.0625rem; }
-  .elo .start-note { margin-top: 2.5rem; font-size: 1.5rem; }
-
-  .elo .work--page { padding: 2.5rem var(--pad) 4rem; }
-  .elo .page-end { margin-top: 3rem; }
-
-  .elo .cs-head { padding: 3rem var(--pad) 3.5rem; }
-  .elo .cs-title { margin-top: 1.25rem; font-size: 2.75rem; }
-  .elo .cs-sub { margin-top: 1.25rem; font-size: 1.5rem; }
-  .elo .cs-facts { flex-wrap: wrap; gap: 1.25rem 2.5rem; margin-top: 2rem; }
-  .elo .cs-facts dd { font-size: 1.125rem; }
-  .elo .cs-caps, .elo .svc-caps { grid-template-columns: 1fr; grid-auto-flow: row; margin-top: 2.5rem; }
-  .elo .cs-caps li, .elo .cs-caps li + li { padding: 1.125rem 0; font-size: 1.125rem; }
-  .elo .cs-caps li + li { border-left: 0; border-top: 1px solid var(--ink-20); }
-  .elo .cs-live { margin-top: 2.5rem; }
-  .elo .cs-shot { margin-top: 2.5rem; }
-  .elo .cs-fig { margin-top: 2rem; }
-  .elo .cs-steps, .elo .cs-notes { padding: 3.5rem var(--pad); }
-  .elo .cs-steps ol { row-gap: 3.5rem; }
-  .elo .cs-step-h { margin-top: 1.125rem; font-size: 2.25rem; }
-  .elo .cs-body { margin-top: 1.125rem; font-size: 1.125rem; }
-  .elo .cs-figure-n { font-size: 4.5rem; }
-  .elo .cs-note--data { margin-top: 3rem; }
-  .elo .svc-steps-label { margin-bottom: 1.75rem; }
-  .elo .svc-work-grid { grid-template-columns: minmax(0, 1fr); gap: 1.25rem; margin-top: 1.25rem; }
-  .elo .svc-work-grid .placeholder { aspect-ratio: 4 / 5; }
-
-  .elo .read { padding: 3.5rem var(--pad) 5rem; }
-  .elo .read-title { font-size: 3rem; }
-  .elo .read-part { margin-top: 2.5rem; }
-  .elo .read-part h2 { font-size: 1.8125rem; }
-  .elo .read-body { font-size: 1.0625rem; }
-}
-
-/* ---------- reduced motion: everything still, everything visible ---------- */
-@media (prefers-reduced-motion: reduce) {
-  html:has(.elo) { scroll-behavior: auto; }
-  .elo:not(.is-in) :is(.name, .name-amp, .hero .hint, .lede, .hero > .act) { opacity: 1; animation: none; }
-  .elo .top, .elo .top::before, .elo .top .who, .elo .top .top-amp, .elo .brand .wordmark, .elo .act, .elo .proj-media video,
-  .elo .name, .elo .name-first, .elo .name-last, .elo .picked, .elo .picked-line, .elo .card-link a, .elo .menu-body a { transition: none; }
-  .elo .proj-media video { display: none; }
-}
-
-/* ---------- /work's groups (Jordan's agents, jordan-work) ----------
-   New classes only: the space around each service's heading on /work. The one
-   rule on an existing class changes digits only: the display font's old-style
-   figures made joon11ee read "joonııee". */
-/* The page's scroll-padding-top clears the header; this is only the space under it. */
-.elo .work-group { margin-top: 2.5rem; scroll-margin-top: 1rem; }
-.elo .work-group + .work-group { margin-top: 5.5rem; }
-.elo .work-group-h { margin-top: 0; font-size: 2.75rem; }
-.elo .proj-name { font-variant-numeric: lining-nums; }
-/* The links to the groups, under the page's title: .more's type and links, in a row. */
-.elo .work-jump { display: flex; flex-wrap: wrap; column-gap: 2rem; margin-top: 1rem; }
-@media (max-width: 1023px) {
-  .elo .work-group { margin-top: 1.75rem; }
-  .elo .work-group + .work-group { margin-top: 3.5rem; }
-  .elo .work-group-h { font-size: 2.25rem; }
-}
-
-/* ---------- questions (Ashan's Claude Code) ----------
-   The home page's section before Contact, and /questions: a chat-style FAQ
-   (components/elorro/faq.tsx, copy in lib/faq.ts). New classes only.
-
-   Laid out as Contact is: the heading on the left, what you use on the right,
-   with the thread under the heading. The thread never moves what's around
-   it, and it's sticky so a reply is on screen wherever the chip that asked
-   for it was, beside the chips, however many there are. On phones (below)
-   there's no box and nothing sticks: each exchange opens in the page's flow,
-   under its chip, or under the field for what's typed. Square and hairlined
-   like everything else: their bubbles in the ink, ours on the paper. */
-.elo .faq .wrap { grid-template-rows: auto 1fr auto; }
-.elo .faq-head { grid-column: 1 / span 5; grid-row: 1; }
-.elo .faq-lede {
-  margin-top: 1.25rem;
-  font-size: max(1.125rem, 15px);
-  line-height: 1.45;
-}
-.elo .faq-ask { grid-column: 7 / -1; grid-row: 1 / span 2; }
-
-.elo .faq-chips { display: flex; flex-wrap: wrap; gap: .625rem; }
-.elo .faq-chip {
-  min-height: max(2.75rem, 44px);
-  padding: .375rem 1rem .5rem;
-  border: 1px solid var(--ink-20);
-  font-family: var(--font-display);
-  font-size: 1.375rem;
-  font-weight: 500;
-  line-height: 1.15;
-  transition: border-color .25s var(--ease), color .25s var(--ease);
-}
-.elo .faq-chip.is-asked { color: var(--ink-65); border-color: color-mix(in srgb, var(--ink) 10%, transparent); }
-@media (hover: hover) {
-  .elo .faq-chip:hover { border-color: currentColor; }
-}
-
-.elo .faq-form { display: flex; align-items: flex-end; gap: 1.25rem; margin-top: 2rem; }
-.elo .faq-form .field { flex: 1 1 auto; min-width: 0; }
-/* The site's button in the ink: gold stays with the one action, the call. */
-.elo .faq-send {
-  flex: none;
-  min-height: 3.25rem;
-  padding: 1rem 1.75rem;
-  background: var(--ink);
-  color: var(--paper);
-  font-family: var(--font-label);
-  font-weight: 600;
-  font-size: max(.8125rem, 12px);
-  letter-spacing: .14em;
-  line-height: 1;
-  text-align: center;
-  text-transform: uppercase;
-  transition: background-color .25s var(--ease);
-}
-.elo .faq-send:focus-visible { outline-color: var(--ink); }
-@media (hover: hover) {
-  .elo .faq-send:hover { background: color-mix(in srgb, var(--ink) 82%, var(--paper)); }
-}
-
-.elo .faq-thread {
-  grid-column: 1 / span 5;
-  grid-row: 2;
-  position: sticky;
-  top: calc(var(--header-h) + 1.5rem);
-  z-index: 1;
-  display: grid;
-  gap: 1.25rem;
-  align-content: start;
-  max-height: min(30rem, calc(100svh - var(--header-h) - 3rem));
-  overflow-y: auto;
-  background: var(--paper);
-  scrollbar-width: thin;
-  scrollbar-color: var(--ink-20) transparent;
-}
-.elo .faq-thread:not(:empty) { margin-top: 2.5rem; }
-.elo .faq-turn { display: grid; gap: .625rem; }
-.elo .faq-you {
-  justify-self: end;
-  max-width: 85%;
-  padding: .4375rem .875rem .5625rem;
-  background: var(--ink);
-  color: var(--paper);
-  font-family: var(--font-display);
-  font-size: 1.375rem;
-  font-weight: 500;
-  line-height: 1.2;
-  overflow-wrap: anywhere;
-}
-.elo .faq-you::selection, .elo .faq-you ::selection { background: var(--paper); color: var(--ink); }
-.elo .faq-us { display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: .625rem; align-items: start; }
-.elo .faq-mark {
-  padding-top: .75rem;
-  font-family: var(--font-display);
-  font-size: 1.125rem;
-  font-weight: 600;
-  line-height: 1;
-  white-space: nowrap;
-}
-.elo .faq-mark .gold { margin-inline: .06em; }
-.elo .faq-reply {
-  justify-self: start;
-  min-width: 0;
-  padding: .6875rem 1rem .8125rem;
-  border: 1px solid var(--ink-20);
-  background: var(--paper);
-  font-size: max(1.0625rem, 15px);
-  line-height: 1.45;
-}
-.elo .faq-reply .act { margin-top: .875rem; padding-inline: 1.125rem; }
-
-/* A bubble settles in; the dots wait; the words come in one after another
-   (each word's delay is set in faq.tsx). None of it changes a size. */
-.elo .faq-you, .elo .faq-us { animation: faq-in .25s var(--ease) both; }
-.elo .faq-word { animation: faq-word .18s var(--ease) both; }
-.elo .faq-dots { display: flex; align-items: center; gap: .3125rem; height: 1.45em; }
-.elo .faq-dots i {
-  width: .375rem;
-  height: .375rem;
-  border-radius: 50%;
-  background: var(--ink);
-  animation: faq-dot .9s ease-in-out infinite;
-}
-.elo .faq-dots i:nth-child(2) { animation-delay: .15s; }
-.elo .faq-dots i:nth-child(3) { animation-delay: .3s; }
-@keyframes faq-in { from { opacity: 0; transform: translateY(.375rem); } }
-@keyframes faq-word { from { opacity: 0; } }
-@keyframes faq-dot { 0%, 100% { opacity: .2; } 40% { opacity: 1; } }
-
-/* The questions and answers as plain text: only with scripting off, when
-   nothing could answer a chip. */
-.elo .faq-all { display: none; }
-@media (scripting: none) {
-  .elo .faq-ask, .elo .faq-lede, .elo .faq-thread { display: none; }
-  .elo .faq-all { grid-column: 7 / -1; grid-row: 1 / span 2; display: grid; row-gap: 1.75rem; }
-  .elo .faq-all dt { font-family: var(--font-display); font-size: 1.625rem; font-weight: 500; line-height: 1.15; }
-  .elo .faq-all dd { margin-top: .375rem; max-width: var(--measure); }
-}
-
-/* /questions: the first thing on the page, spaced as /work is. */
-.elo .faq--page { border-top: 0; padding: 4rem var(--pad) 6rem; }
-
-@media (max-width: 1023px) {
-  .elo .faq .wrap { display: block; }
-  .elo .faq-lede { margin-top: 1rem; font-size: 1.0625rem; }
-  .elo .faq-ask { margin-top: 1.75rem; }
-  /* One chip to a row, so an exchange opening under one never moves another sideways. */
+  .elo .faq-ask { margin-top: 2.25rem; }
   .elo .faq-chips { display: grid; grid-template-columns: minmax(0, 1fr); }
-  .elo .faq-chip { width: 100%; text-align: left; }
+  .elo .faq-chip { width: 100%; text-align: left; border-radius: 1.4rem; }
   .elo .faq-open:not(:empty) { padding-block: .875rem .625rem; }
   .elo .faq-form { margin-top: 1.75rem; }
-  /* What's typed, under the field, in the flow like everything else. */
-  .elo .faq-thread { position: static; z-index: auto; max-height: none; overflow: visible; background: none; }
-  .elo .faq-thread:not(:empty) { margin-top: 1.75rem; }
+  .elo .faq-thread { max-height: none; overflow: visible; }
+  .elo .faq-thread:not(:empty) { margin-top: 1.75rem; padding: 0; border: 0; background: none; }
   .elo .faq-all { margin-top: 1.75rem; }
-  .elo .faq--page { padding: 2.5rem var(--pad) 4rem; }
+  .elo .faq--page { padding-top: 3rem; }
+
+  .elo .contact { padding-bottom: 4rem; }
+  .elo .contact-grid { display: block; }
+  .elo .contact-h { font-size: 2.625rem; }
+  .elo .contact-sign { margin-top: 2rem; font-size: 1.5rem; }
+  .elo .form { margin-top: 3rem; }
+  .elo .fields { grid-template-columns: minmax(0, 1fr); gap: 1.75rem; }
+  .elo .reply-note { font-size: 1.3rem; }
+
+  .elo .foot-logo { padding-block: 3rem; }
+  .elo .foot-logo img { width: 88%; }
+  .elo .foot-cols { grid-template-columns: minmax(0, 1fr); gap: 2rem; }
+
+  .elo .page-head { padding-block: 3.5rem 3rem; }
+  .elo .page-title { font-size: 3.25rem; }
+  .elo .contents { display: grid; gap: 0; margin-top: 2rem; }
+  .elo .svc-intro-grid { display: block; margin-top: 2rem; }
+  .elo .svc-intro { font-size: 1.125rem; }
+  .elo .svc-intro-grid .ticks { margin-top: 2rem; }
+  .elo .svc-grid { display: block; }
+  .elo .svc-title { font-size: 2.5rem; }
+  .elo .svc-media { margin-top: 2.5rem; }
+  .elo .svc-media .screen { margin-inline: calc(-1 * var(--pad)); }
+  .elo .step { grid-template-columns: 3.25rem minmax(0, 1fr); column-gap: 1rem; padding-block: 2rem; }
+  .elo .step-n { font-size: 2.5rem; }
+  .elo .step-h { font-size: 1.75rem; }
+  .elo .page-end { padding-block: 1rem 4.5rem; }
+
+  .elo .cs-head { padding-block: 3.5rem 3rem; }
+  .elo .cs-head > .wrap { display: block; }
+  .elo .cs-title { font-size: 3rem; }
+  .elo .cs-sub { font-size: 1.125rem; }
+  .elo .cs-caps { margin-top: 2.5rem; }
+  .elo .cs-live { margin-top: 2.5rem; }
+  .elo .cs-live .screen { margin-inline: calc(-1 * var(--pad)); }
+  .elo .cs-step-h { font-size: 1.875rem; }
+  .elo .cs-notes > .wrap { display: block; }
+  .elo .cs-note--data { margin-top: 3rem; }
+
+  .elo .read { padding-block: 3.5rem 4.5rem; }
+  .elo .read-title { font-size: 3rem; }
 }
 
+/* ---------- reduced motion: everything still, everything there ---------- */
 @media (prefers-reduced-motion: reduce) {
+  .elo .bar, .elo .act, .elo .go::after, .elo .index-go, .elo .film-poster-ring { transition: none; }
   .elo .faq-you, .elo .faq-us { animation: none; }
   .elo .faq-chip, .elo .faq-send { transition: none; }
 }

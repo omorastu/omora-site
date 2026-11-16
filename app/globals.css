@@ -30,7 +30,7 @@ body {
    the page barely moves when it swaps. The figures are the ones next/font
    used for these two families when they came from Google Fonts, kept so the
    move to local files changed nothing (app/layout.tsx,
-   components/elorro/fonts.ts and hero-font.ts name these). */
+   and components/elorro/fonts.ts name these). */
 @font-face {
   font-family: "Cormorant Garamond Fallback";
   src: local("Times New Roman");

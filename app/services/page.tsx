@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { services, servicesPage } from "@/lib/elorro";
 import { Page } from "@/components/elorro/page";
 import { ServiceRow } from "@/components/elorro/services";
+import { HowItStarts } from "@/components/elorro/how";
 
 export const metadata: Metadata = {
   title: "Services — Elorro",
@@ -11,50 +11,37 @@ export const metadata: Metadata = {
 };
 
 /**
- * /services — the home page's four services, each a section of its own
- * (/services#<slug>) with what's included and the way to its own page, then
- * how a project starts. On the home page's grid, below a title as /work has.
- * Copy in lib/elorro.ts.
+ * /services — the four services, each a chapter of its own (/services#<slug>)
+ * with all that comes with it, a piece of its work playing and the way to its
+ * own page; under the title, the four as a short contents list. Then how a
+ * project starts. Copy in lib/elorro.ts.
  */
 export default function ServicesPage() {
-  const { start } = servicesPage;
-
   return (
     <Page>
-      <div className="page-top">
+      <header className="page-head">
         <div className="wrap">
-          <h1 className="sec-label label">{servicesPage.title}</h1>
-        </div>
-      </div>
-
-      {services.map((s) => (
-        <ServiceRow key={s.slug} service={s} />
-      ))}
-
-      <section className="start sec" id="how" aria-labelledby="how-h">
-        <div className="wrap">
-          <h2 className="sec-h start-h" id="how-h">
-            {start.title}
-          </h2>
-          <ol className="steps">
-            {start.steps.map((step, i) => (
-              <li key={step.title} className="step">
-                <span className="step-n label" aria-hidden="true">
-                  {i + 1}
-                </span>
-                <h3 className="step-title">{step.title}</h3>
-                <p className="step-text">{step.text}</p>
+          <h1 className="page-title">{servicesPage.title}</h1>
+          <ol className="contents">
+            {services.map((s, i) => (
+              <li key={s.slug}>
+                <a href={`#${s.slug}`}>
+                  <span className="contents-n" aria-hidden="true">
+                    {String(i + 1).padStart(2, "0")}
+                  </span>
+                  {s.title.replace(/\.$/, "")}
+                </a>
               </li>
             ))}
           </ol>
-          <p className="start-note">{start.note}</p>
-          <p className="start-act">
-            <Link className="act" href={start.cta.href}>
-              {start.cta.label}
-            </Link>
-          </p>
         </div>
-      </section>
+      </header>
+
+      {services.map((s, i) => (
+        <ServiceRow key={s.slug} service={s} n={i + 1} flip={i % 2 === 1} />
+      ))}
+
+      <HowItStarts href={servicesPage.start.cta.href} />
     </Page>
   );
 }

@@ -63,7 +63,7 @@ export const metadata: Metadata = {
 };
 
 // The browser chrome matches the paper every page is set on (elorro.css).
-// The home page's intro darkens it while it shows (components/intro/intro.tsx).
+// The home page, which opens on the black, sets its own (app/page.tsx).
 export const viewport: Viewport = {
   themeColor: "#F4F1EA",
   colorScheme: "light",

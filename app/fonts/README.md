@@ -3,8 +3,8 @@
 The site's two families, self-hosted so a build never fetches them. Each is
 the latin file Google Fonts serves, byte for byte, and each is under the SIL
 Open Font License 1.1 (the OFL files here). They're loaded with
-`next/font/local` in `app/layout.tsx`, `components/elorro/hero-font.ts` and
-`components/elorro/fonts.ts`.
+`next/font/local` in `app/layout.tsx` and `components/elorro/fonts.ts`. (On
+the layout-b branch nothing loads the Bold file: the hero that used it is gone.)
 
 | File | What it is | From |
 | --- | --- | --- |

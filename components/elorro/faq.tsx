@@ -4,10 +4,14 @@ import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { hero, people } from "@/lib/elorro";
 import { answerFor, faqs, faqSection, homeFaqs, type Faq as Question } from "@/lib/faq";
+import { ChapterMark } from "@/components/elorro/marks";
 import { cn } from "@/lib/utils";
 
 /**
- * Questions, a chat-style FAQ: on the home page before Contact (the five
+ * Questions, a chat-style FAQ, laid out as a conversation window: our
+ * replies above, the questions to tap under them like suggested replies, and
+ * the field to ask your own at the foot, as in any messaging app. On the
+ * home page before Contact (the five
  * marked `home`), on /questions all ten. No live AI and no calls to anything.
  * The visitor taps a question or types one, and the reply is only ever an
  * answer from lib/faq.ts, whole, or the line that sends them to the call.
@@ -62,9 +66,8 @@ type Turn = {
 
 const reducedMotion = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-export function Faq({ all = false }: { all?: boolean }) {
+export function Faq({ all = false, n }: { all?: boolean; n?: string }) {
   const shown = all ? faqs : homeFaqs;
-  const Label = all ? "h1" : "p";
 
   const narrow = useSyncExternalStore(onWidthChange, isNarrow, notNarrow);
   const [thread, setThread] = useState<Turn[]>([]);
@@ -123,11 +126,11 @@ export function Faq({ all = false }: { all?: boolean }) {
   const typed = thread.filter((turn) => !turn.chip).reverse();
 
   return (
-    <section className={cn("faq sec", all && "faq--page")} id="questions" aria-labelledby="questions-h">
+    <section className={cn("faq chap", all && "faq--page")} id="questions" aria-labelledby="questions-h">
       <div className="wrap">
         <div className="faq-head">
-          <Label className="sec-label label">{faqSection.label}</Label>
-          <h2 className="sec-h" id="questions-h">
+          <ChapterMark n={n} label={faqSection.label} as={all ? "h1" : "p"} />
+          <h2 className="statement faq-title" id="questions-h">
             {faqSection.title}
           </h2>
           <p className="faq-lede">{faqSection.lede}</p>
@@ -195,7 +198,7 @@ export function Faq({ all = false }: { all?: boolean }) {
         </div>
 
         {!all && (
-          <p className="more">
+          <p className="more more--center">
             <Link href="/questions">{faqSection.more}</Link>
           </p>
         )}

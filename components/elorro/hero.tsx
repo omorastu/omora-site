@@ -1,67 +1,63 @@
-import { hero, people, type Who } from "@/lib/elorro";
-import { HandsStatus, WhoButton } from "@/components/elorro/hands";
-import { Seam } from "@/components/elorro/seam";
-import { cormorantBold } from "@/components/elorro/hero-font";
-import { cn } from "@/lib/utils";
+import Image from "next/image";
+import Link from "next/link";
+import { hero, people, projects } from "@/lib/elorro";
+import { mediaOnDisk } from "@/lib/work-media";
+import { ProjectScreen } from "@/components/elorro/work";
+import { PlayIcon } from "@/components/elorro/marks";
 
 /**
- * The names on the door, in black, joined by a gold ampersand. Each name is a
- * button: pick one and a band of gold lights under it while that person's
- * line opens under the hint, on their side of the seam. The last name sits
- * under the first, centred in its half of the hero (Fernando between the
- * left edge and the seam, Lopez between the seam and the right edge; on
- * phones, where the names stack, mirrored under the first names), and
- * belongs to the same button; the light stays on the first name. The names
- * write themselves in as the page opens (hands.tsx). The seam runs the
- * hero's length and stops with it.
- * `id="top"` is where the wordmark links.
+ * The opening, on the black: the front door the intro used to be. The gold
+ * logo, the runners in its R's, and under it what the word means, set like a
+ * dictionary's entry ("e·lor·ro, noun: two people who listen first…"); then
+ * what we do, in a line, and the two ways in: book a call, or watch the
+ * film. Beside it on wide screens (under it on phones), a piece of our own
+ * footage playing: the Pearls drone film, in a tall frame.
+ *
+ * It comes in on its own, quickly, in CSS alone (elorro.css, "the opening"):
+ * the logo, then the meaning burning in from left to right as the intro's
+ * line did, then the rest. Nothing holds the page meanwhile; under reduced
+ * motion it's all simply there. `id="top"` is where the wordmark links.
  */
 export function Hero() {
+  const d = hero.definition;
+  const reel = projects.find((p) => p.name === "Pearls Farm Labor");
+  const { media } = mediaOnDisk("Pearls Farm Labor", reel?.serviceMedia);
   return (
-    <section
-      className={cn("hero", cormorantBold.variable)}
-      id="top"
-      aria-label={`${people.a.name} and ${people.j.name}`}
-    >
-      <Seam />
-      <h1 className="names">
-        <WhoButton who="a" className="name name--a">
-          <FullName who="a" />
-        </WhoButton>
-        <span className="name-amp">
-          <span className="gold">&amp;</span>
-        </span>
-        <WhoButton who="j" className="name name--j">
-          <FullName who="j" />
-        </WhoButton>
-      </h1>
-      <p className="hint label across" id="hands-hint">
-        {hero.hint}
-      </p>
-      <div className="picked">
-        <div className="picked-in">
-          {(["a", "j"] as Who[]).map((who) => (
-            <p key={who} className={cn("picked-line", `picked-line--${who}`)}>
-              <b className="picked-name">{people[who].name}.</b> {people[who].line}
-            </p>
-          ))}
+    <section className="open" id="top" aria-labelledby="open-h">
+      <div className="wrap open-grid">
+        <div className="open-text">
+          <h1 className="open-logo" id="open-h">
+            <Image src="/m/brand/elorro-logo.png" alt={d.word} width={1695} height={287} priority sizes="(max-width: 1023px) 80vw, 38vw" />
+            <span className="sr-only">
+              , {people.a.name} &amp; {people.j.name}
+            </span>
+          </h1>
+          <p className="define">
+            <span className="define-say">{d.say}</span> <span className="define-kind">{d.kind}</span>
+          </p>
+          <p className="define-meaning">{d.meaning}</p>
+          <p className="open-lede">{hero.lede}</p>
+          <div className="open-acts">
+            <a className="act" href={hero.cta.href}>
+              {hero.cta.label}
+            </a>
+            <Link className="play" href={hero.film.href}>
+              <PlayIcon />
+              <span>
+                {hero.film.label} <span className="play-len">{hero.film.length}</span>
+              </span>
+            </Link>
+          </div>
         </div>
+        {media && reel && (
+          <div className="open-reel">
+            <ProjectScreen media={media} portrait sizes="(max-width: 1023px) 100vw, 30vw" />
+            <p className="open-reel-cap label">
+              {reel.name} <span aria-hidden="true">·</span> {reel.place}
+            </p>
+          </div>
+        )}
       </div>
-      <p className="lede across">{hero.lede}</p>
-      <a className="act" href={hero.cta.href}>
-        {hero.cta.label}
-      </a>
-      <HandsStatus />
     </section>
-  );
-}
-
-/** First name over last, two lines; the space between them is for screen readers ("Ashan Fernando"). */
-function FullName({ who }: { who: Who }) {
-  return (
-    <>
-      <span className="name-first">{people[who].name}</span>{" "}
-      <span className="name-last">{people[who].last}</span>
-    </>
   );
 }

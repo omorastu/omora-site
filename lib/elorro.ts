@@ -56,6 +56,7 @@ export const nav = [
   { href: "#us", label: "Us" },
   { href: "#do", label: "What we do" },
   { href: "#work", label: "Work" },
+  { href: "#questions", label: "Questions" },
   { href: "#contact", label: "Contact" },
 ];
 
@@ -69,6 +70,7 @@ export const menu = {
     { href: "/services", label: "All services" },
     { href: "/work", label: "All work" },
     { href: "/questions", label: "Questions" },
+    { href: "/film", label: "Watch how we work" },
   ],
 };
 
@@ -78,6 +80,22 @@ export const sectionLabel = (href: string) => nav.find((n) => n.href === href)?.
 /* ── Hero ─────────────────────────────────────────────────────────────── */
 
 export const hero = {
+  /** The intro's definition, now the front door: the word, how it's said, and what it means. */
+  definition: {
+    word: "Elorro",
+    say: "e·lor·ro",
+    kind: "noun",
+    meaning: "Two people who listen first, then build what adds real value to your business.",
+  },
+  /** The way into the short film (app/film): the button, and a line on what it is. */
+  film: {
+    label: "Watch how we work",
+    href: "/film",
+    eyebrow: "A short film",
+    title: "How we work.",
+    note: "Elora, our assistant, walks you through it in about a minute and a half. Sound on if you can; the words are on screen either way.",
+    length: "1:35",
+  },
   hint: "Pick a name to see what each of us does",
   lede: "We build the website, shoot the photos and video, and set up the phone answering and booking behind it, for local businesses around the Bay. The two of us do every project ourselves.",
   cta: { label: "Book a call, let’s talk", href: "#contact" },

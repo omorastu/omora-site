@@ -3,51 +3,45 @@
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { brand, menu, people, type Who } from "@/lib/elorro";
+import { brand, hero, menu, nav } from "@/lib/elorro";
 import { Wordmark } from "@/components/wordmark";
-import { WhoButton } from "@/components/elorro/hands";
 import { Menu } from "@/components/elorro/menu";
+import { PlayIcon } from "@/components/elorro/marks";
 import { cn } from "@/lib/utils";
 
 /**
- * The door plate: the rings and the wordmark on the left, the menu button
- * on the right; the links are in the menu (menu.tsx). Once the page's first
- * heading has gone under it (the names on the door, on the home page) it
- * turns black and the two names fade in on the seam (elorro.css, "header");
- * back above it, it's paper again. On phones the names come in as their
- * initials, in the wordmark's place, and the header steps out of the way on
- * the way down, returning the moment you scroll back up.
+ * The bar along the top: the rings and the wordmark on the left; on wide
+ * screens the home page's chapters, the film and "Book a call" along it; on
+ * phones and tablets, the film and the menu button (the links are in the
+ * menu, menu.tsx). Over the home page's opening it's clear, on the black;
+ * once the opening has gone under it, it's paper, with a hairline. On
+ * phones it steps out of the way on the way down and returns the moment you
+ * scroll back up.
  *
- * On the home page the names are the "pick a name" buttons and the menu's
- * section links are its own sections. Every other page sets `home` false:
- * the names are just names, and the links lead back to the home page's
- * sections ("#us" becomes "/#us") — except any listed in `local`, which that
+ * On the home page the links are its own chapters ("#us"); every other page
+ * leads back to them ("/#us"), except any listed in `local`, which that
  * page has itself.
  */
 export function Header({ home = false, local = [] }: { home?: boolean; local?: string[] }) {
   const ref = useRef<HTMLElement>(null);
   const [hidden, setHidden] = useState(false);
-  const [dark, setDark] = useState(false);
+  const [over, setOver] = useState(home);
   const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
     const small = window.matchMedia("(max-width: 1023px)");
-    // What the header turns dark past: the names on the door, or the page's title.
-    const mark = document.querySelector(".hero .names") ?? document.querySelector("main h1");
+    // What the bar sits clear over: the home page's opening, on the black.
+    const dark = document.querySelector<HTMLElement>(".open");
     let lastY = scrollY;
-
     const onScroll = () => {
       const y = scrollY;
       const focusInside = ref.current?.contains(document.activeElement) ?? false;
       if (small.matches && y > 160 && y > lastY + 4 && !focusInside) setHidden(true);
       else if (y < lastY - 4 || y < 160) setHidden(false);
       lastY = y;
-      // Measured from where the header sits when it's showing, so a header
-      // stepping out of the way doesn't count as the heading going under it.
       const under = ref.current ? ref.current.offsetHeight : 0;
-      setDark(mark ? mark.getBoundingClientRect().bottom <= under : y > 160);
+      setOver(!!dark && dark.getBoundingClientRect().bottom > under);
     };
-
     onScroll();
     addEventListener("scroll", onScroll, { passive: true });
     addEventListener("resize", onScroll);
@@ -57,28 +51,12 @@ export function Header({ home = false, local = [] }: { home?: boolean; local?: s
     };
   }, []);
 
-  // The name, and its initial for phones (where the name is left to screen readers).
-  const name = (who: Who) => {
-    const label = (
-      <>
-        <span className="who-name">{people[who].name}</span>
-        <span className="who-initial" aria-hidden="true">
-          {people[who].initial}
-        </span>
-      </>
-    );
-    return home ? (
-      <WhoButton who={who} className={`who who--${who}`}>
-        {label}
-      </WhoButton>
-    ) : (
-      <span className={`who who--${who}`}>{label}</span>
-    );
-  };
+  const to = (href: string) => (home || local.includes(href) ? href : `/${href}`);
+  const book = to(hero.cta.href);
 
   return (
     <>
-      <header ref={ref} className={cn("top", hidden && "is-hidden", dark && "is-dark")}>
+      <header ref={ref} className={cn("bar", over && "is-over", hidden && "is-hidden")}>
         {home ? (
           <a className="brand" href="#top">
             <Image src={brand.mark} alt="" width={192} height={192} priority />
@@ -90,32 +68,39 @@ export function Header({ home = false, local = [] }: { home?: boolean; local?: s
             <Wordmark className="gold" />
           </Link>
         )}
-        {name("a")}
-        <span className="top-amp gold" aria-hidden="true">
-          &amp;
-        </span>
-        {name("j")}
-        <button
-          type="button"
-          className="menu-btn"
-          aria-label={menu.label}
-          aria-haspopup="dialog"
-          aria-expanded={menuOpen}
-          aria-controls="menu"
-          onClick={() => setMenuOpen(true)}
-        >
-          <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true">
-            <path d="M3 6.5h18M3 12h18M3 17.5h18" />
-          </svg>
-        </button>
+        <nav className="bar-nav" aria-label="Sections">
+          <ul>
+            {nav
+              .filter((n) => n.href !== "#contact")
+              .map((n) => (
+                <li key={n.href}>
+                  <a href={to(n.href)}>{n.label}</a>
+                </li>
+              ))}
+          </ul>
+        </nav>
+        <div className="bar-acts">
+          <Link className="bar-film" href={hero.film.href}>
+            <PlayIcon />
+            <span className="bar-film-label">Watch the film</span>
+          </Link>
+          <a className="bar-book" href={book}>
+            Book a call
+          </a>
+          <button
+            type="button"
+            className="bar-menu label"
+            aria-label={menu.label}
+            aria-haspopup="dialog"
+            aria-expanded={menuOpen}
+            aria-controls="menu"
+            onClick={() => setMenuOpen(true)}
+          >
+            {menu.label}
+          </button>
+        </div>
       </header>
-      <Menu
-        id="menu"
-        open={menuOpen}
-        home={home}
-        local={local}
-        onClose={() => setMenuOpen(false)}
-      />
+      <Menu id="menu" open={menuOpen} home={home} local={local} onClose={() => setMenuOpen(false)} />
     </>
   );
 }

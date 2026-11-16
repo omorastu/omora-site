@@ -12,14 +12,17 @@ import {
 } from "@/lib/elorro";
 import { mediaOnDisk } from "@/lib/work-media";
 import { WorkVideo } from "@/components/elorro/work-video";
-import { WorkPin } from "@/components/elorro/work-pin";
+import { ChapterMark } from "@/components/elorro/marks";
 import { cn } from "@/lib/utils";
 
 /**
- * Work: the studio's shared work, two across (one on phones), every project
- * on the same card: its screen, then its name, where and how it stands, a
- * line and the link. No one's name is on any of it. Hidden projects are
- * skipped, here and on /work.
+ * Work: the studio's shared work, shown the way a magazine lays out a
+ * portfolio, one piece at a time down the page: a big live screen, and
+ * beside it its name, where and how it stands, a line and the link, the
+ * screen swapping sides from one piece to the next. On phones each screen
+ * runs the full width of the phone and its words follow under it: one
+ * column, scrolled as any page is. No one's name is on any of it. Hidden
+ * projects are skipped, here and on /work.
  */
 
 /** Every project ready to show, in order. */
@@ -38,24 +41,15 @@ export const projectsFor = (slug: ServiceSlug) => {
     .map((p) => (p.serviceMedia ? { ...p, media: p.serviceMedia } : p));
 };
 
-/**
- * The home page's Work: the first `homeWorkCount` projects, then the way to
- * the rest. On phones they're one row instead of a column, pinned to the
- * screen while the scroll moves it along (WorkPin), or, under reduced
- * motion, to swipe through.
- */
-export function Work() {
+/** The home page's Work: the first `homeWorkCount` projects, then the way to the rest. */
+export function Work({ n }: { n?: string }) {
   const shown = shownProjects().slice(0, homeWorkCount);
   return (
-    <section className="work sec" id="work" aria-labelledby="work-h">
+    <section className="work chap" id="work" aria-labelledby="work-h">
       <div className="wrap">
-        <WorkPin count={shown.length}>
-          <h2 className="sec-label label" id="work-h">
-            {workPage.title}
-          </h2>
-          <WorkGrid projects={shown} swipe />
-        </WorkPin>
-        <p className="more">
+        <ChapterMark n={n} label={workPage.title} id="work-h" />
+        <WorkGrid projects={shown} large />
+        <p className="more more--center">
           <Link href="/work">{workPage.more}</Link>
         </p>
       </div>
@@ -64,31 +58,31 @@ export function Work() {
 }
 
 /**
- * The cards, two across. `heading` is h2 on /work, where the page title is
- * the h1. `swipe` makes them one row under 768px, each card 85% of the screen.
+ * The pieces, one after another, the screen on alternate sides. `heading` is
+ * h2 where the page has no section heading over them; `large` gives the
+ * screen more of the width (the home page's).
  */
-export function WorkGrid({ projects, heading = "h3", swipe = false }: { projects: Project[]; heading?: "h2" | "h3"; swipe?: boolean }) {
-  const sizes = swipe ? `(max-width: 767px) 85vw, ${CARD_SIZES}` : CARD_SIZES;
+export function WorkGrid({ projects, heading = "h3", large = false }: { projects: Project[]; heading?: "h2" | "h3"; large?: boolean }) {
   return (
-    <div className={cn("work-grid", swipe && "work-grid--swipe")}>
-      {projects.map((p) => (
-        <ProjectCard key={p.name} project={p} heading={heading} sizes={sizes} />
+    <div className={cn("pieces", large && "pieces--large")}>
+      {projects.map((p, i) => (
+        <Piece key={p.name} project={p} heading={heading} flip={i % 2 === 1} sizes={large ? LARGE_SIZES : SIZES} />
       ))}
     </div>
   );
 }
 
-/** A card's screen in the grid: the whole width on phones, a column of two above. */
-const CARD_SIZES = "(max-width: 1023px) 100vw, (min-width: 1921px) 780px, 41vw";
+/** A piece's screen: the full width on phones, about two thirds of the page above (a little more on the home page). */
+const SIZES = "(max-width: 1023px) 100vw, (min-width: 1921px) 1100px, 58vw";
+const LARGE_SIZES = "(max-width: 1023px) 100vw, (min-width: 1921px) 1240px, 64vw";
 
-function ProjectCard({ project: p, heading: Heading, sizes }: { project: Project; heading: "h2" | "h3"; sizes: string }) {
+function Piece({ project: p, heading: Heading, flip, sizes }: { project: Project; heading: "h2" | "h3"; flip: boolean; sizes: string }) {
   const { media } = mediaOnDisk(p.name, p.media);
   return (
-    <article className="proj">
-      {media && <ProjectScreen media={media} sizes={sizes} />}
-      <div className="proj-body">
-        <Heading className="proj-name">{p.name}</Heading>
-        <p className="proj-meta label">
+    <article className={cn("piece", flip && "piece--flip", !media && "piece--text")}>
+      {media && <ProjectScreen media={media} sizes={sizes} className="piece-media" />}
+      <div className="piece-text">
+        <p className="piece-meta label">
           {p.place && (
             <>
               {p.place} <span aria-hidden="true">·</span>{" "}
@@ -96,15 +90,16 @@ function ProjectCard({ project: p, heading: Heading, sizes }: { project: Project
           )}
           {p.status}
         </p>
-        <p className="proj-line">{p.line}</p>
+        <Heading className="piece-name">{p.name}</Heading>
+        <p className="piece-line">{p.line}</p>
         {p.link && (
-          <p className="proj-site">
+          <p className="piece-site">
             {p.link.href.startsWith("/") ? (
-              <Link className="proj-link" href={p.link.href}>
+              <Link className="go" href={p.link.href}>
                 {p.link.label}
               </Link>
             ) : (
-              <a className="proj-link" href={p.link.href} target="_blank" rel="noopener">
+              <a className="go go--out" href={p.link.href} target="_blank" rel="noopener">
                 {p.link.label}
               </a>
             )}
@@ -119,36 +114,50 @@ function ProjectCard({ project: p, heading: Heading, sizes }: { project: Project
  * A project's screen, the live card: the 16:10 desktop still from 1024px up,
  * the 4:5 portrait one below it, and the loop over either once it plays.
  * Under reduced motion, a project with `still` set shows those instead (the
- * loop never plays there). Pass media through `mediaOnDisk` first, so only
- * files that exist are asked for. `sizes` defaults to a card in the grid.
+ * loop never plays there). `portrait` keeps the 4:5 still and the phone cut
+ * at every width (the opening's reel). Pass media through `mediaOnDisk`
+ * first, so only files that exist are asked for.
  */
 export function ProjectScreen({
   media: m,
-  sizes = CARD_SIZES,
+  sizes = SIZES,
   className,
+  portrait = false,
 }: {
   media: ProjectMedia;
   sizes?: string;
   className?: string;
+  portrait?: boolean;
 }) {
   const common = { alt: m.alt, sizes };
   const srcSet = (still: Still) => getImageProps({ ...common, ...still }).props.srcSet;
-  const { props: img } = getImageProps({ ...common, ...m.desktop });
+  const { props: img } = getImageProps({ ...common, ...(portrait ? m.mobile : m.desktop) });
   const reduced = "(prefers-reduced-motion: reduce)";
+  const loop = m.loop && (portrait ? phoneCut(m.loop) : m.loop);
 
   return (
-    <figure className={cn("proj-media", className)}>
+    <figure className={cn("screen", portrait && "screen--portrait", className)}>
       <picture>
-        {m.still && (
-          <>
-            <source media={`${reduced} and (max-width: 1023px)`} srcSet={srcSet(m.still.mobile)} sizes={sizes} />
-            <source media={reduced} srcSet={srcSet(m.still.desktop)} sizes={sizes} />
-          </>
-        )}
-        <source media="(max-width: 1023px)" srcSet={srcSet(m.mobile)} sizes={sizes} />
+        {m.still &&
+          (portrait ? (
+            <source media={reduced} srcSet={srcSet(m.still.mobile)} sizes={sizes} />
+          ) : (
+            <>
+              <source media={`${reduced} and (max-width: 1023px)`} srcSet={srcSet(m.still.mobile)} sizes={sizes} />
+              <source media={reduced} srcSet={srcSet(m.still.desktop)} sizes={sizes} />
+            </>
+          ))}
+        {!portrait && <source media="(max-width: 1023px)" srcSet={srcSet(m.mobile)} sizes={sizes} />}
         <img {...img} alt={m.alt} />
       </picture>
-      {m.loop && <WorkVideo {...m.loop} />}
+      {loop && <WorkVideo {...loop} />}
     </figure>
   );
 }
+
+/** A loop's phone cut at every width (or, with none, whatever cut it has). */
+const phoneCut = (l: NonNullable<ProjectMedia["loop"]>) => {
+  const hd = l.mobile ?? l.desktop;
+  const sd = l.mobileSd ?? l.desktopSd;
+  return { desktop: hd, mobile: hd, desktopSd: sd, mobileSd: sd };
+};

@@ -1,16 +1,15 @@
 import { Header } from "@/components/elorro/header";
 import { Footer } from "@/components/elorro/footer";
-import { Trail } from "@/components/elorro/trail";
 import { hanken } from "@/components/elorro/fonts";
 import { cn } from "@/lib/utils";
 import "@/components/elorro/elorro.css";
 
 /**
  * Every page but the home page, in the home page's frame: the same root,
- * type, header and footer, on the same paper. The home page builds its own
- * (app/page.tsx), because its root is also the "pick a name" toggle. The
- * seam is the home page's hero's alone. `local` lists the menu's section
- * links whose sections are on this page itself (see Header).
+ * type, bar and foot, on the same paper. `local` lists the menu's chapter
+ * links whose chapters are on this page itself (see Header). The root's
+ * class, .elo, is also what the film makes inert while it plays
+ * (components/elorro/film/film.tsx).
  */
 export function Page({
   local,
@@ -29,7 +28,6 @@ export function Page({
       <Header local={local} />
       <main id="main">{children}</main>
       <Footer />
-      <Trail />
     </div>
   );
 }
