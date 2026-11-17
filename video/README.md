@@ -14,7 +14,6 @@ npm run render       # every project's videos, posters and stills → ../public/
 npm run build        # capture, then render
 npm run pearls       # pearls-d.mp4 and its SD cut, from pearlsfarminc.com
 npm run pearls-drone # Pearls' Photo & video loops and posters, from its hero video
-npm run film-voice   # the /film narration's placeholder voice (macOS `say`), from its script
 npm run sd           # SD cuts of Pearls' phone loop and Cubic Ship's
 npm run studio       # preview and scrub the compositions in the browser
 ```
@@ -76,6 +75,44 @@ The site picks between the cuts in `components/elorro/work-video.tsx`; the
 files are listed on each project in `lib/elorro.ts`. One that's listed but not
 in `public/m/work/` yet is left out when the site builds, named in the build
 log, and its card shows the poster in its place (`lib/work-media.ts`).
+
+## Elora's voice (/film)
+
+`voice/elora-sia-take2.mp3` is Elora's voice in the film: ElevenLabs, voice
+"Sia - Natural Conversational Creator", model Eleven v4, the whole script
+(`components/elorro/film/script.ts`) read as one paragraph, in one take,
+generated and picked by Ashan. It's the source, kept here (Vercel ignores
+`video/`); the site plays `public/m/film/elora-sia.m4a`, made from it:
+
+```
+ffmpeg -i voice/elora-sia-take2.mp3 -map_metadata -1 -ac 1 -c:a aac_at -b:a 64k \
+  -movflags +faststart ../public/m/film/elora-sia.m4a
+```
+
+(`aac_at` is macOS's AAC encoder; elsewhere, `-c:a aac`.)
+
+How the timings in `script.ts` were made, to redo them for a new take:
+
+1. Find the quiet between her lines:
+   `ffmpeg -i voice/<take>.mp3 -af silencedetect=noise=-40dB:d=0.25 -f null -`
+   prints each pause's start (where she finishes a line) and end (where the
+   next starts). Match them to the lines in order. A pause inside a line can
+   be as long as one between lines, and two lines read as one sentence may
+   show none, so where it's unclear, look closer (`d=0.12`, `-35dB`) and
+   check a cut of the file by ear or with a local speech-to-text (whisper.cpp's
+   `whisper-cli`, with its `ggml-small.en` model). For this take, three
+   boundaries needed that: "search, / and into", "all three, / and build" and
+   "two of them, / and looked after".
+2. `voice.cues`: where each scene's first line starts in the file. Each
+   line's `at` is where it starts less its scene's cue, so 0 for a scene's
+   first line (the first scene's is `at` seconds in, after the logo), and
+   its `end`, where she finishes it, the same way (her glow follows it).
+3. Each scene's `duration` is its length in the film: at least from its first
+   line to the next scene's, as the file has them (`timeline()` makes it so).
+   Any longer and her voice waits that much at the scene's end, in the quiet
+   between her lines, while the pictures play on. In this take: the opening
+   (1 s, for her glide to the corner), Photo & video (1.8 s, for the drone
+   footage) and the plan (0.9 s, to read the page).
 
 ## Clinical Scribe
 

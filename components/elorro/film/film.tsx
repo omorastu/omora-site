@@ -5,7 +5,7 @@ import { createPortal } from "react-dom";
 import { hanken } from "@/components/elorro/fonts";
 import { EloraAvatar } from "@/components/elorro/film/elora";
 import { CAMERA, CLIPS, ClipContext, DESIGN, Handoff, SCENE_ART, type ClipId } from "@/components/elorro/film/scenes";
-import { captions, scenes, timeline, voice } from "@/components/elorro/film/script";
+import { captions, scenes, timeline, voice, voiceStretches } from "@/components/elorro/film/script";
 import { budget } from "@/components/elorro/work-video";
 import { hero } from "@/lib/elorro";
 import { cn } from "@/lib/utils";
@@ -21,9 +21,10 @@ import "@/components/elorro/film/film.css";
  *
  * Every picture moves by CSS animations on one clock (film.css). This keeps
  * them all at one time, and that time with Elora's voice: the voice leads
- * while it plays, and should it stall the pictures wait for it, briefly. Its
- * file is fetched as the page loads and started inside the click, so a phone
- * plays it. Without it, the film runs as captions alone, on the same timing.
+ * while it plays, and should it stall the pictures wait for it, briefly;
+ * where a scene runs on past her lines, she waits for it. Her file is
+ * fetched as the page loads and started inside the click, so a phone plays
+ * it. Without it, the film runs as captions alone, on the same timing.
  * Only the scenes near the moment are in the page at all (WINDOW), which
  * keeps a phone's memory and work to two scenes at most.
  *
@@ -69,6 +70,32 @@ const PREFETCH = 8;
 const TALL = "(max-width: 767px) and (max-aspect-ratio: 3/4)";
 /** The longest the pictures wait for a stalled voice, in ms, before going on without it. */
 const STALL_MS = 2000;
+/** Her voice against the film (script.ts): the stretches of her file, and between them, where she waits. */
+const VOICE = voiceStretches();
+/** A wait shorter than this, she plays through. */
+const MIN_WAIT = 0.2;
+/** The film's time at `pos` in her file, while she plays: in the stretch she's in, once the film (`t`, about now) has reached it. */
+const filmOf = (pos: number, t: number) => {
+  let i = 0;
+  while (i + 1 < VOICE.length && VOICE[i + 1].file <= pos && VOICE[i + 1].film <= t + MIN_WAIT) i++;
+  return VOICE[i].film + pos - VOICE[i].file;
+};
+/**
+ * Where her file should be at the film's time `t`. Waiting: quiet there until
+ * `until`. Playing: on through `stop`, if she waits after it.
+ */
+const voiceAt = (t: number) => {
+  let i = 0;
+  while (i + 1 < VOICE.length && VOICE[i + 1].film <= t) i++;
+  const s = VOICE[i];
+  const next = VOICE[i + 1];
+  if (t < s.film) return { pos: s.file, wait: true as const, until: s.film };
+  const off = t - s.film;
+  const end = s.film + s.len;
+  const waits = !!next && next.film - end >= MIN_WAIT;
+  if (off >= s.len && waits) return { pos: s.file + s.len, wait: true as const, until: next.film };
+  return { pos: s.file + off, wait: false as const, stop: waits ? end : undefined };
+};
 /** A scene is in the page from this many seconds before its start to as many after its end. */
 const WINDOW = 2.5;
 /** Keys that would scroll the page under the film. */
@@ -167,6 +194,8 @@ export function FilmLauncher({ label }: { label: string }) {
       a.currentTime = 0;
       a.muted = false;
       a.play().catch(() => {});
+      // Her first line comes a moment in: let go here, and the film starts her on time.
+      if (voice.src && VOICE[0].film > 0) a.pause();
     }
     // And the loops, started and stopped here, with nothing loaded yet, so they may play on their own later.
     if (!reducedMotion()) {
@@ -237,6 +266,11 @@ function Film({
   const shut = useRef<HTMLButtonElement>(null);
   const book = useRef<HTMLAnchorElement>(null);
   const clock = useRef<{ align(): void } | null>(null);
+  /** Leaving: her voice, stopped, stays stopped. */
+  const gone = useRef(closing);
+  useLayoutEffect(() => {
+    gone.current = closing;
+  }, [closing]);
   const [muted, setMuted] = useState(false);
   const [ended, setEnded] = useState(false);
   const [near, setNear] = useState(() => scenesAt(at));
@@ -372,18 +406,121 @@ function Film({
     let stalled = false;
     let waiting = false;
     let stall = 0;
-    const leads = () => !!a && !!voice.src && !a.paused && !a.ended && !stalled;
-    const at0 = run && leads() ? a!.currentTime : at;
+    /**
+     * On her way in, after a wait: the film's time she's due (`due`), from
+     * `parked` in her file. The pictures hold there until she's moving, as
+     * they do for a stalled voice, so she's never behind them and they never
+     * jump to meet her; it's in the quiet before her line, a moment at most.
+     */
+    let due = -1;
+    let parked = 0;
+    let watch = 0;
+    let late = 0;
+    const leads = () => !!a && !!voice.src && !a.paused && !a.ended && !stalled && due < 0;
+    /** The film's time by her voice, while it leads. */
+    const heard = () => filmOf(a!.currentTime, now());
+    const at0 = run && leads() ? filmOf(a!.currentTime, at) : at;
     if (run) runAt(at0);
     else pauseAt(at0);
     if (tick0) tick0.onfinish = () => setEnded(true);
     // Scenes just put in the page: onto the clock before they're seen.
-    clock.current = { align: () => (paused || waiting ? pauseAt(now()) : runAt(leads() ? a!.currentTime : now())) };
+    clock.current = { align: () => (paused || waiting || due >= 0 ? pauseAt(now()) : runAt(leads() ? heard() : now())) };
+
+    /**
+     * One file: her voice kept where the film is (script.ts, voiceStretches):
+     * playing through each stretch, quiet where the film runs on past her
+     * lines, on again as the film reaches her next one, from where she
+     * stopped; should she pick up further on than that (Chrome can, by a
+     * fifth of a second), she's put back before the pictures go on, while
+     * she's still quiet. Timed to the moment, not the tick, so she's never
+     * late in or cut short.
+     *
+     * Only her own waits start her again. Stopped any other way (not allowed
+     * to play, or by the visitor's device: headphones out, a call, a media
+     * key), she stays stopped (`off`) and the film goes on with its captions,
+     * as it would without her; started again from outside, she catches up.
+     */
+    let hold = 0;
+    let off = false;
+    /** Started by the film, and not since stopped by it for a wait. */
+    let on = false;
+    const rest = (pos: number, until: number, t: number) => {
+      on = false;
+      if (!a!.paused) a!.pause();
+      if (Math.abs(a!.currentTime - pos) > 0.08) a!.currentTime = pos;
+      if (until < Infinity) hold = window.setTimeout(keepVoice, Math.max(0, (until - t) * 1000));
+    };
+    const arrived = () => {
+      due = -1;
+      cancelAnimationFrame(watch);
+      clearTimeout(late);
+    };
+    const keepVoice = () => {
+      clearTimeout(hold);
+      if (!a || !voice.src || paused || waiting || stalled || off || due >= 0 || gone.current || a.ended) return;
+      if (a.paused && on) {
+        off = true;
+        return;
+      }
+      if (leads()) {
+        // Speaking: on to the end of her stretch, then quiet, if the film runs on past it.
+        const t = heard();
+        const v = voiceAt(t);
+        if (v.wait) rest(v.pos, v.until, t);
+        else if (v.stop !== undefined) hold = window.setTimeout(keepVoice, Math.max(0, (v.stop - t) * 1000));
+        return;
+      }
+      if (!a.paused) return;
+      const t = now();
+      const v = voiceAt(t);
+      if (v.wait) return rest(v.pos, v.until, t);
+      // On again: from where she waited, or where she'd be by now, should the film have gone on.
+      if (Math.abs(a.currentTime - v.pos) > 0.06) a.currentTime = v.pos;
+      parked = a.currentTime;
+      due = t;
+      pauseAt(t);
+      let last = parked;
+      let mended = false;
+      const moving = () => {
+        if (due < 0) return;
+        const pos = a.currentTime;
+        if (a.paused) {
+          // Stopped from outside before she got going.
+          off = true;
+          arrived();
+          runAt(now());
+          return;
+        }
+        if (!mended && pos - last > 0.05) {
+          // Picked up further on than she stopped, in a single frame: back to where she was.
+          mended = true;
+          a.currentTime = parked;
+        } else if (pos - parked > 0.06) {
+          // Truly under way (a browser may nudge the time on a little before it really starts).
+          arrived();
+          runAt(heard());
+          keepVoice();
+          return;
+        } else last = pos;
+        watch = requestAnimationFrame(moving);
+      };
+      watch = requestAnimationFrame(moving);
+      // Too slow to get going (a slow connection): the film goes on, and she catches up, as after a stall.
+      late = window.setTimeout(() => {
+        if (due < 0) return;
+        arrived();
+        stalled = true;
+        runAt(now());
+      }, STALL_MS);
+      on = true;
+      a.play().catch(() => {});
+    };
 
     // One file: the pictures follow it, and wait for it if it stalls, for STALL_MS at most.
     const onWaiting = () => {
       if (!leads()) return;
       waiting = true;
+      clearTimeout(hold);
       pauseAt(now());
       clearTimeout(stall);
       stall = window.setTimeout(() => {
@@ -395,11 +532,13 @@ function Film({
     const onPlaying = () => {
       clearTimeout(stall);
       waiting = false;
-      if (stalled && a) {
-        stalled = false;
-        a.currentTime = now();
+      if ((stalled || off) && a) {
+        stalled = off = false;
+        on = true;
+        a.currentTime = voiceAt(now()).pos;
       }
-      if (leads()) runAt(a!.currentTime);
+      if (leads()) runAt(heard());
+      keepVoice();
     };
     // One file per scene: each starts with its scene.
     let scene = 0;
@@ -408,8 +547,11 @@ function Film({
       const want = scenesAt(t);
       setNear((had) => (same(had, want) ? had : want));
       if (leads()) {
-        if (!waiting) runAt(a!.currentTime);
-      } else {
+        if (!waiting) runAt(heard());
+        keepVoice();
+      } else if (due < 0) {
+        // (A wait she should be through by now, should its moment have been missed.)
+        if (a?.paused && !on && !voiceAt(t).wait) keepVoice();
         if (a && !voice.src) {
           let i = 0;
           while (i + 1 < parts.length && parts[i + 1].start <= t) i++;
@@ -427,6 +569,7 @@ function Film({
     a?.addEventListener("waiting", onWaiting);
     a?.addEventListener("playing", onPlaying);
     const timer = run ? window.setInterval(tick, 200) : 0;
+    if (run) keepVoice();
 
     if (review) {
       window.__eloFilm = {
@@ -442,6 +585,9 @@ function Film({
     return () => {
       clearInterval(timer);
       clearTimeout(stall);
+      clearTimeout(hold);
+      clearTimeout(late);
+      cancelAnimationFrame(watch);
       a?.removeEventListener("waiting", onWaiting);
       a?.removeEventListener("playing", onPlaying);
       for (const type of GESTURES) el.removeEventListener(type, onGesture, true);
