@@ -82,37 +82,58 @@ log, and its card shows the poster in its place (`lib/work-media.ts`).
 "Sia - Natural Conversational Creator", model Eleven v4, the whole script
 (`components/elorro/film/script.ts`) read as one paragraph, in one take,
 generated and picked by Ashan. It's the source, kept here (Vercel ignores
-`video/`); the site plays `public/m/film/elora-sia.m4a`, made from it:
+`video/`); the site plays `public/m/film/elora-sia.m4a`, made from it with
+one phrase cut out (below):
 
 ```
-ffmpeg -i voice/elora-sia-take2.mp3 -map_metadata -1 -ac 1 -c:a aac_at -b:a 64k \
-  -movflags +faststart ../public/m/film/elora-sia.m4a
+ffmpeg -i voice/elora-sia-take2.mp3 -map_metadata -1 \
+  -filter_complex "[0:a]atrim=end=30.30,asetpts=N/SR/TB[a];[0:a]atrim=start=31.98,asetpts=N/SR/TB[b];[a][b]concat=n=2:v=0:a=1[o]" \
+  -map "[o]" -ac 1 -c:a aac_at -b:a 64k -movflags +faststart ../public/m/film/elora-sia.m4a
 ```
 
 (`aac_at` is macOS's AAC encoder; elsewhere, `-c:a aac`.)
 
+**The cut.** The website scene shows Pearls Farm Labor's site now, not
+Prosperando's, so ", like this one for Prosperando" is cut from her line
+"They build one that's clear and easy to use, like this one for
+Prosperando." The take runs 30.30–31.98 s through it. Both ends sit in her
+own silences: after "use" (quiet from 30.25 to 30.36 s) and after
+"Prosperando." (quiet from 31.95 to 32.33 s). What's left of the two pauses
+adds up to 0.42 s before "Booking by text…", the pause the take had there.
+The file is 1.68 s shorter, so every cue after the cut is 1.68 s earlier
+than in the take. The website scene keeps its length, so she waits those
+1.68 s while Pearls' site plays, and everything after it starts when it did.
+To change the cut, find a new pair of quiet points the same way (step 1),
+re-encode, and move the later cues by the difference.
+
 How the timings in `script.ts` were made, to redo them for a new take:
 
 1. Find the quiet between her lines:
-   `ffmpeg -i voice/<take>.mp3 -af silencedetect=noise=-40dB:d=0.25 -f null -`
+   `ffmpeg -i <file> -af silencedetect=noise=-40dB:d=0.25 -f null -`
    prints each pause's start (where she finishes a line) and end (where the
    next starts). Match them to the lines in order. A pause inside a line can
    be as long as one between lines, and two lines read as one sentence may
-   show none, so where it's unclear, look closer (`d=0.12`, `-35dB`) and
-   check a cut of the file by ear or with a local speech-to-text (whisper.cpp's
-   `whisper-cli`, with its `ggml-small.en` model). For this take, three
-   boundaries needed that: "search, / and into", "all three, / and build" and
-   "two of them, / and looked after".
-2. `voice.cues`: where each scene's first line starts in the file. Each
+   show none, so where it's unclear, look closer (`d=0.12`, `-35dB`, or the
+   loudness every 10 ms) and check a cut of the file by ear or with a local
+   speech-to-text (whisper.cpp's `whisper-cli`, with its `ggml-small.en`
+   model; `-ml 1` gives each word's time). For this take, three boundaries
+   needed that: "search, / and into", "all three, / and build" and "two of
+   them, / and looked after"; and the cut above.
+2. Each scene's `cue`: where its first line starts in the site's file. Each
    line's `at` is where it starts less its scene's cue, so 0 for a scene's
-   first line (the first scene's is `at` seconds in, after the logo), and
-   its `end`, where she finishes it, the same way (her glow follows it).
-3. Each scene's `duration` is its length in the film: at least from its first
-   line to the next scene's, as the file has them (`timeline()` makes it so).
-   Any longer and her voice waits that much at the scene's end, in the quiet
-   between her lines, while the pictures play on. In this take: the opening
-   (1 s, for her glide to the corner), Photo & video (1.8 s, for the drone
-   footage) and the plan (0.9 s, to read the page).
+   first line (the first scene's is `at` seconds in, after the logo; a demo's,
+   a moment in, as it comes out of the dark). Its `end`, where she finishes
+   it, the same way: her glow follows it. A line with no voice yet is
+   `silent`: captioned only.
+3. Each scene's `duration` is its length in the film. Within a part of the
+   film, it is at least from its first line to the next scene's, as the file
+   has them; the last scene of a part is at least as long as her lines in it
+   (`timeline()` makes it so). Any longer and her voice waits, in the quiet
+   between her lines, while the pictures play on. As cut: the opening (1 s,
+   for her glide to the corner) and the website (1.68 s, where the phrase
+   was). The demos and the plan run on past her lines too. The film jumps
+   from the choice to each demo and back, and on to the plan; her voice picks
+   up at each from the right place in the file.
 
 ## Clinical Scribe
 

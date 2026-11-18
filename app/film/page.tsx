@@ -24,8 +24,8 @@ export default function FilmPage() {
             <p className="cs-eyebrow label">A short film</p>
             <h1 className="cs-title">How we work.</h1>
             <p className="cs-sub">
-              Elora, our assistant, walks you through it in about a minute and a half. Sound on if you can; the
-              words are on screen either way.
+              Elora, our assistant, walks you through it in about a minute, then you pick what to see. Sound on if
+              you can; the words are on screen either way.
             </p>
             <FilmLauncher label="Watch how we work" />
           </div>

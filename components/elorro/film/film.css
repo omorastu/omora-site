@@ -594,18 +594,21 @@
 
 /* ---------- the end: book a call, on the set ---------- */
 .film-frame { z-index: 4; pointer-events: none; }
-/* The site's hero button, as big as it is there (components/elorro/elorro.css,
-   .act: the same type, padding and gold, and the hero's width), with a soft
-   glow; under it, quietly, a way back to the page. */
+/* Two ways on: the site's hero button, as big as it is there
+   (components/elorro/elorro.css, .act: the same type, padding and gold, and
+   the hero's width), with a soft glow; beside it, quieter, the same size in
+   outline, a look at the home page first. Stacked on a phone. */
 .film-end {
   position: absolute;
   left: 50%;
   top: 73%;
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: calc(.375 * var(--fr));
+  gap: var(--fr);
   transform: translateX(-50%);
+}
+@media (max-width: 767px) {
+  .film-end { flex-direction: column; gap: calc(.625 * var(--fr)); }
 }
 .film-book {
   display: inline-flex;
@@ -630,37 +633,39 @@
   animation: film-book .9s var(--film-ease) var(--from) both;
 }
 .film-book:focus-visible { outline: 2px solid var(--paper); outline-offset: 3px; }
-.film-stay {
-  min-height: 44px;
-  padding: calc(.5 * var(--fr)) var(--fr);
-  border: 0;
-  background: none;
-  color: rgb(244 241 234 / .68);
+.film-look {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: calc(15.75 * var(--fr));
+  min-height: calc(3.25 * var(--fr));
+  padding: var(--fr) calc(1.5 * var(--fr));
+  border: 1px solid rgb(244 241 234 / .4);
+  background: rgb(12 10 8 / .4);
+  color: var(--paper);
   font-family: var(--text);
-  font-size: max(calc(.875 * var(--fr)), 13px);
-  font-weight: 500;
-  letter-spacing: .01em;
-  text-decoration: underline;
-  text-decoration-color: rgb(244 241 234 / .25);
-  text-underline-offset: .3em;
+  font-size: max(calc(.8125 * var(--fr)), 12px);
+  font-weight: 600;
+  letter-spacing: .14em;
+  line-height: 1;
+  text-decoration: none;
+  text-transform: uppercase;
   white-space: nowrap;
-  cursor: pointer;
   pointer-events: auto;
-  animation: film-book .9s var(--film-ease) calc(var(--from) + .5s) both;
-  transition: color .2s ease, text-decoration-color .2s ease;
+  animation: film-book .9s var(--film-ease) calc(var(--from) + .35s) both;
+  transition: border-color .2s ease, background-color .2s ease;
 }
-.film-stay:focus-visible { outline: 2px solid var(--gold-hi); outline-offset: 2px; color: var(--paper); }
+.film-look:focus-visible { outline: 2px solid var(--gold-hi); outline-offset: 3px; }
 @media (hover: hover) {
   .film-book:hover { box-shadow: inset 0 0 0 100vmax rgb(32 20 4 / .16), 0 0 calc(2.75 * var(--fr)) rgb(190 150 69 / .36), 0 0 calc(.875 * var(--fr)) rgb(232 190 110 / .22); }
-  .film-stay:hover { color: var(--paper); text-decoration-color: rgb(244 241 234 / .6); }
+  .film-look:hover { border-color: rgb(244 241 234 / .8); background: rgb(244 241 234 / .06); }
 }
 /* A phone on its side has no room for the hero's size: the two side by side, at a phone's size,
    where the closing note was (she says it anyway). */
 @media (max-height: 560px) and (min-aspect-ratio: 1/1) {
   .film-word--note { display: none; }
   .film-end { top: 66%; flex-direction: row; gap: 12px; }
-  .film-book { min-width: 0; min-height: 44px; padding: 0 22px; font-size: 12px; }
-  .film-stay { font-size: 13px; }
+  .film-book, .film-look { min-width: 0; min-height: 44px; padding: 0 22px; font-size: 12px; }
 }
 @keyframes film-book {
   from { opacity: 0; visibility: hidden; transform: translate3d(0, 14px, 0); }
@@ -710,13 +715,175 @@
   6%, 100% { opacity: 1; transform: none; }
 }
 
-/* A hairline of gold along the foot: how far in. */
-.film-progress { position: absolute; z-index: 5; inset: auto 0 0; height: 2px; background: rgb(244 241 234 / .08); }
-.film-progress i { display: block; height: 100%; background: var(--gold-hi); transform-origin: left; animation: film-progress var(--total) linear 0s both; }
-@keyframes film-progress { from { transform: scaleX(0); } }
+/* A hairline of gold along the foot: how far into the part playing (the
+   first minute, a demo, or the plan and the close), each filling on its own
+   and gone once it's over; none on the choice. */
+.film-progress { position: absolute; z-index: 5; inset: auto 0 0; height: 2px; background: rgb(244 241 234 / .08); transition: opacity .3s ease; }
+.film-progress.is-hidden { opacity: 0; }
+.film-progress i { position: absolute; inset: 0; display: block; background: var(--gold-hi); transform-origin: left; animation: film-progress var(--len) linear var(--from) both; }
+.film-progress i.is-last { animation-name: film-progress-last; }
+@keyframes film-progress { from { transform: scaleX(0); } 99.9% { transform: scaleX(1); opacity: 1; } to { transform: scaleX(1); opacity: 0; } }
+@keyframes film-progress-last { from { transform: scaleX(0); } }
 /* The clock the film's end is read from. */
 .film-clock { position: absolute; width: 0; height: 0; animation: film-clock var(--total) linear 0s both; }
 @keyframes film-clock { from { opacity: 0; } to { opacity: 0; } }
+
+/* ---------- the choice ----------
+   Over the film, stopped: a line in the display face, three cards, each a
+   demo (its look, its name, a line; a gold tick once watched), and the way
+   on: quiet until a demo's been watched, the gold button after. Laid out
+   clear of the top bar and the captions; the film's own controls stay in
+   reach through it. In a row on a wide screen, stacked on a phone. */
+.film-choice {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: calc(4.5 * var(--fr)) var(--fr) calc(var(--cap-b) + 3 * var(--cap-size));
+  pointer-events: none;
+}
+.film-choice > * { pointer-events: auto; }
+.film-choice-h {
+  margin: 0 0 calc(2.25 * var(--fr));
+  font-family: var(--display);
+  font-size: calc(3.125 * var(--fr));
+  font-weight: 500;
+  line-height: 1.1;
+  letter-spacing: -.01em;
+  text-align: center;
+  color: transparent;
+  background: linear-gradient(180deg, #FFFFFF 0%, #F4F1EA 55%, #DCD4C4 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  animation: choice-in .8s var(--film-ease) both;
+}
+.film-cards {
+  display: grid;
+  grid-template-columns: repeat(3, min(calc(21.5 * var(--fr)), 29vw));
+  gap: calc(1.5 * var(--fr));
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.film-cards li { display: flex; }
+.film-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  margin: 0;
+  padding: 0 0 calc(1.125 * var(--fr));
+  overflow: hidden;
+  border: 1px solid rgb(244 241 234 / .16);
+  border-radius: calc(.875 * var(--fr));
+  background: linear-gradient(180deg, rgb(30 25 19 / .92), rgb(17 14 11 / .92));
+  box-shadow: 0 calc(1.25 * var(--fr)) calc(3 * var(--fr)) rgb(0 0 0 / .45);
+  color: var(--paper);
+  font-family: var(--text);
+  text-align: left;
+  cursor: pointer;
+  animation: choice-in .8s var(--film-ease) both;
+  transition: transform .35s var(--film-ease), border-color .25s ease, box-shadow .35s ease;
+}
+.film-cards li:nth-child(2) .film-card { animation-delay: .08s; }
+.film-cards li:nth-child(3) .film-card { animation-delay: .16s; }
+.film-card-look { display: block; aspect-ratio: 16 / 10; overflow: hidden; border-bottom: 1px solid rgb(244 241 234 / .1); background: var(--night); }
+.film-card-look picture { display: contents; }
+.film-card-look img { display: block; width: 100%; height: 100%; object-fit: cover; transition: transform .6s var(--film-ease); }
+.film-card-words { display: flex; flex-direction: column; gap: calc(.375 * var(--fr)); padding: calc(1 * var(--fr)) calc(1.125 * var(--fr)) 0; }
+.film-card-title { font-family: var(--display); font-size: calc(1.75 * var(--fr)); font-weight: 500; line-height: 1.1; letter-spacing: -.005em; }
+.film-card-line { font-size: max(calc(.9375 * var(--fr)), 13px); line-height: 1.4; color: rgb(244 241 234 / .7); }
+.film-card-seen {
+  position: absolute;
+  top: calc(.75 * var(--fr));
+  right: calc(.75 * var(--fr));
+  width: calc(2 * var(--fr));
+  height: calc(2 * var(--fr));
+  min-width: 26px;
+  min-height: 26px;
+  animation: choice-tick .6s var(--film-ease) both;
+}
+.film-card-seen svg { display: block; width: 100%; height: 100%; filter: drop-shadow(0 0 6px rgb(190 150 69 / .55)); }
+.film-card-seen circle { fill: url(#film-gold-v); }
+.film-card-seen path { fill: none; stroke: var(--ink); stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+.film-card.is-seen { border-color: rgb(217 182 106 / .55); }
+.film-card:focus-visible { outline: 2px solid var(--gold-hi); outline-offset: 3px; }
+@media (hover: hover) {
+  .film-card:hover { transform: translate3d(0, -4px, 0); border-color: rgb(217 182 106 / .7); box-shadow: 0 calc(1.25 * var(--fr)) calc(3 * var(--fr)) rgb(0 0 0 / .5), 0 0 calc(2 * var(--fr)) rgb(190 150 69 / .22); }
+  .film-card:hover .film-card-look img { transform: scale(1.04); }
+}
+/* Nothing done for a while: one gentle pulse of gold through the cards, in turn. */
+.film-card.is-nudge { animation: choice-nudge 1.4s ease-in-out both; }
+.film-cards li:nth-child(2) .film-card.is-nudge { animation-delay: .12s; }
+.film-cards li:nth-child(3) .film-card.is-nudge { animation-delay: .24s; }
+@keyframes choice-nudge {
+  0%, 100% { transform: none; border-color: rgb(244 241 234 / .16); }
+  40% { transform: scale(1.025); border-color: rgb(217 182 106 / .85); box-shadow: 0 calc(1.25 * var(--fr)) calc(3 * var(--fr)) rgb(0 0 0 / .45), 0 0 calc(2.5 * var(--fr)) rgb(190 150 69 / .35); }
+}
+@keyframes choice-in { from { opacity: 0; transform: translate3d(0, 16px, 0); } }
+@keyframes choice-tick { from { opacity: 0; transform: scale(.6); } }
+.film-next {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: calc(.5 * var(--fr));
+  min-height: 44px;
+  margin-top: calc(1.75 * var(--fr));
+  padding: calc(.75 * var(--fr)) calc(1.25 * var(--fr));
+  border: 1px solid transparent;
+  background: none;
+  color: rgb(244 241 234 / .72);
+  font-family: var(--text);
+  font-size: max(calc(.8125 * var(--fr)), 12px);
+  font-weight: 600;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  cursor: pointer;
+  animation: choice-in .8s var(--film-ease) .24s both;
+  transition: color .2s ease, background-color .3s ease, box-shadow .3s ease;
+}
+.film-next svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.film-next.is-main {
+  min-width: calc(12 * var(--fr));
+  padding: calc(.875 * var(--fr)) calc(1.75 * var(--fr));
+  background: var(--gold);
+  background-image: linear-gradient(180deg, var(--gold-hi), #886826 36%, #6D4F1C);
+  box-shadow: 0 0 calc(2.25 * var(--fr)) rgb(190 150 69 / .32), 0 0 calc(.75 * var(--fr)) rgb(232 190 110 / .2);
+  color: var(--paper);
+}
+.film-next:focus-visible { outline: 2px solid var(--gold-hi); outline-offset: 3px; color: var(--paper); }
+@media (hover: hover) {
+  .film-next:hover { color: var(--paper); }
+  .film-next.is-main:hover { box-shadow: inset 0 0 0 100vmax rgb(32 20 4 / .16), 0 0 calc(2.25 * var(--fr)) rgb(190 150 69 / .32); }
+}
+/* A phone upright: the cards stacked, each a row (its look, then its words), big enough to tap. */
+@media (max-width: 767px) {
+  .film-choice { justify-content: flex-start; padding: calc(64px + env(safe-area-inset-top)) 16px 0; }
+  .film-choice-h { margin-bottom: 14px; font-size: calc(1.625 * var(--fr)); }
+  .film-cards { grid-template-columns: 1fr; gap: 10px; width: 100%; max-width: 440px; }
+  .film-card { flex-direction: row; align-items: stretch; min-height: 84px; padding: 0; border-radius: 12px; }
+  .film-card-look { flex: 0 0 31%; aspect-ratio: auto; border-bottom: 0; border-right: 1px solid rgb(244 241 234 / .1); }
+  .film-card-words { justify-content: center; gap: 4px; padding: 10px 44px 10px 14px; }
+  .film-card-title { font-size: calc(1.25 * var(--fr)); }
+  .film-card-line { font-size: 13px; }
+  .film-card-seen { top: 50%; right: 12px; margin-top: -13px; width: 26px; height: 26px; }
+  .film-next { margin-top: 14px; }
+}
+/* A phone on its side: one row, small. */
+@media (max-height: 560px) and (min-aspect-ratio: 1/1) {
+  .film-choice { padding: 52px 16px calc(var(--cap-b) + 2.5 * var(--cap-size)); }
+  .film-choice-h { margin-bottom: 10px; font-size: 22px; }
+  .film-cards { grid-template-columns: repeat(3, min(200px, 28vw)); gap: 12px; }
+  .film-card { padding-bottom: 10px; border-radius: 10px; }
+  .film-card-look { aspect-ratio: 16 / 8; }
+  .film-card-words { padding: 8px 10px 0; gap: 2px; }
+  .film-card-title { font-size: 16px; }
+  .film-card-line { font-size: 12px; }
+  .film-next { margin-top: 8px; }
+}
 
 .film-sr { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 
@@ -741,7 +908,7 @@
   .film-cap { animation-name: film-window; }
   .film-cap.film-cap--last { animation-name: film-cap-last-still; }
   @keyframes film-cap-last-still { 0% { opacity: 0; } 8%, 100% { opacity: 1; } }
-  .film-book, .film-stay { animation-name: film-book-still; }
+  .film-book, .film-look { animation-name: film-book-still; }
   @keyframes film-book-still {
     from { opacity: 0; visibility: hidden; }
     to { opacity: 1; visibility: visible; }
@@ -760,9 +927,19 @@
   .film .fx { animation-duration: var(--len, .9s) !important; }
   .film-word { animation-duration: 1.3s !important; }
   .film-cap, .film-label, .elora-voice { animation-duration: var(--len) !important; }
-  .film-book, .film-stay { animation-duration: .9s !important; }
+  .film-book, .film-look { animation-duration: .9s !important; }
   .film-handoff .h-thread { animation-duration: 2.6s !important; }
-  .film-progress i, .film-clock { animation-duration: var(--total) !important; }
+  .film-progress i { animation-duration: var(--len) !important; }
+  .film-clock { animation-duration: var(--total) !important; }
+  /* A demo shows its finished state from its start, its captions running as ever. */
+  .film-scene[data-demo] .fx { animation-delay: var(--s) !important; animation-duration: .01s !important; }
+  /* The choice comes in without moving; the nudge is a glow, not a pulse. */
+  .film-choice-h, .film-card, .film-next { animation-name: choice-fade !important; animation-duration: .5s !important; }
+  @keyframes choice-fade { from { opacity: 0; } }
+  .film-card.is-nudge { animation-name: choice-glow !important; animation-duration: 1.4s !important; }
+  @keyframes choice-glow { 40% { border-color: rgb(217 182 106 / .85); } }
+  .film-card-seen { animation-duration: .01s !important; }
+  .film-card:hover, .film-card:hover .film-card-look img { transform: none; }
   .elora { animation-duration: 1.6s, .01s !important; }
   /* A search result moves to the top in a cut rather than a slide. */
   .film .fx-moveto { animation-duration: .01s !important; }

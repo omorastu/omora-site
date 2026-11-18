@@ -2,10 +2,22 @@
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
+import Link from "next/link";
 import { hanken } from "@/components/elorro/fonts";
 import { EloraAvatar } from "@/components/elorro/film/elora";
 import { CAMERA, CLIPS, ClipContext, DESIGN, Handoff, SCENE_ART, type ClipId } from "@/components/elorro/film/scenes";
-import { captions, scenes, timeline, voice, voiceStretches } from "@/components/elorro/film/script";
+import {
+  DEMO_IDS,
+  GAP,
+  captions,
+  choice,
+  scenes,
+  timeline,
+  voice,
+  voiceStretches,
+  type DemoId,
+  type SegmentId,
+} from "@/components/elorro/film/script";
 import { budget } from "@/components/elorro/work-video";
 import { hero } from "@/lib/elorro";
 import { cn } from "@/lib/utils";
@@ -13,11 +25,19 @@ import "@/components/elorro/film/film.css";
 
 /**
  * "How we work", a short film narrated by Elora: a button, and the film it
- * opens over the whole screen. It plays on its own, scene into scene
- * (scenes.tsx, timed by script.ts), its captions always on, Elora in her
- * corner (elora.tsx); the only things to do are leave (the X, or Escape) and
- * turn the sound off and on. It ends on a button to book a call, which takes
- * the page to its contact section.
+ * opens over the whole screen. Its first minute plays on its own, scene into
+ * scene (scenes.tsx, timed by script.ts), its captions always on, Elora in
+ * her corner (elora.tsx). Then it stops on a choice (its cards are at the
+ * foot of Film): three demos, each playing in place and coming back to the
+ * choice with its card ticked, as many as the visitor likes, in any order;
+ * "Next" goes on to the plan and the close. Nothing moves on from the choice by itself. Throughout, the
+ * visitor can leave (the X, or Escape) and turn the sound off and on. It
+ * ends on two buttons: book a call, which takes the page to its contact
+ * section, and a look at the home page first.
+ *
+ * The film's parts all sit on one timeline (script.ts, SEGMENTS), a few
+ * seconds apart; the clock jumps between them (`go`) and stops on the
+ * choice (HOLD).
  *
  * Every picture moves by CSS animations on one clock (film.css). This keeps
  * them all at one time, and that time with Elora's voice: the voice leads
@@ -39,14 +59,30 @@ import "@/components/elorro/film/film.css";
  * On a phone upright the scenes are laid out tall (TALL, scenes.tsx); the
  * film follows the screen if it turns.
  *
- * For reviewing: /film?at=30 opens the film stopped 30 seconds in, silent;
- * /film?at=30&run plays it on from there.
+ * For reviewing, silent: /film?at=30 opens the film stopped 30 seconds in
+ * (up to the choice, the film's time), and /film?at=30&run plays it on from
+ * there; /film?at=choice opens on the choice; /film?demo=tools (or photo,
+ * frontdesk) plays that demo and comes back to the choice, and
+ * /film?demo=tools&at=3 stops 3 seconds into it; /film?at=plan stops on the
+ * plan, and /film?at=plan&run plays the plan and the close.
  */
 
-const { parts, total } = timeline();
+const { parts, segments, total } = timeline();
 const CAPTIONS = captions();
-/** Her glow follows what she says, not how long its caption stays up. */
-const SPOKEN = CAPTIONS.map((c) => ({ from: c.from, to: c.said }));
+/** Her glow follows what she says, not how long its caption stays up (and not a line she has no voice for yet). */
+const SPOKEN = CAPTIONS.filter((c) => !c.silent).map((c) => ({ from: c.from, to: c.said }));
+const SEG = Object.fromEntries(segments.map((s) => [s.id, s])) as Record<SegmentId, (typeof segments)[number]>;
+/** Where the film stops for the choice: once the last of the first minute has gone and its backdrop is in. */
+const HOLD = SEG.choice.start + 1;
+/** Into a part a moment before its first scene, so it comes in out of the dark. */
+const LEAD = 0.45;
+/** Back from a demo to the choice once its pictures have all but gone. */
+const RETURN = 0.45;
+const PLAN_AT = SEG.finale.start - LEAD;
+const demoAt = (id: DemoId) => SEG[id].start - LEAD;
+const isDemo = (id: SegmentId): id is DemoId => (DEMO_IDS as string[]).includes(id);
+/** The part of the film at `t`: each reaches half way into the quiet either side of it. */
+const segOf = (t: number) => segments.find((s) => t < s.end + GAP / 2) ?? segments[segments.length - 1];
 const LAST = parts[parts.length - 1];
 /** The button to book a call comes up as she says so, the film's last line. */
 const BOOK_AT = LAST.start + (LAST.scene.lines[LAST.scene.lines.length - 1]?.at ?? 0);
@@ -64,8 +100,11 @@ const CLIP_AT = CLIP_IDS.map((id) => {
   const k = p.duration / DESIGN[c.scene];
   return { id, from: p.start + c.at * k, to: p.start + c.until * k, offset: c.offset };
 });
-/** A loop starts loading this many seconds before it plays (never sooner, so the film starts fast). */
+/** A loop starts loading this many seconds before it plays (never sooner, so the film starts fast); a demo's, as the choice comes up. */
 const PREFETCH = 8;
+const DEMO_CLIPS = new Set(CLIP_IDS.filter((id) => isDemo(parts.find((p) => p.scene.id === CLIPS[id].scene)?.segment ?? "main")));
+/** Nothing done on the choice for this long, in ms: the cards pulse once. */
+const NUDGE_MS = 20000;
 /** A phone upright: the scenes' tall layout. Kept the same as film.css's. */
 const TALL = "(max-width: 767px) and (max-aspect-ratio: 3/4)";
 /** The longest the pictures wait for a stalled voice, in ms, before going on without it. */
@@ -151,8 +190,29 @@ function useTall() {
 declare global {
   interface Window {
     /** Set only while reviewing (?at=): stops the film at a time, in seconds. */
-    __eloFilm?: { seek(t: number): void; total: number; starts: number[] };
+    __eloFilm?: {
+      seek(t: number): void;
+      total: number;
+      starts: number[];
+      hold: number;
+      segments: { id: string; start: number; end: number }[];
+    };
   }
+}
+
+/** What a review link opens on (see the top of this file), or null. */
+function reviewing(q: URLSearchParams): Showing | null {
+  const at = q.get("at");
+  const demo = q.get("demo") as DemoId | null;
+  const run = q.has("run");
+  if (demo && isDemo(demo)) {
+    const into = at === null ? null : Math.max(0, Number(at) || 0);
+    return { at: into === null ? demoAt(demo) : SEG[demo].start + into, run: into === null || run, review: true };
+  }
+  if (at === null) return null;
+  if (at === "choice") return { at: HOLD, run: false, review: true };
+  if (at === "plan") return { at: run ? PLAN_AT : SEG.finale.start + 1.2, run, review: true };
+  return { at: Math.min(total, Math.max(0, Number(at) || 0)), run, review: true };
 }
 
 export function FilmLauncher({ label }: { label: string }) {
@@ -165,20 +225,15 @@ export function FilmLauncher({ label }: { label: string }) {
   const refocus = useRef(false);
 
   useEffect(() => {
-    const first = voice.src ?? scenes[0].voice;
-    if (first) {
+    if (voice.src) {
       const a = new Audio();
       a.preload = "auto";
-      a.src = first;
+      a.src = voice.src;
       audio.current = a;
     }
-    const q = new URLSearchParams(location.search);
-    const at = q.get("at");
-    // Reviewing (?at=): open on it once the page is up.
-    const review =
-      at === null
-        ? 0
-        : window.setTimeout(() => setShowing({ at: Math.min(total, Math.max(0, Number(at) || 0)), run: q.has("run"), review: true }));
+    // Reviewing (?at=, ?demo=): open on it once the page is up.
+    const open = reviewing(new URLSearchParams(location.search));
+    const review = open ? window.setTimeout(() => setShowing(open)) : 0;
     return () => {
       audio.current?.pause();
       clearTimeout(leaving.current);
@@ -190,7 +245,6 @@ export function FilmLauncher({ label }: { label: string }) {
     // Inside the click itself: the one moment a phone lets the voice start.
     const a = audio.current;
     if (a) {
-      if (!voice.src && scenes[0].voice) a.src = scenes[0].voice;
       a.currentTime = 0;
       a.muted = false;
       a.play().catch(() => {});
@@ -265,7 +319,7 @@ function Film({
   const reel = useRef<HTMLDivElement>(null);
   const shut = useRef<HTMLButtonElement>(null);
   const book = useRef<HTMLAnchorElement>(null);
-  const clock = useRef<{ align(): void } | null>(null);
+  const clock = useRef<{ align(): void; go(t: number, run: boolean): void } | null>(null);
   /** Leaving: her voice, stopped, stays stopped. */
   const gone = useRef(closing);
   useLayoutEffect(() => {
@@ -273,6 +327,15 @@ function Film({
   }, [closing]);
   const [muted, setMuted] = useState(false);
   const [ended, setEnded] = useState(false);
+  /** On the choice (or playing); the demos watched; the card to come back to. */
+  const [choosing, setChoosing] = useState(() => segOf(at).id === "choice");
+  const [seen, setSeen] = useState<DemoId[]>([]);
+  const [back, setBack] = useState<DemoId | null>(null);
+  const toChoice = useCallback((from?: DemoId) => {
+    setChoosing(true);
+    setBack(from ?? null);
+    if (from) setSeen((had) => (had.includes(from) ? had : [...had, from]));
+  }, []);
   const [near, setNear] = useState(() => scenesAt(at));
   const tall = useTall();
   // The loops stay on their stills under reduced motion, and on a connection too slow for them.
@@ -318,7 +381,10 @@ function Film({
     const anims = () => el.getAnimations({ subtree: true }).filter((x) => !(typeof CSSTransition !== "undefined" && x instanceof CSSTransition));
     const tick0 = el.querySelector(".film-clock")?.getAnimations()[0];
     const now = () => Number(tick0?.currentTime ?? 0) / 1000;
-    let paused = !run;
+    /** The part of the film playing: the first minute, the choice (stopped), a demo, or the plan and the close. */
+    let seg: SegmentId = segOf(at).id;
+    const start = seg === "choice" ? HOLD : at;
+    let paused = !run || seg === "choice";
     /** Elora's video, if she has one, kept to the film's time. */
     const face = () => el.querySelector<HTMLVideoElement>(".elora-video");
     const keepFace = (t: number) => {
@@ -336,17 +402,19 @@ function Film({
      * the visitor's next tap.
      */
     const blocked = new Set<HTMLVideoElement>();
+    // (Taps anywhere on the film count, the choice's cards too.)
+    const host = el.parentElement ?? el;
     const onGesture = () => {
       for (const v of blocked) {
         v.play()?.catch(() => {});
         if (!v.paused) blocked.delete(v);
       }
-      if (!blocked.size) for (const type of GESTURES) el.removeEventListener(type, onGesture, true);
+      if (!blocked.size) for (const type of GESTURES) host.removeEventListener(type, onGesture, true);
       clock.current?.align();
     };
     const refused = (v: HTMLVideoElement) => (err: unknown) => {
       if (!(err instanceof DOMException) || err.name !== "NotAllowedError") return;
-      if (!blocked.size) for (const type of GESTURES) el.addEventListener(type, onGesture, true);
+      if (!blocked.size) for (const type of GESTURES) host.addEventListener(type, onGesture, true);
       blocked.add(v);
     };
     const keepClips = (t: number, moving: boolean) => {
@@ -354,8 +422,8 @@ function Film({
       for (const c of CLIP_AT) {
         const v = clips.current?.[c.id];
         if (!v) continue;
-        // Its cut for the layout, from shortly before it plays; and the other cut, should the screen turn meanwhile.
-        if (t >= c.from - PREFETCH && t <= c.to) {
+        // Its cut for the layout, from shortly before it plays (a demo's, from the choice); and the other cut, should the screen turn meanwhile.
+        if ((t >= c.from - PREFETCH && t <= c.to) || (seg === "choice" && DEMO_CLIPS.has(c.id))) {
           const cut = CLIPS[c.id].cuts;
           const upright = window.matchMedia(TALL).matches;
           const src = budget() === "sd" ? (upright ? cut.mobileSd : cut.desktopSd) : upright ? cut.mobile : cut.desktop;
@@ -419,12 +487,10 @@ function Film({
     const leads = () => !!a && !!voice.src && !a.paused && !a.ended && !stalled && due < 0;
     /** The film's time by her voice, while it leads. */
     const heard = () => filmOf(a!.currentTime, now());
-    const at0 = run && leads() ? filmOf(a!.currentTime, at) : at;
-    if (run) runAt(at0);
-    else pauseAt(at0);
+    const at0 = !paused && leads() ? filmOf(a!.currentTime, start) : start;
+    if (paused) pauseAt(at0);
+    else runAt(at0);
     if (tick0) tick0.onfinish = () => setEnded(true);
-    // Scenes just put in the page: onto the clock before they're seen.
-    clock.current = { align: () => (paused || waiting || due >= 0 ? pauseAt(now()) : runAt(leads() ? heard() : now())) };
 
     /**
      * One file: her voice kept where the film is (script.ts, voiceStretches):
@@ -516,6 +582,62 @@ function Film({
       a.play().catch(() => {});
     };
 
+    /**
+     * The parts. The first minute plays to the choice and stops there (HOLD);
+     * a demo plays from just before its start to just after its end, then
+     * back to the choice; the plan and the close play to the film's end.
+     * Each part's end is timed to the moment, and checked on every tick.
+     */
+    let endTimer = 0;
+    const segEnd = () => (seg === "main" ? HOLD : isDemo(seg) ? SEG[seg].end + RETURN : Infinity);
+    const quiet = () => {
+      clearTimeout(hold);
+      clearTimeout(late);
+      clearTimeout(stall);
+      clearTimeout(endTimer);
+      cancelAnimationFrame(watch);
+      due = -1;
+      waiting = false;
+      stalled = false;
+      off = false;
+      on = false;
+    };
+    /** To `t` on the timeline, playing or stopped there: the pictures, then her voice, ready where she'll pick up. */
+    const go = (t: number, play: boolean) => {
+      quiet();
+      seg = segOf(t).id;
+      paused = !play;
+      if (a && voice.src) {
+        if (!a.paused) a.pause();
+        const pos = voiceAt(t).pos;
+        if (Math.abs(a.currentTime - pos) > 0.05) a.currentTime = pos;
+      }
+      if (play) runAt(t);
+      else pauseAt(t);
+      setNear(scenesAt(t));
+      if (play) {
+        keepVoice();
+        armEnd();
+      }
+    };
+    const checkEnd = (t: number) => {
+      if (paused || t < segEnd()) return false;
+      const from = isDemo(seg) ? seg : undefined;
+      go(HOLD, false);
+      toChoice(from);
+      return true;
+    };
+    const armEnd = () => {
+      clearTimeout(endTimer);
+      const e = segEnd();
+      if (paused || e === Infinity) return;
+      endTimer = window.setTimeout(() => {
+        if (!checkEnd(now())) armEnd();
+      }, Math.max(20, (e - now()) * 1000 + 20));
+    };
+    // Scenes just put in the page: onto the clock before they're seen; and the jumps between parts.
+    clock.current = { align: () => (paused || waiting || due >= 0 ? pauseAt(now()) : runAt(leads() ? heard() : now())), go };
+
     // One file: the pictures follow it, and wait for it if it stalls, for STALL_MS at most.
     const onWaiting = () => {
       if (!leads()) return;
@@ -540,62 +662,56 @@ function Film({
       if (leads()) runAt(heard());
       keepVoice();
     };
-    // One file per scene: each starts with its scene.
-    let scene = 0;
     const tick = () => {
       const t = now();
+      if (checkEnd(t)) return;
       const want = scenesAt(t);
       setNear((had) => (same(had, want) ? had : want));
+      if (paused) return;
       if (leads()) {
         if (!waiting) runAt(heard());
         keepVoice();
       } else if (due < 0) {
         // (A wait she should be through by now, should its moment have been missed.)
         if (a?.paused && !on && !voiceAt(t).wait) keepVoice();
-        if (a && !voice.src) {
-          let i = 0;
-          while (i + 1 < parts.length && parts[i + 1].start <= t) i++;
-          const src = parts[i].scene.voice;
-          if (i !== scene && src) {
-            a.src = src;
-            a.play().catch(() => {});
-          }
-          scene = i;
-        }
         keepFace(t);
         keepClips(t, true);
       }
     };
     a?.addEventListener("waiting", onWaiting);
     a?.addEventListener("playing", onPlaying);
-    const timer = run ? window.setInterval(tick, 200) : 0;
-    if (run) keepVoice();
+    const timer = window.setInterval(tick, 200);
+    if (!paused) {
+      keepVoice();
+      armEnd();
+    }
 
     if (review) {
       window.__eloFilm = {
         seek: (t: number) => {
+          quiet();
+          seg = segOf(t).id;
           paused = true;
           pauseAt(t);
           setNear(scenesAt(t));
         },
         total,
         starts: parts.map((p) => p.start),
+        hold: HOLD,
+        segments: segments.map(({ id, start, end }) => ({ id, start, end })),
       };
     }
     return () => {
       clearInterval(timer);
-      clearTimeout(stall);
-      clearTimeout(hold);
-      clearTimeout(late);
-      cancelAnimationFrame(watch);
+      quiet();
       a?.removeEventListener("waiting", onWaiting);
       a?.removeEventListener("playing", onPlaying);
-      for (const type of GESTURES) el.removeEventListener(type, onGesture, true);
+      for (const type of GESTURES) host.removeEventListener(type, onGesture, true);
       if (tick0) tick0.onfinish = null;
       clock.current = null;
       delete window.__eloFilm;
     };
-  }, [at, run, review, sound, clips, still]);
+  }, [at, run, review, sound, clips, still, toChoice]);
 
   // Scenes just put in the page, or laid out anew for a turned screen: onto the clock before they're seen.
   useLayoutEffect(() => {
@@ -605,6 +721,45 @@ function Film({
   useEffect(() => {
     if (ended) book.current?.focus({ preventScroll: true });
   }, [ended]);
+
+  // The choice: the focus on the card just watched, or the first; the cards pulse once if nothing's done for a while.
+  const cards = useRef<Partial<Record<DemoId, HTMLButtonElement | null>>>({});
+  const [nudge, setNudge] = useState(false);
+  useEffect(() => {
+    if (!choosing) return;
+    if (!review) cards.current[back ?? choice.cards[0].demo]?.focus({ preventScroll: true });
+    const host = root.current;
+    let off = 0;
+    let wait = 0;
+    const idle = () => {
+      clearTimeout(wait);
+      wait = window.setTimeout(() => {
+        setNudge(true);
+        off = window.setTimeout(() => setNudge(false), 1800);
+        for (const type of ["pointermove", "pointerdown", "keydown"]) host?.removeEventListener(type, idle);
+      }, NUDGE_MS);
+    };
+    idle();
+    for (const type of ["pointermove", "pointerdown", "keydown"]) host?.addEventListener(type, idle);
+    return () => {
+      clearTimeout(wait);
+      clearTimeout(off);
+      setNudge(false);
+      for (const type of ["pointermove", "pointerdown", "keydown"]) host?.removeEventListener(type, idle);
+    };
+  }, [choosing, back, review]);
+
+  /** A demo, from the choice; or on to the plan. The focus waits on the X meanwhile. */
+  const pick = (id: DemoId) => {
+    setChoosing(false);
+    shut.current?.focus({ preventScroll: true });
+    clock.current?.go(demoAt(id), true);
+  };
+  const next = () => {
+    setChoosing(false);
+    shut.current?.focus({ preventScroll: true });
+    clock.current?.go(PLAN_AT, true);
+  };
 
   // Leaving by key, the focus kept inside, and nothing underneath scrolled meanwhile.
   useEffect(() => {
@@ -669,6 +824,7 @@ function Film({
               key={scene.id}
               className={cn("film-scene", i === 0 && "is-first", i === parts.length - 1 && "is-last")}
               data-scene={scene.id}
+              data-demo={isDemo(scene.id as SegmentId) ? "" : undefined}
               aria-hidden="true"
               style={
                 {
@@ -705,9 +861,9 @@ function Film({
             <a ref={book} className="film-book" href="#contact" onClick={() => onLeave(false)}>
               {hero.cta.label}
             </a>
-            <button type="button" className="film-stay" onClick={() => onLeave()}>
-              Or keep looking around
-            </button>
+            <Link className="film-look" href="/" onClick={() => onLeave(false)}>
+              Take a quick look at us first
+            </Link>
           </div>
         </div>
 
@@ -745,11 +901,66 @@ function Film({
             </p>
           ))}
         </div>
-        <div className="film-progress" aria-hidden="true">
-          <i />
+        {/* How far into the part playing: the first minute, a demo, or the plan and the close; none on the choice. */}
+        <div className={cn("film-progress", choosing && "is-hidden")} aria-hidden="true">
+          {segments
+            .filter((p) => p.id !== "choice")
+            .map((p) => (
+              <i key={p.id} className={p.id === "finale" ? "is-last" : undefined} style={{ "--from": sec(p.start), "--len": sec(p.end - p.start) } as Vars} />
+            ))}
         </div>
         <span className="film-clock" aria-hidden="true" />
       </div>
+
+      {choosing && (
+        <div className="film-choice" role="group" aria-labelledby="film-choice-h">
+          <h2 className="film-choice-h" id="film-choice-h">
+            {choice.line}
+          </h2>
+          <ul className="film-cards">
+            {choice.cards.map((c) => {
+              const watched = seen.includes(c.demo);
+              return (
+                <li key={c.demo}>
+                  <button
+                    ref={(n) => {
+                      cards.current[c.demo] = n;
+                    }}
+                    type="button"
+                    className={cn("film-card", watched && "is-seen", nudge && "is-nudge")}
+                    onClick={() => pick(c.demo)}
+                  >
+                    <span className="film-card-look" aria-hidden="true">
+                      <picture>
+                        <img src={`/m/film/choice-${c.demo}.jpg`} alt="" decoding="async" />
+                      </picture>
+                    </span>
+                    <span className="film-card-words">
+                      <span className="film-card-title">{c.title}</span>
+                      <span className="film-card-line">{c.line}</span>
+                    </span>
+                    {watched && (
+                      <span className="film-card-seen">
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                          <circle cx="12" cy="12" r="11" />
+                          <path d="M7 12.4l3.2 3.2L17.2 8.6" />
+                        </svg>
+                        <span className="film-sr">, watched</span>
+                      </span>
+                    )}
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+          <button type="button" className={cn("film-next", seen.length > 0 && "is-main")} onClick={next}>
+            {choice.next}
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M5 12h13M13 7l5 5-5 5" />
+            </svg>
+          </button>
+        </div>
+      )}
 
       {/* What she says, for screen readers, all at once. */}
       <div className="film-sr">
