@@ -1,0 +1,170 @@
+/* /type, Elorro Display's specimen (app/type/page.tsx). Its own rules, in the
+   site's tokens (components/elorro/elorro.css), scoped to the page. */
+
+.elo .type-band {
+  padding: 3.5rem var(--pad) 4rem;
+  border-top: 1px solid var(--ink-20);
+}
+.elo .type-label { color: var(--ink-65); }
+
+/* The wordmark, as in the header (600, 0.36em), large. */
+.elo .type-mark {
+  margin-top: 2.5rem;
+  font-size: 9.5rem;
+  line-height: 1;
+}
+.elo .type-mark .wordmark { font-weight: 600; letter-spacing: .36em; margin-right: -.36em; }
+.elo .type-mark--ink { margin-top: 2rem; font-size: 4rem; }
+.elo .type-mark--ink .wordmark { font-weight: 500; letter-spacing: .42em; margin-right: -.42em; }
+
+.elo .type-names {
+  margin-top: 2rem;
+  font-family: var(--font-display);
+  font-size: 8rem;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: -.02em;
+}
+.elo .type-names--small { margin-top: 1.5rem; font-size: 1.5rem; letter-spacing: 0; }
+
+/* The five letters, before and after. */
+.elo .type-sigs {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 2.5rem 2rem;
+  margin: 2.5rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+.elo .type-sig-pair {
+  display: flex;
+  align-items: baseline;
+  gap: .75rem;
+  font-weight: 500;
+  line-height: 1;
+}
+.elo .type-sig-before,
+.elo .type-sig-after { font-size: 7rem; }
+.elo .type-sig-before { font-family: var(--font-cormorant), serif; color: rgb(22 19 15 / .3); }
+.elo .type-sig-after { font-family: var(--font-display); }
+.elo .type-sig-name {
+  margin-top: 1.5rem;
+  font-family: var(--font-display);
+  font-size: 1.625rem;
+  font-weight: 500;
+  line-height: 1.15;
+}
+.elo .type-sig-text {
+  margin-top: .625rem;
+  font-size: max(1rem, 15px);
+  line-height: 1.45;
+  color: var(--ink-65);
+}
+
+/* Every character. */
+.elo .type-set { margin-top: 2.5rem; }
+.elo .type-set + .type-set { padding-top: 2.5rem; border-top: 1px solid var(--ink-20); }
+.elo .type-set-weight { color: var(--gold-text); }
+.elo .type-set-line {
+  display: grid;
+  grid-template-columns: 9rem minmax(0, 1fr);
+  align-items: baseline;
+  gap: 1.5rem;
+  margin-top: 1rem;
+}
+.elo .type-set-name { color: var(--ink-65); }
+.elo .type-set-chars {
+  font-family: var(--font-display);
+  font-size: 2.75rem;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+.elo .type-w5 .type-set-chars { font-weight: 500; }
+.elo .type-w6 .type-set-chars { font-weight: 600; }
+.elo .type-w7 .type-set-chars { font-family: var(--font-display-bold), var(--font-display); font-weight: 700; }
+
+/* Headings from the site, at their sizes there (elorro.css). */
+.elo .type-heads { margin-top: 1rem; }
+.elo .type-head-note { margin-top: 3rem; color: var(--ink-65); }
+.elo .type-head-note:first-child { margin-top: 1.5rem; }
+.elo .type-hero {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 0 3rem;
+  margin-top: 1rem;
+  font-family: var(--font-display);
+  font-size: 9rem;
+  font-weight: 500;
+  line-height: .9;
+  letter-spacing: -.02em;
+}
+.elo .type-hero > span:not(.gold) { display: flex; flex-direction: column; align-items: center; }
+.elo .type-hero b {
+  margin-top: .5rem;
+  font-family: var(--font-display-bold), var(--font-display);
+  font-size: 2.375rem;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+.elo .type-h-sec {
+  margin-top: 1rem;
+  max-width: 62rem;
+  font-family: var(--font-display);
+  font-size: 3.625rem;
+  font-weight: 500;
+  line-height: 1.04;
+  letter-spacing: -.015em;
+  text-wrap: balance;
+}
+.elo .type-h-svc {
+  margin-top: .75rem;
+  font-family: var(--font-display);
+  font-size: 2.75rem;
+  font-weight: 500;
+  line-height: 1.05;
+  letter-spacing: -.01em;
+}
+.elo .type-h-proj {
+  margin-top: 1rem;
+  font-family: var(--font-display);
+  font-size: 2.25rem;
+  font-weight: 500;
+  line-height: 1.25;
+  letter-spacing: -.01em;
+}
+.elo .type-film {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem 4rem;
+  margin-top: 1rem;
+  padding: 2.5rem 3rem;
+  background: var(--ink);
+  color: var(--paper);
+  font-family: var(--font-display);
+  font-size: 5rem;
+  font-weight: 500;
+  line-height: 1.05;
+  letter-spacing: -.01em;
+}
+
+@media (max-width: 1023px) {
+  .elo .type-band { padding: 2.5rem var(--pad) 3rem; }
+  .elo .type-mark { font-size: 3.4rem; margin-top: 1.75rem; }
+  .elo .type-mark--ink { font-size: 2rem; }
+  .elo .type-names { font-size: 4.25rem; }
+  .elo .type-names--small { font-size: 1.5rem; }
+  .elo .type-sigs { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2rem 1.25rem; }
+  .elo .type-sig:last-child { grid-column: 1 / -1; }
+  .elo .type-sig-before,
+  .elo .type-sig-after { font-size: 4.25rem; }
+  .elo .type-sig-name { font-size: 1.375rem; }
+  .elo .type-set-line { grid-template-columns: minmax(0, 1fr); gap: .25rem; }
+  .elo .type-set-chars { font-size: 1.875rem; }
+  .elo .type-hero { font-size: 4.5rem; gap: 0 1.25rem; }
+  .elo .type-hero b { font-size: 1.6875rem; }
+  .elo .type-h-sec { font-size: 2.375rem; }
+  .elo .type-h-svc { font-size: 2rem; }
+  .elo .type-h-proj { font-size: 1.75rem; }
+  .elo .type-film { font-size: 2.75rem; padding: 1.75rem 1.5rem; gap: .75rem 2rem; }
+}

@@ -7,7 +7,7 @@ import { elora } from "@/components/elorro/film/script";
  * corner). One piece to swap: with `elora.video` set (script.ts) a video of
  * her takes the stand-in's place, cut to the same circle, and film.tsx keeps
  * it in step with the film. Until then the medallion holds her initial: a
- * gold E in Cormorant, the wordmark's face, softly lit, rimmed in the logo's
+ * gold E in Elorro Display, the wordmark's face, softly lit, rimmed in the logo's
  * gold.
  *
  * Behind her, a glow that lifts while she speaks (one per line, timed from

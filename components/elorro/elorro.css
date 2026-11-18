@@ -10,9 +10,11 @@
       kept for a few things: the wordmark and the two rings, the
       ampersand between the names, the picked name and the send button.
       The two people share both. Nothing decorative.
-   3. Cormorant Garamond, the wordmark's family, for every heading and
-      display line (names ~3x a normal h1), in 500 and 600 + Hanken
-      Grotesk for everything else (text, wide-caps labels, fields, buttons).
+   3. Elorro Display, our own face (Cormorant Garamond with its O, R, E, L
+      and ampersand redrawn; design/type), the wordmark's family, for every
+      heading and display line (names ~3x a normal h1), in 500 and 600 +
+      Hanken Grotesk for everything else (text, wide-caps labels, fields,
+      buttons).
    4. Photo direction: real screens of real projects, unframed, square,
       one hairline; no portraits for now (lib/elorro.ts).
    5. The paper runs edge to edge: no frame, no card, nothing behind it.
@@ -65,7 +67,7 @@ html:has(.elo),
      clearly (4.6:1 or more). */
   --gold-button: linear-gradient(180deg, var(--gold-hi), #886826 36%, #6D4F1C);
 
-  /* --font-logo (Cormorant Garamond) comes from next/font on <html>
+  /* --font-logo (Elorro Display) comes from next/font on <html>
      (app/layout.tsx), --font-hanken on .elo itself (components/elorro/fonts.ts). */
   --font-display: var(--font-logo), Georgia, "Times New Roman", serif;
   --font-text: var(--font-hanken), "Helvetica Neue", Arial, sans-serif;

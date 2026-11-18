@@ -4,25 +4,27 @@ import { Analytics } from "@vercel/analytics/react";
 import "./globals.css";
 
 /*
- * The display face, loaded once for every page: Cormorant Garamond, the
- * wordmark's family (.wordmark in globals.css, 500) and every heading's
- * (elorro.css points --font-display here; 500 and 600). The text face,
- * Hanken Grotesk, comes with each page's frame (components/elorro/fonts.ts).
+ * The display face, loaded once for every page: Elorro Display, our own
+ * (Cormorant Garamond with its O, R, E, L and ampersand redrawn; built by
+ * design/type/build.py). It sets the wordmark (.wordmark in globals.css)
+ * and every heading (elorro.css points --font-display here): its Regular at
+ * 500, its SemiBold at 600. The text face, Hanken Grotesk, comes with each
+ * page's frame (components/elorro/fonts.ts).
  *
- * All the site's fonts are files in app/fonts (Google Fonts' own latin
- * files, so the build never fetches them; README there), declared the way
- * Google's CSS declared them: one variable file serving 500 and 600. Their
- * stand-ins while they load are in globals.css ("fallbacks").
+ * All the site's fonts are files in app/fonts (README there), so the build
+ * never fetches them. Both files here are preloaded; until they arrive the
+ * text is set in a stand-in sized to them (globals.css, "fallbacks"), so
+ * the headings don't move when they swap in.
  */
-const cormorantGaramond = localFont({
+const elorroDisplay = localFont({
   src: [
-    { path: "./fonts/cormorant-garamond-latin-wght.woff2", weight: "500", style: "normal" },
-    { path: "./fonts/cormorant-garamond-latin-wght.woff2", weight: "600", style: "normal" },
+    { path: "./fonts/elorro-display-regular.woff2", weight: "500", style: "normal" },
+    { path: "./fonts/elorro-display-semibold.woff2", weight: "600", style: "normal" },
   ],
   variable: "--font-logo",
   display: "swap",
   adjustFontFallback: false,
-  fallback: ["Cormorant Garamond Fallback"],
+  fallback: ["Elorro Display Fallback"],
 });
 
 // Absolute base for link previews (og:image etc.). Uses the live Vercel URL
@@ -71,7 +73,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={cormorantGaramond.variable}>
+    <html lang="en" className={elorroDisplay.variable}>
       {/* Each page's frame brings its own skip link, in the site's type. */}
       <body>
         {children}

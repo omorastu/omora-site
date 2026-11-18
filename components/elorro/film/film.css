@@ -342,7 +342,7 @@
 .film-art .t-gold-deep { fill: var(--gold); }
 .film-art .t-ink-faint { fill: rgb(22 19 15 / .42); }
 .film-art .t-name { font-weight: 500; letter-spacing: -.005em; }
-/* The ELORRO wordmark, on paper: Cormorant in caps, tracked, in the logo's deeper gold. */
+/* The ELORRO wordmark, on paper: Elorro Display in caps, tracked, in the logo's deeper gold. */
 .film-art .t-mark { font-family: var(--display); font-weight: 600; letter-spacing: .36em; text-transform: uppercase; fill: var(--gold); }
 /* A website of another time: its serif, its link blue, its banner yellow. */
 .film-art .t-old { font-family: "Times New Roman", Times, Georgia, serif; }

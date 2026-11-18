@@ -4,7 +4,7 @@ import localFont from "next/font/local";
  * The site's text face, for running text, labels, fields and buttons. Every
  * page's root carries its variable (the home page's in app/page.tsx, every
  * other page's in components/elorro/page.tsx); elorro.css reads it as
- * --font-text and --font-label. The display face, Cormorant Garamond, is
+ * --font-text and --font-label. The display face, Elorro Display, is
  * loaded once for the whole site in app/layout.tsx. One variable file in
  * app/fonts serves all three weights, as Google's CSS had it; its stand-in
  * while it loads is in globals.css ("fallbacks").

@@ -1,7 +1,7 @@
 import { hero, people, type Who } from "@/lib/elorro";
 import { HandsStatus, WhoButton } from "@/components/elorro/hands";
 import { Seam } from "@/components/elorro/seam";
-import { cormorantBold } from "@/components/elorro/hero-font";
+import { displayBold } from "@/components/elorro/hero-font";
 import { cn } from "@/lib/utils";
 
 /**
@@ -19,7 +19,7 @@ import { cn } from "@/lib/utils";
 export function Hero() {
   return (
     <section
-      className={cn("hero", cormorantBold.variable)}
+      className={cn("hero", displayBold.variable)}
       id="top"
       aria-label={`${people.a.name} and ${people.j.name}`}
     >

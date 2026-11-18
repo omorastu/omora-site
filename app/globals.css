@@ -27,17 +27,19 @@ body {
 /* ── Fallbacks ──────────────────────────────────────────────────────────
    What the text is set in until the fonts in app/fonts arrive (they load
    with display: swap): a system face sized and spaced to the real one, so
-   the page barely moves when it swaps. The figures are the ones next/font
-   used for these two families when they came from Google Fonts, kept so the
-   move to local files changed nothing (app/layout.tsx,
-   components/elorro/fonts.ts and hero-font.ts name these). */
+   the page doesn't move when it swaps. Elorro Display's figures are
+   measured: size-adjust makes Times New Roman set the site's headings as
+   wide as Elorro Display does, and the ascent and descent are Elorro
+   Display's own, so each line sits where it will (design/type/README.md,
+   "Loading"). Hanken Grotesk's are the ones next/font gave it.
+   (app/layout.tsx, components/elorro/fonts.ts and hero-font.ts name these.) */
 @font-face {
-  font-family: "Cormorant Garamond Fallback";
+  font-family: "Elorro Display Fallback";
   src: local("Times New Roman");
-  ascent-override: 95.27%;
-  descent-override: 29.59%;
+  ascent-override: 95.01%;           /* 924 / 1000 / size-adjust */
+  descent-override: 29.51%;          /* 287 / 1000 / size-adjust */
   line-gap-override: 0%;
-  size-adjust: 96.98%;
+  size-adjust: 97.25%;
 }
 @font-face {
   font-family: "Hanken Grotesk Fallback";
@@ -64,8 +66,8 @@ body {
 }
 
 @layer components {
-  /* The ELORRO wordmark (components/wordmark.tsx), on every page: Cormorant
-     Garamond 500, caps, 0.42em tracking. The negative right margin takes back
+  /* The ELORRO wordmark (components/wordmark.tsx), on every page: Elorro
+     Display 500, caps, 0.42em tracking. The negative right margin takes back
      the tracking after the last letter, so the mark's box ends where its ink
      does and it centres and aligns optically. Size is left to the caller. */
   .wordmark {

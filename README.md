@@ -35,7 +35,8 @@ every old `/services/<slug>` → `/services`; see `next.config.mjs`.
 | `components/elorro/` | one file per home section, plus `hands.tsx` (the "pick a name" toggle, the names' entrance), `seam.tsx`, `page.tsx` (the frame every other page sits in) |
 | `components/elorro/elorro.css` | every style on every page, scoped under `.elo` |
 | `components/work/case-study.tsx` | the case-study template |
-| `components/wordmark.tsx` | the ELORRO wordmark (Cormorant Garamond 500, caps, 0.42em) |
+| `components/wordmark.tsx` | the ELORRO wordmark (Elorro Display 500, caps, 0.42em) |
+| `design/type/` | Elorro Display, the site's display face: its sources and build (README there) |
 
 The pages scale as a poster: the root font size follows the viewport (a 1440
 frame on desktop, 375 under 1024px), so every `rem` in `elorro.css` scales with
