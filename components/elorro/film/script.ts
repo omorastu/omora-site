@@ -221,15 +221,16 @@ export const scenes: Scene[] = [
 
 /** The film's parts, in order: the first minute, the choice, each demo, then the plan and the close. */
 export type SegmentId = "main" | "choice" | DemoId | "finale";
-export const SEGMENTS: { id: SegmentId; scenes: SceneId[] }[] = [
+export const SEGMENTS: { id: SegmentId; scenes: SceneId[]; joined?: boolean }[] = [
   { id: "main", scenes: ["elora", "call", "found", "site", "booking", "calls", "office"] },
-  { id: "choice", scenes: ["choice"] },
+  // Straight on from the first minute, which plays into it.
+  { id: "choice", scenes: ["choice"], joined: true },
   { id: "tools", scenes: ["tools"] },
   { id: "photo", scenes: ["photo"] },
   { id: "frontdesk", scenes: ["frontdesk"] },
   { id: "finale", scenes: ["plan", "close"] },
 ];
-/** The quiet between two parts on the timeline, in seconds: none of one is ever drawn over the other. */
+/** The quiet between two parts the film jumps between, in seconds: none of one is ever drawn over the other. */
 export const GAP = 4;
 
 /**
@@ -243,7 +244,7 @@ export function timeline() {
   let t = 0;
   const parts: { scene: Scene; start: number; duration: number; segment: SegmentId }[] = [];
   const segments = SEGMENTS.map((seg, k) => {
-    if (k > 0) t += GAP;
+    if (k > 0 && !seg.joined) t += GAP;
     const segStart = t;
     seg.scenes.forEach((id, j) => {
       const scene = scenes.find((s) => s.id === id)!;

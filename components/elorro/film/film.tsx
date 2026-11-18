@@ -8,7 +8,6 @@ import { EloraAvatar } from "@/components/elorro/film/elora";
 import { CAMERA, CLIPS, ClipContext, DESIGN, Handoff, SCENE_ART, type ClipId } from "@/components/elorro/film/scenes";
 import {
   DEMO_IDS,
-  GAP,
   captions,
   choice,
   scenes,
@@ -81,8 +80,8 @@ const RETURN = 0.45;
 const PLAN_AT = SEG.finale.start - LEAD;
 const demoAt = (id: DemoId) => SEG[id].start - LEAD;
 const isDemo = (id: SegmentId): id is DemoId => (DEMO_IDS as string[]).includes(id);
-/** The part of the film at `t`: each reaches half way into the quiet either side of it. */
-const segOf = (t: number) => segments.find((s) => t < s.end + GAP / 2) ?? segments[segments.length - 1];
+/** The part of the film at `t`: each reaches half way into the quiet either side of it (none, where one plays into the next). */
+const segOf = (t: number) => segments.find((s, i) => !segments[i + 1] || t < (s.end + segments[i + 1].start) / 2) ?? segments[segments.length - 1];
 const LAST = parts[parts.length - 1];
 /** The button to book a call comes up as she says so, the film's last line. */
 const BOOK_AT = LAST.start + (LAST.scene.lines[LAST.scene.lines.length - 1]?.at ?? 0);
