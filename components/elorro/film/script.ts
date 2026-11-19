@@ -2,10 +2,9 @@
  * "How we work", the film: Elora's lines and the film's timing, in one place.
  * Plain data, nothing imported.
  *
- * The film runs in parts (SEGMENTS). The first minute plays on its own, from
- * Elora to the one-entry moment behind the scenes. Then it stops on a choice:
- * three short demos, any or all of them in any order, each coming back to the
- * choice when it's done. "Next" goes on to the plan and the close.
+ * The short opening leads to the choice of business and service examples.
+ * The full walkthrough continues from the opening through the one-entry
+ * scene. Examples return to the choice, which also leads to the plan.
  *
  * Each scene runs `duration` seconds and holds Elora's lines, each starting
  * `at` seconds into its scene. A line's caption shows from its start to the
@@ -45,12 +44,14 @@ export type SceneId =
   | "tools"
   | "photo"
   | "frontdesk"
+  | "website"
+  | "local"
   | "plan"
   | "close";
 
-/** The three demos on the choice, each a scene of its own. */
-export type DemoId = "tools" | "photo" | "frontdesk";
-export const DEMO_IDS: DemoId[] = ["tools", "photo", "frontdesk"];
+/** The examples on the choice, each a scene of its own. */
+export const DEMO_IDS = ["tools", "photo", "frontdesk", "website", "local"] as const;
+export type DemoId = (typeof DEMO_IDS)[number];
 
 export type Line = {
   text: string;
@@ -87,15 +88,61 @@ export const elora: { video?: string; poster?: string } = {};
 // phrase cut out of it (video/README.md, "Elora's voice").
 export const voice: { src?: string } = { src: "/m/film/elora-sia.m4a" };
 
-/** The choice, after the one-entry moment: its line, and a card for each demo. */
-export const choice = {
-  line: "Pick one to see it in action.",
-  next: "Next",
-  cards: [
-    { demo: "tools" as DemoId, title: "Custom tools", line: "A consult, written up for you" },
-    { demo: "photo" as DemoId, title: "Photo & video", line: "Your place, on camera" },
-    { demo: "frontdesk" as DemoId, title: "Front desk, behind the scenes", line: "Watch a call get handled" },
-  ],
+type ChoiceCard = { demo: DemoId; title: string; line: string; image: string };
+
+export const choice: Record<"owners" | "services", { heading: string; cards: ChoiceCard[] }> = {
+  owners: {
+    heading: "What kind of business do you run?",
+    cards: [
+      {
+        demo: "website",
+        title: "Winery or venue",
+        line: "Show people the place and give them a clear way to inquire.",
+        image: "/m/film/pearls-site-d-poster.jpg",
+      },
+      {
+        demo: "frontdesk",
+        title: "Dental or ortho practice",
+        line: "See a call turn into a booked consult.",
+        image: "/m/film/choice-frontdesk.jpg",
+      },
+      {
+        demo: "local",
+        title: "Local service business",
+        line: "Show customers how to start online before they come in.",
+        image: "/m/work/cubic-d-poster.jpg",
+      },
+    ],
+  },
+  services: {
+    heading: "What would you like to improve?",
+    cards: [
+      {
+        demo: "website",
+        title: "Website",
+        line: "See a real site take a visitor from first look to inquiry.",
+        image: "/m/film/pearls-site-d-poster.jpg",
+      },
+      {
+        demo: "photo",
+        title: "Photo & video",
+        line: "Show what it’s like to visit or work with you.",
+        image: "/m/film/choice-photo.jpg",
+      },
+      {
+        demo: "frontdesk",
+        title: "Calls & booking",
+        line: "See how a call gets answered and confirmed.",
+        image: "/m/film/choice-frontdesk.jpg",
+      },
+      {
+        demo: "tools",
+        title: "Custom tools",
+        line: "See a consult turn into notes and a follow-up draft.",
+        image: "/m/film/choice-tools.jpg",
+      },
+    ],
+  },
 };
 
 export const scenes: Scene[] = [
@@ -210,6 +257,24 @@ export const scenes: Scene[] = [
     ],
   },
   {
+    id: "website",
+    label: "Website example · Pearls Farm Labor",
+    duration: 10.4,
+    lines: [
+      { text: "Pearls Farm Labor shows its crew at work.", at: 0.3, silent: true },
+      { text: "Visitors can see what Pearls does and request a crew.", at: 5.1, silent: true },
+    ],
+  },
+  {
+    id: "local",
+    label: "Local business example · Cubic Ship",
+    duration: 9.6,
+    lines: [
+      { text: "Cubic Ship shows customers what they can do before they visit a counter.", at: 0.3, silent: true },
+      { text: "Start online, then finish in person.", at: 4.5, silent: true },
+    ],
+  },
+  {
     // A little longer than her lines: the page, all ticked, a moment to read.
     id: "plan",
     label: "07 · The plan",
@@ -233,7 +298,7 @@ export const scenes: Scene[] = [
   },
 ];
 
-/** The film's parts, in order: the first minute, the choice, each demo, then the plan and the close. */
+/** The full walkthrough, the choice, the examples, then the plan and close. */
 export type SegmentId = "main" | "choice" | DemoId | "finale";
 export const SEGMENTS: { id: SegmentId; scenes: SceneId[]; joined?: boolean; voice?: string }[] = [
   { id: "main", scenes: ["elora", "call", "found", "site", "booking", "calls", "office"] },
@@ -242,6 +307,8 @@ export const SEGMENTS: { id: SegmentId; scenes: SceneId[]; joined?: boolean; voi
   { id: "tools", scenes: ["tools"] },
   { id: "photo", scenes: ["photo"] },
   { id: "frontdesk", scenes: ["frontdesk"] },
+  { id: "website", scenes: ["website"] },
+  { id: "local", scenes: ["local"] },
   { id: "finale", scenes: ["plan", "close"] },
 ];
 /** The quiet between two parts the film jumps between, in seconds: none of one is ever drawn over the other. */

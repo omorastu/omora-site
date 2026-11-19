@@ -24,15 +24,10 @@ import "@/components/elorro/film/film.css";
 
 /**
  * "How we work", a short film narrated by Elora: a button, and the film it
- * opens over the whole screen. Its first minute plays on its own, scene into
- * scene (scenes.tsx, timed by script.ts), its captions always on, Elora in
- * her corner (elora.tsx). Then it stops on a choice (its cards are at the
- * foot of Film): three demos, each playing in place and coming back to the
- * choice with its card ticked, as many as the visitor likes, in any order;
- * "Next" goes on to the plan and the close. Nothing moves on from the choice by itself. Throughout, the
- * visitor can leave (the X, or Escape) and turn the sound off and on. It
- * ends on two buttons: book a call, which takes the page to its contact
- * section, and a look at the home page first.
+ * opens over the whole screen. A short opening offers examples by business or
+ * service. Examples play in place and return to the choice, and visitors can
+ * watch the full walkthrough or go straight to the plan. The X and Escape
+ * close the film. The final booking button leads to the page's contact form.
  *
  * The film's parts all sit on one timeline (script.ts, SEGMENTS), a few
  * seconds apart; the clock jumps between them (`go`) and stops on the
@@ -50,7 +45,7 @@ import "@/components/elorro/film/film.css";
  * Only the scenes near the moment are in the page at all (WINDOW), which
  * keeps a phone's memory and work to two scenes at most.
  *
- * Three of the scenes play videos of Elorro's real work, made for the film
+ * Scenes play videos of Elorro's real work, made for the film
  * (scenes.tsx, CLIPS; video/README.md), each once through. Their videos are
  * made, and started and stopped at once, inside the same click:
  * an iPhone in Low Power Mode lets a video play on its own later only if it
@@ -77,13 +72,15 @@ const SPOKEN = CAPTIONS.filter((c) => !c.silent).map((c) => ({ from: c.from, to:
 const SEG = Object.fromEntries(segments.map((s) => [s.id, s])) as Record<SegmentId, (typeof segments)[number]>;
 /** Where the film stops for the choice: once the last of the first minute has gone and its backdrop is in. */
 const HOLD = SEG.choice.start + 1;
+/** Stop before the first minute continues into its next narrated scene. */
+const OPEN_END = parts[0].duration - 0.35;
 /** Into a part a moment before its first scene, so it comes in out of the dark. */
 const LEAD = 0.45;
 /** Back from a demo to the choice once its pictures have all but gone. */
 const RETURN = 0.45;
 const PLAN_AT = SEG.finale.start - LEAD;
 const demoAt = (id: DemoId) => SEG[id].start - LEAD;
-const isDemo = (id: SegmentId): id is DemoId => (DEMO_IDS as string[]).includes(id);
+const isDemo = (id: SegmentId): id is DemoId => DEMO_IDS.some((demo) => demo === id);
 /** The part of the film at `t`: each reaches half way into the quiet either side of it (none, where one plays into the next). */
 const segOf = (t: number) => segments.find((s, i) => !segments[i + 1] || t < (s.end + segments[i + 1].start) / 2) ?? segments[segments.length - 1];
 const LAST = parts[parts.length - 1];
@@ -101,11 +98,10 @@ const CLIP_AT = CLIP_IDS.map((id) => {
   const c = CLIPS[id];
   const p = parts.find((x) => x.scene.id === c.scene) ?? parts[0];
   const k = p.duration / DESIGN[c.scene];
-  return { id, from: p.start + c.at * k, to: p.start + c.until * k, offset: c.offset };
+  return { id, segment: p.segment, from: p.start + c.at * k, to: p.start + c.until * k, offset: c.offset };
 });
-/** A loop starts loading this many seconds before it plays (never sooner, so the film starts fast); a demo's, as the choice comes up. */
+/** A loop loads shortly before playback, on the part the visitor actually chose. */
 const PREFETCH = 8;
-const DEMO_CLIPS = new Set(CLIP_IDS.filter((id) => isDemo(parts.find((p) => p.scene.id === CLIPS[id].scene)?.segment ?? "main")));
 /** Nothing done on the choice for this long, in ms: the cards pulse once. */
 const NUDGE_MS = 20000;
 /** A phone upright: the scenes' tall layout. Kept the same as film.css's. */
@@ -355,14 +351,23 @@ function Film({
   const [ended, setEnded] = useState(false);
   /** On the choice (or playing); the demos watched; the card to come back to. */
   const [choosing, setChoosing] = useState(() => segOf(at).id === "choice");
+  const [menu, setMenu] = useState<keyof typeof choice>("owners");
+  const examples = choice[menu];
+  const [playingExample, setPlayingExample] = useState<DemoId | null>(() => {
+    const id = segOf(at).id;
+    return isDemo(id) ? id : null;
+  });
+  const shortOpening = useRef(!review);
   const [seen, setSeen] = useState<DemoId[]>([]);
   const [back, setBack] = useState<DemoId | null>(null);
   const toChoice = useCallback((from?: DemoId) => {
     setChoosing(true);
+    setPlayingExample(null);
     setBack(from ?? null);
     if (from) setSeen((had) => (had.includes(from) ? had : [...had, from]));
   }, []);
   const [near, setNear] = useState(() => scenesAt(at));
+  const opening = !choosing && near.includes(0);
   const tall = useTall();
   // The loops stay on their stills under reduced motion, and on a connection too slow for them.
   const [still] = useState(() => reducedMotion() || budget() === "none");
@@ -448,11 +453,21 @@ function Film({
       for (const c of CLIP_AT) {
         const v = clips.current?.[c.id];
         if (!v) continue;
-        // Its cut for the layout, from shortly before it plays (a demo's, from the choice); and the other cut, should the screen turn meanwhile.
-        if ((t >= c.from - PREFETCH && t <= c.to) || (seg === "choice" && DEMO_CLIPS.has(c.id))) {
+        // Load the cut for the current layout and switch to the other on rotation.
+        if (seg === c.segment && t >= c.from - PREFETCH && t <= c.to) {
           const cut = CLIPS[c.id].cuts;
           const upright = window.matchMedia(TALL).matches;
           const src = budget() === "sd" ? (upright ? cut.mobileSd : cut.desktopSd) : upright ? cut.mobile : cut.desktop;
+          if (!src) {
+            if (v.dataset.src) {
+              v.pause();
+              delete v.dataset.src;
+              v.classList.remove("is-on");
+              v.removeAttribute("src");
+              v.load();
+            }
+            continue;
+          }
           if (v.dataset.src !== src) {
             v.dataset.src = src;
             v.classList.remove("is-on");
@@ -627,7 +642,7 @@ function Film({
      * Each part's end is timed to the moment, and checked on every tick.
      */
     let endTimer = 0;
-    const segEnd = () => (seg === "main" ? HOLD : isDemo(seg) ? SEG[seg].end + RETURN : Infinity);
+    const segEnd = () => (seg === "main" ? (shortOpening.current ? OPEN_END : HOLD) : isDemo(seg) ? SEG[seg].end + RETURN : Infinity);
     const quiet = () => {
       clearTimeout(hold);
       clearTimeout(late);
@@ -766,7 +781,7 @@ function Film({
   const [nudge, setNudge] = useState(false);
   useEffect(() => {
     if (!choosing) return;
-    if (!review) cards.current[back ?? choice.cards[0].demo]?.focus({ preventScroll: true });
+    if (!review) (cards.current[back ?? examples.cards[0].demo] ?? cards.current[examples.cards[0].demo])?.focus({ preventScroll: true });
     const host = root.current;
     let off = 0;
     let wait = 0;
@@ -786,13 +801,24 @@ function Film({
       setNudge(false);
       for (const type of ["pointermove", "pointerdown", "keydown"]) host?.removeEventListener(type, idle);
     };
-  }, [choosing, back, review]);
+  }, [choosing, back, review, examples]);
 
   /** A demo, from the choice; or on to the plan. The focus waits on the X meanwhile. */
   const pick = (id: DemoId) => {
     setChoosing(false);
+    setPlayingExample(id);
     shut.current?.focus({ preventScroll: true });
     clock.current?.go(demoAt(id), true);
+  };
+  const openChoice = () => {
+    clock.current?.go(HOLD, false);
+    toChoice();
+  };
+  const watchFull = () => {
+    shortOpening.current = false;
+    setChoosing(false);
+    shut.current?.focus({ preventScroll: true });
+    clock.current?.go(0, true);
   };
   const next = () => {
     setChoosing(false);
@@ -821,9 +847,11 @@ function Film({
         return;
       }
       // A button's own Space still presses it.
-      if (SCROLL_KEYS.has(e.key) && !(e.key === " " && e.target instanceof HTMLButtonElement)) e.preventDefault();
+      if (SCROLL_KEYS.has(e.key) && !(e.key === " " && e.target instanceof HTMLButtonElement) &&
+          !(e.target instanceof Element && e.target.closest(".film-choice"))) e.preventDefault();
     };
     const still = (e: Event) => {
+      if (e.target instanceof Element && e.target.closest(".film-choice")) return;
       if (!(e instanceof TouchEvent) || e.touches.length < 2) e.preventDefault();
     };
     document.addEventListener("keydown", onKey, true);
@@ -844,12 +872,16 @@ function Film({
   return (
     <div
       ref={root}
-      className={cn("film", hanken.variable, closing && "is-closing")}
+      className={cn("film", hanken.variable, closing && "is-closing", opening && "is-opening", choosing && "is-choosing")}
       role="dialog"
       aria-modal="true"
       aria-label="How we work: a short film, narrated by Elora"
+      aria-describedby="film-purpose"
       style={{ "--total": sec(total) } as Vars}
     >
+      <p id="film-purpose" className="film-sr">
+        Ashan and Jordan build websites, shoot photo and video, and help businesses handle booking and follow-up.
+      </p>
       <div ref={reel} className="film-reel">
         <GoldDefs />
 
@@ -917,6 +949,11 @@ function Film({
               ))}
           </div>
           <div className="film-ctls">
+            {(opening || playingExample) && (
+              <button type="button" className="film-examples-button" onClick={openChoice}>
+                {opening ? "Choose an example" : "Back to examples"}
+              </button>
+            )}
             {sound && (
               <button type="button" className="film-ctl" aria-label="Sound off" aria-pressed={muted} onClick={toggleSound}>
                 <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -954,10 +991,13 @@ function Film({
       {choosing && (
         <div className="film-choice" role="group" aria-labelledby="film-choice-h">
           <h2 className="film-choice-h" id="film-choice-h">
-            {choice.line}
+            {examples.heading}
           </h2>
-          <ul className="film-cards">
-            {choice.cards.map((c) => {
+          <button type="button" className="film-menu-switch" onClick={() => { setBack(null); setMenu(menu === "owners" ? "services" : "owners"); }}>
+            {menu === "owners" ? "Browse by service" : "Browse by business"}
+          </button>
+          <ul className={cn("film-cards", menu === "services" && "film-cards--services")}>
+            {examples.cards.map((c) => {
               const watched = seen.includes(c.demo);
               return (
                 <li key={c.demo}>
@@ -971,7 +1011,7 @@ function Film({
                   >
                     <span className="film-card-look" aria-hidden="true">
                       <picture>
-                        <img src={`/m/film/choice-${c.demo}.jpg`} alt="" decoding="async" />
+                        <img src={c.image} alt="" decoding="async" />
                       </picture>
                     </span>
                     <span className="film-card-words">
@@ -992,12 +1032,10 @@ function Film({
               );
             })}
           </ul>
-          <button type="button" className={cn("film-next", seen.length > 0 && "is-main")} onClick={next}>
-            {choice.next}
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M5 12h13M13 7l5 5-5 5" />
-            </svg>
-          </button>
+          <div className="film-choice-actions">
+            <button type="button" className="film-next is-main" onClick={next}>See the plan</button>
+            <button type="button" className="film-next" onClick={watchFull}>Watch full walkthrough</button>
+          </div>
         </div>
       )}
 

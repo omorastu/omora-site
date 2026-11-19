@@ -944,3 +944,120 @@
   /* A search result moves to the top in a cut rather than a slide. */
   .film .fx-moveto { animation-duration: .01s !important; }
 }
+
+/* /film opening, real work examples and the owner menu. */
+.film.is-opening .elora, .film.is-choosing .elora { visibility: hidden; }
+.film-opening {
+  position: absolute;
+  inset: 78px max(5vw, 32px) 100px;
+  margin: auto;
+  max-width: 1420px;
+  display: grid;
+  grid-template-columns: minmax(0, .82fr) minmax(0, 1.18fr);
+  align-items: center;
+  gap: clamp(28px, 5vw, 84px);
+}
+.film-opening-copy h2 {
+  margin: 10px 0 16px;
+  font: 500 clamp(40px, 5.35vw, 87px)/.96 var(--display);
+  letter-spacing: -.035em;
+  text-wrap: balance;
+}
+.film-opening-copy p {
+  margin: 0;
+  max-width: 33ch;
+  font-size: clamp(16px, 1.5vw, 23px);
+  line-height: 1.38;
+  color: rgb(244 241 234 / .83);
+}
+.film-opening-copy p:first-child {
+  color: #DDBB73;
+  font-size: clamp(12px, 1.05vw, 16px);
+  font-weight: 600;
+  letter-spacing: .17em;
+  text-transform: uppercase;
+}
+.film-opening-example { margin: 0; min-width: 0; }
+.film-proof-example { position: absolute; inset: 0 5%; display: grid; align-content: center; }
+.film-proof-window {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  border: 1px solid rgb(221 187 115 / .5);
+  border-radius: 12px;
+  background: var(--night);
+  box-shadow: 0 20px 55px rgb(0 0 0 / .36);
+}
+.film-opening-example figcaption, .film-proof-example p {
+  margin: 11px 0 0;
+  color: #E4D1AC;
+  font-size: clamp(12px, 1.06vw, 16px);
+  text-align: center;
+  line-height: 1.35;
+}
+.film-examples-button, .film-menu-switch {
+  min-height: 44px;
+  border: 0;
+  padding: 6px 12px;
+  background: transparent;
+  color: #F4E2BC;
+  font: 600 14px/1.25 var(--text);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: .25em;
+}
+.film-examples-button:focus-visible, .film-menu-switch:focus-visible { outline: 2px solid var(--gold-hi); outline-offset: 2px; }
+.film.is-choosing { touch-action: pan-y; }
+.film-choice {
+  inset: 56px 0 0;
+  padding: 15px 18px 34px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  pointer-events: auto;
+  touch-action: pan-y;
+  justify-content: safe center;
+}
+.film-choice-h { margin-bottom: 2px; }
+.film-menu-switch { margin-bottom: 11px; }
+.film-cards--services { grid-template-columns: repeat(4, min(calc(18 * var(--fr)), 22vw)); }
+.film-choice-actions { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }
+.film-choice-actions .film-next { margin-top: 18px; text-align: center; }
+.film-choice-actions .is-main {
+  background: #E6C580;
+  color: #21170C;
+  border-radius: 4px;
+  box-shadow: 0 8px 28px rgb(190 150 69 / .2);
+}
+.film-choice-actions .is-main:focus-visible { color: #21170C; }
+@media (max-width: 767px) and (max-aspect-ratio: 3/4) {
+  .film-opening {
+    inset: 60px 20px 185px;
+    grid-template-columns: minmax(0, 1fr);
+    align-content: center;
+    justify-items: center;
+    gap: 18px;
+    text-align: center;
+  }
+  .film-opening-copy h2 { font-size: clamp(32px, 9.5vw, 45px); margin: 8px 0; }
+  .film-opening-copy p { margin-inline: auto; }
+  .film-opening-example { width: min(68%, 256px, max(140px, 30svh)); }
+  .film-proof-example { inset: 0 19%; }
+  .film-proof-window { aspect-ratio: 4 / 5; }
+}
+@media (max-width: 767px) {
+  .film-choice { inset-block-start: calc(56px + env(safe-area-inset-top)); padding: 2px 16px 22px; justify-content: flex-start; }
+  .film-choice-h { font-size: clamp(25px, 6.8vw, 33px); }
+  .film-menu-switch { margin-bottom: 4px; }
+  .film-card-line { color: rgb(244 241 234 / .82); }
+  .film-cards--services { grid-template-columns: 1fr; }
+  .film-choice-actions { column-gap: 2px; row-gap: 0; }
+  .film-choice-actions .film-next { padding: 8px 12px; margin-top: 10px; letter-spacing: .07em; }
+}
+@media (max-height: 560px) and (min-aspect-ratio: 1/1) {
+  .film-opening { inset: 44px 6vw 64px; }
+  .film-opening-copy h2 { font-size: clamp(30px, 5vw, 50px); }
+  .film-opening-example { width: min(100%, 45vh); justify-self: center; }
+  .film-choice { inset-block-start: 44px; padding: 4px 14px 14px; }
+  .film-cards--services { grid-template-columns: repeat(4, min(155px, 22vw)); }
+}

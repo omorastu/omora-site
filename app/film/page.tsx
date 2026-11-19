@@ -11,7 +11,7 @@ import { FilmLauncher } from "@/components/elorro/film/film";
  */
 export const metadata: Metadata = {
   title: "How we work — Elorro",
-  description: "A short film: Elora, Ashan and Jordan’s assistant, walks you through how they work.",
+  description: "Meet Ashan and Jordan and see how Elorro builds websites, shoots photo and video, and makes booking and follow-up easier.",
   robots: { index: false, follow: false },
 };
 
@@ -24,8 +24,8 @@ export default function FilmPage() {
             <p className="cs-eyebrow label">A short film</p>
             <h1 className="cs-title">How we work.</h1>
             <p className="cs-sub">
-              Elora, our assistant, walks you through it in about a minute, then you pick what to see. Sound on if
-              you can; the words are on screen either way.
+              See how Ashan and Jordan can help, then pick an example for your business. From a better website or
+              a shoot to an easier way to handle calls and booking.
             </p>
             <FilmLauncher label="Watch how we work" />
           </div>

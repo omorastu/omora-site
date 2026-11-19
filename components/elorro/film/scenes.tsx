@@ -51,6 +51,8 @@ export const DESIGN: Record<SceneId, number> = {
   // Paced as when it followed behind the scenes, and longer: the footage, then the posts.
   photo: 15.04,
   frontdesk: 13,
+  website: 10.4,
+  local: 9.6,
   plan: 9,
   close: 10.5,
 };
@@ -226,8 +228,8 @@ function Tick({ cx, cy, r }: { cx: number; cy: number; r: number }) {
 
 /* ── Real work, playing ────────────────────────────────────────────────── */
 
-export type ClipId = "pearlsSite" | "clinical" | "pearlsDrone";
-type Cuts = { desktop: string; mobile: string; desktopSd: string; mobileSd: string };
+export type ClipId = "openingSite" | "pearlsSite" | "websiteExample" | "localExample" | "clinical" | "pearlsDrone";
+type Cuts = { desktop: string; mobile?: string; desktopSd: string; mobileSd?: string };
 /** The film's own loops, made for it (video/scripts/film.mjs), in public/m/film/. */
 const filmCuts = (name: string): Cuts => ({
   desktop: `/m/film/${name}-d.mp4`,
@@ -246,7 +248,14 @@ const filmPosters = (name: string) => ({ desktop: `/m/film/${name}-d-poster.jpg`
  * connection too slow for it.
  */
 export const CLIPS: Record<ClipId, { scene: SceneId; at: number; until: number; offset: number; cuts: Cuts; poster: { desktop: string; mobile: string } }> = {
-  // Pearls Farm Labor's site, which Elorro built, as one flow: the hero, a scroll through every section, then Request a crew.
+  openingSite: { scene: "elora", at: 0.3, until: 9, offset: 0, cuts: filmCuts("pearls-site"), poster: filmPosters("pearls-site") },
+  websiteExample: { scene: "website", at: 0.6, until: 10, offset: 0, cuts: filmCuts("pearls-site"), poster: filmPosters("pearls-site") },
+  localExample: {
+    scene: "local", at: 0.6, until: 9.3, offset: 0,
+    cuts: { desktop: "/m/work/cubic-d.mp4", desktopSd: "/m/work/cubic-d-sd.mp4" },
+    poster: { desktop: "/m/work/cubic-d-poster.jpg", mobile: "/m/work/cubic-m-poster.jpg" },
+  },
+  // Pearls Farm Labor’s Remotion scroll, from the home page through Request a crew.
   pearlsSite: { scene: "site", at: 3.9, until: 14.1, offset: 0, cuts: filmCuts("pearls-site"), poster: filmPosters("pearls-site") },
   // Clinical Scribe: a consult recorded, written up, the coaching for it, and the follow-up letter drafted. Made-up demo data.
   clinical: { scene: "tools", at: 1.5, until: 17.7, offset: 0, cuts: filmCuts("clinical-film"), poster: filmPosters("clinical-film") },
@@ -258,7 +267,7 @@ export const CLIPS: Record<ClipId, { scene: SceneId; at: number; until: number; 
 export const ClipContext = createContext<((id: ClipId, slot: HTMLElement | null) => void) | null>(null);
 
 /** A loop on the set, in its box (set units): its still, and a place for its video, fading in at `fx`. `clean`: no darkening at its edges. */
-function Clip({ id, tall, box: [x, y, w, h], fx, top, clean }: { id: ClipId; tall: boolean; box: Box; fx: Beat; top?: boolean; clean?: boolean }) {
+function Clip({ id, tall, box: [x, y, w, h], fx, top, clean }: { id: ClipId; tall: boolean; box: Box; fx?: Beat; top?: boolean; clean?: boolean }) {
   const attach = useContext(ClipContext);
   const slot = useRef<HTMLDivElement>(null);
   useLayoutEffect(() => {
@@ -267,9 +276,9 @@ function Clip({ id, tall, box: [x, y, w, h], fx, top, clean }: { id: ClipId; tal
   }, [attach, id]);
   const V = tall ? 1100 : 1000;
   const c = CLIPS[id];
-  const style: Vars = { ...fx.style, left: `${x / 10}%`, top: `${(y / V) * 100}%`, width: `${w / 10}%`, height: `${(h / V) * 100}%` };
+  const style: Vars = { ...fx?.style, left: `${x / 10}%`, top: `${(y / V) * 100}%`, width: `${w / 10}%`, height: `${(h / V) * 100}%` };
   return (
-    <div className={`${fx.className} film-clip${top ? " film-clip--top" : ""}${clean ? " film-clip--clean" : ""}`} style={style}>
+    <div className={`${fx?.className ?? ""} film-clip${top ? " film-clip--top" : ""}${clean ? " film-clip--clean" : ""}`} style={style}>
       <picture>
         <img src={tall ? c.poster.mobile : c.poster.desktop} alt="" decoding="async" />
       </picture>
@@ -314,42 +323,52 @@ export function Handoff({ tall, thread, title, gone }: { tall: boolean; thread: 
 /* ── Elora ─────────────────────────────────────────────────────────────── */
 
 function Elora(tall: boolean): SceneArt {
-  const D = DESIGN.elora;
-  const b = beats(D);
-  const ry = tall ? 600 : 590;
-  const rx = tall ? 400 : 250;
   return {
-    far: (
-      <Far>
-        <Glow id="far-elora-spot" cx={50} cy={34} r={58} o={0.24} color="#E8C27A" />
-        <Glow id="far-elora-floor" cx={50} cy={100} r={60} o={0.12} color="#BE9645" />
-      </Far>
-    ),
-    mid: (
-      <>
-        {/* The logo, its light crossing it, lifting away as she comes. */}
-        <div {...b("lift", 1.5, { len: 1.3, cls: "film-logo-wrap" })}>
-          <div {...b("rise", 0.3, { len: 1.4, cls: "film-logo" })}>
-            <span className="film-logo-shine" style={{ "--sh": +(0.7 / D).toFixed(4) } as Vars} />
+    far: <Far><Glow id="far-elora-spot" cx={74} cy={45} r={65} o={0.23} color="#E8C27A" /></Far>,
+    mid: null,
+    near: (
+      <div className="film-opening">
+        <div className="film-opening-copy">
+          <p>Ashan &amp; Jordan</p>
+          <h2>Make it easier to find and book you.</h2>
+          <p>Websites, photo &amp; video, and tools that take booking and follow-up off your plate.</p>
+        </div>
+        <figure className="film-opening-example">
+          <div className="film-proof-window">
+            <Clip id="openingSite" tall={tall} box={[0, 0, 1000, tall ? 1100 : 1000]} clean />
           </div>
-        </div>
-        <Art tall={tall}>
-          <g {...b("out", 1.6, { len: 1 })}>
-            <Gold d={`M 500 ${ry} H ${500 - rx}`} fx={b("draw", 0.8, { len: 1.3 })} />
-            <Gold d={`M 500 ${ry} H ${500 + rx}`} fx={b("draw", 0.8, { len: 1.3 })} />
-          </g>
-        </Art>
-        <div {...b("out", 7.5, { len: 0.8, cls: "film-out" })}>
-          <Word x={50} y={tall ? 72 : 71} size={tall ? 0.13 : 0.11} tracked rise={1.9} shine={2.6} D={D}>
-            Elora
-          </Word>
-          <Word x={50} y={tall ? 81 : 78.5} size={tall ? 0.036 : 0.03} tone="label" rise={2.6} D={D}>
-            Ashan &amp; Jordan’s assistant
-          </Word>
-        </div>
-      </>
+          <figcaption>Pearls Farm Labor · Website</figcaption>
+        </figure>
+      </div>
     ),
-    near: <i {...b("sweep", 0.7, { len: 1.8, cls: "film-sweep" })} />,
+  };
+}
+
+function WebsiteExample(tall: boolean): SceneArt {
+  return {
+    far: <Far><Glow id="far-website-example" cx={50} cy={50} r={65} o={0.18} /></Far>,
+    mid: (
+      <div className="film-proof-example">
+        <div className="film-proof-window">
+          <Clip id="websiteExample" tall={tall} box={[0, 0, 1000, tall ? 1100 : 1000]} clean />
+        </div>
+        <p>pearlsfarminc.com</p>
+      </div>
+    ),
+  };
+}
+
+function LocalExample(tall: boolean): SceneArt {
+  return {
+    far: <Far><Glow id="far-local-example" cx={50} cy={50} r={65} o={0.18} /></Far>,
+    mid: (
+      <div className="film-proof-example">
+        <div className="film-proof-window">
+          <Clip id="localExample" tall={tall} box={[0, 0, 1000, tall ? 1100 : 1000]} clean />
+        </div>
+        <p>cubicship.com · Start online</p>
+      </div>
+    ),
   };
 }
 
@@ -2204,6 +2223,8 @@ export const SCENE_ART: Record<SceneId, (tall: boolean) => SceneArt> = {
   tools: Tools,
   photo: Photo,
   frontdesk: FrontDesk,
+  website: WebsiteExample,
+  local: LocalExample,
   plan: Plan,
   close: Close,
 };
@@ -2226,6 +2247,8 @@ export const CAMERA: Record<SceneId, { px: string; py: string; z0: number; z1: n
   tools: { px: "1%", py: "0%", z0: 1.02, z1: 1.05, ry: "-2deg" },
   photo: { px: "0%", py: "0%", z0: 1.02, z1: 1.06, ry: "0deg" },
   frontdesk: { px: "0%", py: "-0.6%", z0: 1.01, z1: 1.04, ry: "0deg" },
+  website: { px: "0%", py: "0%", z0: 1, z1: 1, ry: "0deg" },
+  local: { px: "0%", py: "0%", z0: 1, z1: 1, ry: "0deg" },
   plan: { px: "0%", py: "-1.2%", z0: 1.06, z1: 1, ry: "0deg" },
   close: { px: "0%", py: "-2%", z0: 1.1, z1: 1, ry: "0deg" },
 };
