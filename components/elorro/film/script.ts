@@ -4,7 +4,8 @@
  *
  * The short opening leads to the choice of business and service examples.
  * The full walkthrough continues from the opening through the one-entry
- * scene. Examples return to the choice, which also leads to the plan.
+ * scene. Service examples return to the choice. Owner paths play relevant
+ * scenes from the same timeline and continue into the plan and close.
  *
  * Each scene runs `duration` seconds and holds Elora's lines, each starting
  * `at` seconds into its scene. A line's caption shows from its start to the
@@ -45,6 +46,7 @@ export type SceneId =
   | "photo"
   | "frontdesk"
   | "website"
+  | "winePhoto"
   | "local"
   | "plan"
   | "close";
@@ -53,9 +55,6 @@ export type SceneId =
 export const DEMO_IDS = ["tools", "photo", "frontdesk", "website", "local"] as const;
 export type DemoId = (typeof DEMO_IDS)[number];
 export type PlanSubject = "winery" | "practice" | "business";
-
-export const ownerPlan = (demo: DemoId): PlanSubject =>
-  demo === "website" ? "winery" : demo === "frontdesk" ? "practice" : "business";
 
 export type Line = {
   text: string;
@@ -93,30 +92,50 @@ export const elora: { video?: string; poster?: string } = {};
 export const voice: { src?: string } = { src: "/m/film/elora-sia.m4a" };
 
 type ChoiceCard = { demo: DemoId; title: string; line: string; image: string };
+export type OwnerPath = ChoiceCard & {
+  enabled: boolean;
+  plan: PlanSubject;
+  scenes: readonly SceneId[];
+  opening?: { trim: number; caption: string };
+};
 
-export const choice: Record<"owners" | "services", { heading: string; cards: ChoiceCard[] }> = {
+export const ownerPaths: readonly OwnerPath[] = [
+  {
+    demo: "website",
+    enabled: true,
+    title: "Winery or venue",
+    line: "See how people find you, book a visit and get a feel for the place.",
+    image: "/m/work/prosperando-m-poster.jpg",
+    plan: "winery",
+    scenes: ["found", "booking", "website", "winePhoto"],
+  },
+  {
+    demo: "frontdesk",
+    enabled: true,
+    title: "Dental or ortho practice",
+    line: "See a call turn into a booked consult and a clear follow-up.",
+    image: "/m/film/choice-frontdesk.jpg",
+    plan: "practice",
+    scenes: ["calls", "office", "frontdesk", "tools"],
+    // The pause between “Or” and the onset of “say” in the existing take.
+    opening: { trim: 0.312, caption: "Say you’re an orthodontist, and the front desk is too busy to pick up." },
+  },
+  {
+    demo: "local",
+    enabled: false,
+    title: "Local service business",
+    line: "Show customers how to start online before they come in.",
+    image: "/m/work/cubic-d-poster.jpg",
+    plan: "business",
+    scenes: ["local"],
+  },
+];
+export const availableOwnerPaths = ownerPaths.filter((path) => path.enabled);
+
+export const choice: Record<"owners" | "services", { heading: string; cards: readonly ChoiceCard[] }> = {
   owners: {
     heading: "What kind of business do you run?",
-    cards: [
-      {
-        demo: "website",
-        title: "Winery or venue",
-        line: "See how Prosperando shows its wines and gives visitors a next step.",
-        image: "/m/work/prosperando-d-poster.jpg",
-      },
-      {
-        demo: "frontdesk",
-        title: "Dental or ortho practice",
-        line: "See a call turn into a booked consult.",
-        image: "/m/film/choice-frontdesk.jpg",
-      },
-      {
-        demo: "local",
-        title: "Local service business",
-        line: "Show customers how to start online before they come in.",
-        image: "/m/work/cubic-d-poster.jpg",
-      },
-    ],
+    cards: availableOwnerPaths,
   },
   services: {
     heading: "What would you like to improve?",
@@ -124,8 +143,8 @@ export const choice: Record<"owners" | "services", { heading: string; cards: Cho
       {
         demo: "website",
         title: "Website",
-        line: "See how a Napa wine label presents its wines and invites people to stay in touch.",
-        image: "/m/work/prosperando-d-poster.jpg",
+        line: "See how Pearls shows its crews at work and makes it easy to get in touch.",
+        image: "/m/film/pearls-site-d-poster.jpg",
       },
       {
         demo: "photo",
@@ -176,12 +195,11 @@ export const scenes: Scene[] = [
     id: "found",
     label: "Illustration · Getting found",
     duration: 11.85,
-    cue: 0.18,
-    voice: "/m/film/voice/found-intro.m4a",
+    cue: 12.1,
     lines: [
       { text: "Say you run a winery, and you’re on page two, where no one looks.", at: 0, end: 4.05 },
-      { text: "They make it easier for customers to find you when they search.", at: 4.59, silent: true },
-      { text: "Give people a clear next step once they find you.", at: 8, silent: true },
+      { text: "They get you to the top when people search,", at: 4.59, end: 6.7 },
+      { text: "and into the answer when people ask AI, which more and more of them do.", at: 6.84, end: 11.29 },
     ],
   },
   {
@@ -192,7 +210,7 @@ export const scenes: Scene[] = [
     cue: 23.95,
     lines: [
       { text: "If your website’s dated and cluttered, people leave.", at: 0, end: 3.14 },
-      { text: "They build one that’s clear and easy to use, like this one for Prosperando.", at: 3.68, end: 8, voice: "/m/film/voice/prosperando.m4a", cue: 0.22 },
+      { text: "They build one that’s clear and easy to use.", at: 3.68, end: 6.29 },
     ],
   },
   {
@@ -263,15 +281,19 @@ export const scenes: Scene[] = [
   },
   {
     id: "website",
+    label: "Client work · Pearls Farm Labor",
+    duration: 10.4,
+    voice: "/m/film/voice/website-proof.m4a",
+    cue: 0.21,
+    lines: [{ text: "They build one that’s clear and easy to use.", at: 0.55, end: 3.16 }],
+  },
+  {
+    id: "winePhoto",
     label: "Client work · Prosperando Vineyards",
-    duration: 13,
-    voice: "/m/film/voice/prosperando.m4a",
-    cue: 0.22,
-    lines: [
-      { text: "They build one that’s clear and easy to use, like this one for Prosperando.", at: 0.45, end: 4.77 },
-      { text: "Visitors can explore the vineyards and wines.", at: 4.95, silent: true },
-      { text: "The page gives them a clear next step: join the list.", at: 8.6, silent: true },
-    ],
+    duration: 5.7,
+    voice: "/m/film/voice/wine-photo.m4a",
+    cue: 0.19,
+    lines: [{ text: "And photos and video that show what you do.", at: 0.5, end: 2.84 }],
   },
   {
     id: "local",
@@ -307,7 +329,7 @@ export const scenes: Scene[] = [
 ];
 
 /** The full walkthrough, the choice, the examples, then the plan and close. */
-export type SegmentId = "main" | "choice" | DemoId | "finale";
+export type SegmentId = "main" | "choice" | DemoId | "winePhoto" | "finale";
 export const SEGMENTS: { id: SegmentId; scenes: SceneId[]; joined?: boolean; voice?: string }[] = [
   { id: "main", scenes: ["elora", "call", "found", "site", "booking", "calls", "office"] },
   // Straight on from the first minute, which plays into it.
@@ -317,6 +339,7 @@ export const SEGMENTS: { id: SegmentId; scenes: SceneId[]; joined?: boolean; voi
   { id: "frontdesk", scenes: ["frontdesk"] },
   { id: "website", scenes: ["website"] },
   { id: "local", scenes: ["local"] },
+  { id: "winePhoto", scenes: ["winePhoto"] },
   { id: "finale", scenes: ["plan", "close"] },
 ];
 /** The quiet between two parts the film jumps between, in seconds: none of one is ever drawn over the other. */
@@ -444,7 +467,7 @@ export function captions() {
       const next = scene.lines[i + 1];
       const from = start + line.at;
       const said = line.silent ? from : start + (line.end ?? (next ? next.at - 0.15 : duration - 0.25));
-      return { text: line.text, from, to: said, said, scene: scene.id, segment, silent: !!line.silent };
+      return { text: line.text, from, to: said, said, scene: scene.id, segment, first: i === 0, silent: !!line.silent };
     })
   );
   all.forEach((c, i) => {

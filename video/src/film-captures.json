@@ -102,29 +102,6 @@
               "h": 280
             }
           ]
-        },
-        "prosperando": {
-          "url": "https://prosperandovineyards.com",
-          "capturedAt": "2026-11-19T15:37:41.956Z",
-          "height": 1870,
-          "header": 0,
-          "stickyHeader": false,
-          "anchors": {
-            "wines": 899,
-            "list": 1519
-          },
-          "tiles": [
-            {
-              "file": "desktop-prosperando-00.png",
-              "y": 0,
-              "h": 1804
-            },
-            {
-              "file": "desktop-prosperando-01.png",
-              "y": 1800,
-              "h": 70
-            }
-          ]
         }
       }
     },
@@ -242,29 +219,6 @@
               "file": "phone-instagram-02.png",
               "y": 2600,
               "h": 48
-            }
-          ]
-        },
-        "prosperando": {
-          "url": "https://prosperandovineyards.com",
-          "capturedAt": "2026-11-19T15:38:07.131Z",
-          "height": 1950,
-          "header": 0,
-          "stickyHeader": false,
-          "anchors": {
-            "wines": 843,
-            "list": 1594
-          },
-          "tiles": [
-            {
-              "file": "phone-prosperando-00.png",
-              "y": 0,
-              "h": 1304
-            },
-            {
-              "file": "phone-prosperando-01.png",
-              "y": 1300,
-              "h": 650
             }
           ]
         }

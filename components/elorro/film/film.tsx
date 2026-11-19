@@ -9,15 +9,17 @@ import { EloraAvatar } from "@/components/elorro/film/elora";
 import { CAMERA, CLIPS, ClipContext, DESIGN, Handoff, SCENE_ART, type ClipId } from "@/components/elorro/film/scenes";
 import {
   DEMO_IDS,
+  availableOwnerPaths,
   captions,
   choice,
-  ownerPlan,
   scenes,
   timeline,
   voice,
   voiceStretches,
   type DemoId,
+  type OwnerPath,
   type PlanSubject,
+  type SceneId,
   type SegmentId,
 } from "@/components/elorro/film/script";
 import { budget } from "@/components/elorro/work-video";
@@ -28,8 +30,8 @@ import "@/components/elorro/film/film.css";
 /**
  * "How we work", a short film narrated by Elora: a button, and the film it
  * opens over the whole screen. A short opening offers examples by business or
- * service. Examples play in place and return to the choice, and visitors can
- * watch the full walkthrough or go straight to the plan. The X and Escape
+ * service. Owner paths play a sequence of relevant scenes and continue to the
+ * plan and the close. Service examples return to the choice. The X and Escape
  * close the film. The final booking button leads to the page's contact form.
  *
  * The film's parts all sit on one timeline (script.ts, SEGMENTS), a few
@@ -87,6 +89,29 @@ const RETURN = 0.45;
 const PLAN_AT = SEG.finale.start - LEAD;
 const demoAt = (id: DemoId) => SEG[id].start - LEAD;
 const isDemo = (id: SegmentId): id is DemoId => DEMO_IDS.some((demo) => demo === id);
+
+type OwnerTrack = OwnerPath & {
+  spans: { start: number; end: number }[];
+  visibleScenes: ReadonlySet<SceneId>;
+};
+const OWNER_TRACKS: readonly OwnerTrack[] = availableOwnerPaths.map((path) => {
+  const selected = path.scenes.map((id) => parts.find((part) => part.scene.id === id)!);
+  const spans: OwnerTrack["spans"] = [];
+  selected.forEach((part, i) => {
+    const previous = selected[i - 1];
+    const main = part.segment === "main";
+    // A standalone scene fades into the gap. Inside the walkthrough, leave
+    // before the next unselected scene starts fading up.
+    const end = part.start + part.duration + (main ? -0.3 : RETURN);
+    if (previous?.segment === part.segment && Math.abs(previous.start + previous.duration - part.start) < 0.01) {
+      spans[spans.length - 1].end = end;
+    } else {
+      const lead = main ? 0 : LEAD;
+      spans.push({ start: part.start - lead + (i === 0 ? path.opening?.trim ?? 0 : 0), end });
+    }
+  });
+  return { ...path, spans, visibleScenes: new Set<SceneId>([...path.scenes, "plan", "close"]) };
+});
 /** The part of the film at `t`: each reaches half way into the quiet either side of it (none, where one plays into the next). */
 const segOf = (t: number) => segments.find((s, i) => !segments[i + 1] || t < (s.end + segments[i + 1].start) / 2) ?? segments[segments.length - 1];
 const LAST = parts[parts.length - 1];
@@ -172,7 +197,7 @@ const scenesAt = (t: number) =>
   parts.flatMap((p, i) => (t >= p.start - WINDOW && t <= p.start + p.duration + WINDOW ? [i] : []));
 const same = (a: number[], b: number[]) => a.length === b.length && a.every((x, i) => x === b[i]);
 
-type Showing = { at: number; run: boolean; review: boolean; subject?: PlanSubject };
+type Showing = { at: number; run: boolean; review: boolean; owner?: OwnerTrack };
 type FilmEffects = ReturnType<typeof makeEffects>;
 type Clips = Partial<Record<ClipId, HTMLVideoElement>>;
 
@@ -272,8 +297,8 @@ export function FilmLauncher({ label }: { label: string }) {
     };
   }, []);
 
-  const watch = (button: HTMLButtonElement, demo?: DemoId) => {
-    const at = demo ? demoAt(demo) : 0;
+  const watch = (button: HTMLButtonElement, owner?: OwnerTrack) => {
+    const at = owner?.spans[0].start ?? 0;
     trigger.current = button;
     // Unlock sound with the same click that starts the selected film.
     const player = (effectsPlayer.current ??= makeEffects());
@@ -299,7 +324,7 @@ export function FilmLauncher({ label }: { label: string }) {
     }
     clearTimeout(leaving.current);
     setClosing(false);
-    setShowing({ at, run: true, review: false, subject: demo ? ownerPlan(demo) : "business" });
+    setShowing({ at, run: true, review: false, owner });
   };
 
   const sound = useCallback((on: boolean) => {
@@ -328,8 +353,8 @@ export function FilmLauncher({ label }: { label: string }) {
   return (
     <>
       <div className="film-launch-options" role="group" aria-label="Choose your business">
-        {choice.owners.cards.map((card) => (
-          <button key={card.demo} type="button" className="act" onClick={(event) => watch(event.currentTarget, card.demo)}>
+        {OWNER_TRACKS.map((card) => (
+          <button key={card.demo} type="button" className="act" onClick={(event) => watch(event.currentTarget, card)}>
             {card.title}
           </button>
         ))}
@@ -347,7 +372,7 @@ function Film({
   at,
   run,
   review,
-  subject = "business",
+  owner,
   audio,
   effectsPlayer,
   clips,
@@ -374,7 +399,10 @@ function Film({
   }, [closing]);
   const [muted, setMuted] = useState(false);
   const [effectsOn, setEffectsOn] = useState(true);
-  const [planSubject, setPlanSubject] = useState<PlanSubject>(subject);
+  const [planSubject, setPlanSubject] = useState<PlanSubject>(owner?.plan ?? "business");
+  const [activeOwner, setActiveOwner] = useState(owner);
+  const ownerRun = useRef(owner ? { track: owner, index: 0 } : null);
+  const [playbackMenu, setPlaybackMenu] = useState(false);
   useEffect(() => {
     if (!review && !closing) effectsPlayer.current?.audible(!muted && effectsOn);
   }, [effectsPlayer, muted, effectsOn, review, closing]);
@@ -385,17 +413,23 @@ function Film({
   const examples = choice[menu];
   const [playingExample, setPlayingExample] = useState<DemoId | null>(() => {
     const id = segOf(at).id;
-    return isDemo(id) ? id : null;
+    return owner?.demo ?? (isDemo(id) ? id : null);
   });
   const shortOpening = useRef(!review);
-  const [seen, setSeen] = useState<DemoId[]>([]);
+  const [seen, setSeen] = useState<Record<keyof typeof choice, DemoId[]>>({ owners: [], services: [] });
   const [back, setBack] = useState<DemoId | null>(null);
-  const toChoice = useCallback((from?: DemoId) => {
+  const markSeen = useCallback((menu: keyof typeof choice, id: DemoId) => {
+    setSeen((had) => had[menu].includes(id) ? had : { ...had, [menu]: [...had[menu], id] });
+  }, []);
+  const toChoice = useCallback((from?: DemoId, watched = true) => {
+    ownerRun.current = null;
+    setActiveOwner(undefined);
+    setPlaybackMenu(false);
     setChoosing(true);
     setPlayingExample(null);
     setBack(from ?? null);
-    if (from) setSeen((had) => (had.includes(from) ? had : [...had, from]));
-  }, []);
+    if (from && watched) markSeen("services", from);
+  }, [markSeen]);
   const [near, setNear] = useState(() => scenesAt(at));
   const opening = !choosing && near.includes(0);
   const tall = useTall();
@@ -670,11 +704,16 @@ function Film({
     /**
      * The parts. The first minute plays to the choice and stops there (HOLD);
      * a demo plays from just before its start to just after its end, then
-     * back to the choice; the plan and the close play to the film's end.
-     * Each part's end is timed to the moment, and checked on every tick.
+     * back to the choice; an owner path plays each chosen span then joins
+     * the plan and the close. Check each boundary on every tick.
      */
     let endTimer = 0;
-    const segEnd = () => (seg === "main" ? (shortOpening.current ? OPEN_END : HOLD) : isDemo(seg) ? SEG[seg].end + RETURN : Infinity);
+    const segEnd = () => {
+      const path = ownerRun.current;
+      if (path) return path.track.spans[path.index].end;
+      if (seg === "main") return shortOpening.current ? OPEN_END : HOLD;
+      return isDemo(seg) || seg === "winePhoto" ? SEG[seg].end + RETURN : Infinity;
+    };
     const quiet = () => {
       clearTimeout(hold);
       clearTimeout(late);
@@ -708,6 +747,19 @@ function Film({
     };
     const checkEnd = (t: number) => {
       if (paused || t < segEnd()) return false;
+      const path = ownerRun.current;
+      if (path) {
+        const next = path.track.spans[path.index + 1];
+        if (next) {
+          path.index++;
+          go(next.start, true);
+        } else {
+          ownerRun.current = null;
+          markSeen("owners", path.track.demo);
+          go(PLAN_AT, true);
+        }
+        return true;
+      }
       const from = isDemo(seg) ? seg : undefined;
       go(HOLD, false);
       toChoice(from);
@@ -804,7 +856,7 @@ function Film({
       clock.current = null;
       delete window.__eloFilm;
     };
-  }, [at, run, review, sound, effectsPlayer, clips, still, toChoice]);
+  }, [at, run, review, sound, effectsPlayer, clips, still, toChoice, markSeen]);
 
   // Scenes just put in the page, or laid out anew for a turned screen: onto the clock before they're seen.
   useLayoutEffect(() => {
@@ -842,29 +894,43 @@ function Film({
     };
   }, [choosing, back, review, examples]);
 
-  /** A demo, from the choice; or on to the plan. The focus waits on the X meanwhile. */
+  /** Start a service example or a full owner path from the choice. */
   const pick = (id: DemoId) => {
-    setChoosing(false);
+    const track = menu === "owners" ? OWNER_TRACKS.find((path) => path.demo === id) : undefined;
+    ownerRun.current = track ? { track, index: 0 } : null;
+    setActiveOwner(track);
+    if (track) setPlanSubject(track.plan);
     setPlayingExample(id);
-    if (menu === "owners") setPlanSubject(ownerPlan(id));
-    shut.current?.focus({ preventScroll: true });
-    clock.current?.go(demoAt(id), true);
+    startAt(track?.spans[0].start ?? demoAt(id));
   };
   const openChoice = () => {
+    toChoice(playingExample ?? undefined, false);
     clock.current?.go(HOLD, false);
-    toChoice();
+  };
+  const startAt = (position: number) => {
+    setPlaybackMenu(false);
+    setChoosing(false);
+    setEnded(false);
+    shut.current?.focus({ preventScroll: true });
+    clock.current?.go(position, true);
   };
   const watchFull = () => {
+    ownerRun.current = null;
+    setActiveOwner(undefined);
+    setPlayingExample(null);
     shortOpening.current = false;
-    setChoosing(false);
-    shut.current?.focus({ preventScroll: true });
-    clock.current?.go(0, true);
+    startAt(0);
   };
   const next = () => {
-    setChoosing(false);
-    shut.current?.focus({ preventScroll: true });
-    clock.current?.go(PLAN_AT, true);
+    ownerRun.current = null;
+    setActiveOwner(undefined);
+    setPlayingExample(null);
+    startAt(PLAN_AT);
   };
+  const visibleScene = (id: SceneId) => !activeOwner || activeOwner.visibleScenes.has(id);
+  const caption = (id: SceneId, first: boolean, text: string) =>
+    first && id === activeOwner?.scenes[0] ? activeOwner.opening?.caption ?? text : text;
+  const transcript: readonly SceneId[] = activeOwner ? [...activeOwner.scenes, "plan", "close"] : scenes.map((scene) => scene.id);
 
   // Leaving by key, the focus kept inside, and nothing underneath scrolled meanwhile.
   useEffect(() => {
@@ -927,7 +993,7 @@ function Film({
 
         <ClipContext.Provider value={attach}>
         {parts.map(({ scene, start, duration }, i) => {
-          if (!near.includes(i)) return null;
+          if (!near.includes(i) || !visibleScene(scene.id)) return null;
           const art = SCENE_ART[scene.id](tall, planSubject);
           const cam = CAMERA[scene.id];
           return (
@@ -935,7 +1001,7 @@ function Film({
               key={scene.id}
               className={cn("film-scene", i === 0 && "is-first", i === parts.length - 1 && "is-last")}
               data-scene={scene.id}
-              data-demo={isDemo(scene.id as SegmentId) ? "" : undefined}
+              data-demo={isDemo(scene.id as SegmentId) || scene.id === "winePhoto" ? "" : undefined}
               aria-hidden="true"
               style={
                 {
@@ -981,7 +1047,7 @@ function Film({
         <div className="film-top">
           <div className="film-labels" aria-hidden="true">
             {parts
-              .filter((p) => p.scene.label)
+              .filter((p) => p.scene.label && visibleScene(p.scene.id))
               .map((p) => (
                 <p key={p.scene.id} className="film-label" style={{ "--from": sec(p.start + 0.35), "--len": sec(p.duration - 0.7) } as Vars}>
                   {p.scene.label}
@@ -989,10 +1055,16 @@ function Film({
               ))}
           </div>
           <div className="film-ctls">
-            {(opening || playingExample) && (
-              <button type="button" className="film-examples-button" onClick={openChoice}>
-                {opening ? "Choose an example" : "Back to examples"}
-              </button>
+            {!choosing && (
+              <>
+                <button type="button" className="film-examples-button film-playback-trigger" onClick={openChoice}>
+                  {opening ? "Choose an example" : "Back to examples"}
+                </button>
+                <button type="button" className="film-examples-button film-playback-trigger" aria-expanded={playbackMenu}
+                  onClick={() => setPlaybackMenu((open) => !open)}>
+                  Options
+                </button>
+              </>
             )}
             {sound && (
               <button type="button" className="film-ctl" aria-label="Sound off" aria-pressed={muted} onClick={toggleSound}>
@@ -1008,12 +1080,19 @@ function Film({
               </svg>
             </button>
           </div>
+          {playbackMenu && (
+            <div className="film-playback-menu" role="group" aria-label="Film options">
+              <button type="button" onClick={next}>See the plan</button>
+              <a href="#contact" onClick={() => onLeave(false)}>Book a call</a>
+              <button type="button" onClick={watchFull}>Watch full walkthrough</button>
+            </div>
+          )}
         </div>
 
         <div className="film-caps" aria-hidden="true">
-          {CAPTIONS.map((c, i) => (
+          {CAPTIONS.map((c, i) => visibleScene(c.scene) && (
             <p key={c.from} className={cn("film-cap", i === CAPTIONS.length - 1 && "film-cap--last")} style={{ "--from": sec(c.from), "--len": sec(c.to - c.from) } as Vars}>
-              <span>{c.text}</span>
+              <span>{caption(c.scene, c.first, c.text)}</span>
             </p>
           ))}
         </div>
@@ -1036,9 +1115,9 @@ function Film({
           <button type="button" className="film-menu-switch" onClick={() => { setBack(null); setMenu(menu === "owners" ? "services" : "owners"); }}>
             {menu === "owners" ? "Browse by service" : "Browse by business"}
           </button>
-          <ul className={cn("film-cards", menu === "services" && "film-cards--services")}>
+          <ul className={cn("film-cards", menu === "services" && "film-cards--services", examples.cards.length === 2 && "film-cards--pair")}>
             {examples.cards.map((c) => {
-              const watched = seen.includes(c.demo);
+              const watched = seen[menu].includes(c.demo);
               return (
                 <li key={c.demo}>
                   <button
@@ -1083,7 +1162,9 @@ function Film({
 
       {/* What she says, for screen readers, all at once. */}
       <div className="film-sr">
-        {scenes.map((s) => s.lines.map((l) => <p key={l.text}>{l.text}</p>))}
+        {transcript.map((id) =>
+          scenes.find((scene) => scene.id === id)?.lines.map((line, i) => <p key={line.text}>{caption(id, i === 0, line.text)}</p>)
+        )}
       </div>
     </div>
   );

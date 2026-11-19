@@ -21,12 +21,11 @@ import captures from "./film-captures.json";
  */
 
 export type Size = "desktop" | "phone";
-type PageName = "pearls" | "pearlsRequest" | "prosperando" | "instagram";
+type PageName = "pearls" | "pearlsRequest" | "instagram";
 type At = { page: PageName; y: number };
 
 export const FPS = 30;
 export const SITE_FRAMES = 270; // 9 s
-export const PROSPERANDO_FRAMES = 360; // 12 s
 export const REEL_FRAMES = 330; // 11 s
 
 export const FRAME_SIZE: Record<Size, { width: number; height: number }> = {
@@ -112,29 +111,6 @@ export const PearlsSite: React.FC<{ size: Size }> = ({ size }) => {
       {mix > 0 && (
         <AbsoluteFill style={{ opacity: mix }}>
           <PageView size={size} at={{ page: "pearlsRequest", y: 0 }} />
-        </AbsoluteFill>
-      )}
-    </AbsoluteFill>
-  );
-};
-
-/* ── Prosperando: three stops at reading pace ─────────────────────────── */
-
-export const ProsperandoSite: React.FC<{ size: Size }> = ({ size }) => {
-  const frame = useCurrentFrame();
-  const home = page(size, "prosperando");
-  const wine = clampY(size, "prosperando", home.anchors.wines - home.header);
-  const list = clampY(size, "prosperando", home.anchors.list - home.header);
-  const y = interpolate(frame, [115, 203, 254], [wine, wine, list], {
-    easing: cruise, extrapolateLeft: "clamp", extrapolateRight: "clamp",
-  });
-  const mix = interpolate(frame, [89, 112], [1, 0], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
-  return (
-    <AbsoluteFill style={{ background: "#14120f" }}>
-      {mix < 1 && <PageView size={size} at={{ page: "prosperando", y }} />}
-      {mix > 0 && (
-        <AbsoluteFill style={{ opacity: mix }}>
-          <Img src={staticFile(`film-captures/prosperando-opening-${size}.jpg`)} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
         </AbsoluteFill>
       )}
     </AbsoluteFill>

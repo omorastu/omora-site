@@ -61,27 +61,29 @@ Send me the files and I'll time them in, both of those included.
 
 ## Owner paths follow-up
 
-The Prosperando line already exists in the original take. The local film now uses
-`/m/film/voice/prosperando.m4a`, cut from 27.41–32.14 seconds of
-`video/voice/elora-sia-take2.mp3`. Cue the line at 0.22 seconds inside the cut.
-No additional recording is needed for that line.
-
-These are draft reads for Ashan to confirm. The film shows the corresponding
-information on screen while the new material is being reviewed.
+These are draft reads for Ashan to review. The front desk illustration is
+captioned with optional effects. The local service path is disabled in the
+picker while its lines are pending.
 
 | Where it plays | What she says now | Record this | File to save |
 |---|---|---|---|
 | Front desk opening | Caption only | **Busy with a patient? Here’s how a front desk could handle an incoming call.** | `frontdesk-1.m4a` |
-| Local business opening | Caption only | **Customers have questions before they come in. Cubic Ship shows them where to start.** | `local-1.m4a` |
-| Local business close | Caption only | **Start online, then finish in person.** | `local-2.m4a` |
-| Full walkthrough, search | Caption only | **They make it easier for customers to find you when they search.** | `found-2.m4a` |
-| Full walkthrough, search close | Caption only | **Give people a clear next step once they find you.** | `found-3.m4a` |
+| Local business opening | Path hidden | **Customers have questions before they come in. Cubic Ship shows them where to start.** | `local-1.m4a` |
+| Local business close | Path hidden | **Start online, then finish in person.** | `local-2.m4a` |
+
+The dental path starts 0.312 seconds into the existing calls scene. The short
+cut drops “Or” while retaining “Say,” checked against Whisper word times and
+the waveform. The full walkthrough keeps the original read.
+
+**Optional wording for JP and Ashan to review.** In the search scene, consider
+“They help customers find you when they search,” and “They also make the
+business easier for AI tools to understand and reference.” The film retains
+Ashan’s existing narration and wording, including the five plan items.
 
 In the original take, have Ashan or JP listen to the pronunciation of “Ashan”
 near the start. The transcription alone did not establish an error.
 
-Before changing on-screen credits, confirm the proposed wording with both
-founders. Pearls Farm Labor — site and film by Jordan. Clinical Scribe —
-built by Ashan, recreated screens using fictional patient data. Prosperando —
-photography, video, website color, and family story. The public portfolio
-lists those deliverables, and the film currently uses work and demo labels.
+Proposed credit wording for the founders to confirm: Pearls Farm Labor site
+and film by Jordan. Clinical Scribe built by Ashan, shown in recreated screens
+with fictional data. Prosperando photography, video, site color and family
+story. Its shot in the film is the bottle footage and is labeled for that work.

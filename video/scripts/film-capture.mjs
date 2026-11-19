@@ -50,17 +50,13 @@ const PAGES = {
     url: "https://www.pearlsfarminc.com/request-a-crew",
     anchors: {},
   },
-  prosperando: {
-    url: "https://prosperandovineyards.com",
-    anchors: { wines: /Oak Creek Vineyards/i, list: /Join the Prosperando list/i },
-  },
   instagram: {
     url: "https://www.instagram.com/pearlsfarmlabor/",
     session: true,
     anchors: { grid: "grid" },
   },
 };
-const GROUPS = { pearls: ["pearls", "pearlsRequest"], prosperando: ["prosperando"], instagram: ["instagram"] };
+const GROUPS = { pearls: ["pearls", "pearlsRequest"], instagram: ["instagram"] };
 
 // Over the page in a screenshot: cookie banners, dialogs, chat launchers.
 const HIDE = `
@@ -74,19 +70,10 @@ if (only && !GROUPS[only]) throw new Error(`No "${only}". Try: ${Object.keys(GRO
 const names = only ? GROUPS[only] : Object.values(GROUPS).flat();
 
 fs.mkdirSync(OUT, { recursive: true });
-if (names.includes("prosperando")) {
-  // Use the already published portfolio artwork for the opener, preserving the live site's age gate.
-  for (const [size, suffix] of [["desktop", "d"], ["phone", "m"]]) {
-    fs.copyFileSync(
-      path.resolve(ROOT, "..", "public", "m", "work", `prosperando-${suffix}-poster.jpg`),
-      path.join(OUT, `prosperando-opening-${size}.jpg`),
-    );
-  }
-}
 for (const f of fs.readdirSync(OUT)) if (names.some((n) => f.includes(`-${n}-`))) fs.rmSync(path.join(OUT, f));
 const manifest = fs.existsSync(MANIFEST) ? JSON.parse(fs.readFileSync(MANIFEST, "utf8")) : { overlap: OVERLAP, sizes: {} };
 
-const browser = await chromium.launch({ channel: process.env.FILM_CAPTURE_BROWSER, args: ["--mute-audio"] });
+const browser = await chromium.launch({ args: ["--mute-audio"] });
 for (const [size, vp] of Object.entries(SIZES)) {
   manifest.sizes[size] ??= { width: vp.width, dpr: vp.dpr, tile: TILE[size], pages: {} };
   for (const name of names) {

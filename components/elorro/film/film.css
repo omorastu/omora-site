@@ -1067,3 +1067,44 @@
 .film-launch-overview.act { margin: 14px 0 0; color: inherit; background: transparent; border-color: currentColor; }
 .film-choice-book { text-decoration: none; color: var(--paper); }
 .film-effects-switch[aria-pressed="true"] { color: #F4E2BC; text-decoration: underline; text-underline-offset: .25em; }
+
+/* Keep the client bottle footage in its native portrait framing. */
+.film-proof-example--portrait { inset-inline: 24%; }
+.film-proof-example--portrait .film-proof-window { aspect-ratio: 4 / 5; }
+.film-playback-menu {
+  position: absolute;
+  inset-block-start: calc(100% - 10px);
+  inset-inline-end: max(14px, env(safe-area-inset-right));
+  display: grid;
+  min-width: min(218px, 85vw);
+  padding: 6px;
+  border: 1px solid rgb(221 187 115 / .45);
+  border-radius: 8px;
+  background: #1e1913;
+  box-shadow: 0 10px 26px rgb(0 0 0 / .5);
+}
+.film-playback-menu button, .film-playback-menu a {
+  display: flex;
+  align-items: center;
+  padding: 6px 10px;
+  min-height: 44px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--paper);
+  font: 600 15px/1.25 var(--text);
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+.film-playback-menu :is(button, a):is(:focus-visible, :hover) {
+  background: #E6C580;
+  color: #21170C;
+}
+@media (min-width: 768px) {
+  .film-cards--pair { grid-template-columns: repeat(2, min(calc(21.5 * var(--fr)), 43vw)); }
+}
+@media (max-width: 767px) {
+  .film-playback-trigger { padding-inline: 6px; font-size: 12px; }
+  .film-proof-example--portrait { inset-inline: 16%; }
+}

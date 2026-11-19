@@ -39,8 +39,6 @@ export const Root: React.FC = () => (
       {...Clinical.FRAME_SIZE.phone}
       defaultProps={{ size: "phone" as const }}
     />
-    <Composition id="ProsperandoSiteDesktop" component={Film.ProsperandoSite} durationInFrames={Film.PROSPERANDO_FRAMES} fps={Film.FPS} {...Film.FRAME_SIZE.desktop} defaultProps={{ size: "desktop" as const }} />
-    <Composition id="ProsperandoSitePhone" component={Film.ProsperandoSite} durationInFrames={Film.PROSPERANDO_FRAMES} fps={Film.FPS} {...Film.FRAME_SIZE.phone} defaultProps={{ size: "phone" as const }} />
     {/* The film's loops (scripts/film.mjs). */}
     {(["desktop", "phone"] as const).map((size) => {
       const tag = size === "desktop" ? "Desktop" : "Phone";
