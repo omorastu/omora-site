@@ -1,5 +1,5 @@
 import { createContext, useContext, useLayoutEffect, useRef, type CSSProperties, type ReactNode } from "react";
-import type { SceneId } from "@/components/elorro/film/script";
+import type { PlanSubject, SceneId } from "@/components/elorro/film/script";
 
 /**
  * The film's pictures. Each scene fills the frame in layers, which the camera
@@ -51,7 +51,7 @@ export const DESIGN: Record<SceneId, number> = {
   // Paced as when it followed behind the scenes, and longer: the footage, then the posts.
   photo: 15.04,
   frontdesk: 13,
-  website: 10.4,
+  website: 13,
   local: 9.6,
   plan: 9,
   close: 10.5,
@@ -228,7 +228,7 @@ function Tick({ cx, cy, r }: { cx: number; cy: number; r: number }) {
 
 /* ── Real work, playing ────────────────────────────────────────────────── */
 
-export type ClipId = "openingSite" | "pearlsSite" | "websiteExample" | "localExample" | "clinical" | "pearlsDrone";
+export type ClipId = "openingSite" | "prosperandoSite" | "websiteExample" | "localExample" | "clinical" | "pearlsDrone";
 type Cuts = { desktop: string; mobile?: string; desktopSd: string; mobileSd?: string };
 /** The film's own loops, made for it (video/scripts/film.mjs), in public/m/film/. */
 const filmCuts = (name: string): Cuts => ({
@@ -249,14 +249,13 @@ const filmPosters = (name: string) => ({ desktop: `/m/film/${name}-d-poster.jpg`
  */
 export const CLIPS: Record<ClipId, { scene: SceneId; at: number; until: number; offset: number; cuts: Cuts; poster: { desktop: string; mobile: string } }> = {
   openingSite: { scene: "elora", at: 0.3, until: 9, offset: 0, cuts: filmCuts("pearls-site"), poster: filmPosters("pearls-site") },
-  websiteExample: { scene: "website", at: 0.6, until: 10, offset: 0, cuts: filmCuts("pearls-site"), poster: filmPosters("pearls-site") },
+  websiteExample: { scene: "website", at: 0.45, until: 12.8, offset: 0, cuts: filmCuts("prosperando-site"), poster: filmPosters("prosperando-site") },
   localExample: {
     scene: "local", at: 0.6, until: 9.3, offset: 0,
     cuts: { desktop: "/m/work/cubic-d.mp4", desktopSd: "/m/work/cubic-d-sd.mp4" },
     poster: { desktop: "/m/work/cubic-d-poster.jpg", mobile: "/m/work/cubic-m-poster.jpg" },
   },
-  // Pearls Farm Labor’s Remotion scroll, from the home page through Request a crew.
-  pearlsSite: { scene: "site", at: 3.9, until: 14.1, offset: 0, cuts: filmCuts("pearls-site"), poster: filmPosters("pearls-site") },
+  prosperandoSite: { scene: "site", at: 3.9, until: 14.1, offset: 0, cuts: filmCuts("prosperando-site"), poster: filmPosters("prosperando-site") },
   // Clinical Scribe: a consult recorded, written up, the coaching for it, and the follow-up letter drafted. Made-up demo data.
   clinical: { scene: "tools", at: 1.5, until: 17.7, offset: 0, cuts: filmCuts("clinical-film"), poster: filmPosters("clinical-film") },
   // Pearls: the drone over the vines, then the posts on Pearls' Instagram.
@@ -337,7 +336,7 @@ function Elora(tall: boolean): SceneArt {
           <div className="film-proof-window">
             <Clip id="openingSite" tall={tall} box={[0, 0, 1000, tall ? 1100 : 1000]} clean />
           </div>
-          <figcaption>Pearls Farm Labor · Website</figcaption>
+          <figcaption>Client work · Pearls Farm Labor website</figcaption>
         </figure>
       </div>
     ),
@@ -352,7 +351,7 @@ function WebsiteExample(tall: boolean): SceneArt {
         <div className="film-proof-window">
           <Clip id="websiteExample" tall={tall} box={[0, 0, 1000, tall ? 1100 : 1000]} clean />
         </div>
-        <p>pearlsfarminc.com</p>
+        <p>Client work · Prosperando Vineyards<br />Site color, photography &amp; video</p>
       </div>
     ),
   };
@@ -366,7 +365,7 @@ function LocalExample(tall: boolean): SceneArt {
         <div className="film-proof-window">
           <Clip id="localExample" tall={tall} box={[0, 0, 1000, tall ? 1100 : 1000]} clean />
         </div>
-        <p>cubicship.com · Start online</p>
+        <p>Client work · Cubic Ship website</p>
       </div>
     ),
   };
@@ -788,8 +787,8 @@ function Site(tall: boolean): SceneArt {
           )}
           <rect className="f-url" x={px} y={py} width={pw} height={ph} rx={ph / 2} />
         </Art>
-        {/* Pearls' site, which they built, playing in it. */}
-        <Clip id="pearlsSite" tall={tall} box={L.body} fx={b("fade", NEW + 0.2, { len: 0.6 })} clean />
+        {/* The real Prosperando example. */}
+        <Clip id="prosperandoSite" tall={tall} box={L.body} fx={b("fade", NEW + 0.2, { len: 0.6 })} clean />
         {/* Over it, until it gives way: the old one. */}
         <div {...b("pass", NEW, { len: 0.8, cls: "film-layer" })}>
           <Art tall={tall}>
@@ -801,7 +800,7 @@ function Site(tall: boolean): SceneArt {
         </div>
         <Art tall={tall}>
           <text x="500" y={urlY} fontSize={L.url} {...b("fade", NEW + 0.3, { len: 0.6, cls: "t-body" })}>
-            pearlsfarminc.com
+            prosperandovineyards.com
           </text>
           <g {...b("fade", NEW + 0.9, { len: 1 })}>
             <rect className="s-gold-edge" fill="none" x={fx} y={fy} width={fw} height={fh} rx={tall ? 44 : 18} />
@@ -1536,7 +1535,7 @@ function Office(tall: boolean): SceneArt {
                 <AppWindow i={i} W={W} wy={y} />
               </g>
             ))}
-            {/* Typed by hand, one app after another, the hours adding up. */}
+            {/* The same details are entered by hand in each tool. */}
             <g {...b("out", ONE, { len: 0.35 })}>
               {W.ys.map((y, i) => (
                 <AppFields key={y} i={i} W={W} wy={y} b={b} typed />
@@ -1547,18 +1546,9 @@ function Office(tall: boolean): SceneArt {
                   By hand
                 </text>
                 <text className="t-faint t-left" x={tall ? 84 : sx + 28} y={tall ? sy + 114 : sy + 222} fontSize={tall ? 30 : 20}>
-                  hours a week
+                  Repeated entry
                 </text>
               </g>
-              <Count
-                values={["2", "4", "6"]}
-                at={TYPE_AT.map((t) => t + 0.7)}
-                x={tall ? 916 : sx + 26}
-                y={tall ? sy + 122 : sy + 178}
-                size={tall ? 120 : 112}
-                cls={`t-disp ${tall ? "t-right" : "t-left"}`}
-                b={b}
-              />
             </g>
             {/* Then once: one entry, and all three fill in on their own. */}
             <g {...b("fade", ONE + 0.2, { len: 0.6 })}>
@@ -1598,7 +1588,7 @@ function Office(tall: boolean): SceneArt {
 
 /* ── Demo: custom tools ────────────────────────────────────────────────── */
 
-/** A tool built around how they work: an orthodontist's consult, recorded and written up. The gold sketch of it gives way to the real tool, Clinical Scribe. */
+/** Clinical Scribe's consult workflow shown in recreated screens with fictional data. */
 function Tools(tall: boolean): SceneArt {
   const D = DESIGN.tools;
   const b = beats(D);
@@ -1619,7 +1609,11 @@ function Tools(tall: boolean): SceneArt {
       <>
         <Art tall={tall}>
           <text x="500" y={T.title} fontSize={T.size} {...b("rise", 0.2, { len: 1.2, cls: "t-disp" })}>
-            Custom tools
+            Clinical Scribe
+          </text>
+          <text x="500" y={T.title + (tall ? 42 : 34)} fontSize={tall ? 32 : 24}
+            {...b("fade", 0.7, { len: 0.5, cls: "t-small" })}>
+            Recreated screens · Demo data
           </text>
         </Art>
         <div {...b("rise", 0.5, { len: 1.1, cls: "film-layer" })}>
@@ -2038,6 +2032,10 @@ function Photo(tall: boolean): SceneArt {
           <text x="500" y={T.title} fontSize={T.size} {...b("rise", 0.2, { len: 1.2, cls: "t-disp" })}>
             Photo &amp; video
           </text>
+          <text x="500" y={T.title + (tall ? 42 : 34)} fontSize={tall ? 32 : 24}
+            {...b("fade", 0.65, { len: 0.5, cls: "t-small" })}>
+            Client work · Pearls Farm Labor
+          </text>
           <g {...b("out", 1.2, { len: 0.8 })}>
             <path pathLength={1} d={V.hill} {...b("draw", 0.2, { len: 1, cls: "s-paper-soft" })} />
             <Gold d={ring(V.sun[0], V.sun[1], V.sun[2])} fx={b("draw", 0.3, { len: 0.9 })} />
@@ -2070,13 +2068,29 @@ function Photo(tall: boolean): SceneArt {
 /* ── The plan: the page they'd get after the first call ────────────────── */
 
 /** The five things from the film, as the plan has them: what, and a line of what that means. */
-const PLAN = [
-  ["Get found on Google and in AI search", "At the top of search, and in AI answers"],
-  ["A new site", "Clear, quick and easy to use"],
-  ["Book online", "Tastings booked in a click, confirmed"],
-  ["Every call answered", "Booked in and followed up"],
-  ["One entry, no double work", "Typed once, filled in everywhere"],
-];
+const PLAN: Record<PlanSubject, [string, string][]> = {
+  winery: [
+    ["Help people find you", "A clear presence in local search"],
+    ["Show the place and wines", "Photography and video on location"],
+    ["Make the site easier to use", "Wines, visits and contact in one place"],
+    ["Make inquiries easier", "A direct way to ask or book"],
+    ["Follow up", "A clear next step for each inquiry"],
+  ],
+  practice: [
+    ["Make the basics easy to find", "Services, hours and contact"],
+    ["Answer new inquiries", "An option for calls during busy hours"],
+    ["Book the consult", "A clear time and confirmation"],
+    ["Support the front desk", "A workflow that fits the practice"],
+    ["Follow up after the consult", "Drafts your team can review"],
+  ],
+  business: [
+    ["Help people find you", "A clear presence in local search"],
+    ["Show what you do", "A website with your work and services"],
+    ["Make it easy to start", "A clear way to call, book or ask"],
+    ["Follow up on inquiries", "A plan for what happens next"],
+    ["Reduce double entry", "Connect the tools your team uses"],
+  ],
+};
 const PAGE_WIDE = {
   page: [190, 40, 620, 790] as Box, m: 52, mark: [104, 24], date: 16, rule: 128, title: [196, 46], by: [228, 17],
   items: [290, 84], indent: 48, num: 24, what: 21, why: [17, 27], tick: [-16, -7, 15], line: 46, sep: 684,
@@ -2088,7 +2102,8 @@ const PAGE_TALL = {
   field: { label: 956, size: 22, y: 974, h: 34, w: 370, dx: 410 }, foot: [1050, 22],
 };
 
-function Plan(tall: boolean): SceneArt {
+function Plan(tall: boolean, subject: PlanSubject = "business"): SceneArt {
+  const items = PLAN[subject];
   const D = DESIGN.plan;
   const b = beats(D);
   const P = tall ? PAGE_TALL : PAGE_WIDE;
@@ -2124,13 +2139,13 @@ function Plan(tall: boolean): SceneArt {
             </text>
             <path className="s-gold-hair" d={`M ${l} ${P.rule} H ${r}`} />
             <text className="t-disp t-ink t-left" x={l} y={P.title[0]} fontSize={P.title[1]}>
-              Plan for Your winery
+              Plan for your {subject}
             </text>
             <text className="t-ink-soft t-left" x={l} y={P.by[0]} fontSize={P.by[1]}>
               Prepared by Ashan &amp; Jordan, after your first call
             </text>
             {/* The five things, in order. */}
-            {PLAN.map(([what, why], i) => (
+            {items.map(([what, why], i) => (
               <g key={what}>
                 <text className="t-disp t-gold-deep t-left" x={l} y={itemY(i)} fontSize={P.num}>
                   {`0${i + 1}`}
@@ -2141,7 +2156,7 @@ function Plan(tall: boolean): SceneArt {
                 <text className="t-ink-soft t-left" x={l + P.indent} y={itemY(i) + P.why[1]} fontSize={P.why[0]}>
                   {why}
                 </text>
-                {i < PLAN.length - 1 && <path className="s-ink-line" d={`M ${l} ${itemY(i) + P.line} H ${r}`} />}
+                {i < items.length - 1 && <path className="s-ink-line" d={`M ${l} ${itemY(i) + P.line} H ${r}`} />}
                 <circle className="s-ink-line" fill="none" {...tick(i)} />
               </g>
             ))}
@@ -2159,7 +2174,7 @@ function Plan(tall: boolean): SceneArt {
               elorro.com · Bay Area
             </text>
           </g>
-          {PLAN.map(([what], i) => (
+          {items.map(([what], i) => (
             <g key={what} {...b("pop", TICK[i], { len: 0.5 })}>
               <Tick {...tick(i)} />
             </g>
@@ -2211,7 +2226,7 @@ function Close(tall: boolean): SceneArt {
 }
 
 /** Each scene's pictures, tall for a phone upright. */
-export const SCENE_ART: Record<SceneId, (tall: boolean) => SceneArt> = {
+export const SCENE_ART: Record<SceneId, (tall: boolean, subject?: PlanSubject) => SceneArt> = {
   elora: Elora,
   call: Call,
   found: Found,

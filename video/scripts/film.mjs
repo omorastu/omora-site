@@ -24,6 +24,7 @@ const FILM = path.resolve(ROOT, "..", "public", "m", "film");
  */
 const LOOPS = {
   site: { needs: ["src/film-captures.json"], id: "PearlsSite", prefix: "pearls-site", still: 0 },
+  prosperando: { needs: ["src/film-captures.json"], id: "ProsperandoSite", prefix: "prosperando-site", still: 0 },
   reel: { needs: ["src/film-captures.json", "public/film-captures/drone-src.mp4"], id: "PhotoReel", prefix: "photo-reel", still: 320 },
   clinical: { needs: [], id: "ClinicalFilm", prefix: "clinical-film", still: 460 },
 };

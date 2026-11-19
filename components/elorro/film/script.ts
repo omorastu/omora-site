@@ -52,6 +52,10 @@ export type SceneId =
 /** The examples on the choice, each a scene of its own. */
 export const DEMO_IDS = ["tools", "photo", "frontdesk", "website", "local"] as const;
 export type DemoId = (typeof DEMO_IDS)[number];
+export type PlanSubject = "winery" | "practice" | "business";
+
+export const ownerPlan = (demo: DemoId): PlanSubject =>
+  demo === "website" ? "winery" : demo === "frontdesk" ? "practice" : "business";
 
 export type Line = {
   text: string;
@@ -97,8 +101,8 @@ export const choice: Record<"owners" | "services", { heading: string; cards: Cho
       {
         demo: "website",
         title: "Winery or venue",
-        line: "Show people the place and give them a clear way to inquire.",
-        image: "/m/film/pearls-site-d-poster.jpg",
+        line: "See how Prosperando shows its wines and gives visitors a next step.",
+        image: "/m/work/prosperando-d-poster.jpg",
       },
       {
         demo: "frontdesk",
@@ -120,8 +124,8 @@ export const choice: Record<"owners" | "services", { heading: string; cards: Cho
       {
         demo: "website",
         title: "Website",
-        line: "See a real site take a visitor from first look to inquiry.",
-        image: "/m/film/pearls-site-d-poster.jpg",
+        line: "See how a Napa wine label presents its wines and invites people to stay in touch.",
+        image: "/m/work/prosperando-d-poster.jpg",
       },
       {
         demo: "photo",
@@ -170,29 +174,30 @@ export const scenes: Scene[] = [
   // From here, outside in: what a customer meets first, then what happens behind the scenes. Each problem, then the fix.
   {
     id: "found",
-    label: "02 · Getting found",
+    label: "Illustration · Getting found",
     duration: 11.85,
-    cue: 12.1,
+    cue: 0.18,
+    voice: "/m/film/voice/found-intro.m4a",
     lines: [
       { text: "Say you run a winery, and you’re on page two, where no one looks.", at: 0, end: 4.05 },
-      { text: "They get you to the top when people search,", at: 4.59, end: 6.7 },
-      { text: "and into the answer when people ask AI, which more and more of them do.", at: 6.84, end: 11.29 },
+      { text: "They make it easier for customers to find you when they search.", at: 4.59, silent: true },
+      { text: "Give people a clear next step once they find you.", at: 8, silent: true },
     ],
   },
   {
-    // Longer than her lines: Pearls' site plays on through, all of it, after her line.
+    // The full walkthrough labels the illustrative old site and the real example separately.
     id: "site",
-    label: "03 · The website",
+    label: "Website example",
     duration: 11.91,
     cue: 23.95,
     lines: [
       { text: "If your website’s dated and cluttered, people leave.", at: 0, end: 3.14 },
-      { text: "They build one that’s clear and easy to use.", at: 3.68, end: 6.29 },
+      { text: "They build one that’s clear and easy to use, like this one for Prosperando.", at: 3.68, end: 8, voice: "/m/film/voice/prosperando.m4a", cue: 0.22 },
     ],
   },
   {
     id: "booking",
-    label: "04 · Booking",
+    label: "Illustration · Booking",
     duration: 7.45,
     cue: 30.68,
     lines: [
@@ -202,7 +207,7 @@ export const scenes: Scene[] = [
   },
   {
     id: "calls",
-    label: "05 · Calls",
+    label: "Illustration · Calls",
     duration: 8.31,
     cue: 38.13,
     lines: [
@@ -213,7 +218,7 @@ export const scenes: Scene[] = [
   {
     // To the one entry filling in all three, held a moment; then the choice.
     id: "office",
-    label: "06 · Behind the scenes",
+    label: "Illustration · Behind the scenes",
     duration: 7.3,
     cue: 46.44,
     lines: [
@@ -231,7 +236,7 @@ export const scenes: Scene[] = [
   {
     // Her line from behind the scenes, then Clinical Scribe: the consult written up, the coaching for it, the follow-up letter.
     id: "tools",
-    label: "Demo · Custom tools",
+    label: "Clinical Scribe · Recreated screens · Demo data",
     duration: 17,
     cue: 52.99,
     lines: [{ text: "And build tools around how you work, like one that writes up each consult.", at: 0.5, end: 4.48 }],
@@ -239,7 +244,7 @@ export const scenes: Scene[] = [
   {
     // Her line, then the drone footage plays on, and gives way to the posts.
     id: "photo",
-    label: "Demo · Photo & video",
+    label: "Client work · Pearls Farm Labor",
     duration: 12.3,
     cue: 57.33,
     lines: [{ text: "And photos and video that show what you do.", at: 0.5, end: 2.84 }],
@@ -247,10 +252,10 @@ export const scenes: Scene[] = [
   {
     // A call handled behind the scenes, step by step. No voice for it yet.
     id: "frontdesk",
-    label: "Demo · Front desk",
+    label: "Illustration · Front desk",
     duration: 13,
     lines: [
-      { text: "A call comes in while the desk is busy, and it’s answered for them.", at: 0.5, silent: true },
+      { text: "Busy with a patient? Here’s how a front desk could handle an incoming call.", at: 0.3, silent: true },
       { text: "As she talks, what she wants is picked out.", at: 3.6, silent: true },
       { text: "A slot is found and booked, and her record fills in.", at: 6.7, silent: true },
       { text: "The confirmation goes out by text. Nobody had to stop.", at: 9.7, silent: true },
@@ -258,11 +263,14 @@ export const scenes: Scene[] = [
   },
   {
     id: "website",
-    label: "Website example · Pearls Farm Labor",
-    duration: 10.4,
+    label: "Client work · Prosperando Vineyards",
+    duration: 13,
+    voice: "/m/film/voice/prosperando.m4a",
+    cue: 0.22,
     lines: [
-      { text: "Pearls Farm Labor shows its crew at work.", at: 0.3, silent: true },
-      { text: "Visitors can see what Pearls does and request a crew.", at: 5.1, silent: true },
+      { text: "They build one that’s clear and easy to use, like this one for Prosperando.", at: 0.45, end: 4.77 },
+      { text: "Visitors can explore the vineyards and wines.", at: 4.95, silent: true },
+      { text: "The page gives them a clear next step: join the list.", at: 8.6, silent: true },
     ],
   },
   {
@@ -270,7 +278,7 @@ export const scenes: Scene[] = [
     label: "Local business example · Cubic Ship",
     duration: 9.6,
     lines: [
-      { text: "Cubic Ship shows customers what they can do before they visit a counter.", at: 0.3, silent: true },
+      { text: "Customers have questions before they come in. Cubic Ship shows them where to start.", at: 0.3, silent: true },
       { text: "Start online, then finish in person.", at: 4.5, silent: true },
     ],
   },

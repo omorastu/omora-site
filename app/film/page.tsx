@@ -24,8 +24,8 @@ export default function FilmPage() {
             <p className="cs-eyebrow label">A short film</p>
             <h1 className="cs-title">How we work.</h1>
             <p className="cs-sub">
-              See how Ashan and Jordan can help, then pick an example for your business. From a better website or
-              a shoot to an easier way to handle calls and booking.
+              Pick your business to see how Ashan and Jordan can help with your website, photos and video,
+              or the calls and bookings that come in.
             </p>
             <FilmLauncher label="Watch how we work" />
           </div>

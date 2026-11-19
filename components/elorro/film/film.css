@@ -1061,3 +1061,9 @@
   .film-choice { inset-block-start: 44px; padding: 4px 14px 14px; }
   .film-cards--services { grid-template-columns: repeat(4, min(155px, 22vw)); }
 }
+
+.film-launch-options { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.film-launch-options .act { margin: 0; }
+.film-launch-overview.act { margin: 14px 0 0; color: inherit; background: transparent; border-color: currentColor; }
+.film-choice-book { text-decoration: none; color: var(--paper); }
+.film-effects-switch[aria-pressed="true"] { color: #F4E2BC; text-decoration: underline; text-underline-offset: .25em; }

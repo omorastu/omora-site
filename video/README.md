@@ -239,3 +239,18 @@ three 1920×1200 frames for the case study:
   `STILL_FRAME`/`EXTRA_FRAMES` in step with `scripts/render.mjs`).
 - `src/clinical/screens.tsx`, `src/clinical/ui.tsx`: the app's screens and
   components, each noting the file in the app it mirrors.
+
+### Prosperando owner path
+
+Run `FILM_CAPTURE_BROWSER=chrome npm run film-capture -- prosperando` once to capture desktop
+and phone in separate viewports. Run `npm run film -- prosperando` to render the four
+encodes and their posters using those tiles. The twelve-second clip opens with approved
+portfolio artwork and holds on the vineyard and signup sections from the live site.
+It keeps the age check out of the edit by starting from existing artwork and
+using the captured page only below its first section.
+
+The existing Sia take provides `public/m/film/voice/prosperando.m4a` from
+27.41–32.14 seconds of `voice/elora-sia-take2.mp3`. The search intro uses
+11.92–16.37 seconds of the existing `elora-sia.m4a`; the remaining search
+copy is captioned pending the next voice pass. No effects audio files are
+needed. The film plays its quiet cues with Web Audio under the master mute.

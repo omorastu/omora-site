@@ -4,17 +4,20 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState, useSyncExter
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import { hanken } from "@/components/elorro/fonts";
+import { effects, makeEffects } from "@/components/elorro/film/effects";
 import { EloraAvatar } from "@/components/elorro/film/elora";
 import { CAMERA, CLIPS, ClipContext, DESIGN, Handoff, SCENE_ART, type ClipId } from "@/components/elorro/film/scenes";
 import {
   DEMO_IDS,
   captions,
   choice,
+  ownerPlan,
   scenes,
   timeline,
   voice,
   voiceStretches,
   type DemoId,
+  type PlanSubject,
   type SegmentId,
 } from "@/components/elorro/film/script";
 import { budget } from "@/components/elorro/work-video";
@@ -67,6 +70,9 @@ import "@/components/elorro/film/film.css";
 
 const { parts, segments, total } = timeline();
 const CAPTIONS = captions();
+const EFFECTS = parts.flatMap(({ scene, start, duration }) =>
+  (effects[scene.id] ?? []).map(([at, cue]) => ({ at: start + at * duration / DESIGN[scene.id], cue }))
+);
 /** Her glow follows what she says, not how long its caption stays up (and not a line she has no voice for yet). */
 const SPOKEN = CAPTIONS.filter((c) => !c.silent).map((c) => ({ from: c.from, to: c.said }));
 const SEG = Object.fromEntries(segments.map((s) => [s.id, s])) as Record<SegmentId, (typeof segments)[number]>;
@@ -166,7 +172,8 @@ const scenesAt = (t: number) =>
   parts.flatMap((p, i) => (t >= p.start - WINDOW && t <= p.start + p.duration + WINDOW ? [i] : []));
 const same = (a: number[], b: number[]) => a.length === b.length && a.every((x, i) => x === b[i]);
 
-type Showing = { at: number; run: boolean; review: boolean };
+type Showing = { at: number; run: boolean; review: boolean; subject?: PlanSubject };
+type FilmEffects = ReturnType<typeof makeEffects>;
 type Clips = Partial<Record<ClipId, HTMLVideoElement>>;
 
 const reducedMotion = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -237,7 +244,8 @@ export function FilmLauncher({ label }: { label: string }) {
   const [closing, setClosing] = useState(false);
   const audio = useRef<HTMLAudioElement | null>(null);
   const clips = useRef<Clips>({});
-  const trigger = useRef<HTMLButtonElement>(null);
+  const trigger = useRef<HTMLButtonElement | null>(null);
+  const effectsPlayer = useRef<FilmEffects>(null);
   const leaving = useRef(0);
   const refocus = useRef(false);
 
@@ -256,22 +264,28 @@ export function FilmLauncher({ label }: { label: string }) {
     const review = open ? window.setTimeout(() => setShowing(open)) : 0;
     return () => {
       audio.current?.pause();
+      effectsPlayer.current?.close();
+      effectsPlayer.current = null;
       clearTimeout(leaving.current);
       clearTimeout(review);
       clearTimeout(warm);
     };
   }, []);
 
-  const watch = () => {
-    // Inside the click itself: the one moment a phone lets the voice start.
+  const watch = (button: HTMLButtonElement, demo?: DemoId) => {
+    const at = demo ? demoAt(demo) : 0;
+    trigger.current = button;
+    // Unlock sound with the same click that starts the selected film.
+    const player = (effectsPlayer.current ??= makeEffects());
+    player?.unlock();
+    player?.audible(true);
     const a = audio.current;
     if (a) {
-      if (VOICE[0].src) place(a, VOICE[0].src, VOICE[0].file, 0);
-      a.currentTime = VOICE[0].file;
+      const cue = voiceAt(at);
+      if (cue.src) place(a, cue.src, cue.pos, 0);
       a.muted = false;
       a.play().catch(() => {});
-      // Her first line comes a moment in: let go here, and the film starts her on time.
-      if (VOICE[0].src && VOICE[0].film > 0) a.pause();
+      if (cue.wait) a.pause();
     }
     // And the loops, started and stopped here, with nothing loaded yet, so they may play on their own later.
     if (!reducedMotion()) {
@@ -285,7 +299,7 @@ export function FilmLauncher({ label }: { label: string }) {
     }
     clearTimeout(leaving.current);
     setClosing(false);
-    setShowing({ at: 0, run: true, review: false });
+    setShowing({ at, run: true, review: false, subject: demo ? ownerPlan(demo) : "business" });
   };
 
   const sound = useCallback((on: boolean) => {
@@ -295,6 +309,7 @@ export function FilmLauncher({ label }: { label: string }) {
   /** Leave the film: it fades, the page comes back, and the focus with it, unless booking took it to the form. */
   const leave = useCallback((back: boolean = true) => {
     audio.current?.pause();
+    effectsPlayer.current?.audible(false);
     setClosing(true);
     refocus.current = back;
     leaving.current = window.setTimeout(() => {
@@ -312,11 +327,18 @@ export function FilmLauncher({ label }: { label: string }) {
 
   return (
     <>
-      <button ref={trigger} type="button" className="act" onClick={watch}>
+      <div className="film-launch-options" role="group" aria-label="Choose your business">
+        {choice.owners.cards.map((card) => (
+          <button key={card.demo} type="button" className="act" onClick={(event) => watch(event.currentTarget, card.demo)}>
+            {card.title}
+          </button>
+        ))}
+      </div>
+      <button type="button" className="act film-launch-overview" onClick={(event) => watch(event.currentTarget)}>
         {label}
       </button>
       {showing &&
-        createPortal(<Film {...showing} audio={audio} clips={clips} closing={closing} onLeave={leave} onSound={sound} />, document.body)}
+        createPortal(<Film {...showing} audio={audio} effectsPlayer={effectsPlayer} clips={clips} closing={closing} onLeave={leave} onSound={sound} />, document.body)}
     </>
   );
 }
@@ -325,13 +347,16 @@ function Film({
   at,
   run,
   review,
+  subject = "business",
   audio,
+  effectsPlayer,
   clips,
   closing,
   onLeave,
   onSound,
 }: Showing & {
   audio: React.RefObject<HTMLAudioElement | null>;
+  effectsPlayer: React.RefObject<FilmEffects>;
   clips: React.RefObject<Clips>;
   closing: boolean;
   onLeave: (refocus?: boolean) => void;
@@ -348,6 +373,11 @@ function Film({
     gone.current = closing;
   }, [closing]);
   const [muted, setMuted] = useState(false);
+  const [effectsOn, setEffectsOn] = useState(true);
+  const [planSubject, setPlanSubject] = useState<PlanSubject>(subject);
+  useEffect(() => {
+    if (!review && !closing) effectsPlayer.current?.audible(!muted && effectsOn);
+  }, [effectsPlayer, muted, effectsOn, review, closing]);
   const [ended, setEnded] = useState(false);
   /** On the choice (or playing); the demos watched; the card to come back to. */
   const [choosing, setChoosing] = useState(() => segOf(at).id === "choice");
@@ -408,6 +438,7 @@ function Film({
     const el = reel.current;
     if (!el || typeof el.getAnimations !== "function") return;
     const a = sound?.current ?? null;
+    const player = review ? null : effectsPlayer.current;
     // (Transitions, such as a loop fading in over its still, keep their own time.)
     const anims = () => el.getAnimations({ subtree: true }).filter((x) => !(typeof CSSTransition !== "undefined" && x instanceof CSSTransition));
     const tick0 = el.querySelector(".film-clock")?.getAnimations()[0];
@@ -531,6 +562,7 @@ function Film({
     /** The film's time by her voice, while it leads. */
     const heard = () => filmOf(a!.currentTime, now(), a!.src);
     const at0 = !paused && leads() ? filmOf(a!.currentTime, start, a!.src) : start;
+    let effectFrom = at0;
     if (paused) pauseAt(at0);
     else runAt(at0);
     if (tick0) tick0.onfinish = () => setEnded(true);
@@ -660,6 +692,7 @@ function Film({
       quiet();
       seg = segOf(t).id;
       paused = !play;
+      effectFrom = t;
       if (a && VOICE[0].src) {
         if (!a.paused) a.pause();
         const v = voiceAt(t);
@@ -722,6 +755,12 @@ function Film({
       const want = scenesAt(t);
       setNear((had) => (same(had, want) ? had : want));
       if (paused) return;
+      if (player && !gone.current && t - effectFrom <= 0.6) {
+        for (const effect of EFFECTS) {
+          if (effect.at > effectFrom && effect.at <= t) player.play(effect.cue);
+        }
+      }
+      effectFrom = Math.max(effectFrom, t);
       if (leads()) {
         if (!waiting) runAt(heard());
         keepVoice();
@@ -765,7 +804,7 @@ function Film({
       clock.current = null;
       delete window.__eloFilm;
     };
-  }, [at, run, review, sound, clips, still, toChoice]);
+  }, [at, run, review, sound, effectsPlayer, clips, still, toChoice]);
 
   // Scenes just put in the page, or laid out anew for a turned screen: onto the clock before they're seen.
   useLayoutEffect(() => {
@@ -807,6 +846,7 @@ function Film({
   const pick = (id: DemoId) => {
     setChoosing(false);
     setPlayingExample(id);
+    if (menu === "owners") setPlanSubject(ownerPlan(id));
     shut.current?.focus({ preventScroll: true });
     clock.current?.go(demoAt(id), true);
   };
@@ -888,7 +928,7 @@ function Film({
         <ClipContext.Provider value={attach}>
         {parts.map(({ scene, start, duration }, i) => {
           if (!near.includes(i)) return null;
-          const art = SCENE_ART[scene.id](tall);
+          const art = SCENE_ART[scene.id](tall, planSubject);
           const cam = CAMERA[scene.id];
           return (
             <section
@@ -1034,7 +1074,9 @@ function Film({
           </ul>
           <div className="film-choice-actions">
             <button type="button" className="film-next is-main" onClick={next}>See the plan</button>
+            <a className="film-next film-choice-book" href="#contact" onClick={() => onLeave(false)}>Book a call</a>
             <button type="button" className="film-next" onClick={watchFull}>Watch full walkthrough</button>
+            {!review && <button type="button" className="film-next film-effects-switch" aria-pressed={effectsOn} onClick={() => setEffectsOn((on) => !on)}>Sound effects</button>}
           </div>
         </div>
       )}
