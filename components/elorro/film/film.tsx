@@ -89,6 +89,7 @@ const RETURN = 0.45;
 const PLAN_AT = SEG.finale.start - LEAD;
 const demoAt = (id: DemoId) => SEG[id].start - LEAD;
 const isDemo = (id: SegmentId): id is DemoId => DEMO_IDS.some((demo) => demo === id);
+const isExample = (id: SegmentId) => id !== "main" && id !== "choice" && id !== "finale";
 
 type OwnerTrack = OwnerPath & {
   spans: { start: number; end: number }[];
@@ -712,7 +713,7 @@ function Film({
       const path = ownerRun.current;
       if (path) return path.track.spans[path.index].end;
       if (seg === "main") return shortOpening.current ? OPEN_END : HOLD;
-      return isDemo(seg) || seg === "winePhoto" ? SEG[seg].end + RETURN : Infinity;
+      return isExample(seg) ? SEG[seg].end + RETURN : Infinity;
     };
     const quiet = () => {
       clearTimeout(hold);
@@ -992,7 +993,7 @@ function Film({
         <GoldDefs />
 
         <ClipContext.Provider value={attach}>
-        {parts.map(({ scene, start, duration }, i) => {
+        {parts.map(({ scene, start, duration, segment }, i) => {
           if (!near.includes(i) || !visibleScene(scene.id)) return null;
           const art = SCENE_ART[scene.id](tall, planSubject);
           const cam = CAMERA[scene.id];
@@ -1001,7 +1002,7 @@ function Film({
               key={scene.id}
               className={cn("film-scene", i === 0 && "is-first", i === parts.length - 1 && "is-last")}
               data-scene={scene.id}
-              data-demo={isDemo(scene.id as SegmentId) || scene.id === "winePhoto" ? "" : undefined}
+              data-demo={isExample(segment) ? "" : undefined}
               aria-hidden="true"
               style={
                 {

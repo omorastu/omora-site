@@ -52,6 +52,7 @@ export const DESIGN: Record<SceneId, number> = {
   photo: 15.04,
   frontdesk: 13,
   website: 10.4,
+  wineSite: 13,
   winePhoto: 5.7,
   local: 9.6,
   plan: 9,
@@ -229,7 +230,7 @@ function Tick({ cx, cy, r }: { cx: number; cy: number; r: number }) {
 
 /* ── Real work, playing ────────────────────────────────────────────────── */
 
-export type ClipId = "openingSite" | "pearlsSite" | "websiteExample" | "wineFootage" | "localExample" | "clinical" | "pearlsDrone";
+export type ClipId = "openingSite" | "pearlsSite" | "websiteExample" | "wineWebsite" | "wineFootage" | "localExample" | "clinical" | "pearlsDrone";
 type Cuts = { desktop: string; mobile?: string; desktopSd: string; mobileSd?: string };
 /** The film's own loops, made for it (video/scripts/film.mjs), in public/m/film/. */
 const filmCuts = (name: string): Cuts => ({
@@ -251,6 +252,7 @@ const filmPosters = (name: string) => ({ desktop: `/m/film/${name}-d-poster.jpg`
 export const CLIPS: Record<ClipId, { scene: SceneId; at: number; until: number; offset: number; cuts: Cuts; poster: { desktop: string; mobile: string } }> = {
   openingSite: { scene: "elora", at: 0.3, until: 9, offset: 0, cuts: filmCuts("pearls-site"), poster: filmPosters("pearls-site") },
   websiteExample: { scene: "website", at: 0.45, until: 10.1, offset: 0, cuts: filmCuts("pearls-site"), poster: filmPosters("pearls-site") },
+  wineWebsite: { scene: "wineSite", at: 0.45, until: 12.8, offset: 0, cuts: filmCuts("prosperando-site"), poster: filmPosters("prosperando-site") },
   wineFootage: {
     scene: "winePhoto", at: 0.18, until: 5.4, offset: 0,
     cuts: {
@@ -352,19 +354,22 @@ function Elora(tall: boolean): SceneArt {
   };
 }
 
-function WebsiteExample(tall: boolean): SceneArt {
+function WebsiteProof(tall: boolean, clip: "websiteExample" | "wineWebsite", credit: ReactNode): SceneArt {
   return {
-    far: <Far><Glow id="far-website-example" cx={50} cy={50} r={65} o={0.18} /></Far>,
+    far: <Far><Glow id={`far-${clip}`} cx={50} cy={50} r={65} o={0.18} /></Far>,
     mid: (
       <div className="film-proof-example">
         <div className="film-proof-window">
-          <Clip id="websiteExample" tall={tall} box={[0, 0, 1000, tall ? 1100 : 1000]} clean />
+          <Clip id={clip} tall={tall} box={[0, 0, 1000, tall ? 1100 : 1000]} clean />
         </div>
-        <p>Client work · Pearls Farm Labor website</p>
+        <p>{credit}</p>
       </div>
     ),
   };
 }
+
+const WebsiteExample = (tall: boolean) => WebsiteProof(tall, "websiteExample", "Client work · Pearls Farm Labor website");
+const WineWebsite = (tall: boolean) => WebsiteProof(tall, "wineWebsite", <>Client work · Prosperando Vineyards<br />Website, photography &amp; video</>);
 
 function WinePhoto(tall: boolean): SceneArt {
   return {
@@ -2245,6 +2250,7 @@ export const SCENE_ART: Record<SceneId, (tall: boolean, subject?: PlanSubject) =
   photo: Photo,
   frontdesk: FrontDesk,
   website: WebsiteExample,
+  wineSite: WineWebsite,
   winePhoto: WinePhoto,
   local: LocalExample,
   plan: Plan,
@@ -2270,6 +2276,7 @@ export const CAMERA: Record<SceneId, { px: string; py: string; z0: number; z1: n
   photo: { px: "0%", py: "0%", z0: 1.02, z1: 1.06, ry: "0deg" },
   frontdesk: { px: "0%", py: "-0.6%", z0: 1.01, z1: 1.04, ry: "0deg" },
   website: { px: "0%", py: "0%", z0: 1, z1: 1, ry: "0deg" },
+  wineSite: { px: "0%", py: "0%", z0: 1, z1: 1, ry: "0deg" },
   winePhoto: { px: "0%", py: "0%", z0: 1, z1: 1, ry: "0deg" },
   local: { px: "0%", py: "0%", z0: 1, z1: 1, ry: "0deg" },
   plan: { px: "0%", py: "-1.2%", z0: 1.06, z1: 1, ry: "0deg" },

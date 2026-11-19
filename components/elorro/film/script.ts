@@ -46,6 +46,7 @@ export type SceneId =
   | "photo"
   | "frontdesk"
   | "website"
+  | "wineSite"
   | "winePhoto"
   | "local"
   | "plan"
@@ -107,7 +108,7 @@ export const ownerPaths: readonly OwnerPath[] = [
     line: "See how people find you, book a visit and get a feel for the place.",
     image: "/m/work/prosperando-m-poster.jpg",
     plan: "winery",
-    scenes: ["found", "booking", "website", "winePhoto"],
+    scenes: ["found", "booking", "wineSite", "winePhoto"],
   },
   {
     demo: "frontdesk",
@@ -288,6 +289,18 @@ export const scenes: Scene[] = [
     lines: [{ text: "They build one that’s clear and easy to use.", at: 0.55, end: 3.16 }],
   },
   {
+    id: "wineSite",
+    label: "Client work · Prosperando Vineyards",
+    duration: 13,
+    voice: "/m/film/voice/prosperando.m4a",
+    cue: 0.22,
+    lines: [
+      { text: "They build one that’s clear and easy to use, like this one for Prosperando.", at: 0.45, end: 4.77 },
+      { text: "Visitors can explore the vineyards and wines.", at: 4.95, silent: true },
+      { text: "The page gives them a clear next step: join the list.", at: 8.6, silent: true },
+    ],
+  },
+  {
     id: "winePhoto",
     label: "Client work · Prosperando Vineyards",
     duration: 5.7,
@@ -329,7 +342,7 @@ export const scenes: Scene[] = [
 ];
 
 /** The full walkthrough, the choice, the examples, then the plan and close. */
-export type SegmentId = "main" | "choice" | DemoId | "winePhoto" | "finale";
+export type SegmentId = "main" | "choice" | DemoId | "wineSite" | "winePhoto" | "finale";
 export const SEGMENTS: { id: SegmentId; scenes: SceneId[]; joined?: boolean; voice?: string }[] = [
   { id: "main", scenes: ["elora", "call", "found", "site", "booking", "calls", "office"] },
   // Straight on from the first minute, which plays into it.
@@ -339,6 +352,7 @@ export const SEGMENTS: { id: SegmentId; scenes: SceneId[]; joined?: boolean; voi
   { id: "frontdesk", scenes: ["frontdesk"] },
   { id: "website", scenes: ["website"] },
   { id: "local", scenes: ["local"] },
+  { id: "wineSite", scenes: ["wineSite"] },
   { id: "winePhoto", scenes: ["winePhoto"] },
   { id: "finale", scenes: ["plan", "close"] },
 ];

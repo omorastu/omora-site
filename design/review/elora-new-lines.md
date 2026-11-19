@@ -61,6 +61,11 @@ Send me the files and I'll time them in, both of those included.
 
 ## Owner paths follow-up
 
+The winery website example uses Sia's original Prosperando line. The clip
+`/m/film/voice/prosperando.m4a` is 27.41–32.14 seconds of
+`video/voice/elora-sia-take2.mp3`, cued 0.22 seconds into the clip. The full
+walkthrough's Pearls website scene uses Ashan's cut of the original track.
+
 These are draft reads for Ashan to review. The front desk illustration is
 captioned with optional effects. The local service path is disabled in the
 picker while its lines are pending.
@@ -85,5 +90,5 @@ near the start. The transcription alone did not establish an error.
 
 Proposed credit wording for the founders to confirm: Pearls Farm Labor site
 and film by Jordan. Clinical Scribe built by Ashan, shown in recreated screens
-with fictional data. Prosperando photography, video, site color and family
-story. Its shot in the film is the bottle footage and is labeled for that work.
+with fictional data. The winery path credits Prosperando for website,
+photography and video, with the bottle footage showing the photo and video work.

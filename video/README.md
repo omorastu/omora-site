@@ -240,8 +240,16 @@ three 1920×1200 frames for the case study:
 - `src/clinical/screens.tsx`, `src/clinical/ui.tsx`: the app's screens and
   components, each noting the file in the app it mirrors.
 
-The winery path reuses the website and photo lines from the existing Sia track.
-`website-proof.m4a` is 27.42–30.44 seconds of `public/m/film/elora-sia.m4a`.
-`wine-photo.m4a` is 57.14–59.95 seconds of the same file. The Pearls website
-scroll is the website proof. The Prosperando proof uses the existing portrait
-bottle footage at `public/m/work/prosperando-m.mp4`.
+### Prosperando owner path
+
+The winery path plays the twelve-second Prosperando scroll from commit
+`4586345` and then the existing portrait bottle footage at
+`public/m/work/prosperando-m.mp4`. The scroll opens with portfolio artwork and
+holds on the vineyard and signup sections. The four checked-in encodes and their
+posters live at `public/m/film/prosperando-site-*`. The capture and Remotion
+recipe are in `4586345`, along with the original capture manifest.
+
+`public/m/film/voice/prosperando.m4a` is 27.41–32.14 seconds of
+`voice/elora-sia-take2.mp3`, cued at 0.22 seconds. For the bottle shot,
+`wine-photo.m4a` is 57.14–59.95 seconds of `public/m/film/elora-sia.m4a`.
+The full walkthrough and standalone Website example use the Pearls scroll.
