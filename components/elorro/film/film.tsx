@@ -86,6 +86,9 @@ const OPEN_END = parts[0].duration - 0.35;
 const LEAD = 0.45;
 /** Back from a demo to the choice once its pictures have all but gone. */
 const RETURN = 0.45;
+// Owner jumps use a shorter fade and skip the quiet tail of standalone scenes.
+const OWNER_LEAD = 0.12;
+const OWNER_TAIL_TRIM = 0.16;
 const PLAN_AT = SEG.finale.start - LEAD;
 const demoAt = (id: DemoId) => SEG[id].start - LEAD;
 const isDemo = (id: SegmentId): id is DemoId => DEMO_IDS.some((demo) => demo === id);
@@ -101,13 +104,12 @@ const OWNER_TRACKS: readonly OwnerTrack[] = availableOwnerPaths.map((path) => {
   selected.forEach((part, i) => {
     const previous = selected[i - 1];
     const main = part.segment === "main";
-    // A standalone scene fades into the gap. Inside the walkthrough, leave
-    // before the next unselected scene starts fading up.
-    const end = part.start + part.duration + (main ? -0.3 : RETURN);
+    // Inside the walkthrough, leave before the next unselected scene fades up.
+    const end = part.start + part.duration - (main ? 0.3 : OWNER_TAIL_TRIM);
     if (previous?.segment === part.segment && Math.abs(previous.start + previous.duration - part.start) < 0.01) {
       spans[spans.length - 1].end = end;
     } else {
-      const lead = main ? 0 : LEAD;
+      const lead = main ? 0 : OWNER_LEAD;
       spans.push({ start: part.start - lead + (i === 0 ? path.opening?.trim ?? 0 : 0), end });
     }
   });
@@ -757,7 +759,7 @@ function Film({
         } else {
           ownerRun.current = null;
           markSeen("owners", path.track.demo);
-          go(PLAN_AT, true);
+          go(SEG.finale.start - OWNER_LEAD, true);
         }
         return true;
       }
@@ -979,7 +981,7 @@ function Film({
   return (
     <div
       ref={root}
-      className={cn("film", hanken.variable, closing && "is-closing", opening && "is-opening", choosing && "is-choosing")}
+      className={cn("film", hanken.variable, closing && "is-closing", opening && "is-opening", choosing && "is-choosing", activeOwner && "is-owner-path")}
       role="dialog"
       aria-modal="true"
       aria-label="How we work: a short film, narrated by Elora"

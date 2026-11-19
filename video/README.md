@@ -242,12 +242,16 @@ three 1920×1200 frames for the case study:
 
 ### Prosperando owner path
 
-The winery path plays the twelve-second Prosperando scroll from commit
-`4586345` and then the existing portrait bottle footage at
-`public/m/work/prosperando-m.mp4`. The scroll opens with portfolio artwork and
-holds on the vineyard and signup sections. The four checked-in encodes and their
-posters live at `public/m/film/prosperando-site-*`. The capture and Remotion
-recipe are in `4586345`, along with the original capture manifest.
+The winery path plays a twelve-second Prosperando scroll and then the existing
+portrait bottle footage at `public/m/work/prosperando-m.mp4`. The four encodes
+and their posters live at `public/m/film/prosperando-site-*`. The capture and
+Remotion recipe are in `4586345`, along with the original capture manifest.
+
+The phone encodes and poster open on the desktop crest and vineyard frame,
+cropped to 4:5 (a centered 592 by 740 crop starting at y=60). In the phone
+video, a 0.76-second dissolve starts at 2.97 seconds and leads into the
+original phone site cut starting at 3.8 seconds from `f56921f`. The signup
+frame holds through 12 seconds.
 
 `public/m/film/voice/prosperando.m4a` is 27.41–32.14 seconds of
 `voice/elora-sia-take2.mp3`, cued at 0.22 seconds. For the bottle shot,

@@ -1068,6 +1068,21 @@
 .film-choice-book { text-decoration: none; color: var(--paper); }
 .film-effects-switch[aria-pressed="true"] { color: #F4E2BC; text-decoration: underline; text-underline-offset: .25em; }
 
+/* Owner paths jump between chapters on the film clock. Keep those fades short. */
+.film.is-owner-path .film-scene {
+  animation-duration: .38s, .44s;
+  animation-delay: calc(var(--s) - .18s), calc(var(--s) + var(--d) - .36s);
+}
+.film.is-owner-path .film-scene .film-lens { animation-duration: .55s, .44s; }
+@media (prefers-reduced-motion: no-preference) {
+  .film.is-owner-path [data-scene="frontdesk"] .film-orbit > .film-layer,
+  .film.is-owner-path [data-scene="tools"] .film-orbit > .film-art > .t-disp.fx-rise,
+  .film.is-owner-path [data-scene="plan"] .film-orbit .fx-rise { animation-duration: .35s; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .film.is-owner-path .film-scene { animation-duration: .25s, .30s !important; }
+}
+
 /* Keep the client bottle footage in its native portrait framing. */
 .film-proof-example--portrait { inset-inline: 24%; }
 .film-proof-example--portrait .film-proof-window { aspect-ratio: 4 / 5; }
