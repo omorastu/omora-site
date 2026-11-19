@@ -41,14 +41,18 @@ import "@/components/elorro/film/film.css";
  * Every picture moves by CSS animations on one clock (film.css). This keeps
  * them all at one time, and that time with Elora's voice: the voice leads
  * while it plays, and should it stall the pictures wait for it, briefly;
- * where a scene runs on past her lines, she waits for it. Her file is
+ * where a scene runs on past her lines, she waits for it. Her first file is
  * fetched as the page loads and started inside the click, so a phone plays
- * it. Without it, the film runs as captions alone, on the same timing.
+ * it; any others (a part's or a line's own, script.ts) are fetched soon
+ * after, and she moves to each in the quiet before its line, on the same
+ * audio element. Without her, the film runs as captions alone, on the same
+ * timing.
  * Only the scenes near the moment are in the page at all (WINDOW), which
  * keeps a phone's memory and work to two scenes at most.
  *
- * Three of the scenes play Elorro's own loops (scenes.tsx, CLIPS). Their
- * videos are made, and started and stopped at once, inside the same click:
+ * Three of the scenes play videos of Elorro's real work, made for the film
+ * (scenes.tsx, CLIPS; video/README.md), each once through. Their videos are
+ * made, and started and stopped at once, inside the same click:
  * an iPhone in Low Power Mode lets a video play on its own later only if it
  * was started in a gesture (as work-video.tsx does on the pages). Each loads
  * only shortly before its scene, plays in step with the film, and stays on
@@ -108,31 +112,49 @@ const NUDGE_MS = 20000;
 const TALL = "(max-width: 767px) and (max-aspect-ratio: 3/4)";
 /** The longest the pictures wait for a stalled voice, in ms, before going on without it. */
 const STALL_MS = 2000;
-/** Her voice against the film (script.ts): the stretches of her file, and between them, where she waits. */
+/** Her voice against the film (script.ts): the stretches of her files, and between them, where she waits. */
 const VOICE = voiceStretches();
+/** Her files, the first she plays first. */
+const FILES = [...new Set(VOICE.map((s) => s.src))];
 /** A wait shorter than this, she plays through. */
 const MIN_WAIT = 0.2;
-/** The film's time at `pos` in her file, while she plays: in the stretch she's in, once the film (`t`, about now) has reached it. */
-const filmOf = (pos: number, t: number) => {
+const href = (src: string) => new URL(src, location.href).href;
+/** The film's time at `pos` in her file `src`, while she plays: in the stretch she's in, once the film (`t`, about now) has reached it. */
+const filmOf = (pos: number, t: number, src: string) => {
+  const mine = VOICE.filter((s) => href(s.src) === src);
+  if (!mine.length) return t;
   let i = 0;
-  while (i + 1 < VOICE.length && VOICE[i + 1].file <= pos && VOICE[i + 1].film <= t + MIN_WAIT) i++;
-  return VOICE[i].film + pos - VOICE[i].file;
+  while (i + 1 < mine.length && mine[i + 1].file <= pos && mine[i + 1].film <= t + MIN_WAIT) i++;
+  return mine[i].film + pos - mine[i].file;
 };
 /**
- * Where her file should be at the film's time `t`. Waiting: quiet there until
- * `until`. Playing: on through `stop`, if she waits after it.
+ * Where her voice should be at the film's time `t`: in which file, and where
+ * in it. Waiting: quiet there until `until` (in the next stretch's file, if
+ * it's another, so that one loads meanwhile). Playing: on through `stop`, if
+ * she waits after it.
  */
 const voiceAt = (t: number) => {
   let i = 0;
   while (i + 1 < VOICE.length && VOICE[i + 1].film <= t) i++;
   const s = VOICE[i];
   const next = VOICE[i + 1];
-  if (t < s.film) return { pos: s.file, wait: true as const, until: s.film };
+  if (t < s.film) return { src: s.src, pos: s.file, wait: true as const, until: s.film };
   const off = t - s.film;
   const end = s.film + s.len;
-  const waits = !!next && next.film - end >= MIN_WAIT;
-  if (off >= s.len && waits) return { pos: s.file + s.len, wait: true as const, until: next.film };
-  return { pos: s.file + off, wait: false as const, stop: waits ? end : undefined };
+  // She stops at a stretch's end if the film waits for her next, or if her next is in another file.
+  const waits = !!next && (next.film - end >= MIN_WAIT || next.src !== s.src);
+  if (off >= s.len && waits)
+    return next.src === s.src
+      ? { src: s.src, pos: s.file + s.len, wait: true as const, until: next.film }
+      : { src: next.src, pos: next.file, wait: true as const, until: next.film };
+  return { src: s.src, pos: s.file + off, wait: false as const, stop: waits ? end : undefined };
+};
+/** Her voice into `src` (if it isn't there already) at `pos`. */
+const place = (a: HTMLAudioElement, src: string, pos: number, slack: number) => {
+  if (a.src !== href(src)) {
+    a.src = src;
+    a.currentTime = pos;
+  } else if (Math.abs(a.currentTime - pos) > slack) a.currentTime = pos;
 };
 /** A scene is in the page from this many seconds before its start to as many after its end. */
 const WINDOW = 2.5;
@@ -153,13 +175,13 @@ type Clips = Partial<Record<ClipId, HTMLVideoElement>>;
 
 const reducedMotion = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-/** One of the loops' videos: muted, inline, looping, nothing loaded; shown once it has a frame to show. */
+/** One of the scenes' videos: muted, inline, played once, nothing loaded; shown once it has a frame to show. */
 function makeClip() {
   const v = document.createElement("video");
   v.muted = true;
   v.defaultMuted = true;
   v.playsInline = true;
-  v.loop = true;
+  v.loop = false;
   v.preload = "none";
   v.tabIndex = -1;
   v.className = "film-clip-video";
@@ -224,11 +246,14 @@ export function FilmLauncher({ label }: { label: string }) {
   const refocus = useRef(false);
 
   useEffect(() => {
-    if (voice.src) {
+    let warm = 0;
+    if (voice.src || FILES[0]) {
       const a = new Audio();
       a.preload = "auto";
-      a.src = voice.src;
+      a.src = FILES[0] || voice.src!;
       audio.current = a;
+      // Any other files of hers, fetched once the page has settled, so each is at hand when the film reaches it.
+      if (FILES.length > 1) warm = window.setTimeout(() => FILES.slice(1).forEach((src) => fetch(src).catch(() => {})), 4000);
     }
     // Reviewing (?at=, ?demo=): open on it once the page is up.
     const open = reviewing(new URLSearchParams(location.search));
@@ -237,6 +262,7 @@ export function FilmLauncher({ label }: { label: string }) {
       audio.current?.pause();
       clearTimeout(leaving.current);
       clearTimeout(review);
+      clearTimeout(warm);
     };
   }, []);
 
@@ -244,11 +270,12 @@ export function FilmLauncher({ label }: { label: string }) {
     // Inside the click itself: the one moment a phone lets the voice start.
     const a = audio.current;
     if (a) {
-      a.currentTime = 0;
+      if (VOICE[0].src) place(a, VOICE[0].src, VOICE[0].file, 0);
+      a.currentTime = VOICE[0].file;
       a.muted = false;
       a.play().catch(() => {});
       // Her first line comes a moment in: let go here, and the film starts her on time.
-      if (voice.src && VOICE[0].film > 0) a.pause();
+      if (VOICE[0].src && VOICE[0].film > 0) a.pause();
     }
     // And the loops, started and stopped here, with nothing loaded yet, so they may play on their own later.
     if (!reducedMotion()) {
@@ -436,9 +463,11 @@ function Film({
         if (!v.dataset.src) continue;
         const dur = Number.isFinite(v.duration) ? v.duration : 0;
         const want = Math.max(0, t - c.from) + c.offset;
-        const pos = dur ? want % dur : want;
+        // Played once: at its end it holds its last frame.
+        const last = dur ? dur - 0.04 : Infinity;
+        const pos = Math.min(want, last);
         const off = Math.abs(v.currentTime - pos);
-        if (!moving || !v.isConnected || t < c.from || t > c.to) {
+        if (!moving || !v.isConnected || t < c.from || t > c.to || want >= last) {
           if (!v.paused) v.pause();
           if (t <= c.to && off > 0.05) v.currentTime = pos;
           continue;
@@ -446,7 +475,7 @@ function Film({
         if (v.paused) {
           if (off > 0.15) v.currentTime = pos;
           if (!blocked.has(v)) v.play()?.catch(refused(v));
-        } else if (Math.min(off, dur ? dur - off : off) > 1) v.currentTime = pos;
+        } else if (off > 1) v.currentTime = pos;
       }
     };
     /** All running at `t`: set by their start time, so none that has finished starts over. */
@@ -483,10 +512,10 @@ function Film({
     let parked = 0;
     let watch = 0;
     let late = 0;
-    const leads = () => !!a && !!voice.src && !a.paused && !a.ended && !stalled && due < 0;
+    const leads = () => !!a && !!VOICE[0].src && !a.paused && !a.ended && !stalled && due < 0;
     /** The film's time by her voice, while it leads. */
-    const heard = () => filmOf(a!.currentTime, now());
-    const at0 = !paused && leads() ? filmOf(a!.currentTime, start) : start;
+    const heard = () => filmOf(a!.currentTime, now(), a!.src);
+    const at0 = !paused && leads() ? filmOf(a!.currentTime, start, a!.src) : start;
     if (paused) pauseAt(at0);
     else runAt(at0);
     if (tick0) tick0.onfinish = () => setEnded(true);
@@ -509,10 +538,10 @@ function Film({
     let off = false;
     /** Started by the film, and not since stopped by it for a wait. */
     let on = false;
-    const rest = (pos: number, until: number, t: number) => {
+    const rest = (src: string, pos: number, until: number, t: number) => {
       on = false;
       if (!a!.paused) a!.pause();
-      if (Math.abs(a!.currentTime - pos) > 0.08) a!.currentTime = pos;
+      place(a!, src, pos, 0.08);
       if (until < Infinity) hold = window.setTimeout(keepVoice, Math.max(0, (until - t) * 1000));
     };
     const arrived = () => {
@@ -522,7 +551,15 @@ function Film({
     };
     const keepVoice = () => {
       clearTimeout(hold);
-      if (!a || !voice.src || paused || waiting || stalled || off || due >= 0 || gone.current || a.ended) return;
+      if (!a || !VOICE[0].src || paused || waiting || stalled || off || due >= 0 || gone.current) return;
+      if (a.ended) {
+        // A file played to its end (a line's own file): quiet until her next stretch, in its file.
+        on = false;
+        const t = now();
+        const next = VOICE.find((s) => s.film > t + 0.05);
+        if (next) rest(next.src, next.file, next.film, t);
+        return;
+      }
       if (a.paused && on) {
         off = true;
         return;
@@ -531,16 +568,18 @@ function Film({
         // Speaking: on to the end of her stretch, then quiet, if the film runs on past it.
         const t = heard();
         const v = voiceAt(t);
-        if (v.wait) rest(v.pos, v.until, t);
+        // Past the end of this file's stretch into one in another file: over to it, now.
+        if (href(v.src) !== a.src) return rest(v.src, v.pos, t, t);
+        if (v.wait) rest(v.src, v.pos, v.until, t);
         else if (v.stop !== undefined) hold = window.setTimeout(keepVoice, Math.max(0, (v.stop - t) * 1000));
         return;
       }
       if (!a.paused) return;
       const t = now();
       const v = voiceAt(t);
-      if (v.wait) return rest(v.pos, v.until, t);
+      if (v.wait) return rest(v.src, v.pos, v.until, t);
       // On again: from where she waited, or where she'd be by now, should the film have gone on.
-      if (Math.abs(a.currentTime - v.pos) > 0.06) a.currentTime = v.pos;
+      place(a, v.src, v.pos, 0.06);
       parked = a.currentTime;
       due = t;
       pauseAt(t);
@@ -606,10 +645,10 @@ function Film({
       quiet();
       seg = segOf(t).id;
       paused = !play;
-      if (a && voice.src) {
+      if (a && VOICE[0].src) {
         if (!a.paused) a.pause();
-        const pos = voiceAt(t).pos;
-        if (Math.abs(a.currentTime - pos) > 0.05) a.currentTime = pos;
+        const v = voiceAt(t);
+        place(a, v.src, v.pos, 0.05);
       }
       if (play) runAt(t);
       else pauseAt(t);
@@ -656,7 +695,8 @@ function Film({
       if ((stalled || off) && a) {
         stalled = off = false;
         on = true;
-        a.currentTime = voiceAt(now()).pos;
+        const v = voiceAt(now());
+        place(a, v.src, v.pos, 0);
       }
       if (leads()) runAt(heard());
       keepVoice();

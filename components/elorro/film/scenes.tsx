@@ -30,8 +30,9 @@ import type { SceneId } from "@/components/elorro/film/script";
  * Pearls' the website; the orthodontist for calls and the office. Then the
  * choice (its cards are film.tsx's), and the three demos it leads to: custom
  * tools, photo and video, and the front desk behind the scenes. Then the plan
- * they'd get. Three scenes play Elorro's real work (Clip): Pearls' site,
- * Clinical Scribe and the Pearls drone footage.
+ * they'd get. Three scenes play Elorro's real work (Clip): Pearls' site as one
+ * flow, Clinical Scribe from consult to follow-up, and the Pearls drone
+ * footage into Pearls' Instagram.
  */
 
 /** Each scene's length as designed, in seconds: its beats are shares of it. */
@@ -39,15 +40,16 @@ export const DESIGN: Record<SceneId, number> = {
   elora: 9,
   call: 8.5,
   found: 12.5,
-  site: 9.5,
+  // Longer than when it ran 8.41 s, at the same pace: its pictures as they were, then Pearls' site plays on, through.
+  site: 13.454,
   booking: 8.5,
   calls: 9.5,
   // As long as its first two stages ran when the scene went on into custom tools, at the same pace.
   office: 8.044,
   choice: 2,
-  tools: 8.5,
-  // Paced as when it followed behind the scenes, and longer: the footage plays on.
-  photo: 8.56,
+  tools: 17,
+  // Paced as when it followed behind the scenes, and longer: the footage, then the posts.
+  photo: 15.04,
   frontdesk: 13,
   plan: 9,
   close: 10.5,
@@ -226,30 +228,30 @@ function Tick({ cx, cy, r }: { cx: number; cy: number; r: number }) {
 
 export type ClipId = "pearlsSite" | "clinical" | "pearlsDrone";
 type Cuts = { desktop: string; mobile: string; desktopSd: string; mobileSd: string };
-const cuts = (name: string): Cuts => ({
-  desktop: `/m/work/${name}-d.mp4`,
-  mobile: `/m/work/${name}-m.mp4`,
-  desktopSd: `/m/work/${name}-d-sd.mp4`,
-  mobileSd: `/m/work/${name}-m-sd.mp4`,
+/** The film's own loops, made for it (video/scripts/film.mjs), in public/m/film/. */
+const filmCuts = (name: string): Cuts => ({
+  desktop: `/m/film/${name}-d.mp4`,
+  mobile: `/m/film/${name}-m.mp4`,
+  desktopSd: `/m/film/${name}-d-sd.mp4`,
+  mobileSd: `/m/film/${name}-m-sd.mp4`,
 });
-const posters = (name: string) => ({ desktop: `/m/work/${name}-d-poster.jpg`, mobile: `/m/work/${name}-m-poster.jpg` });
+const filmPosters = (name: string) => ({ desktop: `/m/film/${name}-d-poster.jpg`, mobile: `/m/film/${name}-m-poster.jpg` });
 /**
- * Three of Elorro's own loops (the Work page's), each in its scene: its still
- * first, the loop over it once it plays. `at` and `until` are when it plays,
- * in seconds into its scene as designed; `offset`, where in the loop it
- * starts. The tall layout plays the phone cut, the wide one the desktop cut.
+ * Three videos of Elorro's real work, made for the film (video/scripts/film.mjs),
+ * each in its scene: its still first, the video over it once it plays, once
+ * through, holding its last frame. `at` and `until` are when it plays, in
+ * seconds into its scene as designed; `offset`, where in the video it starts. The tall layout plays the phone cut, the wide one the desktop cut.
  * film.tsx loads each shortly before (never at the film's start), plays it in
  * step with the film, and leaves it on its still under reduced motion or on a
  * connection too slow for it.
  */
 export const CLIPS: Record<ClipId, { scene: SceneId; at: number; until: number; offset: number; cuts: Cuts; poster: { desktop: string; mobile: string } }> = {
-  // Pearls Farm Labor's site, which Elorro built: its homepage, from where the crew is at work in the rows behind it
-  // (the loop is the homepage alone: its nav, the crew request and the call button, over the hero video).
-  pearlsSite: { scene: "site", at: 3.9, until: 10.1, offset: 12, cuts: cuts("pearls"), poster: posters("pearls") },
-  // Clinical Scribe: a consult recorded, then written up. Made-up demo data.
-  clinical: { scene: "tools", at: 1.5, until: 9.2, offset: 1.8, cuts: cuts("clinical"), poster: posters("clinical") },
-  // Pearls: the drone over the vines.
-  pearlsDrone: { scene: "photo", at: 1.2, until: 9.2, offset: 0, cuts: cuts("pearls-drone"), poster: posters("pearls-drone") },
+  // Pearls Farm Labor's site, which Elorro built, as one flow: the hero, a scroll through every section, then Request a crew.
+  pearlsSite: { scene: "site", at: 3.9, until: 14.1, offset: 0, cuts: filmCuts("pearls-site"), poster: filmPosters("pearls-site") },
+  // Clinical Scribe: a consult recorded, written up, the coaching for it, and the follow-up letter drafted. Made-up demo data.
+  clinical: { scene: "tools", at: 1.5, until: 17.7, offset: 0, cuts: filmCuts("clinical-film"), poster: filmPosters("clinical-film") },
+  // Pearls: the drone over the vines, then the posts on Pearls' Instagram.
+  pearlsDrone: { scene: "photo", at: 1.2, until: 15.7, offset: 0, cuts: filmCuts("photo-reel"), poster: filmPosters("photo-reel") },
 };
 
 /** Where film.tsx puts a loop's video once its scene is in the page (null as it leaves). */
@@ -1630,14 +1632,14 @@ function Tools(tall: boolean): SceneArt {
           <Clip id="clinical" tall={tall} box={body} fx={b("fade", 1.5, { len: 0.8 })} top />
           <Art tall={tall}>
             <rect className="s-gold-edge" fill="none" x={wx} y={wy} width={ww} height={wh} rx="22" />
-            <g {...b("pop", 6.6, { len: 0.7 })}>
+            <g {...b("pop", 14.6, { len: 0.7 })}>
               <g transform={tall ? "translate(500 972) scale(1.2) translate(-500 -734)" : undefined}>
-                <rect className="f-gold-v" x="340" y="696" width="320" height="76" rx="10" />
+                <rect className="f-gold-v" x="300" y="696" width="400" height="76" rx="10" />
                 <text className="t-ink t-caps" x="500" y="744" fontSize="24">
-                  Letter drafted
+                  Follow-up drafted
                 </text>
-                <circle className="f-paper" cx="690" cy="734" r="28" />
-                <path className="s-ink" d="M 676 735 l 9 9 l 19 -20" />
+                <circle className="f-paper" cx="730" cy="734" r="28" />
+                <path className="s-ink" d="M 716 735 l 9 9 l 19 -20" />
               </g>
             </g>
           </Art>
@@ -1691,23 +1693,29 @@ const HANDLED = 10.8;
  * each step ticking in turn. Labelled a demo; the data is made up.
  */
 function FrontDesk(tall: boolean): SceneArt {
-  const D = DESIGN.frontdesk;
-  const b = beats(D);
-  const L = tall
-    ? {
-        win: [30, 30, 940, 1040] as Box, bar: 80, title: 24, tag: [790, 49, 150, 42] as Box, tagSize: 20,
-        card: [60, 134, 880, 132] as Box, av: 44, name: 40, sub: 28, pill: [720, 176, 190, 50] as Box, pillSize: 20,
-        tLabel: 312, tSize: 22, bub: 330, bubGap: 80, bubH: 66, bubSize: 30, bubX: [60, 940] as const,
-        chip: [60, 738, 880, 60] as Box, chipSize: 28,
-        steps: { y: 846, gap: 48, cx: 84, r: 15, x: 118, title: 30, detail: 26, detailX: 940, inline: true },
-      }
-    : {
-        win: [40, 110, 920, 700] as Box, bar: 64, title: 18, tag: [838, 125, 92, 34] as Box, tagSize: 15,
-        card: [70, 196, 490, 112] as Box, av: 36, name: 28, sub: 19, pill: [404, 234, 136, 36] as Box, pillSize: 15,
-        tLabel: 352, tSize: 16, bub: 372, bubGap: 74, bubH: 56, bubSize: 21, bubX: [70, 560] as const,
-        chip: [70, 742, 490, 46] as Box, chipSize: 19,
-        steps: { y: 244, gap: 110, cx: 616, r: 18, x: 648, title: 21, detail: 18, detailX: 648, inline: false },
-      };
+  const b = beats(DESIGN.frontdesk);
+  return {
+    far: (
+      <Far>
+        <Glow id="far-desk-a" cx={50} cy={46} r={60} o={0.1} color="#F4F1EA" />
+        <g {...b("fade", HANDLED, { len: 1.2 })}>
+          <Glow id="far-desk-b" cx={60} cy={44} r={62} o={0.16} />
+        </g>
+      </Far>
+    ),
+    mid: <div {...b("rise", 0.15, { len: 1, cls: "film-layer" })}>{tall ? <DeskTall b={b} /> : <DeskWide b={b} />}</div>,
+  };
+}
+
+/** On a wide screen: the call and its transcript on the left, every step listed down the right. */
+function DeskWide({ b }: { b: Beats }) {
+  const L = {
+    win: [40, 110, 920, 700] as Box, bar: 64, title: 18, tag: [838, 125, 92, 34] as Box, tagSize: 15,
+    card: [70, 196, 490, 112] as Box, av: 36, name: 28, sub: 19, pill: [404, 234, 136, 36] as Box, pillSize: 15,
+    tLabel: 352, tSize: 16, bub: 372, bubGap: 74, bubH: 56, bubSize: 21, bubX: [70, 560] as const,
+    chip: [70, 742, 490, 46] as Box, chipSize: 19,
+    steps: { y: 244, gap: 110, cx: 616, r: 18, x: 648, title: 21, detail: 18 },
+  };
   const [wx, wy, ww, wh] = L.win;
   const [cx0, cy0, cw, ch] = L.card;
   const avX = cx0 + L.av + 22;
@@ -1719,143 +1727,275 @@ function FrontDesk(tall: boolean): SceneArt {
   const stepY = (i: number) => S.y + i * S.gap;
   // A bubble's width, from its text: Hanken's letters run about half an em wide.
   const bubW = (text: string) => Math.round(text.length * L.bubSize * 0.5 + L.bubSize * 2);
-  return {
-    far: (
-      <Far>
-        <Glow id="far-desk-a" cx={50} cy={46} r={60} o={0.1} color="#F4F1EA" />
-        <g {...b("fade", HANDLED, { len: 1.2 })}>
-          <Glow id="far-desk-b" cx={60} cy={44} r={62} o={0.16} />
+  return (
+    <Art tall={false}>
+      {/* The desk's live view: its title bar, live, and labelled a demo. */}
+      <rect className="card card--deep" x={wx} y={wy} width={ww} height={wh} rx="22" />
+      <path className="s-soft" d={`M ${wx} ${wy + L.bar} H ${wx + ww}`} />
+      <g {...b("blink", 0.5, { len: 1.2, n: 8 })}>
+        <circle className="f-gold" cx={wx + 40} cy={wy + L.bar / 2} r={8} />
+      </g>
+      <text className="t-small t-gold-text t-left" x={wx + 62} y={wy + L.bar / 2 + L.title * 0.36} fontSize={L.title}>
+        Front desk · live
+      </text>
+      <rect className="s-gold-faint" x={tx} y={ty} width={tw} height={th} rx={th / 2} />
+      <text className="t-caps t-gold-text" x={tx + tw / 2} y={ty + th / 2 + L.tagSize * 0.36} fontSize={L.tagSize}>
+        Demo
+      </text>
+
+      {/* The call: Sofia Park, ringing, then answered. */}
+      <g {...b("rise", 0.5, { len: 0.8 })}>
+        <rect className="card s-paper-soft" x={cx0} y={cy0} width={cw} height={ch} rx="18" />
+        <Ringing cx={avX} cy={avY} r={L.av} at={0.8} b={b} />
+        <text className="t-body t-left" x={avX + L.av + 24} y={avY - 2} fontSize={L.name}>
+          {CALLER.name}
+        </text>
+        <text className="t-faint t-left" x={avX + L.av + 24} y={avY + L.sub * 1.3} fontSize={L.sub}>
+          415 555 0142
+        </text>
+      </g>
+      <g {...b("fade", 0.6, { len: 0.3 })}>
+        <g {...b("out", 1.6, { len: 0.25 })}>
+          <rect className="s-paper-soft" fill="none" x={px} y={py} width={pw} height={ph} rx={ph / 2} />
+          <text className="t-small" x={px + pw / 2} y={py + ph / 2 + L.pillSize * 0.36} fontSize={L.pillSize}>
+            Incoming
+          </text>
         </g>
-      </Far>
-    ),
-    mid: (
-      <div {...b("rise", 0.15, { len: 1, cls: "film-layer" })}>
-        <Art tall={tall}>
-          {/* The desk's live view: its title bar, live, and labelled a demo. */}
-          <rect className="card card--deep" x={wx} y={wy} width={ww} height={wh} rx="22" />
-          <path className="s-soft" d={`M ${wx} ${wy + L.bar} H ${wx + ww}`} />
-          <g {...b("blink", 0.5, { len: 1.2, n: 8 })}>
-            <circle className="f-gold" cx={wx + 40} cy={wy + L.bar / 2} r={tall ? 10 : 8} />
-          </g>
-          <text className="t-small t-gold-text t-left" x={wx + 62} y={wy + L.bar / 2 + L.title * 0.36} fontSize={L.title}>
-            Front desk · live
+      </g>
+      <g {...b("pop", 1.6, { len: 0.5 })}>
+        <g {...b("out", HANDLED, { len: 0.25 })}>
+          <rect className="f-gold-v" x={px} y={py} width={pw} height={ph} rx={ph / 2} />
+          <text className="t-ink t-caps" x={px + pw / 2} y={py + ph / 2 + L.pillSize * 0.36} fontSize={L.pillSize}>
+            Answered
           </text>
-          <rect className="s-gold-faint" x={tx} y={ty} width={tw} height={th} rx={th / 2} />
-          <text className="t-caps t-gold-text" x={tx + tw / 2} y={ty + th / 2 + L.tagSize * 0.36} fontSize={L.tagSize}>
-            Demo
-          </text>
+        </g>
+      </g>
+      <g {...b("pop", HANDLED, { len: 0.5 })}>
+        <rect className="f-paper" x={px} y={py} width={pw} height={ph} rx={ph / 2} />
+        <text className="t-ink t-caps" x={px + pw / 2} y={py + ph / 2 + L.pillSize * 0.36} fontSize={L.pillSize}>
+          Handled
+        </text>
+      </g>
 
-          {/* The call: Sofia Park, ringing, then answered. */}
-          <g {...b("rise", 0.5, { len: 0.8 })}>
-            <rect className="card s-paper-soft" x={cx0} y={cy0} width={cw} height={ch} rx="18" />
-            <Ringing cx={avX} cy={avY} r={L.av} at={0.8} b={b} />
-            <text className="t-body t-left" x={avX + L.av + 24} y={avY - (tall ? 4 : 2)} fontSize={L.name}>
-              {CALLER.name}
-            </text>
-            <text className="t-faint t-left" x={avX + L.av + 24} y={avY + L.sub * 1.3} fontSize={L.sub}>
-              415 555 0142
+      {/* What's said, line by line. */}
+      <text x={cx0} y={L.tLabel} fontSize={L.tSize} {...b("fade", 2, { len: 0.4, cls: "t-small t-left" })}>
+        Live transcript
+      </text>
+      {TRANSCRIPT.map(([who, text, at], i) => {
+        const w = bubW(text);
+        const x = who === "caller" ? L.bubX[0] : L.bubX[1] - w;
+        const y = L.bub + i * L.bubGap;
+        return (
+          <g key={text} {...b("rise", at, { len: 0.6 })}>
+            <rect className={who === "caller" ? "bubble" : "f-ai"} x={x} y={y} width={w} height={L.bubH} rx="16" />
+            <text className="t-body t-left" x={x + L.bubSize} y={y + L.bubH / 2 + L.bubSize * 0.36} fontSize={L.bubSize}>
+              {text}
             </text>
           </g>
-          <g {...b("fade", 0.6, { len: 0.3 })}>
-            <g {...b("out", 1.6, { len: 0.25 })}>
-              <rect className="s-paper-soft" fill="none" x={px} y={py} width={pw} height={ph} rx={ph / 2} />
-              <text className="t-small" x={px + pw / 2} y={py + ph / 2 + L.pillSize * 0.36} fontSize={L.pillSize}>
-                Incoming
-              </text>
+        );
+      })}
+
+      {/* Her request, picked out of what she said. */}
+      <g {...b("pop", 4.5, { len: 0.6 })}>
+        <rect className="f-gold-dim s-gold-edge" x={kx} y={ky} width={kw} height={kh} rx={kh / 2} />
+        <path className="f-gold" d={sparkle(kx + kh * 0.62, ky + kh / 2, kh * 0.26)} />
+        <text className="t-gold-text t-left t-strong" x={kx + kh * 1.12} y={ky + kh / 2 + L.chipSize * 0.36} fontSize={L.chipSize}>
+          New patient consult, Thursday morning
+        </text>
+      </g>
+
+      {/* Meanwhile: each step, ticked in turn, the thread between them drawn on as they go. */}
+      <text x={S.cx - S.r} y={S.y - 34} fontSize={L.tSize} {...b("fade", 1.2, { len: 0.4, cls: "t-small t-left" })}>
+        What happens
+      </text>
+      {STEPS.map(([title, detail, at], i) => {
+        const y = stepY(i);
+        const next = STEPS[i + 1];
+        return (
+          <g key={title}>
+            {next && (
+              <>
+                <path className="s-soft" d={`M ${S.cx} ${y + S.r + 6} V ${stepY(i + 1) - S.r - 6}`} />
+                <Gold d={`M ${S.cx} ${y + S.r + 6} V ${stepY(i + 1) - S.r - 6}`} fx={b("draw", next[2] - 0.45, { len: 0.45 })} thin />
+              </>
+            )}
+            <circle fill="none" cx={S.cx} cy={y} r={S.r} {...b("fade", 1 + i * 0.12, { len: 0.4, cls: "s-paper-soft" })} />
+            <g {...b("pop", at, { len: 0.5 })}>
+              <Tick cx={S.cx} cy={y} r={S.r} />
             </g>
-          </g>
-          <g {...b("pop", 1.6, { len: 0.5 })}>
-            <g {...b("out", HANDLED, { len: 0.25 })}>
-              <rect className="f-gold-v" x={px} y={py} width={pw} height={ph} rx={ph / 2} />
-              <text className="t-ink t-caps" x={px + pw / 2} y={py + ph / 2 + L.pillSize * 0.36} fontSize={L.pillSize}>
-                Answered
-              </text>
-            </g>
-          </g>
-          <g {...b("pop", HANDLED, { len: 0.5 })}>
-            <rect className="f-paper" x={px} y={py} width={pw} height={ph} rx={ph / 2} />
-            <text className="t-ink t-caps" x={px + pw / 2} y={py + ph / 2 + L.pillSize * 0.36} fontSize={L.pillSize}>
-              Handled
+            <text x={S.x} y={y + S.title * 0.36} fontSize={S.title} {...b("fade", 1 + i * 0.12, { len: 0.4, cls: "t-faint t-left" })}>
+              {title}
+            </text>
+            <text x={S.x} y={y + S.title * 0.36} fontSize={S.title} {...b("fade", at, { len: 0.4, cls: "t-body t-left" })}>
+              {title}
+            </text>
+            <text
+              className="t-gold-text t-left"
+              x={S.x}
+              y={y + S.title * 0.36 + S.detail * 1.7}
+              fontSize={S.detail}
+            >
+              {i === 3 ? <Typed text={detail} at={at + 0.1} b={b} step={0.035} /> : <tspan {...b("fade", at + 0.1, { len: 0.4 })}>{detail}</tspan>}
             </text>
           </g>
+        );
+      })}
 
-          {/* What's said, line by line. */}
-          <text x={cx0} y={L.tLabel} fontSize={L.tSize} {...b("fade", 2, { len: 0.4, cls: "t-small t-left" })}>
-            Live transcript
-          </text>
-          {TRANSCRIPT.map(([who, text, at], i) => {
-            const w = bubW(text);
-            const x = who === "caller" ? L.bubX[0] : L.bubX[1] - w;
-            const y = L.bub + i * L.bubGap;
-            return (
-              <g key={text} {...b("rise", at, { len: 0.6 })}>
-                <rect className={who === "caller" ? "bubble" : "f-ai"} x={x} y={y} width={w} height={L.bubH} rx="16" />
-                <text className="t-body t-left" x={x + L.bubSize} y={y + L.bubH / 2 + L.bubSize * 0.36} fontSize={L.bubSize}>
-                  {text}
-                </text>
-              </g>
-            );
-          })}
-
-          {/* Her request, picked out of what she said. */}
-          <g {...b("pop", 4.5, { len: 0.6 })}>
-            <rect className="f-gold-dim s-gold-edge" x={kx} y={ky} width={kw} height={kh} rx={kh / 2} />
-            <path className="f-gold" d={sparkle(kx + kh * 0.62, ky + kh / 2, kh * 0.26)} />
-            <text className="t-gold-text t-left t-strong" x={kx + kh * 1.12} y={ky + kh / 2 + L.chipSize * 0.36} fontSize={L.chipSize}>
-              New patient consult, Thursday morning
-            </text>
-          </g>
-
-          {/* Meanwhile: each step, ticked in turn, the thread between them drawn on as they go. */}
-          {!S.inline && (
-            <text x={S.cx - S.r} y={S.y - 34} fontSize={L.tSize} {...b("fade", 1.2, { len: 0.4, cls: "t-small t-left" })}>
-              What happens
-            </text>
-          )}
-          {STEPS.map(([title, detail, at], i) => {
-            const y = stepY(i);
-            const next = STEPS[i + 1];
-            return (
-              <g key={title}>
-                {next && (
-                  <>
-                    <path className="s-soft" d={`M ${S.cx} ${y + S.r + 6} V ${stepY(i + 1) - S.r - 6}`} />
-                    <Gold d={`M ${S.cx} ${y + S.r + 6} V ${stepY(i + 1) - S.r - 6}`} fx={b("draw", next[2] - 0.45, { len: 0.45 })} thin />
-                  </>
-                )}
-                <circle fill="none" cx={S.cx} cy={y} r={S.r} {...b("fade", 1 + i * 0.12, { len: 0.4, cls: "s-paper-soft" })} />
-                <g {...b("pop", at, { len: 0.5 })}>
-                  <Tick cx={S.cx} cy={y} r={S.r} />
-                </g>
-                <text x={S.x} y={y + S.title * 0.36} fontSize={S.title} {...b("fade", 1 + i * 0.12, { len: 0.4, cls: "t-faint t-left" })}>
-                  {title}
-                </text>
-                <text x={S.x} y={y + S.title * 0.36} fontSize={S.title} {...b("fade", at, { len: 0.4, cls: "t-body t-left" })}>
-                  {title}
-                </text>
-                <text
-                  className={`t-gold-text ${S.inline ? "t-right" : "t-left"}`}
-                  x={S.detailX}
-                  y={S.inline ? y + S.detail * 0.36 : y + S.title * 0.36 + S.detail * 1.7}
-                  fontSize={S.detail}
-                >
-                  {i === 3 ? <Typed text={detail} at={at + 0.1} b={b} step={0.035} /> : <tspan {...b("fade", at + 0.1, { len: 0.4 })}>{detail}</tspan>}
-                </text>
-              </g>
-            );
-          })}
-
-          {/* All of it done, nobody at the desk having stopped. */}
-          <g {...b("fade", HANDLED, { len: 1 })}>
-            <rect className="s-gold-edge" fill="none" x={wx} y={wy} width={ww} height={wh} rx="22" />
-          </g>
-        </Art>
-      </div>
-    ),
-  };
+      {/* All of it done, nobody at the desk having stopped. */}
+      <g {...b("fade", HANDLED, { len: 1 })}>
+        <rect className="s-gold-edge" fill="none" x={wx} y={wy} width={ww} height={wh} rx="22" />
+      </g>
+    </Art>
+  );
 }
 
-/* ── Photo & video: the vineyard drawn in gold, then filmed ────────────── */
+/**
+ * On a phone upright, readable at its size (nothing under 12px: 32 set
+ * units, at 1000 across 390px): the call across the top; the transcript's
+ * last three lines, each new one pushing the oldest up and out; her request
+ * picked out; then the steps as a row of five ticks, the one just done
+ * named large under them.
+ */
+function DeskTall({ b }: { b: Beats }) {
+  const win: Box = [30, 30, 940, 1040];
+  const [wx, wy, ww, wh] = win;
+  const bar = 96;
+  const card: Box = [60, 152, 880, 150];
+  const [cx0, cy0, cw, ch] = card;
+  const av = 48;
+  const avX = cx0 + av + 26;
+  const avY = cy0 + ch / 2;
+  const pill: Box = [680, avY - 30, 230, 60];
+  const [px, py, pw, ph] = pill;
+  // The transcript: three places for its lines, the newest at the bottom.
+  const bub = { y: 384, gap: 94, h: 78, size: 36, x: [60, 940] as const };
+  const SLOTS = 3;
+  const chip: Box = [60, 676, 880, 72];
+  const [kx, ky, kw, kh] = chip;
+  const row = { y: 812, r: 26, xs: [120, 300, 480, 660, 840] };
+  const bubW = (text: string) => Math.round(text.length * bub.size * 0.5 + bub.size * 2);
+  return (
+    <Art tall>
+      <rect className="card card--deep" x={wx} y={wy} width={ww} height={wh} rx="26" />
+      <path className="s-soft" d={`M ${wx} ${wy + bar} H ${wx + ww}`} />
+      <g {...b("blink", 0.5, { len: 1.2, n: 8 })}>
+        <circle className="f-gold" cx={wx + 44} cy={wy + bar / 2} r={11} />
+      </g>
+      <text className="t-small t-gold-text t-left" x={wx + 72} y={wy + bar / 2 + 12} fontSize={32}>
+        Front desk · live
+      </text>
+      <rect className="s-gold-faint" x={wx + ww - 196} y={wy + bar / 2 - 29} width={170} height={58} rx={29} />
+      <text className="t-caps t-gold-text" x={wx + ww - 111} y={wy + bar / 2 + 12} fontSize={32}>
+        Demo
+      </text>
+
+      {/* The call: Sofia Park, ringing, then answered. */}
+      <g {...b("rise", 0.5, { len: 0.8 })}>
+        <rect className="card s-paper-soft" x={cx0} y={cy0} width={cw} height={ch} rx="22" />
+        <Ringing cx={avX} cy={avY} r={av} at={0.8} b={b} />
+        <text className="t-body t-left" x={avX + av + 26} y={avY - 6} fontSize={46}>
+          {CALLER.name}
+        </text>
+        <text className="t-faint t-left" x={avX + av + 26} y={avY + 42} fontSize={36}>
+          415 555 0142
+        </text>
+      </g>
+      <g {...b("fade", 0.6, { len: 0.3 })}>
+        <g {...b("out", 1.6, { len: 0.25 })}>
+          <rect className="s-paper-soft" fill="none" x={px} y={py} width={pw} height={ph} rx={ph / 2} />
+          <text className="t-small" x={px + pw / 2} y={py + ph / 2 + 11} fontSize={32}>
+            Incoming
+          </text>
+        </g>
+      </g>
+      <g {...b("pop", 1.6, { len: 0.5 })}>
+        <g {...b("out", HANDLED, { len: 0.25 })}>
+          <rect className="f-gold-v" x={px} y={py} width={pw} height={ph} rx={ph / 2} />
+          <text className="t-ink t-caps" x={px + pw / 2} y={py + ph / 2 + 11} fontSize={32}>
+            Answered
+          </text>
+        </g>
+      </g>
+      <g {...b("pop", HANDLED, { len: 0.5 })}>
+        <rect className="f-paper" x={px} y={py} width={pw} height={ph} rx={ph / 2} />
+        <text className="t-ink t-caps" x={px + pw / 2} y={py + ph / 2 + 11} fontSize={32}>
+          Handled
+        </text>
+      </g>
+
+      {/* The transcript's last three lines: each newcomer comes in at the bottom, and the rest move up. */}
+      <text x={cx0} y={bub.y - 22} fontSize={32} {...b("fade", 2, { len: 0.4, cls: "t-small t-left" })}>
+        Live transcript
+      </text>
+      {TRANSCRIPT.map(([who, text, at], i) => {
+        const w = bubW(text);
+        const x = who === "caller" ? bub.x[0] : bub.x[1] - w;
+        const y = bub.y + Math.min(i, SLOTS - 1) * bub.gap;
+        // Each line after the third moves this one up a place; the one that would leave the top goes.
+        const later = TRANSCRIPT.slice(i + 1).map((t, k) => ({ at: t[2], n: i + 1 + k })).filter((t) => t.n >= SLOTS);
+        let node = (
+          <g {...b("rise", at, { len: 0.6 })}>
+            <rect className={who === "caller" ? "bubble" : "f-ai"} x={x} y={y} width={w} height={bub.h} rx="20" />
+            <text className="t-body t-left" x={x + bub.size} y={y + bub.h / 2 + bub.size * 0.36} fontSize={bub.size}>
+              {text}
+            </text>
+          </g>
+        );
+        later.forEach((t, k) => {
+          const place = Math.min(i, SLOTS - 1) - (k + 1);
+          node = <g {...b("moveto", t.at, { len: 0.5, dy: -bub.gap })}>{place < 0 ? <g {...b("out", t.at, { len: 0.3 })}>{node}</g> : node}</g>;
+        });
+        return <g key={text}>{node}</g>;
+      })}
+
+      {/* Her request, picked out of what she said. */}
+      <g {...b("pop", 4.5, { len: 0.6 })}>
+        <rect className="f-gold-dim s-gold-edge" x={kx} y={ky} width={kw} height={kh} rx={kh / 2} />
+        <path className="f-gold" d={sparkle(kx + kh * 0.6, ky + kh / 2, kh * 0.24)} />
+        <text className="t-gold-text t-left t-strong" x={kx + kh * 1.1} y={ky + kh / 2 + 12} fontSize={32}>
+          New patient consult, Thursday morning
+        </text>
+      </g>
+
+      {/* The steps: five ticks in a row, the thread drawn on between them as they go. */}
+      <path className="s-soft" d={`M ${row.xs[0] + row.r + 8} ${row.y} H ${row.xs[4] - row.r - 8}`} />
+      {STEPS.map(([title, , at], i) => {
+        const cx = row.xs[i];
+        const next = STEPS[i + 1];
+        return (
+          <g key={title}>
+            {next && <Gold d={`M ${cx + row.r + 8} ${row.y} H ${row.xs[i + 1] - row.r - 8}`} fx={b("draw", next[2] - 0.45, { len: 0.45 })} thin />}
+            <circle fill="none" cx={cx} cy={row.y} r={row.r} {...b("fade", 1 + i * 0.12, { len: 0.4, cls: "s-paper-soft" })} />
+            <g {...b("pop", at, { len: 0.5 })}>
+              <Tick cx={cx} cy={row.y} r={row.r} />
+            </g>
+          </g>
+        );
+      })}
+      {/* The step just done, named large under the row, until the next. */}
+      {STEPS.map(([title, detail, at], i) => {
+        const next = STEPS[i + 1];
+        const label = (
+          <g {...b("rise", at, { len: 0.5 })}>
+            <text className="t-body" x={500} y={row.y + 96} fontSize={44}>
+              {title}
+            </text>
+            <text className="t-gold-text" x={500} y={row.y + 152} fontSize={36}>
+              {i === 3 ? <Typed text={detail} at={at + 0.1} b={b} step={0.035} /> : detail}
+            </text>
+          </g>
+        );
+        return <g key={title}>{next ? <g {...b("out", next[2] - 0.05, { len: 0.25 })}>{label}</g> : label}</g>;
+      })}
+
+      <g {...b("fade", HANDLED, { len: 1 })}>
+        <rect className="s-gold-edge" fill="none" x={wx} y={wy} width={ww} height={wh} rx="26" />
+      </g>
+    </Art>
+  );
+}
+
+/* ── Photo & video: the vineyard drawn in gold, filmed, then posted ─────── */
 
 function Photo(tall: boolean): SceneArt {
   const D = DESIGN.photo;
@@ -1888,6 +2028,8 @@ function Photo(tall: boolean): SceneArt {
           </g>
         </Art>
         <Clip id="pearlsDrone" tall={tall} box={V.clip} fx={b("fade", 1.2, { len: 0.8 })} />
+        {/* The viewfinder, while the drone films; it lifts as the footage gives way to the posts. */}
+        <div {...b("out", 5.5, { len: 0.7, cls: "film-layer" })}>
         <Art tall={tall}>
           <path d={`M ${c0} ${c1 + 60} V ${c1} H ${c0 + 70} M ${c2 - 70} ${c1} H ${c2} V ${c1 + 60} M ${c2} ${c3 - 60} V ${c3} H ${c2 - 70} M ${c0 + 70} ${c3} H ${c0} V ${c3 - 60}`} {...b("fade", 0.2, { cls: "s-paper thick-ish" })} />
           <g {...b("blink", 0.6, { len: 0.8, n: 4 })}>
@@ -1900,6 +2042,7 @@ function Photo(tall: boolean): SceneArt {
             <rect className="s-paper" x={V.focus[0]} y={V.focus[1]} width={V.focus[2]} height={V.focus[3]} />
           </g>
         </Art>
+        </div>
       </>
     ),
   };

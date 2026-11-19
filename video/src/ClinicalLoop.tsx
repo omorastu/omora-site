@@ -49,7 +49,7 @@ export const FRAME_SIZE: Record<Size, { width: number; height: number }> = {
  * The app's window (CSS px), and the width of its page column there (the
  * window less the sidebar's 208 and the page's padding).
  */
-const VIEW: Record<Size, { width: number; column: number }> = {
+export const VIEW: Record<Size, { width: number; column: number }> = {
   desktop: { width: 840, column: 584 },
   phone: { width: 360, column: 328 },
 };
@@ -67,12 +67,12 @@ const BANNER: Record<Size, { scale: number; lines: number }> = {
 const bannerHeight = (size: Size) => (12 + 16 * BANNER[size].lines) * BANNER[size].scale;
 
 /** CSS px of page ground the camera keeps either side of a panel. */
-const PAD = 10;
+export const PAD = 10;
 /** Tall enough for the longest page, so nothing the camera visits is cut off. */
 const WORLD_HEIGHT = 2400;
 
 /** Frame px per CSS px with a panel framed edge to edge, as the dialog is drawn. */
-const closeUp = (size: Size) => FRAME_SIZE[size].width / (VIEW[size].column + 2 * PAD);
+export const closeUp = (size: Size) => FRAME_SIZE[size].width / (VIEW[size].column + 2 * PAD);
 
 /** The beats, in frames. Both sizes share them. */
 const T = {
@@ -100,14 +100,14 @@ const T = {
 export const STILL_FRAME = 436; // the family letter
 export const EXTRA_FRAMES = { summary: 230, doctorLetter: 337, followUps: 640 };
 
-const ease = Easing.bezier(0.65, 0, 0.35, 1);
+export const ease = Easing.bezier(0.65, 0, 0.35, 1);
 /** For following a draft down as it arrives: steadier through the middle. */
-const glide = Easing.bezier(0.45, 0, 0.55, 1);
+export const glide = Easing.bezier(0.45, 0, 0.55, 1);
 const clamp01 = (x: number) => Math.max(0, Math.min(1, x));
-const progress = (frame: number, [a, b]: number[]) => clamp01((frame - a) / (b - a));
+export const progress = (frame: number, [a, b]: number[]) => clamp01((frame - a) / (b - a));
 
 /** Characters of a draft that have arrived by a frame. */
-const chars = (frame: number, window: number[], text: string) => Math.round(progress(frame, window) * text.length);
+export const chars = (frame: number, window: number[], text: string) => Math.round(progress(frame, window) * text.length);
 
 /* -------------------------------------------------------------------------
  * The camera
@@ -120,10 +120,10 @@ type Rect = { x: number; y: number; w: number; h: number };
  * together), the panel's width plus PAD across, and the panel's top,
  * middle or bottom against the frame's. `zoom` goes closer than that.
  */
-type Shot = { id: string | string[]; align: "top" | "center" | "bottom"; zoom?: number };
-type Key = [frame: number, shot: Shot, curve?: (x: number) => number];
+export type Shot = { id: string | string[]; align: "top" | "center" | "bottom"; zoom?: number };
+export type Key = [frame: number, shot: Shot, curve?: (x: number) => number];
 
-const SHOT = {
+export const SHOT = {
   record: { id: ["rec-head", "rec"], align: "top" },
   summaryTop: { id: "sum-head", align: "top" },
   summaryEnd: { id: "sum-card", align: "bottom" },
@@ -187,14 +187,14 @@ function viewOf(shot: Shot, r: Rect, aspect: number): Rect {
   return { x, y, w, h };
 }
 
-/** The camera's view at a frame. Scale eases evenly (in log), position linearly. */
-function cameraAt(frame: number, find: (id: string | string[]) => Rect, aspect: number): Rect {
+/** The camera's view at a frame, on a path (this loop's CAMERA unless given). Scale eases evenly (in log), position linearly. */
+function cameraAt(frame: number, find: (id: string | string[]) => Rect, aspect: number, path: Key[] = CAMERA): Rect {
   let i = 0;
-  while (i + 1 < CAMERA.length && frame >= CAMERA[i + 1][0]) i++;
-  const [f0, a] = CAMERA[i];
+  while (i + 1 < path.length && frame >= path[i + 1][0]) i++;
+  const [f0, a] = path[i];
   const at = (shot: Shot) => viewOf(shot, find(shot.id), aspect);
-  if (i + 1 === CAMERA.length) return at(a);
-  const [f1, b, curve = ease] = CAMERA[i + 1];
+  if (i + 1 === path.length) return at(a);
+  const [f1, b, curve = ease] = path[i + 1];
   const k = curve(clamp01((frame - f0) / (f1 - f0)));
   if (k === 0 || a === b) return at(a);
   const [va, vb] = [at(a), at(b)];
@@ -210,7 +210,7 @@ function cameraAt(frame: number, find: (id: string | string[]) => Rect, aspect: 
  * are, and only once the fonts have loaded, so the text it frames is the
  * text in the video.
  */
-const Camera: React.FC<{ size: Size; frame: number; children: ReactNode; overlay?: ReactNode }> = ({ size, frame, children, overlay }) => {
+const Camera: React.FC<{ size: Size; frame: number; children: ReactNode; overlay?: ReactNode; path?: Key[] }> = ({ size, frame, children, overlay, path }) => {
   const world = useRef<HTMLDivElement>(null);
   const aim = useRef(() => {});
   const fontsReady = useRef(false);
@@ -225,7 +225,7 @@ const Camera: React.FC<{ size: Size; frame: number; children: ReactNode; overlay
     aim.current = () => {
       const w = world.current;
       if (!w) return;
-      const v = cameraAt(frame, (id) => rectOf(w, id), height / width);
+      const v = cameraAt(frame, (id) => rectOf(w, id), height / width, path);
       const s = width / v.w;
       // Whole frame pixels, so text is as sharp in motion as at rest.
       w.style.transform = `translate(${Math.round(-v.x * s)}px, ${Math.round(-v.y * s)}px) scale(${s})`;
@@ -240,7 +240,7 @@ const Camera: React.FC<{ size: Size; frame: number; children: ReactNode; overlay
         }
       });
     }
-  }, [frame, handle, size]);
+  }, [frame, handle, size, path]);
 
   const top = bannerHeight(size);
   return (
@@ -269,7 +269,7 @@ const Camera: React.FC<{ size: Size; frame: number; children: ReactNode; overlay
  * The scenes
  * ---------------------------------------------------------------------- */
 
-type Scene = {
+export type Scene = {
   key: string;
   nav: NavKey | null;
   node: ReactNode;
@@ -354,10 +354,10 @@ const ORDER: { name: string; fade: number[]; kind: "page" | "tab" }[] = [
 ];
 
 /** A dip: the old content is gone by `split` of the way, the new one starts at 1 - `split`. */
-const dipOut = (k: number, split = 0.6) => 1 - ease(clamp01(k / split));
-const dipIn = (k: number, split = 0.6) => ease(clamp01((k - (1 - split)) / split));
+export const dipOut = (k: number, split = 0.6) => 1 - ease(clamp01(k / split));
+export const dipIn = (k: number, split = 0.6) => ease(clamp01((k - (1 - split)) / split));
 
-type Content = { scene: Scene; opacity: number };
+export type Content = { scene: Scene; opacity: number };
 
 /**
  * What the page area holds at a frame: one scene's content, or two during a
@@ -394,7 +394,7 @@ function contentsAt(size: Size, frame: number): Content[] {
 }
 
 /** One frame: the pinned banner, then the app (navigation and page content) through the camera, then any dialog. */
-const AppFrame: React.FC<{ size: Size; frame: number; contents: Content[] }> = ({ size, frame, contents }) => {
+export const AppFrame: React.FC<{ size: Size; frame: number; contents: Content[]; path?: Key[] }> = ({ size, frame, contents, path }) => {
   // The navigation follows whichever page is more in view.
   const nav = contents.reduce((a, b) => (b.opacity > a.opacity ? b : a)).scene.nav;
   const page = (
@@ -422,7 +422,7 @@ const AppFrame: React.FC<{ size: Size; frame: number; contents: Content[] }> = (
           <DemoBanner />
         </div>
       </div>
-      <Camera size={size} frame={frame} overlay={overlay}>
+      <Camera size={size} frame={frame} overlay={overlay} path={path}>
         {size === "desktop" ? <Sidebar active={nav} /> : <PhoneHeader active={nav} />}
         {page}
       </Camera>

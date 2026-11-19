@@ -15,6 +15,8 @@ npm run build        # capture, then render
 npm run pearls       # pearls-d.mp4 and its SD cut, from pearlsfarminc.com
 npm run pearls-drone # Pearls' Photo & video loops and posters, from its hero video
 npm run sd           # SD cuts of Pearls' phone loop and Cubic Ship's
+npm run film-capture # captures for the film's loops (/film): Pearls' site, Pearls' Instagram
+npm run film         # the film's loops → ../public/m/film/
 npm run studio       # preview and scrub the compositions in the browser
 ```
 
@@ -76,6 +78,46 @@ files are listed on each project in `lib/elorro.ts`. One that's listed but not
 in `public/m/work/` yet is left out when the site builds, named in the build
 log, and its card shows the poster in its place (`lib/work-media.ts`).
 
+## The film's loops (/film)
+
+Three videos made for the film, in `public/m/film/`, encoded like the Work
+loops (1280×800 and 720×900 under 2 MB, SD cuts at 864×540 and 544×680 under
+900 KB, posters at 1280×800 and 720×900). The Work section's own files in
+`public/m/work/` are never touched.
+
+| Files | What | Made by |
+| --- | --- | --- |
+| `pearls-site-{d,m}` | Pearls Farm Labor's site as one flow (9 s): the hero, one scroll down the homepage through every section to "Let's talk about your block", then a dissolve into the Request a crew page | `src/FilmLoops.tsx` (PearlsSite), from `npm run film-capture` |
+| `photo-reel-{d,m}` | The Photo & video demo (11 s): Jordan's drone footage of a crew in the rows, dissolving into Pearls' Instagram profile, scrolled from its header down its grid | `src/FilmLoops.tsx` (PhotoReel), from the captures and the drone footage |
+| `clinical-film-{d,m}` | The Custom tools demo (15.5 s): Clinical Scribe's invented consult recorded, written up, its coaching ("Recommended next move"), then "Draft this message" and the follow-up letter drafting | `src/ClinicalFilm.tsx`, from the same replica as the Work card (which it leaves as it is) |
+
+```
+npm run film-capture          # both captures
+npm run film-capture -- pearls
+npm run film                  # every loop, both sizes
+npm run film -- clinical phone
+```
+
+- **The captures** (`scripts/film-capture.mjs`) are full-page tiles, as for
+  Numen, in `public/film-captures/`, with where things sit in
+  `src/film-captures.json`. They aren't committed.
+- **The Instagram capture needs a logged-in session.** Instagram puts a login
+  wall over a profile seen logged out. The session is saved by hand from a
+  visible browser window, logged in by a person, into
+  `design/review/.auth/social.json`. That folder is never committed
+  (`.gitignore`), and the script only hands the file to the browser.
+- **Nothing from that account shows.** Before the shots, the capture hides
+  everything pinned to the screen: Instagram's navigation (with the account's
+  avatar), Messages, and the app banner. What's left is Pearls' own header and
+  grid. If the profile shows a login wall or a check, the capture stops.
+- **The drone footage** is the hero video on pearlsfarminc.com
+  (`home-two-angle-graded-v6-16x9.mp4`). Save it as
+  `public/film-captures/drone-src.mp4`. The reel plays the crew's stretch from
+  5.4 s, cropped as `scripts/pearls-drone.mjs` crops it.
+- **They play once,** so they have no seam. Each poster is the still the film
+  shows until its video plays, and instead of it under reduced motion. The
+  site's is its first frame; each demo's is its finished state.
+
 ## Elora's voice (/film)
 
 `voice/elora-sia-take2.mp3` is Elora's voice in the film: ElevenLabs, voice
@@ -134,6 +176,15 @@ How the timings in `script.ts` were made, to redo them for a new take:
    was). The demos and the plan run on past her lines too. The film jumps
    from the choice to each demo and back, and on to the plan; her voice picks
    up at each from the right place in the file.
+
+**New takes, a part or a line at a time.** Every scene, every part of the film
+(`SEGMENTS`) and every single line can have a file of its own (`voice`, with a
+`cue` where it starts in that file). The nearest wins: line, scene, part,
+then the long take. So a re-recorded line drops in without re-cutting the
+take: save its AAC copy in `public/m/film/voice/`, name it on the line, and
+re-time its `end`. The film moves her from file to file in the quiet between
+lines, and loads the other files early. The lines that need one, and how to
+record them, are listed in `design/review/elora-new-lines.md`.
 
 ## Clinical Scribe
 

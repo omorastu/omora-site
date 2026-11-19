@@ -13,12 +13,21 @@
  * (scenes.tsx) are timed as shares of it, so a scene made longer or shorter
  * keeps its choreography in step.
  *
- * Her voice is one file (`voice.src`). Each scene she speaks in has a `cue`:
- * where its first line starts in the file, in seconds. From there her voice
- * plays on in step with the scene; where a scene runs longer than her lines in
- * it, she waits, in the quiet before her next line, until the film reaches it.
- * A scene is never shorter than her lines in it (timeline()). A line marked
- * `silent` has no voice yet: it's captioned only.
+ * Her voice. Each scene she speaks in has a `cue`: where its first line
+ * starts in its file, in seconds. From there her voice plays on in step with
+ * the scene; where a scene runs longer than her lines in it, she waits, in
+ * the quiet before her next line, until the film reaches it. A scene is never
+ * shorter than her lines in it (timeline()). A line marked `silent` has no
+ * voice yet: it's captioned only.
+ *
+ * Her file. One take of the whole script (`voice.src`) serves every scene;
+ * a part of the film (SEGMENTS) can have a file of its own (its `voice`), and
+ * so can a scene; a single line can too (its `voice`, with its own `cue`,
+ * where it starts in that file, 0 if not given). The nearest wins: line,
+ * scene, part, then the take. So a new take of one part, or of one line, drops
+ * in without re-cutting the long one: put the file in public/m/film/, name it
+ * there, and time it (video/README.md, "Elora's voice"). film.tsx moves her
+ * from file to file in the quiet between lines, loading the next one early.
  *
  * All the parts sit on one timeline, a few seconds apart, and the film jumps
  * between them (film.tsx): times here are seconds into that timeline.
@@ -50,6 +59,9 @@ export type Line = {
   end?: number;
   /** No voice for it yet: a caption only, and her glow stays down. */
   silent?: boolean;
+  /** A file of its own for this line (from public/, e.g. "/m/film/voice/office-2.m4a"), and where in it the line starts. */
+  voice?: string;
+  cue?: number;
 };
 
 export type Scene = {
@@ -58,8 +70,10 @@ export type Scene = {
   label: string;
   duration: number;
   lines: Line[];
-  /** Where her first line in this scene starts in her file, in seconds. */
+  /** Where her first line in this scene starts in its file, in seconds. */
   cue?: number;
+  /** A file of its own for this scene's lines (see the top of this file). */
+  voice?: string;
 };
 
 /**
@@ -119,10 +133,10 @@ export const scenes: Scene[] = [
     ],
   },
   {
-    // Longer than her lines (by the phrase cut from them): Pearls' site plays on after her line.
+    // Longer than her lines: Pearls' site plays on through, all of it, after her line.
     id: "site",
     label: "03 · The website",
-    duration: 8.41,
+    duration: 11.91,
     cue: 23.95,
     lines: [
       { text: "If your website’s dated and cluttered, people leave.", at: 0, end: 3.14 },
@@ -161,25 +175,25 @@ export const scenes: Scene[] = [
     ],
   },
   {
-    // The film stops here (film.tsx, HOLD) until the visitor picks a demo or goes on.
+    // The film stops here (film.tsx, HOLD) until the visitor picks a demo or goes on. Its line is the cards' heading.
     id: "choice",
     label: "",
     duration: 2,
-    lines: [{ text: choice.line, at: 0.3, silent: true }],
+    lines: [],
   },
   {
-    // Her line from behind the scenes, then Clinical Scribe writing up the consult.
+    // Her line from behind the scenes, then Clinical Scribe: the consult written up, the coaching for it, the follow-up letter.
     id: "tools",
     label: "Demo · Custom tools",
-    duration: 8.5,
+    duration: 17,
     cue: 52.99,
     lines: [{ text: "And build tools around how you work, like one that writes up each consult.", at: 0.5, end: 4.48 }],
   },
   {
-    // Her line, then the drone footage plays on.
+    // Her line, then the drone footage plays on, and gives way to the posts.
     id: "photo",
     label: "Demo · Photo & video",
-    duration: 7,
+    duration: 12.3,
     cue: 57.33,
     lines: [{ text: "And photos and video that show what you do.", at: 0.5, end: 2.84 }],
   },
@@ -221,7 +235,7 @@ export const scenes: Scene[] = [
 
 /** The film's parts, in order: the first minute, the choice, each demo, then the plan and the close. */
 export type SegmentId = "main" | "choice" | DemoId | "finale";
-export const SEGMENTS: { id: SegmentId; scenes: SceneId[]; joined?: boolean }[] = [
+export const SEGMENTS: { id: SegmentId; scenes: SceneId[]; joined?: boolean; voice?: string }[] = [
   { id: "main", scenes: ["elora", "call", "found", "site", "booking", "calls", "office"] },
   // Straight on from the first minute, which plays into it.
   { id: "choice", scenes: ["choice"], joined: true },
@@ -252,8 +266,9 @@ export function timeline() {
       const first = scene.lines[0]?.at ?? 0;
       const last = scene.lines[scene.lines.length - 1];
       let need = 0;
-      if (scene.cue !== undefined && next?.cue !== undefined) need = first + next.cue - scene.cue - (next.lines[0]?.at ?? 0);
-      else if (scene.cue !== undefined && last?.end !== undefined) need = last.end + 0.3;
+      const oneFile = !!next && fileOf(scene) === fileOf(next) && [...scene.lines, ...next.lines].every((l) => !l.voice);
+      if (scene.cue !== undefined && next?.cue !== undefined && oneFile) need = first + next.cue - scene.cue - (next.lines[0]?.at ?? 0);
+      else if (last?.end !== undefined && scene.lines.some((l) => !l.silent)) need = last.end + 0.3;
       const duration = Math.max(scene.duration, need);
       parts.push({ scene, start: t, duration, segment: seg.id });
       t += duration;
@@ -263,29 +278,80 @@ export function timeline() {
   return { parts, segments, total: t };
 }
 
+/** The file a scene's lines are in (a line's own `voice` aside): the scene's, its part's, or the take. */
+export function fileOf(scene: Scene): string | undefined {
+  return scene.voice ?? SEGMENTS.find((g) => g.scenes.includes(scene.id))?.voice ?? voice.src;
+}
+
 /**
- * Her voice against the film: stretches of her file, each played from `file`
- * (seconds into it) at `film` (seconds into the timeline) for `len` seconds;
- * between two, she waits. A stretch for each scene she speaks in, from its
- * first line, starting a little before it, in the quiet after her line before
- * (half way through it, by her lines' `end`), where she also waits if the
- * scene before runs longer. Without cues, one stretch: the file is the film's time.
+ * Her voice against the film: stretches of her files, each played from
+ * `file` (seconds into `src`) at `film` (seconds into the timeline) for `len`
+ * seconds; between two, she waits. One stretch for each run of a scene's
+ * lines in one file, and one for each line with a file of its own. A stretch
+ * starts a little before its first line: in the same file, half way through
+ * the quiet after the line before (by her lines' `end`), where she also waits
+ * if the scene before runs longer; in a new file, 0.3 s before the line, or
+ * from the top. It runs on to the next stretch where that one carries on in
+ * the same file, or else 0.35 s past her last word; the last, to the end.
+ * Without a file, one stretch: the file is the film's time.
  */
 export function voiceStretches() {
   const { parts } = timeline();
-  const voiced = parts.filter((p) => p.scene.cue !== undefined);
-  if (!voiced.length) return [{ film: 0, file: 0, len: Infinity }];
-  const starts = voiced.map((p, i) => {
-    const cue = p.scene.cue!;
-    const first = p.scene.lines[0]?.at ?? 0;
-    const before = voiced[i - 1]?.scene;
-    const last = before?.lines[before.lines.length - 1];
-    // Where she finished her line before, in the file; half way from there to this cue.
-    const done = before && last?.end !== undefined ? before.cue! + last.end - (before.lines[0]?.at ?? 0) : cue - 0.3;
-    const file = i === 0 ? 0 : Math.max(done, (done + cue) / 2);
-    return { film: p.start + first - (cue - file), file };
+  type Run = { src: string; film: number; cue: number; end: number };
+  const runs: Run[] = [];
+  for (const p of parts) {
+    const scene = p.scene;
+    if (scene.cue === undefined && scene.lines.every((l) => !l.voice)) continue;
+    const first = scene.lines[0]?.at ?? 0;
+    let run: Run | null = null;
+    for (const line of scene.lines) {
+      if (line.silent) continue;
+      const spoken = (line.end ?? line.at + 2) - line.at;
+      if (line.voice) {
+        run = null;
+        const cue = line.cue ?? 0;
+        runs.push({ src: line.voice, film: p.start + line.at, cue, end: cue + spoken });
+        continue;
+      }
+      const src = fileOf(scene);
+      if (!src || scene.cue === undefined) continue;
+      const at = scene.cue + line.at - first;
+      if (run) run.end = at + spoken;
+      else {
+        run = { src, film: p.start + line.at, cue: at, end: at + spoken };
+        runs.push(run);
+      }
+    }
+  }
+  if (!runs.length) return [{ src: voice.src ?? "", film: 0, file: 0, len: Infinity }];
+  const starts = runs.map((r, i) => {
+    const before = runs[i - 1];
+    const carries = !!before && before.src === r.src && before.end <= r.cue;
+    const fresh = !runs.slice(0, i).some((x) => x.src === r.src);
+    const file = carries ? Math.max(before.end, (before.end + r.cue) / 2) : fresh && r.cue < 0.5 ? 0 : Math.max(0, r.cue - 0.3);
+    return { src: r.src, film: r.film - (r.cue - file), file };
   });
-  return starts.map((s, i) => ({ ...s, len: starts[i + 1] ? starts[i + 1].file - s.file : Infinity }));
+  const stretches = starts.map((s, i) => {
+    const next = starts[i + 1];
+    const carries = !!next && next.src === s.src && runs[i].end <= runs[i + 1].cue;
+    const len = !next ? Infinity : carries ? next.file - s.file : runs[i].end - s.file + 0.35;
+    return { ...s, len };
+  });
+  // From one file into another with little quiet between her lines: the
+  // first stops and the second starts half way through that quiet.
+  stretches.forEach((s, i) => {
+    const next = stretches[i + 1];
+    if (!next || next.src === s.src || s.film + s.len <= next.film) return;
+    const said = s.film + runs[i].end - s.file;
+    const starts = runs[i + 1].film;
+    const half = (said + starts) / 2;
+    s.len = half - s.film;
+    next.file = Math.max(0, runs[i + 1].cue - (starts - half));
+    next.film = starts - (runs[i + 1].cue - next.file);
+    if (stretches[i + 2] && stretches[i + 2].src === next.src) next.len = stretches[i + 2].file - next.file;
+    else if (Number.isFinite(next.len)) next.len = runs[i + 1].end - next.file + 0.35;
+  });
+  return stretches;
 }
 
 /**

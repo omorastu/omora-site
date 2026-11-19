@@ -300,9 +300,12 @@ const SummaryCard: React.FC<{ shown: Shown; spaceAfter?: number }> = ({ shown, s
   </Card>
 );
 
-/** recommendation.tsx's card, as the summary tab shows it under the summary. */
-const RecommendationCard: React.FC<{ spaceAfter?: number }> = ({ spaceAfter }) => (
-  <Card spaceAfter={spaceAfter}>
+/**
+ * recommendation.tsx's card, as the summary tab shows it under the summary.
+ * `pressed`: its "Draft this message" button being pressed (the film's cut).
+ */
+const RecommendationCard: React.FC<{ spaceAfter?: number; pressed?: boolean }> = ({ spaceAfter, pressed = false }) => (
+  <Card spaceAfter={spaceAfter} cam="recommend">
     <CardTitle
       right={
         <B as="span" c="rounded-full px-2 py-0.5 text-[0.6875rem] font-medium bg-emerald-100 text-emerald-900">
@@ -343,7 +346,7 @@ const RecommendationCard: React.FC<{ spaceAfter?: number }> = ({ spaceAfter }) =
         ))}
       </B>
     </B>
-    <B c="mt-3">
+    <B c="mt-3" s={pressed ? { transform: "scale(0.96)", transformOrigin: "left center", filter: "brightness(0.92)" } : undefined}>
       <Button variant="amber">{RECOMMENDATION.draftButton}</Button>
     </B>
   </Card>
@@ -404,13 +407,15 @@ export const SummaryScreen: React.FC<{
   opacity?: number;
   /** The tab being left during a switch, complete, fading out over the new one. */
   from?: { tab: Tab; opacity: number };
-}> = ({ tab, shown, letterChars, drafting, opacity = 1, from }) => {
+  /** The recommendation's "Draft this message" being pressed (the film's cut). */
+  pressed?: boolean;
+}> = ({ tab, shown, letterChars, drafting, opacity = 1, from, pressed = false }) => {
   const card = (key: Tab, complete: boolean) =>
     key === "summary" ? (
       <B c="space-y-6">
         <SummaryCard shown={complete ? () => 1 : shown} />
         <Reveal k={complete ? 1 : shown(12)}>
-          <RecommendationCard />
+          <RecommendationCard pressed={!complete && pressed} />
         </Reveal>
       </B>
     ) : (

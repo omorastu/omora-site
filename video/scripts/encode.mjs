@@ -35,12 +35,14 @@ export const probe = (file) =>
  * H.264 (High, yuv420p, no audio, moov first) at the lowest CRF that keeps it
  * under `cap`, found by bisection to half a step, so the file spends its whole
  * budget on sharpness. The source is scaled once (lanczos) into a lossless
- * intermediate, so each trial encode only encodes.
+ * intermediate, so each trial encode only encodes. `prefilter` (an ffmpeg
+ * filter, before the scale) is for footage too fine-grained to fit otherwise.
  */
-export function encode(source, [w, h], dest, cap) {
+export function encode(source, [w, h], dest, cap, prefilter) {
   fs.mkdirSync(OUT, { recursive: true });
   const scaled = path.join(OUT, `${path.basename(dest, ".mp4")}-scaled.mkv`);
-  ffmpeg(["-i", source, "-an", "-vf", `scale=${w}:${h}:flags=lanczos`, "-c:v", "libx264", "-preset", "ultrafast", "-qp", "0", "-pix_fmt", "yuv444p", scaled]);
+  const vf = `${prefilter ? `${prefilter},` : ""}scale=${w}:${h}:flags=lanczos`;
+  ffmpeg(["-i", source, "-an", "-vf", vf, "-c:v", "libx264", "-preset", "ultrafast", "-qp", "0", "-pix_fmt", "yuv444p", scaled]);
   const at = (crf) => {
     ffmpeg([
       "-i", scaled, "-an",

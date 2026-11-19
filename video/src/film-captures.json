@@ -1,0 +1,228 @@
+{
+  "overlap": 4,
+  "sizes": {
+    "desktop": {
+      "width": 1440,
+      "dpr": 1.5,
+      "tile": 1800,
+      "pages": {
+        "pearls": {
+          "url": "https://www.pearlsfarminc.com",
+          "capturedAt": "2026-11-19T01:52:11.291Z",
+          "height": 11511,
+          "header": 72,
+          "stickyHeader": true,
+          "anchors": {
+            "close": 10282,
+            "footer": 10753
+          },
+          "tiles": [
+            {
+              "file": "desktop-pearls-00.png",
+              "y": 0,
+              "h": 1804
+            },
+            {
+              "file": "desktop-pearls-01.png",
+              "y": 1800,
+              "h": 1804
+            },
+            {
+              "file": "desktop-pearls-02.png",
+              "y": 3600,
+              "h": 1804
+            },
+            {
+              "file": "desktop-pearls-03.png",
+              "y": 5400,
+              "h": 1804
+            },
+            {
+              "file": "desktop-pearls-04.png",
+              "y": 7200,
+              "h": 1804
+            },
+            {
+              "file": "desktop-pearls-05.png",
+              "y": 9000,
+              "h": 1804
+            },
+            {
+              "file": "desktop-pearls-06.png",
+              "y": 10800,
+              "h": 711
+            }
+          ]
+        },
+        "pearlsRequest": {
+          "url": "https://www.pearlsfarminc.com/request-a-crew",
+          "capturedAt": "2026-11-19T01:52:20.879Z",
+          "height": 2714,
+          "header": 72,
+          "stickyHeader": true,
+          "anchors": {},
+          "tiles": [
+            {
+              "file": "desktop-pearlsRequest-00.png",
+              "y": 0,
+              "h": 1804
+            },
+            {
+              "file": "desktop-pearlsRequest-01.png",
+              "y": 1800,
+              "h": 914
+            }
+          ]
+        },
+        "instagram": {
+          "url": "https://www.instagram.com/pearlsfarmlabor/",
+          "capturedAt": "2026-11-19T01:56:19.089Z",
+          "height": 3880,
+          "header": 0,
+          "stickyHeader": false,
+          "anchors": {
+            "grid": 552,
+            "gridEnd": 3745,
+            "posts": 36
+          },
+          "tiles": [
+            {
+              "file": "desktop-instagram-00.png",
+              "y": 0,
+              "h": 1804
+            },
+            {
+              "file": "desktop-instagram-01.png",
+              "y": 1800,
+              "h": 1804
+            },
+            {
+              "file": "desktop-instagram-02.png",
+              "y": 3600,
+              "h": 280
+            }
+          ]
+        }
+      }
+    },
+    "phone": {
+      "width": 390,
+      "dpr": 3,
+      "tile": 1300,
+      "pages": {
+        "pearls": {
+          "url": "https://www.pearlsfarminc.com",
+          "capturedAt": "2026-11-19T01:52:59.444Z",
+          "height": 10803,
+          "header": 62,
+          "stickyHeader": true,
+          "anchors": {
+            "close": 9310,
+            "footer": 9733
+          },
+          "tiles": [
+            {
+              "file": "phone-pearls-00.png",
+              "y": 0,
+              "h": 1304
+            },
+            {
+              "file": "phone-pearls-01.png",
+              "y": 1300,
+              "h": 1304
+            },
+            {
+              "file": "phone-pearls-02.png",
+              "y": 2600,
+              "h": 1304
+            },
+            {
+              "file": "phone-pearls-03.png",
+              "y": 3900,
+              "h": 1304
+            },
+            {
+              "file": "phone-pearls-04.png",
+              "y": 5200,
+              "h": 1304
+            },
+            {
+              "file": "phone-pearls-05.png",
+              "y": 6500,
+              "h": 1304
+            },
+            {
+              "file": "phone-pearls-06.png",
+              "y": 7800,
+              "h": 1304
+            },
+            {
+              "file": "phone-pearls-07.png",
+              "y": 9100,
+              "h": 1304
+            },
+            {
+              "file": "phone-pearls-08.png",
+              "y": 10400,
+              "h": 403
+            }
+          ]
+        },
+        "pearlsRequest": {
+          "url": "https://www.pearlsfarminc.com/request-a-crew",
+          "capturedAt": "2026-11-19T01:53:08.199Z",
+          "height": 2964,
+          "header": 62,
+          "stickyHeader": true,
+          "anchors": {},
+          "tiles": [
+            {
+              "file": "phone-pearlsRequest-00.png",
+              "y": 0,
+              "h": 1304
+            },
+            {
+              "file": "phone-pearlsRequest-01.png",
+              "y": 1300,
+              "h": 1304
+            },
+            {
+              "file": "phone-pearlsRequest-02.png",
+              "y": 2600,
+              "h": 364
+            }
+          ]
+        },
+        "instagram": {
+          "url": "https://www.instagram.com/pearlsfarmlabor/",
+          "capturedAt": "2026-11-19T01:56:34.876Z",
+          "height": 2648,
+          "header": 0,
+          "stickyHeader": false,
+          "anchors": {
+            "grid": 528,
+            "gridEnd": 2603,
+            "posts": 36
+          },
+          "tiles": [
+            {
+              "file": "phone-instagram-00.png",
+              "y": 0,
+              "h": 1304
+            },
+            {
+              "file": "phone-instagram-01.png",
+              "y": 1300,
+              "h": 1304
+            },
+            {
+              "file": "phone-instagram-02.png",
+              "y": 2600,
+              "h": 48
+            }
+          ]
+        }
+      }
+    }
+  }
+}
