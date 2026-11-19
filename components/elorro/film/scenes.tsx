@@ -2165,7 +2165,7 @@ function Plan(tall: boolean, subject: PlanSubject = "business"): SceneArt {
                   {what}
                 </text>
                 <text className="t-ink-soft t-left" x={l + P.indent} y={itemY(i) + P.why[1]} fontSize={P.why[0]}>
-                  {subject === "practice" && what === "Book online" ? "Consults booked in a click, confirmed" : why}
+                  {why}
                 </text>
                 {i < PLAN.length - 1 && <path className="s-ink-line" d={`M ${l} ${itemY(i) + P.line} H ${r}`} />}
                 <circle className="s-ink-line" fill="none" {...tick(i)} />

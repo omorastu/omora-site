@@ -1075,8 +1075,6 @@
 }
 .film.is-owner-path .film-scene .film-lens { animation-duration: .55s, .44s; }
 @media (prefers-reduced-motion: no-preference) {
-  .film.is-owner-path [data-scene="frontdesk"] .film-orbit > .film-layer,
-  .film.is-owner-path [data-scene="tools"] .film-orbit > .film-art > .t-disp.fx-rise,
   .film.is-owner-path [data-scene="plan"] .film-orbit .fx-rise { animation-duration: .35s; }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -1117,6 +1115,7 @@
   color: #21170C;
 }
 @media (min-width: 768px) {
+  .film-cards--single { grid-template-columns: min(calc(21.5 * var(--fr)), 43vw); }
   .film-cards--pair { grid-template-columns: repeat(2, min(calc(21.5 * var(--fr)), 43vw)); }
 }
 @media (max-width: 767px) {

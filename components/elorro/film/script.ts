@@ -55,7 +55,7 @@ export type SceneId =
 /** The examples on the choice, each a scene of its own. */
 export const DEMO_IDS = ["tools", "photo", "frontdesk", "website", "local"] as const;
 export type DemoId = (typeof DEMO_IDS)[number];
-export type PlanSubject = "winery" | "practice" | "business";
+export type PlanSubject = "winery" | "business";
 
 export type Line = {
   text: string;
@@ -97,7 +97,6 @@ export type OwnerPath = ChoiceCard & {
   enabled: boolean;
   plan: PlanSubject;
   scenes: readonly SceneId[];
-  opening?: { trim: number; caption: string };
 };
 
 export const ownerPaths: readonly OwnerPath[] = [
@@ -109,17 +108,6 @@ export const ownerPaths: readonly OwnerPath[] = [
     image: "/m/work/prosperando-m-poster.jpg",
     plan: "winery",
     scenes: ["found", "booking", "wineSite", "winePhoto"],
-  },
-  {
-    demo: "frontdesk",
-    enabled: true,
-    title: "Dental or ortho practice",
-    line: "See a call turn into a booked consult and a clear follow-up.",
-    image: "/m/film/choice-frontdesk.jpg",
-    plan: "practice",
-    scenes: ["calls", "office", "frontdesk", "tools"],
-    // The pause between “Or” and the onset of “say” in the existing take.
-    opening: { trim: 0.312, caption: "Say you’re an orthodontist, and the front desk is too busy to pick up." },
   },
   {
     demo: "local",
@@ -481,7 +469,7 @@ export function captions() {
       const next = scene.lines[i + 1];
       const from = start + line.at;
       const said = line.silent ? from : start + (line.end ?? (next ? next.at - 0.15 : duration - 0.25));
-      return { text: line.text, from, to: said, said, scene: scene.id, segment, first: i === 0, silent: !!line.silent };
+      return { text: line.text, from, to: said, said, scene: scene.id, segment, silent: !!line.silent };
     })
   );
   all.forEach((c, i) => {

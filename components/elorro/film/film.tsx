@@ -110,7 +110,7 @@ const OWNER_TRACKS: readonly OwnerTrack[] = availableOwnerPaths.map((path) => {
       spans[spans.length - 1].end = end;
     } else {
       const lead = main ? 0 : OWNER_LEAD;
-      spans.push({ start: part.start - lead + (i === 0 ? path.opening?.trim ?? 0 : 0), end });
+      spans.push({ start: part.start - lead, end });
     }
   });
   return { ...path, spans, visibleScenes: new Set<SceneId>([...path.scenes, "plan", "close"]) };
@@ -931,8 +931,6 @@ function Film({
     startAt(PLAN_AT);
   };
   const visibleScene = (id: SceneId) => !activeOwner || activeOwner.visibleScenes.has(id);
-  const caption = (id: SceneId, first: boolean, text: string) =>
-    first && id === activeOwner?.scenes[0] ? activeOwner.opening?.caption ?? text : text;
   const transcript: readonly SceneId[] = activeOwner ? [...activeOwner.scenes, "plan", "close"] : scenes.map((scene) => scene.id);
 
   // Leaving by key, the focus kept inside, and nothing underneath scrolled meanwhile.
@@ -1095,7 +1093,7 @@ function Film({
         <div className="film-caps" aria-hidden="true">
           {CAPTIONS.map((c, i) => visibleScene(c.scene) && (
             <p key={c.from} className={cn("film-cap", i === CAPTIONS.length - 1 && "film-cap--last")} style={{ "--from": sec(c.from), "--len": sec(c.to - c.from) } as Vars}>
-              <span>{caption(c.scene, c.first, c.text)}</span>
+              <span>{c.text}</span>
             </p>
           ))}
         </div>
@@ -1118,7 +1116,12 @@ function Film({
           <button type="button" className="film-menu-switch" onClick={() => { setBack(null); setMenu(menu === "owners" ? "services" : "owners"); }}>
             {menu === "owners" ? "Browse by service" : "Browse by business"}
           </button>
-          <ul className={cn("film-cards", menu === "services" && "film-cards--services", examples.cards.length === 2 && "film-cards--pair")}>
+          <ul className={cn(
+            "film-cards",
+            menu === "services" && "film-cards--services",
+            examples.cards.length === 1 && "film-cards--single",
+            examples.cards.length === 2 && "film-cards--pair",
+          )}>
             {examples.cards.map((c) => {
               const watched = seen[menu].includes(c.demo);
               return (
@@ -1166,7 +1169,7 @@ function Film({
       {/* What she says, for screen readers, all at once. */}
       <div className="film-sr">
         {transcript.map((id) =>
-          scenes.find((scene) => scene.id === id)?.lines.map((line, i) => <p key={line.text}>{caption(id, i === 0, line.text)}</p>)
+          scenes.find((scene) => scene.id === id)?.lines.map((line) => <p key={line.text}>{line.text}</p>)
         )}
       </div>
     </div>
