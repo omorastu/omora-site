@@ -948,8 +948,14 @@
   /* A demo shows its finished state from its start, its captions running as ever. */
   .film-scene[data-demo] .fx { animation-delay: var(--s) !important; animation-duration: .01s !important; }
   /* The choice comes in without moving; the nudge is a glow, not a pulse. */
-  .film-choice-h, .film-card, .film-next { animation-name: choice-fade !important; animation-duration: .5s !important; }
+  .film-choice-h, .film-card, .film-next, .film-choice-other { animation-name: choice-fade !important; animation-duration: .5s !important; }
   @keyframes choice-fade { from { opacity: 0; } }
+  /* A question, and the note, fade in where they stand (no rise). */
+  .film-ask { animation-name: choice-fade !important; animation-duration: .6s !important; }
+  .film-note { animation-name: choice-fade !important; animation-duration: .7s !important; }
+  /* Fades between states keep their own time: the film closing, the progress line hiding on the picker and the note. */
+  .film { transition-duration: .45s !important; }
+  .film-progress { transition-duration: .3s !important; }
   .film-card.is-nudge { animation-name: choice-glow !important; animation-duration: 1.4s !important; }
   @keyframes choice-glow { 40% { border-color: rgb(217 182 106 / .85); } }
   .film-card-seen { animation-duration: .01s !important; }
@@ -1501,17 +1507,23 @@ html.way-boot body { visibility: hidden; }
   .way-h { top: 13svh; max-width: calc(100% - 40px); font-size: 24px; }
   .way-note { bottom: 4svh; }
 }
-/* Reduced motion: no mist, no dust, no swing, no push (the tap goes straight to the film): fades. */
+/* Reduced motion: no mist, no dust, no swing, no push (the tap goes straight to the film): fades, opacity only.
+   globals.css cuts every animation and transition short here, so each fade is an animation with its own
+   length kept (!important). Back from the film (.is-back) it's all there at once, as ever. */
 @media (prefers-reduced-motion: reduce) {
   .way-intro .elo-intro-mark { transition: opacity .6s ease; }
-  .way.is-mist .elo-intro-mark { transform: none; opacity: 0; }
-  /* At the door the logo fades in, already small at the top: an animation, since globals.css cuts every transition short here. */
+  /* At the hold the logo fades out where it is, with the line and the rule (way.tsx); at the door it fades in, already small at the top. */
+  .way.is-mist .elo-intro-mark { transform: none; opacity: 0; animation: way-gone .6s ease both; animation-duration: .6s !important; }
+  @keyframes way-gone { from { opacity: 1; } to { opacity: 0; } }
   .way.is-at-door:not(.is-back) .elo-intro-mark { animation: way-fade .6s ease both; animation-duration: .6s !important; }
   .way-h { -webkit-mask-image: none; mask-image: none; opacity: 0; transition: opacity .9s ease; }
   .way.is-welcome .way-h { opacity: 1; }
+  .way.is-welcome:not(.is-back) .way-h { animation: way-fade .9s ease both; animation-duration: .9s !important; }
   .way.is-at-door .way-door-at, .way.is-welcome .way-note-in { animation-name: way-fade !important; animation-duration: .9s !important; }
   @keyframes way-fade { from { opacity: 0; } }
+  /* The warm light the door stands in comes up with it. */
   .way::before { transition: none; }
+  .way.is-at-door:not(.is-back)::before { animation: way-fade .9s ease both; animation-duration: .9s !important; }
   .way-light, .way-doorway::after, .way-spill { animation: none !important; }
   .way-leaf { transition: none !important; }
 }
