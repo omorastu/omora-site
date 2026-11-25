@@ -51,7 +51,8 @@ function placeLogo(root: HTMLElement) {
   const w = innerWidth;
   const h = innerHeight;
   const flat = h < 560 && w > h;
-  const width = flat ? 130 : w < 600 ? 150 : 200;
+  // A quiet header, not a headline: its width at the top, 67 px on a desktop (some 11 px tall), 50 on a phone, 43 on its side.
+  const width = flat ? 43 : w < 600 ? 50 : 67;
   const cy = Math.max(flat ? 24 : 34, h * (flat ? 0.07 : w < 600 ? 0.065 : 0.075));
   const x = inner.offsetLeft + mark.offsetLeft + mark.offsetWidth / 2;
   const y = inner.offsetTop + mark.offsetTop + mark.offsetHeight / 2;

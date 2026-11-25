@@ -1502,6 +1502,8 @@ html.way-boot body { visibility: hidden; }
 @media (prefers-reduced-motion: reduce) {
   .way-intro .elo-intro-mark { transition: opacity .6s ease; }
   .way.is-mist .elo-intro-mark { transform: none; opacity: 0; }
+  /* At the door the logo fades in, already small at the top: an animation, since globals.css cuts every transition short here. */
+  .way.is-at-door:not(.is-back) .elo-intro-mark { animation: way-fade .6s ease both; animation-duration: .6s !important; }
   .way-h { -webkit-mask-image: none; mask-image: none; opacity: 0; transition: opacity .9s ease; }
   .way.is-welcome .way-h { opacity: 1; }
   .way.is-at-door .way-door-at, .way.is-welcome .way-note-in { animation-name: way-fade !important; animation-duration: .9s !important; }
