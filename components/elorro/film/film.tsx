@@ -1216,7 +1216,10 @@ function Film({
         return;
       }
       if (e.key === "Tab") {
-        const stops = [...el.querySelectorAll<HTMLElement>("button, a[href], input, textarea")].filter((n) => getComputedStyle(n).visibility !== "hidden");
+        // (What the browser's own Tab would stop at: not a field kept out of it, as the note's trap for bots is, nor a disabled button.)
+        const stops = [...el.querySelectorAll<HTMLElement>("button, a[href], input, textarea")].filter(
+          (n) => n.tabIndex >= 0 && !n.matches(":disabled") && getComputedStyle(n).visibility !== "hidden"
+        );
         const i = stops.indexOf(document.activeElement as HTMLElement);
         const next = e.shiftKey ? (i <= 0 ? stops.length - 1 : i - 1) : i >= stops.length - 1 ? 0 : i + 1;
         e.preventDefault();
@@ -1527,10 +1530,17 @@ function FilmNote({
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const startedAt = useRef(0);
   const heading = useRef<HTMLHeadingElement>(null);
+  const nameInput = useRef<HTMLInputElement>(null);
   const thanks = useRef<HTMLHeadingElement>(null);
+  /** Name, open and waiting: a soft gold glow on it until it's first been in (on a phone, until it's tapped). */
+  const [waiting, setWaiting] = useState(true);
   useEffect(() => {
     startedAt.current = Date.now();
-    if (!review) heading.current?.focus({ preventScroll: true });
+    if (review) return;
+    // With a mouse or a trackpad, the cursor in Name, to start typing. On a phone or a tablet, not: its keyboard would come
+    // up over her captions; the focus on the note's heading, as ever, for a screen reader.
+    if (window.matchMedia("(hover: hover) and (pointer: fine)").matches) nameInput.current?.focus({ preventScroll: true });
+    else heading.current?.focus({ preventScroll: true });
   }, [review]);
   useEffect(() => {
     if (sent && !review) thanks.current?.focus({ preventScroll: true });
@@ -1550,6 +1560,7 @@ function FilmNote({
   const send = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (status === "sending") return;
+    setWaiting(false);
     setStatus("sending");
     setError("");
     setFieldErrors({});
@@ -1600,15 +1611,17 @@ function FilmNote({
       </div>
     );
   const field = (name: "name" | "business" | "contact", label: string, autoComplete: string, type = "text") => (
-    <div className={cn("film-note-field", fieldErrors[name] && "has-error")}>
+    <div className={cn("film-note-field", name === "name" && "film-note-field--name", name === "name" && waiting && "is-waiting", fieldErrors[name] && "has-error")}>
       <label htmlFor={`film-note-${name}`}>{label}</label>
       <input
+        ref={name === "name" ? nameInput : undefined}
         id={`film-note-${name}`}
         name={name}
         type={type}
         autoComplete={autoComplete}
         value={draft[name]}
         onChange={edit(name)}
+        onFocus={name === "name" ? () => setWaiting(false) : undefined}
         aria-invalid={!!fieldErrors[name] || undefined}
         aria-describedby={fieldErrors[name] ? `film-note-${name}-error` : undefined}
         required={name !== "business"}

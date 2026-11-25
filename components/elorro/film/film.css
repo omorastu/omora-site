@@ -1229,10 +1229,14 @@
   color: var(--paper);
   /* (16px: a phone doesn't zoom into it.) */
   font: 400 16px/1.45 var(--text);
-  transition: border-color .2s ease, background-color .2s ease;
+  transition: border-color .2s ease, background-color .2s ease, box-shadow .3s ease;
 }
 .film-note-field textarea { min-height: 150px; resize: vertical; }
 .film-note-field :is(input, textarea):focus { border-color: #D9B66A; background: rgb(244 241 234 / .08); outline: 2px solid rgb(217 182 106 / .3); outline-offset: 1px; }
+/* Name, open and waiting: a soft gold glow, in focus (the cursor's there on a desktop) and, until it's first been in
+   (a phone doesn't put the cursor there), on its own. */
+.film-note-field--name input:focus, .film-note-field--name.is-waiting input { box-shadow: 0 0 0 4px rgb(217 182 106 / .12), 0 0 22px 2px rgb(217 182 106 / .28); }
+.film-note-field--name.is-waiting input { border-color: rgb(217 182 106 / .75); }
 .film-note-field.has-error :is(input, textarea) { border-color: #E08A6E; }
 .film-note-error { margin: 0; font-size: 13px; line-height: 1.35; color: #F2AA92; }
 .film-note-trap { position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden; }
