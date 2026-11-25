@@ -1746,7 +1746,10 @@ function Plan(p: ArtProps): SceneArt {
   // "Also available", under what they said yes to, and its quieter rows.
   const alsoY = itemY(items.length - 1) + S.label;
   const otherY = (j: number) => alsoY + S.first + j * S.also;
-  const tick = (i: number) => ({ cx: r + P.tick[0], cy: itemY(i) + P.tick[1], r: P.tick[2] });
+  // Each mark in the middle of its row: half way between the divider over it and the one under it (each row's dividers
+  // a row apart; the first row's line over it, and the last's under it, where they'd be).
+  const divider = also.length ? pitch * 0.62 : P.line;
+  const tick = (i: number) => ({ cx: r + P.tick[0], cy: itemY(i) + divider - pitch / 2, r: P.tick[2] });
   const T = planAt(p, items.length);
   const date = new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
   return {
@@ -1789,7 +1792,7 @@ function Plan(p: ArtProps): SceneArt {
                 <text className="t-ink-soft t-left" x={l + P.indent} y={itemY(i) + P.why[1]} fontSize={P.why[0]}>
                   {why}
                 </text>
-                {i < items.length - 1 && <path className="s-ink-line" d={`M ${l} ${itemY(i) + (also.length ? pitch * 0.62 : P.line)} H ${r}`} />}
+                {i < items.length - 1 && <path className="s-ink-line" d={`M ${l} ${itemY(i) + divider} H ${r}`} />}
                 <circle className="s-ink-line" fill="none" {...tick(i)} />
               </g>
             ))}
