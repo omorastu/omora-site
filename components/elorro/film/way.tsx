@@ -14,8 +14,9 @@ import { cn } from "@/lib/utils";
  * in under it. After its hold, the line turns to gold mist and drifts off
  * (mist.ts), the rule fades and the logo goes small to the top. Then the door
  * comes up, on its own, ajar, warm light at its gap; then, together, the
- * welcome forms out of gold dust at the top (the mist in reverse) and "Open
- * the door to see what it's about." comes up at the bottom.
+ * welcome forms out of gold dust at the top (the mist in reverse), settling
+ * in the intro's own gold, and "Open the door to see what it's about." comes
+ * up at the bottom.
  *
  * The door's tap (or Enter, or Space) is the gesture the film needs for her
  * voice and its videos (film.tsx): the door swings open and the camera goes
@@ -199,8 +200,11 @@ export function FilmWay({ stage, onOpen }: { stage: "in" | "door" | "through"; o
           <IntroCard />
         </div>
         <div className="way-welcome" aria-hidden={!atDoor}>
+          {/* In the intro's own gold: its line's style (intro.css, .elo-intro-cut), cut into the stone. */}
           <h2 ref={welcome} className="way-h">
-            Welcome to the <span className="way-h-us">Ashan &amp; Jordan experience.</span>
+            <span className="elo-intro-cut">
+              Welcome to the <span className="way-h-us">Ashan &amp; Jordan experience.</span>
+            </span>
           </h2>
           <button ref={door} type="button" className="way-door" onClick={open} tabIndex={atDoor ? 0 : -1}>
             <span className="way-door-at" aria-hidden="true">

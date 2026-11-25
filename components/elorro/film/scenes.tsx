@@ -738,31 +738,40 @@ function AnswersTall({ b, at, Q }: { b: Beats; at: number; Q: Search }) {
 /* ── 2 Reviews: the numbers, then their reviews answered ────────────────── */
 
 /**
- * The two numbers, word for word as Ashan gave them, each with its source
- * under it, in small type; nothing else is claimed. Each card comes in as she
- * says its sentence.
+ * The two numbers, each its figure large and the rest of its sentence under
+ * it (BrightLocal's own wording for the first), with its source under that,
+ * in small type; nothing else is claimed. Each card comes in as she says its
+ * sentence.
  */
 const STATS = [
   {
     figure: "97%",
     after: "",
-    lines: ["of people read reviews before", "choosing a local business."],
-    linesTall: ["of people read reviews before choosing", "a local business."],
+    lines: ["of consumers read reviews", "for local businesses."],
+    linesTall: ["of consumers read reviews", "for local businesses."],
     source: ["Source: BrightLocal, Local Consumer", "Review Survey 2026"],
     sourceTall: ["Source: BrightLocal, Local Consumer Review Survey 2026"],
   },
   {
     figure: "35%",
     after: " more",
-    lines: ["Businesses that reply to at least", "1 in 4 reviews earn 35% more than", "average. 3 in 4 small businesses", "don’t reply to any."],
-    linesTall: ["Businesses that reply to at least 1 in 4 reviews", "earn 35% more than average. 3 in 4 small", "businesses don’t reply to any."],
+    lines: ["revenue for businesses that reply", "to at least 1 in 4 reviews.", "3 in 4 small businesses don’t", "reply to any."],
+    linesTall: ["revenue for businesses that reply to", "at least 1 in 4 reviews.", "3 in 4 small businesses don’t reply to any."],
     source: ["Source: Womply, study of 200,000+", "U.S. small businesses (2019)"],
     sourceTall: ["Source: Womply, study of 200,000+ U.S. small businesses (2019)"],
   },
 ];
+/**
+ * The figures are in the display face's old-style numerals, whose 9, 7, 3 and
+ * 5 hang below the line: their lowest ink is this far under the baseline, in
+ * ems (measured in Chrome and WebKit; the "%" and "more" sit almost on it).
+ * The gold line under each figure clears it by FIG_GAP, the same on both cards.
+ */
+const FIG_DESCENT = 0.276;
+const FIG_GAP = 0.1;
 /** Side by side on a wide screen; one over the other, upright. */
-const STAT_WIDE = { cards: [[70, 250, 420, 470], [510, 250, 420, 470]] as Box[], m: 36, fig: [140, 104], text: [204, 25, 36], src: [418, 15, 22] };
-const STAT_TALL = { cards: [[50, 60, 900, 430], [50, 530, 900, 500]] as Box[], m: 52, fig: [150, 120], text: [222, 34, 46], src: [0, 23, 30] };
+const STAT_WIDE = { cards: [[70, 250, 420, 470], [510, 250, 420, 470]] as Box[], m: 36, fig: [140, 104], text: [218, 25, 36], src: [418, 15, 22] };
+const STAT_TALL = { cards: [[50, 60, 900, 430], [50, 530, 900, 500]] as Box[], m: 52, fig: [150, 120], text: [246, 34, 46], src: [0, 23, 30] };
 
 /** The demo comes in as she starts on their business (her fourth chunk), the numbers giving way. */
 const reviewsFix = (p: ArtProps) => Math.max(6, (p.at[3] ?? 8.6) + 0.1);
@@ -800,8 +809,8 @@ function Reviews(p: ArtProps): SceneArt {
                     {st.figure}
                     {st.after && <tspan fontSize={S.fig[1] * 0.42}>{st.after}</tspan>}
                   </text>
-                  {/* A gold line drawn under the number, a beat after it's in. */}
-                  <Gold d={`M ${l} ${y + S.fig[0] + S.fig[1] * 0.2} H ${l + S.fig[1] * 1.6}`} fx={b("draw", at[k] + 0.55, { len: 0.9 })} thin />
+                  {/* A gold line drawn under the number, a beat after it's in, clear of its lowest digit. */}
+                  <Gold d={`M ${l} ${y + S.fig[0] + S.fig[1] * (FIG_DESCENT + FIG_GAP)} H ${l + S.fig[1] * 1.6}`} fx={b("draw", at[k] + 0.55, { len: 0.9 })} thin />
                   {lines.map((line, i) => (
                     <text key={line} className="t-body t-left" x={l} y={y + S.text[0] + i * S.text[2]} fontSize={S.text[1]}>
                       {line}

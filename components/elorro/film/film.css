@@ -1343,8 +1343,7 @@ html.way-boot body { visibility: hidden; }
 
 .way-welcome { position: absolute; inset: 0; visibility: hidden; }
 .way.is-at-door .way-welcome { visibility: visible; }
-/* The welcome, at the top: hidden until the dust forms it (its wipe, --wipe, the mist's the other way). Its
-   padding keeps the gold, which is cut to the box (background-clip), clear of the descenders. */
+/* The welcome, at the top: hidden until the dust forms it (its wipe, --wipe, the mist's the other way). */
 .way-h {
   position: absolute;
   left: 0;
@@ -1353,7 +1352,6 @@ html.way-boot body { visibility: hidden; }
   width: fit-content;
   max-width: min(22ch, calc(100% - 40px));
   margin: 0 auto;
-  padding: .06em 0 .16em;
   font-family: var(--display);
   font-size: clamp(30px, 3.5vw, 54px);
   font-weight: 500;
@@ -1361,12 +1359,16 @@ html.way-boot body { visibility: hidden; }
   letter-spacing: -.012em;
   text-align: center;
   text-wrap: balance;
-  color: transparent;
-  background: linear-gradient(180deg, #FFFFFF 0%, #F4F1EA 55%, #DCD4C4 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
   -webkit-mask-image: linear-gradient(90deg, #000 calc(var(--wipe, -100000px) - 28px), transparent calc(var(--wipe, -100000px) + 28px));
   mask-image: linear-gradient(90deg, #000 calc(var(--wipe, -100000px) - 28px), transparent calc(var(--wipe, -100000px) + 28px));
+}
+/* Its words in the intro's gold (intro.css, .elo-intro-cut, as the intro's line): the golds falling down each
+   line, here a line of 1.08em, and the cut's shade and lit edge. The gold is a background cut to the letters,
+   painted only inside the box: its padding takes the box past the tails of the descenders. */
+.way-h .elo-intro-cut {
+  padding: .06em 0 .16em;
+  background-size: 100% 1.08em;
+  background-position: 0 .06em;
 }
 .way-h-us { white-space: nowrap; }
 .way.is-through .way-h, .way.is-through .way-note { opacity: 0; transition: opacity .35s ease; }
