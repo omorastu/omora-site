@@ -9,7 +9,6 @@ import { EloraAvatar } from "@/components/elorro/film/elora";
 import { FilmWay } from "@/components/elorro/film/way";
 import { ClipContext, MEDIA, SCENES, cameraOf, clipKey, type ArtProps, type MediaId } from "@/components/elorro/film/scenes";
 import {
-  ASK,
   INDUSTRIES,
   INDUSTRY,
   PICKER,
@@ -126,7 +125,7 @@ const HOLD = SEG.pick.start + 0.6;
  */
 const ASKS = parts.flatMap(({ scene, start, segment }) =>
   scene.ask
-    ? [{ service: scene.ask.service, segment, scene: scene.id, show: start + scene.ask.at - 0.1, hold: +(start + scene.ask.end + 0.25).toFixed(3) }]
+    ? [{ service: scene.ask.service, q: scene.ask.q, segment, scene: scene.id, show: start + scene.ask.at - 0.1, hold: +(start + scene.ask.end + 0.25).toFixed(3) }]
     : []
 );
 type Asked = (typeof ASKS)[number];
@@ -1198,11 +1197,10 @@ function Film({
     else toPicker();
   };
 
-  // What she says, for screen readers, all at once: her hook, their walkthrough (each question once), the plan and the close.
+  // What she says, for screen readers, all at once: her hook, their walkthrough (each chapter's question after it), the plan and the close.
   const transcript = [
     ...partOf("opener").scene.lines,
-    ...parts.filter((p) => p.segment === ind).flatMap((p) => p.scene.lines.filter((l) => !l.heading)),
-    { text: ASK },
+    ...parts.filter((p) => p.segment === ind).flatMap((p) => p.scene.lines),
     ...partOf("plan").scene.lines,
     ...CLOSE.scene.lines,
   ];
@@ -1454,7 +1452,7 @@ function Film({
           <div className="film-ask-words">
             <p className="film-ask-label">{ASK_LABEL[asking.service]}</p>
             <h2 className="film-ask-q" id="film-ask-q">
-              {ASK}
+              {asking.q}
             </h2>
           </div>
           <div className="film-ask-answers">

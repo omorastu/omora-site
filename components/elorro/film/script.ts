@@ -18,7 +18,7 @@ export { LINES, TAKES, voiceFile, type VoiceId } from "@/components/elorro/film/
  *
  * Each scene runs at least `duration` seconds and holds Elora's lines. Her
  * words are Ashan's approved script (LINES), one file per line, recorded in
- * seven takes and cut by video/scripts/voice-v2.mjs into
+ * eight takes and cut by video/scripts/voice-v2.mjs into
  * public/m/film/voice/v2/<line>.m4a; it writes where each caption-sized
  * chunk of each line starts and ends in its file (voice-v2.ts). Lines are
  * laid out from those times: a scene's first starts `lead` in, each next one
@@ -119,8 +119,6 @@ export const SERVICE: Record<Service, { title: string; plan: number[] }> = {
 };
 /** What they said to each question, this visit (film.tsx keeps it, in memory only). */
 export type Answers = Partial<Record<Service, boolean>>;
-/** The question, on screen in full every time (she says it in full the first time, "And this one?" after). */
-export const ASK = "Is this something your business needs?";
 
 /** The note they'd send, written from their business and what they said yes to; they add to it. */
 const RUN: Record<Industry, string> = {
@@ -169,8 +167,8 @@ export type Scene = {
   duration: number;
   /** Where its own pictures are done: then the question, if it asks one (`ask`), over its last frame. */
   content: number;
-  /** The question after it: which service, and when she starts and finishes asking, in seconds into it. */
-  ask?: { service: Service; at: number; end: number };
+  /** The question after it: which service, what she asks (the card's heading too), and when she starts and finishes asking, in seconds into it. */
+  ask?: { service: Service; q: string; at: number; end: number };
   lines: Line[];
 };
 
@@ -237,7 +235,7 @@ function resolve(p: Plan): Scene {
   if (p.ask) {
     const said = place(p.ask[0], content + ASK_LEAD, true);
     lines.push(...said.lines);
-    ask = { service: p.ask[1], at: said.lines[0].at, end: +said.end.toFixed(3) };
+    ask = { service: p.ask[1], q: LINES[p.ask[0]].join(" "), at: said.lines[0].at, end: +said.end.toFixed(3) };
     duration = said.end + ASK_TAIL;
   }
   const [label, label2] = typeof p.label === "string" ? [p.label, undefined] : p.label;
@@ -289,7 +287,7 @@ const OPENER_LEAD = 1.8;
 
 /** One business's walkthrough: seven chapters, eight scenes, and a question after each chapter. */
 const walk = (ind: Industry): Plan[] => [
-  // 1 Getting found: her line for them, then how they get to the top, and into the AI answer. Then the question, in full.
+  // 1 Getting found: her line for them, then how they get to the top, and into the AI answer. Then the question.
   { id: `found-${ind}`, kind: "found", ind, label: "Illustration · Getting found", duration: 12, say: [`${ind}-found`, "found-top"], hold: [3, 3.9], ask: ["ask-1", "found"] },
   // 2 Reviews: the two numbers, sourced, as she says them; then their reviews inbox, as a new one comes in and is answered (a demo, /demos/reviews).
   {
@@ -302,7 +300,7 @@ const walk = (ind: Industry): Plan[] => [
     say: ["reviews-shared", `${ind}-reviews`],
     hold: [3, REVIEWS_HOLD],
     tail: 0.5,
-    ask: ["ask-2", "reviews"],
+    ask: ["ask-reviews", "reviews"],
   },
   // 3 The website: a dated one, then a real one, playing on as she says what it's for. A winery's is Prosperando's, then
   // Pearls': the scene grows to fit both, and she waits while the second plays.
@@ -318,7 +316,7 @@ const walk = (ind: Industry): Plan[] => [
     // (From her second chunk: the site comes in 0.1 s later; a winery's cuts to Pearls' SITE_CUT after that.)
     hold: [1, ind === "winery" ? 0.1 + SITE_CUT + SITE_PLAY : 9.6],
     tail: 0.6,
-    ask: ["ask-2", "site"],
+    ask: ["ask-site", "site"],
   },
   // 4 Booking: the requests piling up, then their booking app, as one comes in and is confirmed (a demo, /demos/booking).
   {
@@ -331,16 +329,16 @@ const walk = (ind: Industry): Plan[] => [
     say: [`${ind}-booking`],
     hold: [1, BOOKING_HOLD],
     tail: 0.5,
-    ask: ["ask-2", "booking"],
+    ask: ["ask-booking", "booking"],
   },
   // 5 Calls: the phone unanswered, then the front desk taking a call, told for them (a demo, /demos/front-desk).
-  { id: `calls-${ind}`, kind: "calls", ind, label: ["Illustration · Calls", "Demo · Front desk"], relabel: 1, duration: 10, say: [`${ind}-calls`], hold: [1, CALLS_HOLD], ask: ["ask-2", "calls"] },
+  { id: `calls-${ind}`, kind: "calls", ind, label: ["Illustration · Calls", "Demo · Front desk"], relabel: 1, duration: 10, say: [`${ind}-calls`], hold: [1, CALLS_HOLD], ask: ["ask-calls", "calls"] },
   // 6 Behind the scenes: typed in by hand, then once, into everything (a demo, /demos/one-entry).
   { id: `office-${ind}`, kind: "office", ind, label: ["Illustration · Behind the scenes", "Demo · One entry"], relabel: 1, duration: 7.6, say: ["office"], hold: [1, OFFICE_HOLD], tail: 0.45 },
   // …and a tool of their own: Clinical Scribe for a practice; for the others, one built around their week (a demo, /demos/tool). Then one question for both.
   ind === "dental"
-    ? { id: "tools-dental", kind: "tools", ind, label: "Clinical Scribe · Recreated screens · Demo data", duration: 17, say: ["dental-tools"], lead: 0.5, ask: ["ask-2", "tools"] }
-    : { id: `tools-${ind}`, kind: "tools", ind, label: "Demo · A tool for your week", duration: 8, say: [`${ind}-tools`], lead: 0.45, hold: [1, TOOL_HOLD], ask: ["ask-2", "tools"] },
+    ? { id: "tools-dental", kind: "tools", ind, label: "Clinical Scribe · Recreated screens · Demo data", duration: 17, say: ["dental-tools"], lead: 0.5, ask: ["ask-office", "tools"] }
+    : { id: `tools-${ind}`, kind: "tools", ind, label: "Demo · A tool for your week", duration: 8, say: [`${ind}-tools`], lead: 0.45, hold: [1, TOOL_HOLD], ask: ["ask-office", "tools"] },
   // 7 Photo & video: for every business, the real reel (the drone shot for Pearls, into Pearls' Instagram).
   {
     id: `photo-${ind}`,
@@ -351,7 +349,7 @@ const walk = (ind: Industry): Plan[] => [
     say: [`${ind}-photo`],
     lead: 0.5,
     tail: 0.8,
-    ask: ["ask-2", "photo"],
+    ask: ["ask-photo", "photo"],
   },
 ];
 
@@ -455,8 +453,8 @@ export function voiceStretches() {
     if (starts[i + 2]?.carries) next.len = stretches[i + 2].file - next.file;
     else next.len = runs[i + 1].end - next.file + 0.35;
   });
-  // Never past the end of its file (a short line, "And this one?", is shorter than its last word and the quiet after
-  // it): the film picking up there, as after a question, then waits for her next stretch instead of playing nothing.
+  // Never past the end of its file (a short line, as a question is, can be shorter than its last word and the quiet
+  // after it): the film picking up there, as after a question, then waits for her next stretch instead of playing nothing.
   for (const s of stretches) {
     const file = V2[s.src.split("/").pop()!.replace(/\.m4a$/, "")]?.file;
     if (file !== undefined) s.len = Math.max(0.05, Math.min(s.len, file - s.file - 0.04));

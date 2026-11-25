@@ -185,7 +185,7 @@ frame holds through 12 seconds.
 ## Elora's voice (/film)
 
 Since round 9 the film is told for the visitor's business, and Elora speaks
-Ashan's approved script from seven takes: ElevenLabs, voice "Sia - Natural
+Ashan's approved script from eight takes: ElevenLabs, voice "Sia - Natural
 Conversational Creator", model Eleven v4, stability 50, similarity 75, each
 line its own paragraph. They're the source, kept in `voice/v2/` (Vercel
 ignores `video/`):
@@ -194,8 +194,9 @@ ignores `video/`):
 | --- | --- |
 | `take-shared.mp3` | hook-1, hook-2, hook-3, hook-4, found-top, site-shared, office, closer (no longer used: found, so the cuts either side of it are right, and skipped), plan, close |
 | `take-winery.mp3`, `take-dental.mp3`, `take-contractor.mp3`, `take-general.mp3` | that business's found, site, booking, calls, tools, photo (in `take-dental.mp3`, its old photo line, `dental-photo-old`, no longer used: found and skipped) |
-| `take-extra.mp3` | ask-1 ("Real quick, is this something your business needs?"), ask-2 ("And this one?"), then round 10's send line (`send-old`, no longer used: found and skipped) |
+| `take-extra.mp3` | ask-1 ("Real quick, is this something your business needs?"), ask-2 ("And this one?", no longer used since round 11.3: found and skipped; its old file is left in place), then round 10's send line (`send-old`, no longer used: found and skipped) |
 | `take-r11.mp3` | reviews-shared, winery-reviews, dental-reviews, contractor-reviews, general-reviews, dental-photo (the new one), send (the new one) |
+| `take-asks.mp3` | each chapter's own question: ask-reviews, ask-site, ask-booking, ask-calls, ask-office, ask-photo |
 
 The words of every line, and the chunks its captions show, are in
 `components/elorro/film/lines.ts`; the takes' lists above are its `TAKES`.
@@ -236,10 +237,11 @@ Any word whisper hears differently from the script is printed, line by line,
 so a misread line can be re-recorded. It spells some names its own way
 ("Ashan" as "Ashawn" or "Ashton"), which isn't a misread.
 
-She asks the question after every chapter of the walkthrough: ask-1 the
-first time, after getting found, ask-2 after the rest (the full question is
-always on screen); send is her line on the note, for a visitor who said yes
-to anything.
+After every chapter of the walkthrough she asks its own question, and the
+question card shows the same words as its heading: ask-1 after getting found,
+then ask-reviews, ask-site, ask-booking, ask-calls, ask-office (after behind
+the scenes and a tool of their own) and ask-photo. send is her line on the
+note, for a visitor who said yes to anything.
 
 **The cuts** are listed in `design/review/cc-report.md` for each round: every
 line, its file, its length, and the link and time where it plays.

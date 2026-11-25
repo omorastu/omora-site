@@ -1,5 +1,5 @@
 /**
- * Elora's lines: Ashan's approved script, word for word, and the seven takes
+ * Elora's lines: Ashan's approved script, word for word, and the eight takes
  * they're recorded in. Plain data, nothing imported: the film reads it
  * (script.ts), and so does video/scripts/voice-v2.mjs, which cuts the takes
  * into a file per line.
@@ -62,9 +62,15 @@ export const LINES = {
   "dental-photo": ["Here’s a shoot they did.", "They’d do the same at your practice,", "so it feels welcoming before anyone walks in."],
   "contractor-photo": ["They shoot photos and video of your finished work,", "so it sells the next job for you."],
   "general-photo": ["They shoot photos and video that show what you do,", "and turn them into posts people see."],
-  // After each service, the question, the first time in full, then short (the full question is always on screen).
+  // After each chapter, its own question (also the question card's heading): getting found's, then reviews', the
+  // website's, booking's, calls', behind the scenes and a tool's (one question for both), and photo and video's.
   "ask-1": ["Real quick, is this something your business needs?"],
-  "ask-2": ["And this one?"],
+  "ask-reviews": ["What about your reviews?"],
+  "ask-site": ["Could your website use this?"],
+  "ask-booking": ["Would online booking help you?"],
+  "ask-calls": ["Are calls slipping through?"],
+  "ask-office": ["Could you use a few hours back?"],
+  "ask-photo": ["And last one, photos and video?"],
   // The plan, the close, and the note they send.
   plan: ["After the first call, you get it all on one page:", "what they’ll do, in what order, and how long it takes."],
   close: ["One plan, built by the two of them,", "and looked after once it’s live.", "If that sounds right, book a call."],
@@ -78,11 +84,14 @@ export const LINES = {
 /**
  * Recorded, but no longer in the film: still in their takes, so the cutting
  * script finds them by their words, and skips them. The closer look's (gone
- * in round 10), and the old photo line for a practice and the old send line
- * (both said again, new, in take-r11).
+ * in round 10), the old photo line for a practice and the old send line
+ * (both said again, new, in take-r11), and the short question after every
+ * chapter but the first (each has its own since round 11.3; its file,
+ * public/m/film/voice/v2/ask-2.m4a, is left where it is).
  */
 export const RETIRED = {
   closer: ["Want a closer look at any of it?", "Pick one, or go straight to your plan."],
+  "ask-2": ["And this one?"],
   "dental-photo-old": ["They shoot photos and video that make your practice feel welcoming,", "before anyone walks in."],
   "send-old": ["Send them a quick note, and they’ll get back to you within the hour."],
 } as const satisfies Record<string, readonly string[]>;
@@ -90,7 +99,7 @@ export type RetiredId = keyof typeof RETIRED;
 export type VoiceId = keyof typeof LINES;
 /** Where her lines' files are (video/scripts/voice-v2.mjs makes them). */
 export const voiceFile = (id: VoiceId) => `/m/film/voice/v2/${id}.m4a`;
-/** The seven takes, as recorded, and the lines in each, in order (video/voice/v2/). */
+/** The eight takes, as recorded, and the lines in each, in order (video/voice/v2/). */
 export const TAKES: Record<string, readonly (VoiceId | RetiredId)[]> = {
   "take-shared": ["hook-1", "hook-2", "hook-3", "hook-4", "found-top", "site-shared", "office", "closer", "plan", "close"],
   "take-winery": ["winery-found", "winery-site", "winery-booking", "winery-calls", "winery-tools", "winery-photo"],
@@ -99,4 +108,5 @@ export const TAKES: Record<string, readonly (VoiceId | RetiredId)[]> = {
   "take-general": ["general-found", "general-site", "general-booking", "general-calls", "general-tools", "general-photo"],
   "take-extra": ["ask-1", "ask-2", "send-old"],
   "take-r11": ["reviews-shared", "winery-reviews", "dental-reviews", "contractor-reviews", "general-reviews", "dental-photo", "send"],
+  "take-asks": ["ask-reviews", "ask-site", "ask-booking", "ask-calls", "ask-office", "ask-photo"],
 };

@@ -2,14 +2,16 @@
 //
 //   npm run voice-v2
 //
-// Reads the seven takes in voice/v2/ (take-shared.mp3, take-winery.mp3,
+// Reads the eight takes in voice/v2/ (take-shared.mp3, take-winery.mp3,
 // take-dental.mp3, take-contractor.mp3, take-general.mp3, take-extra.mp3,
-// take-r11.mp3: each the lines components/elorro/film/lines.ts lists for
-// it, in order, a paragraph each). A line the film no longer says (lines.ts,
-// RETIRED: the closer look's, in take-shared; the old photo line for a
-// practice, in take-dental; the old send line, in take-extra; the new ones
-// are in take-r11) is found like any other, so the lines either side of it
-// are cut right, and then skipped.
+// take-r11.mp3, take-asks.mp3: each the lines components/elorro/film/lines.ts
+// lists for it, in order, a paragraph each). A line the film no longer says
+// (lines.ts, RETIRED: the closer look's, in take-shared; the old photo line
+// for a practice, in take-dental; the old send line and "And this one?", in
+// take-extra; the new photo and send lines are in take-r11, and each
+// chapter's own question in take-asks) is found like any other, so the
+// lines either side of it are cut right, and then skipped (its old file, if
+// any, is left as it is).
 // For each take:
 //
 // 1. whisper.cpp's whisper-cli hears it, a time for every word (a ggml

@@ -1130,20 +1130,23 @@
   .film-ask-yes:hover { box-shadow: inset 0 0 0 100vmax rgb(32 20 4 / .16), 0 0 calc(1.5 * var(--fr)) rgb(190 150 69 / .3); }
   .film-ask-no:hover { border-color: rgb(244 241 234 / .8); background: rgb(244 241 234 / .06); }
 }
-/* A wide screen: one low row, the question on the left, Yes and No on the right, clear of the scene above. */
+/* A wide screen: one low row, the question on the left, Yes and No on the right, clear of the scene above.
+   The card is as wide as its question on one line; only if that's wider than the screen allows does the
+   question wrap (balanced), the buttons keeping their size. */
 @media (min-width: 768px) and (min-height: 561px) {
   .film-ask {
     display: flex;
     align-items: center;
     gap: calc(1.75 * var(--fr));
-    width: auto;
+    width: max-content;
     max-width: 94vw;
     bottom: max(calc(var(--cap-b) * .4), calc(env(safe-area-inset-bottom) + var(--fr)));
     padding: calc(.85 * var(--fr)) calc(.9 * var(--fr)) calc(.85 * var(--fr)) calc(1.5 * var(--fr));
     text-align: left;
   }
-  .film-ask-words { flex: 1 1 auto; }
-  .film-ask-q { margin: calc(.2 * var(--fr)) 0 0; font-size: calc(1.625 * var(--fr)); white-space: nowrap; }
+  .film-ask-words { flex: 1 1 auto; min-width: 0; }
+  .film-ask-answers { flex: none; }
+  .film-ask-q { margin: calc(.2 * var(--fr)) 0 0; font-size: calc(1.625 * var(--fr)); }
   .film-ask-yes, .film-ask-no { min-width: calc(7 * var(--fr)); }
 }
 @media (max-width: 767px) {
