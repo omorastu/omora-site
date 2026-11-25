@@ -165,6 +165,22 @@ export function Intro() {
       <div className="elo-intro-ground">
         <canvas ref={canvas} className="elo-intro-canvas" />
       </div>
+      <IntroCard />
+    </div>
+  );
+}
+
+/**
+ * The intro's picture, as it plays on the black: the logo with its shine,
+ * the gold rule, and the line under them, cut in gold behind the burn's
+ * edge, all on intro.css's timeline from the moment it's shown; and the
+ * cut's filter. The home page's intro shows it here; the film's way in
+ * (components/elorro/film/way.tsx) shows the very same, on its own black,
+ * inside an element with the class `elo-intro-host` (for the golds).
+ */
+export function IntroCard() {
+  return (
+    <>
       <div className="elo-intro-inner">
         <span className="elo-intro-mark">
           <Image
@@ -190,8 +206,29 @@ export function Intro() {
         {/* The old tagline, out for now: "When everything works the way it should, and looks the way it should." */}
       </div>
       <Engrave />
-    </div>
+    </>
   );
+}
+
+/**
+ * The shine, cut to the logo's own picture (the file the page already has):
+ * armed once that's in. Returns what takes its listener off, if it's waiting.
+ */
+export function armShine(el: HTMLElement): () => void {
+  const logo = el.querySelector<HTMLImageElement>(".elo-intro-logo");
+  const shine = el.querySelector<HTMLElement>(".elo-intro-shine");
+  if (!logo || !shine) return () => {};
+  const arm = () => {
+    if (!logo.naturalWidth) return;
+    shine.style.setProperty("--logo", `url("${logo.currentSrc || logo.src}")`);
+    shine.dataset.on = "";
+  };
+  if (logo.complete) {
+    arm();
+    return () => {};
+  }
+  logo.addEventListener("load", arm, { once: true });
+  return () => logo.removeEventListener("load", arm);
 }
 
 /**
@@ -298,17 +335,7 @@ function play(el: HTMLDivElement, cv: HTMLCanvasElement, boot: Boot, finish: () 
   const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   // The shine is cut to the logo's own picture, the file the page already has: it shows once that's in.
-  const logo = el.querySelector<HTMLImageElement>(".elo-intro-logo");
-  const shine = el.querySelector<HTMLElement>(".elo-intro-shine");
-  if (logo && shine && !reduced) {
-    const arm = () => {
-      if (!logo.naturalWidth) return;
-      shine.style.setProperty("--logo", `url("${logo.currentSrc || logo.src}")`);
-      shine.dataset.on = "";
-    };
-    if (logo.complete) arm();
-    else on(logo, "load", arm, { once: true });
-  }
+  if (!reduced) offs.push(armShine(el));
   const mouse = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
 
   const getSmoke = () => {

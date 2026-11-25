@@ -4,7 +4,7 @@
 //   npm run film -- site             one loop (see LOOPS)
 //   npm run film -- site phone       one size of it (desktop | phone)
 //
-// PearlsSite and PhotoReel need `npm run film-capture` first (and the drone
+// PearlsSite, PearlsCrew, PracticeSite and PhotoReel need `npm run film-capture` first (and the drone
 // footage in public/film-captures/drone-src.mp4: see src/FilmLoops.tsx).
 // Each is rendered once as a near-lossless master at its master size, then
 // scaled down and encoded at the lowest CRF that keeps it under the same caps
@@ -24,6 +24,8 @@ const FILM = path.resolve(ROOT, "..", "public", "m", "film");
  */
 const LOOPS = {
   site: { needs: ["src/film-captures.json"], id: "PearlsSite", prefix: "pearls-site", still: 0 },
+  crew: { needs: ["src/film-captures.json"], id: "PearlsCrew", prefix: "pearls-crew", still: 0 },
+  practice: { needs: ["src/film-captures.json", "public/film-captures/desktop-practice-00.png"], id: "PracticeSite", prefix: "practice-site", still: 0 },
   reel: { needs: ["src/film-captures.json", "public/film-captures/drone-src.mp4"], id: "PhotoReel", prefix: "photo-reel", still: 320 },
   clinical: { needs: [], id: "ClinicalFilm", prefix: "clinical-film", still: 460 },
 };

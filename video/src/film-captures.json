@@ -102,6 +102,41 @@
               "h": 280
             }
           ]
+        },
+        "practice": {
+          "url": "http://[::1]:3001/demos/practice",
+          "capturedAt": "2026-11-25T07:43:57.703Z",
+          "height": 5514,
+          "header": 77,
+          "stickyHeader": true,
+          "headerTop": 40,
+          "anchors": {
+            "book": 4381,
+            "form": 4485,
+            "footer": 5245
+          },
+          "tiles": [
+            {
+              "file": "desktop-practice-00.png",
+              "y": 0,
+              "h": 1804
+            },
+            {
+              "file": "desktop-practice-01.png",
+              "y": 1800,
+              "h": 1804
+            },
+            {
+              "file": "desktop-practice-02.png",
+              "y": 3600,
+              "h": 1804
+            },
+            {
+              "file": "desktop-practice-03.png",
+              "y": 5400,
+              "h": 114
+            }
+          ]
         }
       }
     },
@@ -219,6 +254,51 @@
               "file": "phone-instagram-02.png",
               "y": 2600,
               "h": 48
+            }
+          ]
+        },
+        "practice": {
+          "url": "http://[::1]:3001/demos/practice",
+          "capturedAt": "2026-11-25T07:44:09.848Z",
+          "height": 6941,
+          "header": 65,
+          "stickyHeader": true,
+          "headerTop": 35,
+          "anchors": {
+            "book": 5435,
+            "form": 5642,
+            "footer": 6525
+          },
+          "tiles": [
+            {
+              "file": "phone-practice-00.png",
+              "y": 0,
+              "h": 1304
+            },
+            {
+              "file": "phone-practice-01.png",
+              "y": 1300,
+              "h": 1304
+            },
+            {
+              "file": "phone-practice-02.png",
+              "y": 2600,
+              "h": 1304
+            },
+            {
+              "file": "phone-practice-03.png",
+              "y": 3900,
+              "h": 1304
+            },
+            {
+              "file": "phone-practice-04.png",
+              "y": 5200,
+              "h": 1304
+            },
+            {
+              "file": "phone-practice-05.png",
+              "y": 6500,
+              "h": 441
             }
           ]
         }

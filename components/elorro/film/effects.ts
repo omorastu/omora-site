@@ -1,14 +1,6 @@
-import type { SceneId } from "./script";
-
-type Cue = "tap" | "ring" | "pickup" | "tick" | "text";
+/** The film's sound effects: quiet UI feedback, each scene's at its own moments (scenes.tsx, SCENES' `sfx`). */
+export type Cue = "tap" | "ring" | "pickup" | "tick" | "text";
 type Tone = [frequency: number, seconds: number, delay?: number, level?: number];
-
-export const effects: Partial<Record<SceneId, readonly [seconds: number, cue: Cue][]>> = {
-  found: [[0.4, "tap"], [0.62, "tap"], [0.84, "tap"]],
-  photo: [[1.1, "tap"]],
-  tools: [[5.9, "tick"], [10.1, "tick"], [14.6, "text"]],
-  frontdesk: [[0.6, "ring"], [1.9, "pickup"], [4.7, "tick"], [6.9, "tick"], [8, "tick"], [9.9, "text"]],
-};
 
 const tones: Record<Cue, Tone[]> = {
   tap: [[170, 0.045, 0, 0.56]],

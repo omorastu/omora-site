@@ -44,6 +44,8 @@ export const Root: React.FC = () => (
       const tag = size === "desktop" ? "Desktop" : "Phone";
       return [
         <Composition key={`site-${size}`} id={`PearlsSite${tag}`} component={Film.PearlsSite} durationInFrames={Film.SITE_FRAMES} fps={Film.FPS} {...Film.FRAME_SIZE[size]} defaultProps={{ size }} />,
+        <Composition key={`crew-${size}`} id={`PearlsCrew${tag}`} component={Film.PearlsCrew} durationInFrames={Film.CREW_FRAMES} fps={Film.FPS} {...Film.FRAME_SIZE[size]} defaultProps={{ size }} />,
+        <Composition key={`practice-${size}`} id={`PracticeSite${tag}`} component={Film.PracticeSite} durationInFrames={Film.PRACTICE_FRAMES} fps={Film.FPS} {...Film.FRAME_SIZE[size]} defaultProps={{ size }} />,
         <Composition key={`reel-${size}`} id={`PhotoReel${tag}`} component={Film.PhotoReel} durationInFrames={Film.REEL_FRAMES} fps={Film.FPS} {...Film.FRAME_SIZE[size]} defaultProps={{ size }} />,
         <Composition key={`clinical-${size}`} id={`ClinicalFilm${tag}`} component={ClinicalFilm} durationInFrames={FILM_FRAMES} fps={Clinical.FPS} {...Clinical.FRAME_SIZE[size]} defaultProps={{ size }} />,
       ];

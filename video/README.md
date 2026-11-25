@@ -15,7 +15,7 @@ npm run build        # capture, then render
 npm run pearls       # pearls-d.mp4 and its SD cut, from pearlsfarminc.com
 npm run pearls-drone # Pearls' Photo & video loops and posters, from its hero video
 npm run sd           # SD cuts of Pearls' phone loop and Cubic Ship's
-npm run film-capture # captures for the film's loops (/film): Pearls' site, Pearls' Instagram
+npm run film-capture # captures for the film's loops (/film): Pearls' site, Pearls' Instagram, the practice's concept site
 npm run film         # the film's loops → ../public/m/film/
 npm run studio       # preview and scrub the compositions in the browser
 ```
@@ -88,24 +88,31 @@ loops (1280×800 and 720×900 under 2 MB, SD cuts at 864×540 and 544×680 under
 | Files | What | Made by |
 | --- | --- | --- |
 | `pearls-site-{d,m}` | Pearls Farm Labor's site as one flow (9 s): the hero, one scroll down the homepage through every section to "Let's talk about your block", then a dissolve into the Request a crew page | `src/FilmLoops.tsx` (PearlsSite), from `npm run film-capture` |
+| `pearls-crew-{d,m}` | Pearls' site from its crew side, for a contractor (9 s): the services list (harvest, orchard and labor crews), one scroll past the crews at work to "Let's talk about your block", then a dissolve into the Request a crew page (in by 7.2 s) | `src/FilmLoops.tsx` (PearlsCrew), from `npm run film-capture -- pearls` |
+| `practice-site-{d,m}` | Brightline Orthodontics, a made-up practice's concept site (`/demos/practice`), for a practice's website scene (9 s): its top, then one smooth scroll down the whole site, resting on its Book a consult form from 7.5 s. Labelled "Concept site", never client work | `src/FilmLoops.tsx` (PracticeSite), from `npm run film-capture -- practice` (needs the dev server; `PRACTICE_BASE` to point elsewhere) |
 | `photo-reel-{d,m}` | The Photo & video demo (11 s): Jordan's drone footage of a crew in the rows, dissolving into Pearls' Instagram profile, scrolled from its header down its grid | `src/FilmLoops.tsx` (PhotoReel), from the captures and the drone footage |
 | `clinical-film-{d,m}` | The Custom tools demo (15.5 s): Clinical Scribe's invented consult recorded, written up, its coaching ("Recommended next move"), then "Draft this message" and the follow-up letter drafting | `src/ClinicalFilm.tsx`, from the same replica as the Work card (which it leaves as it is) |
 
 ```
-npm run film-capture          # both captures
+npm run film-capture          # every capture
 npm run film-capture -- pearls
+npm run film-capture -- practice
 npm run film                  # every loop, both sizes
 npm run film -- clinical phone
 ```
 
 - **The captures** (`scripts/film-capture.mjs`) are full-page tiles, as for
   Numen, in `public/film-captures/`, with where things sit in
-  `src/film-captures.json`. They aren't committed.
+  `src/film-captures.json`. They aren't committed. `npm run film-capture --
+  practice` captures `/demos/practice` from the local dev server; the page is
+  static, so the tiles are exactly what it serves.
 - **The Instagram capture needs a logged-in session.** Instagram puts a login
   wall over a profile seen logged out. The session is saved by hand from a
   visible browser window, logged in by a person, into
   `design/review/.auth/social.json`. That folder is never committed
-  (`.gitignore`), and the script only hands the file to the browser.
+  (`.gitignore`), and the script only hands the file to the browser. (The
+  session used for round 7 was deleted in round 9; a new capture needs a new
+  login.)
 - **Nothing from that account shows.** Before the shots, the capture hides
   everything pinned to the screen: Instagram's navigation (with the account's
   avatar), Messages, and the app banner. What's left is Pearls' own header and
@@ -114,77 +121,128 @@ npm run film -- clinical phone
   (`home-two-angle-graded-v6-16x9.mp4`). Save it as
   `public/film-captures/drone-src.mp4`. The reel plays the crew's stretch from
   5.4 s, cropped as `scripts/pearls-drone.mjs` crops it.
+- **Where each plays,** now the film is told for the visitor's business
+  (round 11): in the website scene, a winery's plays Prosperando's site, then
+  a quick cut to Pearls' (below); a practice's, the concept site; a
+  contractor's, Pearls' from the crew side; any other business's, Pearls'
+  site. The reel is every business's photo & video, credited to Pearls
+  Farm Labor. Clinical Scribe is a practice's tool of their own. (Since
+  round 10 the film opens on the way in, a door, not on Pearls' site, and
+  the closer look is gone.)
+- **The picker's dental card picture** (`choice-dental.jpg`, 640×400) is a
+  frame of round 10's film: the practice's waiting room, its illustrated
+  photo & video scene (gone since round 11) with the viewfinder hidden,
+  taken in Chromium at 1440×900 with the camera's moves stilled, and scaled
+  down.
+- **Clinical Scribe's film cut has no prices** (round 10): `ClinicalFilm.tsx`
+  gives its fee line ("A monthly payment plan was explained. Insurance may
+  cover part of it, to be verified.") and its drafted message ("…on the
+  payment plan we discussed…") their own words (`FILM_COPY` in
+  `src/clinical/data.ts`); the Work card's loop keeps the originals. Its
+  beats fall on the same frames as before.
+- **The demo loops** (`demo-reviews-*`, `demo-booking-*`, `demo-desk-*`,
+  `demo-entry-*`, `demo-tool-*`, per business, `-d` and `-m`, with SD cuts
+  and posters) are the app screens under `/demos` (`/demos/reviews`,
+  `/demos/booking`, `/demos/front-desk`, `/demos/one-entry`, `/demos/tool`,
+  each with `?for=<business>`):
+  noindexed, linked from nowhere, labelled Demo, their data made up. Each
+  page draws its flow as a pure function of one time; with `?capture` it
+  waits for `window.__demo.seek(t)`. `scripts/demos.mjs` (`npm run demos`;
+  `npm run demos -- desk dental phone` for one) captures every frame in
+  turn, as `pearls.mjs` does: desktop at 1440×900 at 1.5×, the phone at
+  390×488 at 3×, 30 fps, into a near-lossless master encoded like the
+  film's other loops; the poster is the last frame, the finished state.
+  `BASE` picks the server (default `http://localhost:3001`, with Chromium
+  told to reach `localhost` at `[::1]`: on this Mac, `localhost:3001` over
+  IPv4 is another project's process, and the dev server doesn't hydrate a
+  page opened as `http://[::1]:3001`, so the demo would never start);
+  recapture from a server that compiles cleanly at the time. The film plays
+  them in the reviews, booking, calls, behind-the-scenes and tool scenes
+  (`DEMO_AT` in `components/elorro/film/scenes.tsx` has when things happen
+  in each). The reviews demo's ratings are each the stars' sum over the
+  count, and its replies to a practice's reviews never confirm anyone is a
+  patient.
 - **They play once,** so they have no seam. Each poster is the still the film
   shows until its video plays, and instead of it under reduced motion. The
   site's is its first frame; each demo's is its finished state.
 
+### Prosperando (the winery's walkthrough)
+
+The winery's website scene plays Jordan's twelve-second Prosperando scroll
+(`public/m/film/prosperando-site-*`, after the dated site gives way) for
+5.6 s, to its vineyards, then cuts to Pearls' site (`pearls-site-*`), whole;
+the scene grows to fit both, the label and the address bar going from
+Prosperando's credit to Pearls'. Its photo & video scene plays the reel, as
+every business's does (round 11). The capture and Remotion recipe for the
+scroll are in `4586345`, with the original capture manifest.
+
+The phone encodes and poster open on the desktop crest and vineyard frame,
+cropped to 4:5 (a centered 592 by 740 crop starting at y=60). In the phone
+video, a 0.76-second dissolve starts at 2.97 seconds and leads into the
+original phone site cut starting at 3.8 seconds from `f56921f`. The signup
+frame holds through 12 seconds.
+
 ## Elora's voice (/film)
 
-`voice/elora-sia-take2.mp3` is Elora's voice in the film: ElevenLabs, voice
-"Sia - Natural Conversational Creator", model Eleven v4, the whole script
-(`components/elorro/film/script.ts`) read as one paragraph, in one take,
-generated and picked by Ashan. It's the source, kept here (Vercel ignores
-`video/`); the site plays `public/m/film/elora-sia.m4a`, made from it with
-one phrase cut out (below):
+Since round 9 the film is told for the visitor's business, and Elora speaks
+Ashan's approved script from seven takes: ElevenLabs, voice "Sia - Natural
+Conversational Creator", model Eleven v4, stability 50, similarity 75, each
+line its own paragraph. They're the source, kept in `voice/v2/` (Vercel
+ignores `video/`):
+
+| Take | Its lines, in order |
+| --- | --- |
+| `take-shared.mp3` | hook-1, hook-2, hook-3, hook-4, found-top, site-shared, office, closer (no longer used: found, so the cuts either side of it are right, and skipped), plan, close |
+| `take-winery.mp3`, `take-dental.mp3`, `take-contractor.mp3`, `take-general.mp3` | that business's found, site, booking, calls, tools, photo (in `take-dental.mp3`, its old photo line, `dental-photo-old`, no longer used: found and skipped) |
+| `take-extra.mp3` | ask-1 ("Real quick, is this something your business needs?"), ask-2 ("And this one?"), then round 10's send line (`send-old`, no longer used: found and skipped) |
+| `take-r11.mp3` | reviews-shared, winery-reviews, dental-reviews, contractor-reviews, general-reviews, dental-photo (the new one), send (the new one) |
+
+The words of every line, and the chunks its captions show, are in
+`components/elorro/film/lines.ts`; the takes' lists above are its `TAKES`.
 
 ```
-ffmpeg -i voice/elora-sia-take2.mp3 -map_metadata -1 \
-  -filter_complex "[0:a]atrim=end=30.30,asetpts=N/SR/TB[a];[0:a]atrim=start=31.98,asetpts=N/SR/TB[b];[a][b]concat=n=2:v=0:a=1[o]" \
-  -map "[o]" -ac 1 -c:a aac_at -b:a 64k -movflags +faststart ../public/m/film/elora-sia.m4a
+WHISPER_MODEL=/path/to/ggml-small.en.bin npm run voice-v2
 ```
 
-(`aac_at` is macOS's AAC encoder; elsewhere, `-c:a aac`.)
+`scripts/voice-v2.mjs` cuts each take into a file per line,
+`public/m/film/voice/v2/<line>.m4a`:
 
-**The cut.** The website scene shows Pearls Farm Labor's site now, not
-Prosperando's, so ", like this one for Prosperando" is cut from her line
-"They build one that's clear and easy to use, like this one for
-Prosperando." The take runs 30.30–31.98 s through it. Both ends sit in her
-own silences: after "use" (quiet from 30.25 to 30.36 s) and after
-"Prosperando." (quiet from 31.95 to 32.33 s). What's left of the two pauses
-adds up to 0.42 s before "Booking by text…", the pause the take had there.
-The file is 1.68 s shorter, so every cue after the cut is 1.68 s earlier
-than in the take. The website scene keeps its length, so she waits those
-1.68 s while Pearls' site plays, and everything after it starts when it did.
-To change the cut, find a new pair of quiet points the same way (step 1),
-re-encode, and move the later cues by the difference.
+1. whisper.cpp's `whisper-cli` (Homebrew's `whisper-cpp`, with its
+   `ggml-small.en` model from huggingface.co/ggerganov/whisper.cpp) hears the
+   take, a time for every word;
+2. the words heard are matched to the script's (an edit distance, word by
+   word), so each line is found by its words, not by counting pauses: some
+   lines are two sentences, and a pause inside one can be as long as one
+   between two;
+3. whisper folds a pause into the words either side of it, so each end of a
+   line is put at the quiet there (`silencedetect`, -40 dB, 0.08 s or more),
+   and the line is cut at the middle of the quiet around it, keeping at most
+   0.35 s of it either side;
+4. each is encoded as the site's voice files always have been:
+   `-map_metadata -1 -ac 1 -c:a aac_at -b:a 64k -movflags +faststart`
+   (`aac_at` is macOS's AAC encoder; elsewhere, `-c:a aac`).
 
-How the timings in `script.ts` were made, to redo them for a new take:
+It then writes `components/elorro/film/voice-v2.ts`: each line's file length,
+and where each of its caption chunks starts and ends in its file (a chunk
+split falls in the pause at its comma or full stop). The film lays her lines
+out from it (`script.ts`): a scene's first line starts a moment in, the next
+half a second after the one before ends, a line's chunks keep the spacing
+they have in its file, and a scene grows to fit her lines (she's never cut
+off). The pictures that go with her words (the fix arriving as she says
+"Now…") are timed from where her chunks start. A line missing from
+`voice-v2.ts` is captioned only, on timing estimated from its words.
 
-1. Find the quiet between her lines:
-   `ffmpeg -i <file> -af silencedetect=noise=-40dB:d=0.25 -f null -`
-   prints each pause's start (where she finishes a line) and end (where the
-   next starts). Match them to the lines in order. A pause inside a line can
-   be as long as one between lines, and two lines read as one sentence may
-   show none, so where it's unclear, look closer (`d=0.12`, `-35dB`, or the
-   loudness every 10 ms) and check a cut of the file by ear or with a local
-   speech-to-text (whisper.cpp's `whisper-cli`, with its `ggml-small.en`
-   model; `-ml 1` gives each word's time). For this take, three boundaries
-   needed that: "search, / and into", "all three, / and build" and "two of
-   them, / and looked after"; and the cut above.
-2. Each scene's `cue`: where its first line starts in the site's file. Each
-   line's `at` is where it starts less its scene's cue, so 0 for a scene's
-   first line (the first scene's is `at` seconds in, after the logo; a demo's,
-   a moment in, as it comes out of the dark). Its `end`, where she finishes
-   it, the same way: her glow follows it. A line with no voice yet is
-   `silent`: captioned only.
-3. Each scene's `duration` is its length in the film. Within a part of the
-   film, it is at least from its first line to the next scene's, as the file
-   has them; the last scene of a part is at least as long as her lines in it
-   (`timeline()` makes it so). Any longer and her voice waits, in the quiet
-   between her lines, while the pictures play on. As cut: the opening (1 s,
-   for her glide to the corner) and the website (1.68 s, where the phrase
-   was). The demos and the plan run on past her lines too. The film jumps
-   from the choice to each demo and back, and on to the plan; her voice picks
-   up at each from the right place in the file.
+Any word whisper hears differently from the script is printed, line by line,
+so a misread line can be re-recorded. It spells some names its own way
+("Ashan" as "Ashawn" or "Ashton"), which isn't a misread.
 
-**New takes, a part or a line at a time.** Every scene, every part of the film
-(`SEGMENTS`) and every single line can have a file of its own (`voice`, with a
-`cue` where it starts in that file). The nearest wins: line, scene, part,
-then the long take. So a re-recorded line drops in without re-cutting the
-take: save its AAC copy in `public/m/film/voice/`, name it on the line, and
-re-time its `end`. The film moves her from file to file in the quiet between
-lines, and loads the other files early. The lines that need one, and how to
-record them, are listed in `design/review/elora-new-lines.md`.
+She asks the question after every chapter of the walkthrough: ask-1 the
+first time, after getting found, ask-2 after the rest (the full question is
+always on screen); send is her line on the note, for a visitor who said yes
+to anything.
+
+**The cuts** are listed in `design/review/cc-report.md` for each round: every
+line, its file, its length, and the link and time where it plays.
 
 ## Clinical Scribe
 
@@ -239,21 +297,3 @@ three 1920×1200 frames for the case study:
   `STILL_FRAME`/`EXTRA_FRAMES` in step with `scripts/render.mjs`).
 - `src/clinical/screens.tsx`, `src/clinical/ui.tsx`: the app's screens and
   components, each noting the file in the app it mirrors.
-
-### Prosperando owner path
-
-The winery path plays a twelve-second Prosperando scroll and then the existing
-portrait bottle footage at `public/m/work/prosperando-m.mp4`. The four encodes
-and their posters live at `public/m/film/prosperando-site-*`. The capture and
-Remotion recipe are in `4586345`, along with the original capture manifest.
-
-The phone encodes and poster open on the desktop crest and vineyard frame,
-cropped to 4:5 (a centered 592 by 740 crop starting at y=60). In the phone
-video, a 0.76-second dissolve starts at 2.97 seconds and leads into the
-original phone site cut starting at 3.8 seconds from `f56921f`. The signup
-frame holds through 12 seconds.
-
-`public/m/film/voice/prosperando.m4a` is 27.41–32.14 seconds of
-`voice/elora-sia-take2.mp3`, cued at 0.22 seconds. For the bottle shot,
-`wine-photo.m4a` is 57.14–59.95 seconds of `public/m/film/elora-sia.m4a`.
-The full walkthrough and standalone Website example use the Pearls scroll.

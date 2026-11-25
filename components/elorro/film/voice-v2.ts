@@ -1,0 +1,50 @@
+/**
+ * Elora's lines, as cut from her takes (video/voice/v2/) by
+ * video/scripts/voice-v2.mjs, which writes this file: for each line (its
+ * file, public/m/film/voice/v2/<line>.m4a), the file's length and where each
+ * of its caption chunks (lines.ts) starts and ends in it, in seconds. A line
+ * missing here is captioned only, on estimated timing.
+ */
+export const V2: Record<string, { file: number; chunks: [start: number, end: number][] }> = {
+  "hook-1": { file: 3.553, chunks: [[0.09, 3.276]] },
+  "hook-2": { file: 5.155, chunks: [[0.276, 4.825]] },
+  "hook-3": { file: 5.341, chunks: [[0.309, 5.036]] },
+  "hook-4": { file: 2.252, chunks: [[0.299, 1.945]] },
+  "winery-found": { file: 6.2, chunks: [[0.04, 2.63], [2.63, 5.926]] },
+  "dental-found": { file: 7.012, chunks: [[0.05, 2.888], [3.136, 6.803]] },
+  "contractor-found": { file: 5.642, chunks: [[0.07, 1.968], [2.14, 5.367]] },
+  "general-found": { file: 5.573, chunks: [[0.04, 2.127], [2.323, 5.397]] },
+  "found-top": { file: 7.57, chunks: [[0.288, 2.466], [2.466, 7.343]] },
+  "reviews-shared": { file: 9.845, chunks: [[0.06, 2.97], [3.582, 7.267], [7.685, 9.506]] },
+  "winery-reviews": { file: 10.704, chunks: [[0.319, 4.291], [4.858, 7.841], [8.119, 10.392]] },
+  "dental-reviews": { file: 11.169, chunks: [[0.31, 4.547], [5.196, 8.278], [8.53, 10.869]] },
+  "contractor-reviews": { file: 11.029, chunks: [[0.295, 5.128], [5.747, 8.05], [8.447, 10.748]] },
+  "general-reviews": { file: 8.684, chunks: [[0.276, 2.71], [3.245, 5.529], [5.953, 8.36]] },
+  "site-shared": { file: 6.873, chunks: [[0.216, 3.304], [3.801, 6.576]] },
+  "winery-site": { file: 4.226, chunks: [[0.263, 3.989]] },
+  "dental-site": { file: 4.621, chunks: [[0.196, 4.317]] },
+  "contractor-site": { file: 4.458, chunks: [[0.268, 4.172]] },
+  "general-site": { file: 4.365, chunks: [[0.174, 4.072]] },
+  "winery-booking": { file: 8.661, chunks: [[0.221, 4.203], [4.792, 8.374]] },
+  "dental-booking": { file: 8.824, chunks: [[0.303, 3.95], [4.521, 8.52]] },
+  "contractor-booking": { file: 10.031, chunks: [[0.279, 4.622], [5.183, 9.755]] },
+  "general-booking": { file: 8.522, chunks: [[0.282, 3.862], [4.412, 8.255]] },
+  "winery-calls": { file: 9.288, chunks: [[0.285, 3.296], [3.894, 9.048]] },
+  "dental-calls": { file: 9.683, chunks: [[0.285, 3.678], [4.22, 9.414]] },
+  "contractor-calls": { file: 8.963, chunks: [[0.273, 3.047], [3.554, 8.707]] },
+  "general-calls": { file: 8.591, chunks: [[0.263, 2.699], [3.22, 8.372]] },
+  "office": { file: 7.454, chunks: [[0.291, 4.345], [4.836, 7.169]] },
+  "winery-tools": { file: 5.851, chunks: [[0.218, 2.545], [2.799, 5.599]] },
+  "dental-tools": { file: 6.177, chunks: [[0.25, 2.472], [2.712, 5.909]] },
+  "contractor-tools": { file: 5.898, chunks: [[0.237, 4.171], [4.463, 5.663]] },
+  "general-tools": { file: 5.712, chunks: [[0.219, 2.545], [2.778, 5.449]] },
+  "winery-photo": { file: 5.387, chunks: [[0.241, 3.113], [3.249, 5.2]] },
+  "dental-photo": { file: 6.525, chunks: [[0.318, 1.361], [1.731, 3.767], [3.767, 6.208]] },
+  "contractor-photo": { file: 5.132, chunks: [[0.215, 2.881], [3.029, 4.978]] },
+  "general-photo": { file: 5.457, chunks: [[0.261, 3.014], [3.149, 5.262]] },
+  "ask-1": { file: 2.879, chunks: [[0.08, 2.743]] },
+  "ask-2": { file: 1.161, chunks: [[0.129, 0.868]] },
+  "plan": { file: 7.105, chunks: [[0.229, 3.251], [3.68, 6.842]] },
+  "close": { file: 6.594, chunks: [[0.257, 2.254], [2.351, 4.192], [4.593, 6.415]] },
+  "send": { file: 11.819, chunks: [[0.304, 3.121], [3.373, 6.376], [6.376, 8.237], [8.76, 11.68]] },
+};

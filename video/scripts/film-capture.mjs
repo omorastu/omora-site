@@ -1,8 +1,8 @@
 // Full-page captures for the film's loops (/film): Pearls Farm Labor's site,
-// and Pearls' Instagram profile.
+// Pearls' Instagram profile, and the practice concept site.
 //
 //   npm run film-capture
-//   npm run film-capture -- pearls        one of them
+//   npm run film-capture -- pearls        one of them (pearls | instagram | practice)
 //
 // Each page is shot at 1440 wide (desktop, 1.5×) and 390 wide (phone, 3×),
 // as overlapping horizontal tiles in public/film-captures/, like
@@ -11,6 +11,11 @@
 //
 // Pearls: the homepage, walked to the bottom first so every on-scroll reveal
 // has happened, and the Request a crew page it ends on.
+//
+// Practice: Brightline Orthodontics, the made-up practice's concept site this
+// app serves at /demos/practice (components/elorro/demos/practice.tsx), from
+// the local dev server (PRACTICE_BASE, default http://[::1]:3001): the whole
+// page, down to its Book a consult form.
 //
 // Instagram: instagram.com/pearlsfarmlabor seen logged in, with a session
 // saved by hand into design/review/.auth/social.json (never committed: see
@@ -55,12 +60,17 @@ const PAGES = {
     session: true,
     anchors: { grid: "grid" },
   },
+  practice: {
+    url: `${process.env.PRACTICE_BASE ?? "http://[::1]:3001"}/demos/practice`,
+    anchors: { book: /^Book a consult$/i, form: ".bl-form", footer: "footer" },
+  },
 };
-const GROUPS = { pearls: ["pearls", "pearlsRequest"], instagram: ["instagram"] };
+const GROUPS = { pearls: ["pearls", "pearlsRequest"], instagram: ["instagram"], practice: ["practice"] };
 
-// Over the page in a screenshot: cookie banners, dialogs, chat launchers.
+// Over the page in a screenshot: cookie banners, dialogs, chat launchers (and
+// a dev server's own badge, for the pages this app serves).
 const HIDE = `
-  [role="dialog"], [aria-modal="true"],
+  [role="dialog"], [aria-modal="true"], nextjs-portal,
   [class*="cookie" i], [id*="cookie" i], [class*="consent" i], [id*="consent" i] {
     display: none !important;
   }`;
@@ -148,16 +158,24 @@ for (const [size, vp] of Object.entries(SIZES)) {
           if (posts[0]) out[key] = top(posts[0]);
           if (posts.length) out.gridEnd = Math.max(...posts.map((e) => Math.round(e.getBoundingClientRect().bottom + scrollY)));
           out.posts = posts.length;
+        } else if (typeof a === "string") {
+          // A selector: where that element starts.
+          const e = document.querySelector(a);
+          if (e) out[key] = top(e);
         } else {
           const re = new RegExp(a.source, a.flags);
           const h = [...document.querySelectorAll("h1, h2, h3")].find((e) => re.test(e.textContent.trim()));
           if (h) out[key] = top(h.closest("section") ?? h);
         }
       }
+      // A sticky header that doesn't start at the very top (a notice bar above
+      // it) is drawn from where it sits; Pearls' is at 0, and leaves it out.
+      const headerTop = sticky ? Math.round(header.getBoundingClientRect().top + scrollY) : 0;
       return {
         height: document.documentElement.scrollHeight,
         header: sticky ? Math.round(header.getBoundingClientRect().height) : 0,
         stickyHeader: sticky,
+        ...(headerTop ? { headerTop } : {}),
         anchors: out,
       };
     }, JSON.stringify(page.anchors, (_, v) => (v instanceof RegExp ? { source: v.source, flags: v.flags } : v)));

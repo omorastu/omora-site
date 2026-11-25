@@ -94,7 +94,8 @@
    (The same query as film.tsx's TALL.) */
 @media (max-width: 767px) and (max-aspect-ratio: 3/4) {
   .film {
-    --top: calc(56px + env(safe-area-inset-top));
+    /* (Room for the controls, and under them a scene's label on a line of its own.) */
+    --top: calc(78px + env(safe-area-inset-top));
     --bot: calc(var(--cap-b) + 3 * var(--cap-size) + 8px);
     --band: calc(100svh - var(--top) - var(--bot));
     --sw: min(100vw, var(--band) / 1.1);
@@ -151,7 +152,7 @@
 .film-far {
   position: absolute;
   inset: -8%;
-  animation: cam-far calc(var(--d) + 2s) var(--camera) calc(var(--s) - 1s) both;
+  animation: cam-far calc(var(--cd, var(--d)) + 2s) var(--camera) calc(var(--s) - 1s) both;
 }
 .film-far-art { display: block; width: 100%; height: 100%; }
 @keyframes cam-far {
@@ -169,7 +170,7 @@
 .film-orbit {
   position: absolute;
   inset: 0;
-  animation: cam-mid calc(var(--d) + 2s) var(--camera) calc(var(--s) - 1s) both;
+  animation: cam-mid calc(var(--cd, var(--d)) + 2s) var(--camera) calc(var(--s) - 1s) both;
 }
 @keyframes cam-mid {
   from { transform: perspective(1800px) translate3d(var(--px), var(--py), 0) rotateY(var(--ry)) scale(calc(1 + (var(--z0) - 1) * var(--zk, 1))); }
@@ -289,7 +290,10 @@
     word-shine 1.8s cubic-bezier(.45, 0, .55, 1) calc(var(--s) + var(--d) * var(--sh)) both;
 }
 /* The metal: a light band crossing it once, over the logo's gold falling from pale to deep. */
+/* Its gold or paper is a background cut to the letters, painted only inside the box: padding, even above and below
+   (so it stays centred where it's put), takes the box past the tails of a J, a g or a y. */
 .film-word--gold, .film-word--paper {
+  padding: .16em 0;
   color: transparent;
   -webkit-background-clip: text;
   background-clip: text;
@@ -566,11 +570,21 @@
   max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
-  animation: film-window var(--len) linear var(--from) both;
+  /* In and out in a fixed time, however long the scene: up through its question, at its end. */
+  animation:
+    film-cap-in .4s var(--film-ease) var(--from) both,
+    film-cap-out .3s linear calc(var(--from) + var(--len) - .3s) forwards;
 }
 @media (max-width: 767px) {
   .film-labels { font-size: max(calc(.75 * var(--fr)), 11px); }
   .film-label { letter-spacing: .14em; }
+}
+/* A phone upright: a scene's label on a line of its own under the controls, so its credit (Client work, Illustration,
+   Demo data) is read whole. */
+@media (max-width: 767px) and (max-aspect-ratio: 3/4) {
+  .film-top { flex-wrap: wrap; row-gap: 2px; padding-bottom: calc(.75 * var(--fr)); }
+  .film-labels { order: 2; flex: 1 0 100%; }
+  .film-ctls { margin-left: auto; }
 }
 .film-ctls { display: flex; gap: calc(.25 * var(--fr)); }
 .film-ctl {
@@ -692,7 +706,10 @@
   line-height: 1.5;
   text-align: center;
   text-wrap: balance;
-  animation: film-cap var(--len) linear var(--from) both;
+  /* In as she starts, out as she moves on: a fixed fade each way, however long the caption stays up. */
+  animation:
+    film-cap-in .35s var(--film-ease) var(--from) both,
+    film-cap-out .3s linear calc(var(--from) + var(--len) - .3s) forwards;
 }
 .film-cap span {
   padding: .12em .5em;
@@ -702,18 +719,10 @@
   -webkit-box-decoration-break: clone;
   box-decoration-break: clone;
 }
-@keyframes film-cap {
-  0% { opacity: 0; transform: translate3d(0, .25em, 0); }
-  6%, 94% { opacity: 1; transform: none; }
-  100% { opacity: 0; transform: none; }
-}
-@keyframes film-window { 0%, 100% { opacity: 0; } 8%, 92% { opacity: 1; } }
+@keyframes film-cap-in { from { opacity: 0; transform: translate3d(0, .25em, 0); } to { opacity: 1; transform: none; } }
+@keyframes film-cap-out { from { opacity: 1; } to { opacity: 0; } }
 /* Her last line stays on the final frame, as readable as every other. */
-.film-cap.film-cap--last { animation-name: film-cap-last; }
-@keyframes film-cap-last {
-  0% { opacity: 0; transform: translate3d(0, .25em, 0); }
-  6%, 100% { opacity: 1; transform: none; }
-}
+.film-cap.film-cap--last { animation: film-cap-in .35s var(--film-ease) var(--from) both; }
 
 /* A hairline of gold along the foot: how far into the part playing (the
    first minute, a demo, or the plan and the close), each filling on its own
@@ -747,7 +756,9 @@
 }
 .film-choice > * { pointer-events: auto; }
 .film-choice-h {
-  margin: 0 0 calc(2.25 * var(--fr));
+  margin: 0 0 calc(2.25 * var(--fr) - .16em);
+  /* (Room under the letters for the tails its clipped background paints: see .film-word--gold.) */
+  padding: .06em 0 .16em;
   font-family: var(--display);
   font-size: calc(3.125 * var(--fr));
   font-weight: 500;
@@ -905,9 +916,9 @@
   .film-word { animation-name: word-fade, none; }
   .film-word--label, .film-word--note { animation-name: word-fade; }
   @keyframes word-fade { from { opacity: 0; transform: translate(-50%, -50%); } to { opacity: 1; transform: translate(-50%, -50%); } }
-  .film-cap { animation-name: film-window; }
-  .film-cap.film-cap--last { animation-name: film-cap-last-still; }
-  @keyframes film-cap-last-still { 0% { opacity: 0; } 8%, 100% { opacity: 1; } }
+  .film-cap, .film-label { animation-name: film-cap-still, film-cap-out; }
+  .film-cap.film-cap--last { animation-name: film-cap-still; }
+  @keyframes film-cap-still { from { opacity: 0; } to { opacity: 1; } }
   .film-book, .film-look { animation-name: film-book-still; }
   @keyframes film-book-still {
     from { opacity: 0; visibility: hidden; }
@@ -926,7 +937,10 @@
   .film-scene.is-last { animation-duration: 1.3s !important; }
   .film .fx { animation-duration: var(--len, .9s) !important; }
   .film-word { animation-duration: 1.3s !important; }
-  .film-cap, .film-label, .elora-voice { animation-duration: var(--len) !important; }
+  .film-label { animation-duration: .4s, .3s !important; }
+  .elora-voice { animation-duration: var(--len) !important; }
+  .film-cap { animation-duration: .35s, .3s !important; }
+  .film-cap.film-cap--last { animation-duration: .35s !important; }
   .film-book, .film-look { animation-duration: .9s !important; }
   .film-handoff .h-thread { animation-duration: 2.6s !important; }
   .film-progress i { animation-duration: var(--len) !important; }
@@ -945,58 +959,9 @@
   .film .fx-moveto { animation-duration: .01s !important; }
 }
 
-/* /film opening, real work examples and the owner menu. */
-.film.is-opening .elora, .film.is-choosing .elora { visibility: hidden; }
-.film-opening {
-  position: absolute;
-  inset: 78px max(5vw, 32px) 100px;
-  margin: auto;
-  max-width: 1420px;
-  display: grid;
-  grid-template-columns: minmax(0, .82fr) minmax(0, 1.18fr);
-  align-items: center;
-  gap: clamp(28px, 5vw, 84px);
-}
-.film-opening-copy h2 {
-  margin: 10px 0 16px;
-  font: 500 clamp(40px, 5.35vw, 87px)/.96 var(--display);
-  letter-spacing: -.035em;
-  text-wrap: balance;
-}
-.film-opening-copy p {
-  margin: 0;
-  max-width: 33ch;
-  font-size: clamp(16px, 1.5vw, 23px);
-  line-height: 1.38;
-  color: rgb(244 241 234 / .83);
-}
-.film-opening-copy p:first-child {
-  color: #DDBB73;
-  font-size: clamp(12px, 1.05vw, 16px);
-  font-weight: 600;
-  letter-spacing: .17em;
-  text-transform: uppercase;
-}
-.film-opening-example { margin: 0; min-width: 0; }
-.film-proof-example { position: absolute; inset: 0 5%; display: grid; align-content: center; }
-.film-proof-window {
-  position: relative;
-  width: 100%;
-  aspect-ratio: 16 / 10;
-  overflow: hidden;
-  border: 1px solid rgb(221 187 115 / .5);
-  border-radius: 12px;
-  background: var(--night);
-  box-shadow: 0 20px 55px rgb(0 0 0 / .36);
-}
-.film-opening-example figcaption, .film-proof-example p {
-  margin: 11px 0 0;
-  color: #E4D1AC;
-  font-size: clamp(12px, 1.06vw, 16px);
-  text-align: center;
-  line-height: 1.35;
-}
-.film-examples-button, .film-menu-switch {
+/* Elora's out of the way on the picker; and the top bar's buttons. */
+.film.is-choosing .elora { visibility: hidden; }
+.film-examples-button {
   min-height: 44px;
   border: 0;
   padding: 6px 12px;
@@ -1007,7 +972,7 @@
   text-decoration: underline;
   text-underline-offset: .25em;
 }
-.film-examples-button:focus-visible, .film-menu-switch:focus-visible { outline: 2px solid var(--gold-hi); outline-offset: 2px; }
+.film-examples-button:focus-visible { outline: 2px solid var(--gold-hi); outline-offset: 2px; }
 .film.is-choosing { touch-action: pan-y; }
 .film-choice {
   inset: 56px 0 0;
@@ -1018,9 +983,7 @@
   touch-action: pan-y;
   justify-content: safe center;
 }
-.film-choice-h { margin-bottom: 2px; }
-.film-menu-switch { margin-bottom: 11px; }
-.film-cards--services { grid-template-columns: repeat(4, min(calc(18 * var(--fr)), 22vw)); }
+.film-choice-h { margin-bottom: 14px; }
 .film-choice-actions { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }
 .film-choice-actions .film-next { margin-top: 18px; text-align: center; }
 .film-choice-actions .is-main {
@@ -1030,60 +993,42 @@
   box-shadow: 0 8px 28px rgb(190 150 69 / .2);
 }
 .film-choice-actions .is-main:focus-visible { color: #21170C; }
-@media (max-width: 767px) and (max-aspect-ratio: 3/4) {
-  .film-opening {
-    inset: 60px 20px 185px;
-    grid-template-columns: minmax(0, 1fr);
-    align-content: center;
-    justify-items: center;
-    gap: 18px;
-    text-align: center;
-  }
-  .film-opening-copy h2 { font-size: clamp(32px, 9.5vw, 45px); margin: 8px 0; }
-  .film-opening-copy p { margin-inline: auto; }
-  .film-opening-example { width: min(68%, 256px, max(140px, 30svh)); }
-  .film-proof-example { inset: 0 19%; }
-  .film-proof-window { aspect-ratio: 4 / 5; }
-}
 @media (max-width: 767px) {
   .film-choice { inset-block-start: calc(56px + env(safe-area-inset-top)); padding: 2px 16px 22px; justify-content: flex-start; }
   .film-choice-h { font-size: clamp(25px, 6.8vw, 33px); }
-  .film-menu-switch { margin-bottom: 4px; }
   .film-card-line { color: rgb(244 241 234 / .82); }
-  .film-cards--services { grid-template-columns: 1fr; }
   .film-choice-actions { column-gap: 2px; row-gap: 0; }
   .film-choice-actions .film-next { padding: 8px 12px; margin-top: 10px; letter-spacing: .07em; }
 }
 @media (max-height: 560px) and (min-aspect-ratio: 1/1) {
-  .film-opening { inset: 44px 6vw 64px; }
-  .film-opening-copy h2 { font-size: clamp(30px, 5vw, 50px); }
-  .film-opening-example { width: min(100%, 45vh); justify-self: center; }
   .film-choice { inset-block-start: 44px; padding: 4px 14px 14px; }
-  .film-cards--services { grid-template-columns: repeat(4, min(155px, 22vw)); }
 }
 
-.film-launch-options { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
-.film-launch-options .act { margin: 0; }
-.film-launch-overview.act { margin: 14px 0 0; color: inherit; background: transparent; border-color: currentColor; }
+/* The /film page's one button: back to the door, once the film and the way in are put away (after booking a call). */
+.film-launch.act { margin-top: 2.25rem; }
 .film-choice-book { text-decoration: none; color: var(--paper); }
-.film-effects-switch[aria-pressed="true"] { color: #F4E2BC; text-decoration: underline; text-underline-offset: .25em; }
 
-/* Owner paths jump between chapters on the film clock. Keep those fades short. */
-.film.is-owner-path .film-scene {
-  animation-duration: .38s, .44s;
-  animation-delay: calc(var(--s) - .18s), calc(var(--s) + var(--d) - .36s);
+/* The picker's quiet way on for any other business, under its three cards. */
+.film-choice-other {
+  min-height: 44px;
+  margin-top: 16px;
+  padding: 6px 12px;
+  border: 0;
+  background: none;
+  color: rgb(244 241 234 / .72);
+  font: 500 max(calc(.9375 * var(--fr)), 14px)/1.3 var(--text);
+  cursor: pointer;
+  animation: choice-in .8s var(--film-ease) .2s both;
 }
-.film.is-owner-path .film-scene .film-lens { animation-duration: .55s, .44s; }
-@media (prefers-reduced-motion: no-preference) {
-  .film.is-owner-path [data-scene="plan"] .film-orbit .fx-rise { animation-duration: .35s; }
+.film-choice-other span { color: #F4E2BC; text-decoration: underline; text-underline-offset: .25em; }
+.film-choice-other:focus-visible { outline: 2px solid var(--gold-hi); outline-offset: 2px; }
+@media (hover: hover) {
+  .film-choice-other:hover span { color: var(--paper); }
 }
-@media (prefers-reduced-motion: reduce) {
-  .film.is-owner-path .film-scene { animation-duration: .25s, .30s !important; }
+@media (max-width: 767px) {
+  .film-choice-other { margin-top: 8px; }
 }
 
-/* Keep the client bottle footage in its native portrait framing. */
-.film-proof-example--portrait { inset-inline: 24%; }
-.film-proof-example--portrait .film-proof-window { aspect-ratio: 4 / 5; }
 .film-playback-menu {
   position: absolute;
   inset-block-start: calc(100% - 10px);
@@ -1120,5 +1065,446 @@
 }
 @media (max-width: 767px) {
   .film-playback-trigger { padding-inline: 6px; font-size: 12px; }
-  .film-proof-example--portrait { inset-inline: 16%; }
+}
+
+/* ---------- a question, after each chapter ----------
+   Over the scene's last frame, where the captions go (there's none while
+   it's up): what it's about, the question, Yes and No, big enough to tap.
+   The film waits on it. */
+.film-ask {
+  position: absolute;
+  z-index: 6;
+  left: 50%;
+  bottom: max(calc(var(--cap-b) * .5), calc(env(safe-area-inset-bottom) + var(--fr)));
+  width: min(92vw, calc(34 * var(--fr)));
+  padding: calc(1.05 * var(--fr)) calc(1.4 * var(--fr)) calc(1.25 * var(--fr));
+  border: 1px solid rgb(217 182 106 / .38);
+  border-radius: calc(.875 * var(--fr));
+  background: linear-gradient(180deg, rgb(30 25 19 / .95), rgb(17 14 11 / .95));
+  box-shadow: 0 calc(1.25 * var(--fr)) calc(3 * var(--fr)) rgb(0 0 0 / .5), 0 0 calc(2 * var(--fr)) rgb(190 150 69 / .12);
+  text-align: center;
+  transform: translateX(-50%);
+  animation: ask-in .6s var(--film-ease) both;
+}
+@keyframes ask-in { from { opacity: 0; transform: translate(-50%, 14px); } }
+.film-ask-label {
+  margin: 0;
+  color: #DDBB73;
+  font-size: max(calc(.75 * var(--fr)), 11px);
+  font-weight: 600;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+}
+.film-ask-q {
+  margin: calc(.35 * var(--fr)) 0 calc(1 * var(--fr));
+  font-family: var(--display);
+  font-size: calc(1.875 * var(--fr));
+  font-weight: 500;
+  line-height: 1.12;
+  letter-spacing: -.008em;
+  text-wrap: balance;
+  color: var(--paper);
+}
+.film-ask-answers { display: flex; justify-content: center; gap: calc(.75 * var(--fr)); }
+.film-ask-yes, .film-ask-no {
+  min-width: calc(8.5 * var(--fr));
+  min-height: 48px;
+  padding: 0 calc(1.5 * var(--fr));
+  border-radius: 4px;
+  color: var(--paper);
+  font: 600 max(calc(.875 * var(--fr)), 14px)/1 var(--text);
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: box-shadow .25s ease, background-color .25s ease, border-color .25s ease;
+}
+.film-ask-yes {
+  border: 0;
+  background: var(--gold);
+  background-image: linear-gradient(180deg, var(--gold-hi), #886826 36%, #6D4F1C);
+  box-shadow: 0 0 calc(1.5 * var(--fr)) rgb(190 150 69 / .3);
+}
+.film-ask-no { border: 1px solid rgb(244 241 234 / .42); background: rgb(12 10 8 / .4); }
+.film-ask-yes:focus-visible, .film-ask-no:focus-visible { outline: 2px solid var(--paper); outline-offset: 3px; }
+@media (hover: hover) {
+  .film-ask-yes:hover { box-shadow: inset 0 0 0 100vmax rgb(32 20 4 / .16), 0 0 calc(1.5 * var(--fr)) rgb(190 150 69 / .3); }
+  .film-ask-no:hover { border-color: rgb(244 241 234 / .8); background: rgb(244 241 234 / .06); }
+}
+/* A wide screen: one low row, the question on the left, Yes and No on the right, clear of the scene above. */
+@media (min-width: 768px) and (min-height: 561px) {
+  .film-ask {
+    display: flex;
+    align-items: center;
+    gap: calc(1.75 * var(--fr));
+    width: auto;
+    max-width: 94vw;
+    bottom: max(calc(var(--cap-b) * .4), calc(env(safe-area-inset-bottom) + var(--fr)));
+    padding: calc(.85 * var(--fr)) calc(.9 * var(--fr)) calc(.85 * var(--fr)) calc(1.5 * var(--fr));
+    text-align: left;
+  }
+  .film-ask-words { flex: 1 1 auto; }
+  .film-ask-q { margin: calc(.2 * var(--fr)) 0 0; font-size: calc(1.625 * var(--fr)); white-space: nowrap; }
+  .film-ask-yes, .film-ask-no { min-width: calc(7 * var(--fr)); }
+}
+@media (max-width: 767px) {
+  .film-ask { bottom: calc(env(safe-area-inset-bottom) + 14px); padding: 14px 16px 16px; border-radius: 14px; }
+  .film-ask-q { margin: 4px 0 14px; font-size: 24px; }
+  .film-ask-answers { gap: 10px; }
+  .film-ask-yes, .film-ask-no { flex: 1; min-width: 0; min-height: 52px; }
+}
+@media (max-height: 560px) and (min-aspect-ratio: 1/1) {
+  .film-ask { bottom: 10px; padding: 10px 16px 12px; width: min(80vw, 520px); }
+  .film-ask-q { margin: 2px 0 8px; font-size: 20px; }
+  .film-ask-yes, .film-ask-no { min-height: 44px; }
+}
+
+/* ---------- the note: what they'd send us, already written ----------
+   Over the film, under its top bar (the X stays in reach): the heading,
+   the fields, the gold Send; Back, small, in its corner. Scrolls on a
+   phone, the keyboard up. */
+/* She talks them through it: her captions, smaller and low, over it, with the form scrolling above their band. */
+.film.is-noting { --cap-size: calc(1.25 * var(--fr)); --cap-b: 2.5svh; }
+.film.is-noting .film-caps { z-index: 7; }
+.film-note {
+  position: absolute;
+  inset: calc(56px + env(safe-area-inset-top)) 0 calc(max(var(--cap-b), env(safe-area-inset-bottom) + var(--fr)) + 3.3 * var(--cap-size));
+  z-index: 6;
+  display: flex;
+  justify-content: center;
+  padding: 8px 16px 16px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
+  animation: choice-in .7s var(--film-ease) both;
+}
+.film-note-card { position: relative; width: min(100%, 600px); margin: auto 0; }
+.film-note-h {
+  margin: 0 0 calc(.6 * var(--fr) - .16em);
+  /* (Room under the letters for the tails its clipped background paints: see .film-word--gold.) */
+  padding: .06em 0 .16em;
+  font-family: var(--display);
+  font-size: clamp(30px, 3.2vw, 48px);
+  font-weight: 500;
+  line-height: 1.08;
+  letter-spacing: -.012em;
+  text-wrap: balance;
+  color: transparent;
+  background: linear-gradient(180deg, #FFFFFF 0%, #F4F1EA 55%, #DCD4C4 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  outline: none;
+}
+/* Under the heading, what she says, in short. */
+.film-note-sub {
+  margin: 0 0 calc(1.4 * var(--fr));
+  max-width: 34em;
+  font-size: clamp(15px, 1.1vw, 17px);
+  line-height: 1.5;
+  color: rgb(244 241 234 / .8);
+}
+.film-note-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.film-note-field { display: grid; gap: 6px; margin-bottom: 14px; }
+.film-note-field label {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: rgb(244 241 234 / .72);
+}
+.film-note-field input, .film-note-field textarea {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid rgb(244 241 234 / .24);
+  border-radius: 6px;
+  background: rgb(244 241 234 / .05);
+  color: var(--paper);
+  /* (16px: a phone doesn't zoom into it.) */
+  font: 400 16px/1.45 var(--text);
+  transition: border-color .2s ease, background-color .2s ease;
+}
+.film-note-field textarea { min-height: 150px; resize: vertical; }
+.film-note-field :is(input, textarea):focus { border-color: #D9B66A; background: rgb(244 241 234 / .08); outline: 2px solid rgb(217 182 106 / .3); outline-offset: 1px; }
+.film-note-field.has-error :is(input, textarea) { border-color: #E08A6E; }
+.film-note-error { margin: 0; font-size: 13px; line-height: 1.35; color: #F2AA92; }
+.film-note-trap { position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden; }
+.film-note .film-book { animation: none; }
+.film-note-send { width: 100%; margin-top: 6px; border: 0; border-radius: 4px; cursor: pointer; }
+.film-note-send:disabled { cursor: progress; opacity: .75; }
+.film-note-status { min-height: 1.4em; margin: 10px 0 0; font-size: 14px; line-height: 1.4; color: #F2AA92; }
+.film-note-back {
+  position: absolute;
+  top: 0;
+  left: max(8px, env(safe-area-inset-left));
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  min-height: 44px;
+  padding: 0 12px 0 4px;
+  border: 0;
+  background: none;
+  color: rgb(244 241 234 / .78);
+  font: 600 14px/1 var(--text);
+  letter-spacing: .06em;
+  cursor: pointer;
+}
+.film-note-back svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.film-note-back:focus-visible { outline: 2px solid var(--gold-hi); outline-offset: 2px; color: var(--paper); }
+@media (hover: hover) {
+  .film-note-back:hover { color: var(--paper); }
+}
+.film-note.is-sent .film-note-card { text-align: center; }
+.film-note-home { margin-top: 6px; }
+@media (max-width: 767px) {
+  .film-note { padding-top: 44px; }
+  .film-note-card { margin-top: 0; }
+  .film-note-row { grid-template-columns: 1fr; gap: 0; }
+  .film-note-h { font-size: 28px; margin-bottom: calc(10px - .16em); }
+  .film-note-sub { margin-bottom: 18px; font-size: 15px; }
+  .film-note-field textarea { min-height: 170px; }
+}
+
+/* ---------- the way in (way.tsx) ----------
+   Over the whole page: the home page's intro, as it is there (intro.css, on
+   the same black); its line gone to gold mist (mist.ts: the wipe is --wipe,
+   a mask), the rule out and the logo up, small, to the top (--lx, --ly and
+   --ls, from way.tsx); the door, ajar, warm light at its gap, on its own;
+   then the welcome forming out of gold dust at the top (the same mask, the
+   other way) and the line under the door. Opened, the door swings in and the
+   camera pushes through the doorway into the film, starting behind. */
+.way {
+  --paper: #F4F1EA;
+  --gold: #A8802F;
+  --gold-hi: #BE9645;
+  --ease: cubic-bezier(.33, 0, .15, 1);
+  --display: var(--font-logo), Georgia, "Times New Roman", serif;
+  --text: var(--font-hanken), "Helvetica Neue", Arial, sans-serif;
+  --door-h: min(42svh, 430px);
+  /* The doorway's middle, from the top. */
+  --door-mid: 54svh;
+  position: fixed;
+  inset: 0;
+  z-index: 2147482999;
+  overflow: hidden;
+  background: var(--night);
+  color: var(--paper);
+  font-family: var(--text);
+  -webkit-font-smoothing: antialiased;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.way *, .way *::before, .way *::after { box-sizing: border-box; }
+/* Before the way in is up (app/film/page.tsx, WAY_BOOT): the page dark from its first paint, as the home page's intro is. */
+html.way-boot { background: #0C0A08; }
+html.way-boot body { visibility: hidden; }
+/* The warm room the door stands in, once the intro has had its moment on the black. */
+.way::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 80% 62% at 50% var(--door-mid), #17120C 0%, rgb(12 10 8 / 0) 72%);
+  opacity: 0;
+  transition: opacity 1.6s ease;
+  pointer-events: none;
+}
+.way.is-at-door::before { opacity: 1; }
+.way.is-through { z-index: 2147483001; pointer-events: none; animation: way-out .45s ease-in 1.15s forwards; }
+@keyframes way-out { to { opacity: 0; visibility: hidden; } }
+.way-stage { position: absolute; inset: 0; transform-origin: var(--door-x, 50%) var(--door-y, 50%); }
+.way.is-through .way-stage { animation: way-push 1.1s cubic-bezier(.6, 0, .85, .3) .35s forwards; }
+@keyframes way-push { to { transform: scale(7); } }
+/* A warm flood as the camera reaches the doorway: the film's first scene is the room beyond it. */
+.way::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 70% 70% at var(--door-x, 50%) var(--door-y, 50%), #E8C27A, #6E4A1A 80%);
+  opacity: 0;
+  pointer-events: none;
+}
+.way.is-through::after { animation: way-flood .5s ease-in .9s forwards; }
+@keyframes way-flood { to { opacity: .5; } }
+.way-sr { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
+
+/* The intro (intro.tsx's IntroCard, laid out by intro.css as on the home
+   page). After its hold the logo goes up, small, to the top; the line goes
+   to mist behind its wipe; then the line and the rule are gone. */
+.way-intro { position: absolute; inset: 0; }
+.way-intro .elo-intro-mark { transform-origin: 50% 50%; transition: transform 1.5s var(--ease); }
+.way:not(.is-intro) .elo-intro-mark { transform: translate(var(--lx, 0px), var(--ly, 0px)) scale(var(--ls, 1)); }
+.way[data-instant] .elo-intro-mark { transition: none; }
+.way-intro .elo-intro-def {
+  -webkit-mask-image: linear-gradient(90deg, transparent calc(var(--wipe, -200px) - 28px), #000 calc(var(--wipe, -200px) + 28px));
+  mask-image: linear-gradient(90deg, transparent calc(var(--wipe, -200px) - 28px), #000 calc(var(--wipe, -200px) + 28px));
+}
+.way.is-at-door .elo-intro-def, .way.is-at-door .elo-intro-rule { visibility: hidden; }
+.way-mist { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+
+.way-welcome { position: absolute; inset: 0; visibility: hidden; }
+.way.is-at-door .way-welcome { visibility: visible; }
+/* The welcome, at the top: hidden until the dust forms it (its wipe, --wipe, the mist's the other way). Its
+   padding keeps the gold, which is cut to the box (background-clip), clear of the descenders. */
+.way-h {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 12.5svh;
+  width: fit-content;
+  max-width: min(22ch, calc(100% - 40px));
+  margin: 0 auto;
+  padding: .06em 0 .16em;
+  font-family: var(--display);
+  font-size: clamp(30px, 3.5vw, 54px);
+  font-weight: 500;
+  line-height: 1.08;
+  letter-spacing: -.012em;
+  text-align: center;
+  text-wrap: balance;
+  color: transparent;
+  background: linear-gradient(180deg, #FFFFFF 0%, #F4F1EA 55%, #DCD4C4 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-mask-image: linear-gradient(90deg, #000 calc(var(--wipe, -100000px) - 28px), transparent calc(var(--wipe, -100000px) + 28px));
+  mask-image: linear-gradient(90deg, #000 calc(var(--wipe, -100000px) - 28px), transparent calc(var(--wipe, -100000px) + 28px));
+}
+.way-h-us { white-space: nowrap; }
+.way.is-through .way-h, .way.is-through .way-note { opacity: 0; transition: opacity .35s ease; }
+
+/* The door: the whole screen is its button; the doorway in the middle, the line at the foot. */
+.way-door {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.way-door:focus { outline: none; }
+.way-door:focus-visible .way-doorway { outline: 2px solid #E6C580; outline-offset: 10px; }
+.way-door-at {
+  position: absolute;
+  left: 50%;
+  top: calc(var(--door-mid) - var(--door-h) / 2);
+  width: calc(var(--door-h) * 100 / 210);
+  height: var(--door-h);
+  margin-left: calc(var(--door-h) * -50 / 210);
+  visibility: hidden;
+}
+.way.is-at-door .way-door-at { visibility: visible; animation: way-rise 1.4s var(--ease) both; }
+@keyframes way-rise { from { opacity: 0; transform: translate3d(0, 18px, 0); } }
+.way-doorway { position: relative; display: block; width: 100%; height: 100%; perspective: 900px; background: #060504; }
+/* The light beyond it, through the gap, and spilling out of it. */
+.way-light {
+  position: absolute;
+  inset: 2.4% 5% 0;
+  background: linear-gradient(180deg, #F7DA97 0%, #E4B05A 46%, #B9792C 100%);
+  animation: way-breathe 4.5s ease-in-out infinite;
+}
+.way-doorway::after {
+  content: "";
+  position: absolute;
+  top: 4%;
+  bottom: -2%;
+  left: 55%;
+  width: 110%;
+  background: radial-gradient(ellipse 38% 48% at 34% 56%, rgb(232 190 110 / .2), transparent 72%);
+  pointer-events: none;
+  animation: way-breathe 4.5s ease-in-out infinite;
+}
+@keyframes way-breathe { 50% { opacity: .8; } }
+.way-hinge { position: absolute; inset: 2.4% 5% 0; transform-style: preserve-3d; }
+.way-leaf {
+  position: absolute;
+  inset: 0;
+  transform-origin: 0 50%;
+  transform: rotateY(16deg);
+  background: linear-gradient(90deg, #17120D 0%, #0F0C09 62%, #1B150E 100%);
+  box-shadow: inset -1px 0 0 rgb(232 190 110 / .6);
+  transition: transform .7s var(--ease);
+}
+.way-panel { position: absolute; left: 15%; right: 15%; border: 1px solid rgb(190 150 69 / .24); border-radius: 2px; }
+.way-panel:nth-child(1) { top: 7%; height: 37%; }
+.way-panel:nth-child(2) { top: 51%; height: 42%; }
+.way-knob {
+  position: absolute;
+  right: 10%;
+  top: 48%;
+  width: 7%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #F2DCA2, #A8802F 72%);
+  box-shadow: 0 0 6px rgb(232 190 110 / .45);
+}
+.way-frame { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; fill: none; }
+.way-frame rect { stroke: #C9A55C; stroke-width: 1.6; vector-effect: non-scaling-stroke; }
+.way-frame .way-frame-in { stroke-opacity: .4; stroke-width: 1; }
+/* The light on the floor before it. */
+.way-spill {
+  position: absolute;
+  left: 50%;
+  top: 100%;
+  width: calc(var(--door-h) * 1.15);
+  height: calc(var(--door-h) * .26);
+  transform: translateX(-42%);
+  background: radial-gradient(ellipse 46% 62% at 50% 0%, rgb(232 190 110 / .26), transparent 72%);
+  pointer-events: none;
+  animation: way-breathe 4.5s ease-in-out infinite;
+}
+/* The line at the foot, up with the welcome. */
+.way-note {
+  position: absolute;
+  left: 20px;
+  right: 20px;
+  bottom: 8svh;
+  font-size: clamp(15px, 1.25vw, 18px);
+  line-height: 1.5;
+  letter-spacing: .02em;
+  text-align: center;
+  color: rgb(244 241 234 / .84);
+  visibility: hidden;
+}
+.way-note-in {
+  display: inline-block;
+  text-decoration: underline;
+  text-decoration-color: rgb(201 165 92 / .6);
+  text-underline-offset: .35em;
+}
+.way.is-welcome .way-note { visibility: visible; }
+.way.is-welcome .way-note-in { animation: way-rise 1.2s var(--ease) both; }
+@media (hover: hover) {
+  .way-door-at:hover .way-leaf { transform: rotateY(24deg); }
+  .way-door:hover .way-note { color: var(--paper); }
+}
+.way.is-through .way-leaf { transform: rotateY(104deg); transition: transform .85s cubic-bezier(.5, 0, .2, 1); }
+.way.is-through .way-light { animation: none; }
+
+/* A phone upright: the door a little smaller. */
+@media (max-width: 600px) {
+  .way { --door-h: min(38svh, 340px); --door-mid: 53svh; }
+  .way-h { top: 11svh; font-size: min(30px, 8.2vw); }
+  .way-note { bottom: 7svh; }
+}
+/* A phone on its side: smaller all round, the welcome on one line. */
+@media (max-height: 560px) and (min-aspect-ratio: 1/1) {
+  .way { --door-h: 50svh; --door-mid: 56svh; }
+  .way-h { top: 13svh; max-width: calc(100% - 40px); font-size: 24px; }
+  .way-note { bottom: 4svh; }
+}
+/* Reduced motion: no mist, no dust, no swing, no push (the tap goes straight to the film): fades. */
+@media (prefers-reduced-motion: reduce) {
+  .way-intro .elo-intro-mark { transition: opacity .6s ease; }
+  .way.is-mist .elo-intro-mark { transform: none; opacity: 0; }
+  .way-h { -webkit-mask-image: none; mask-image: none; opacity: 0; transition: opacity .9s ease; }
+  .way.is-welcome .way-h { opacity: 1; }
+  .way.is-at-door .way-door-at, .way.is-welcome .way-note-in { animation-name: way-fade !important; animation-duration: .9s !important; }
+  @keyframes way-fade { from { opacity: 0; } }
+  .way::before { transition: none; }
+  .way-light, .way-doorway::after, .way-spill { animation: none !important; }
+  .way-leaf { transition: none !important; }
 }

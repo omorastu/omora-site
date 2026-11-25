@@ -1,5 +1,18 @@
 import { createContext, useContext, useLayoutEffect, useRef, type CSSProperties, type ReactNode } from "react";
-import type { PlanSubject, SceneId } from "@/components/elorro/film/script";
+import type { Cue } from "@/components/elorro/film/effects";
+import {
+  INDUSTRY,
+  REVIEWS_LEN,
+  SERVICE,
+  SERVICES,
+  SITE_CREDIT,
+  SITE_CREDIT_2,
+  siteCut,
+  siteNow,
+  type Answers,
+  type Industry,
+  type Kind,
+} from "@/components/elorro/film/script";
 
 /**
  * The film's pictures. Each scene fills the frame in layers, which the camera
@@ -8,7 +21,7 @@ import type { PlanSubject, SceneId } from "@/components/elorro/film/script";
  *   filters (they're costly on a phone), and nothing floating in it;
  * - mid: the scene itself, on a set as big as the screen allows, its big
  *   words in HTML so a shine can cross them like the logo's;
- * - near (Elora's scene and the close only): a sweep of light, once.
+ * - near (the opener and the close only): what sits over the set.
  *
  * Two shapes of set. Wide (desktop, tablets, a phone on its side): a square,
  * 1000 × 1000. Tall (a phone upright, film.css "phones first"): 1000 × 1100,
@@ -16,47 +29,36 @@ import type { PlanSubject, SceneId } from "@/components/elorro/film/script";
  * each scene laid out for it: bigger cards and type, side-by-side things
  * stacked. `tall` picks which; film.tsx follows the screen.
  *
- * Every move is a CSS animation on the film's one clock (film.tsx): a beat is
- * an effect starting a share of the way into its scene, worked out from the
- * scene's designed length (DESIGN), so a scene timed longer or shorter in
- * script.ts keeps its choreography in step. A thing that moves never carries
- * a transform attribute of its own: its effect goes on a wrapping <g>.
+ * Every scene is told for one business (`ind`): its words and pictures come
+ * from the tables below (SEARCH, DATED, INBOX, REC, PLAN) and the demos'
+ * videos (MEDIA, /demos), and an
+ * orthodontist never sees a winery's, nor a winery a patient. Real work keeps
+ * its "Client work · …" credit; anything made up says Illustration or Demo.
  *
- * The story runs outside in, the way a customer meets a business: being
- * found, the website, booking, a call; then behind the scenes, the office.
- * Each is a problem, then the fix, quickly: a scene's stages (Stage) give way
- * to one another on the set, the problem in paper and grey, the fix arriving
- * in gold. The winery is the business for being found and its bookings,
- * Pearls' the website; the orthodontist for calls and the office. Then the
- * choice (its cards are film.tsx's), and the three demos it leads to: custom
- * tools, photo and video, and the front desk behind the scenes. Then the plan
- * they'd get. Three scenes play Elorro's real work (Clip): Pearls' site as one
- * flow, Clinical Scribe from consult to follow-up, and the Pearls drone
- * footage into Pearls' Instagram.
+ * Every move is a CSS animation on the film's one clock (film.tsx): a beat is
+ * an effect starting a share of the way into its scene. Most scenes are timed
+ * in seconds against her lines (`at`, where each starts; see script.ts), so
+ * the fix arrives as she says it whatever the length of her take; a few keep
+ * the pace they were designed at, as shares of that length, whatever their
+ * scene's (the Pearls reel, the close). A thing that moves never carries a
+ * transform attribute of its own: its effect goes on a wrapping <g>.
  */
 
-/** Each scene's length as designed, in seconds: its beats are shares of it. */
-export const DESIGN: Record<SceneId, number> = {
-  elora: 9,
-  call: 8.5,
-  found: 12.5,
-  // Longer than when it ran 8.41 s, at the same pace: its pictures as they were, then Pearls' site plays on, through.
-  site: 13.454,
-  booking: 8.5,
-  calls: 9.5,
-  // As long as its first two stages ran when the scene went on into custom tools, at the same pace.
-  office: 8.044,
-  choice: 2,
-  tools: 17,
-  // Paced as when it followed behind the scenes, and longer: the footage, then the posts.
-  photo: 15.04,
-  frontdesk: 13,
-  website: 10.4,
-  wineSite: 13,
-  winePhoto: 5.7,
-  local: 9.6,
-  plan: 9,
-  close: 10.5,
+/** A scene as its pictures need it: which, how it's laid out, for whom, and her timing in it. */
+export type ArtProps = {
+  /** The scene's id: its videos are named after it. */
+  id: string;
+  tall: boolean;
+  ind: Industry;
+  /** Where each of her lines in the scene starts, and ends, in seconds into it. */
+  at: number[];
+  end: number[];
+  /** The scene's length, in seconds. */
+  d: number;
+  /** Where its own pictures are done, in seconds into it: after that, the question it asks, over its last frame. */
+  content: number;
+  /** What they've said to the questions so far (the plan follows them). */
+  answers: Answers;
 };
 
 type Vars = CSSProperties & Record<`--${string}`, string | number>;
@@ -65,11 +67,11 @@ type Beat = { className: string; style: Vars };
 type Box = [x: number, y: number, w: number, h: number];
 export type SceneArt = { far: ReactNode; mid: ReactNode; near?: ReactNode };
 
-/** An effect, `at` seconds into a scene designed `D` seconds long. */
+/** An effect, `at` seconds into a scene `D` seconds long (or designed so: then it keeps that pace's shares). */
 const beats =
   (D: number) =>
   (kind: string, at: number, o: Opts = {}): Beat => {
-    const style: Vars = { "--at": +(at / D).toFixed(4) };
+    const style: Vars = { "--at": +(Math.max(0, at) / D).toFixed(4) };
     if (o.len) style["--len"] = `${o.len}s`;
     if (o.n) style["--n"] = o.n;
     if (o.dx !== undefined) style["--dx"] = `${o.dx}px`;
@@ -77,17 +79,13 @@ const beats =
     return { className: `fx fx-${kind}${o.cls ? ` ${o.cls}` : ""}`, style };
   };
 type Beats = ReturnType<typeof beats>;
-
-/** A wave along y, from x0 to x1: `amp` high, one crest every `len`. */
-const wave = (x0: number, x1: number, y: number, amp: number, len: number) => {
-  let d = `M ${x0} ${y} Q ${x0 + len / 4} ${y - amp} ${x0 + len / 2} ${y}`;
-  for (let x = x0 + len; x <= x1; x += len / 2) d += ` T ${x} ${y}`;
-  return d;
-};
+/** Beats designed for a scene `D` seconds long, kept to their shares of where its own pictures are done (a question may follow them). */
+const paced =
+  (D: number, p: ArtProps): Beats =>
+  (kind, at, o = {}) =>
+    beats(p.d)(kind, (at * p.content) / D, o);
 /** A circle as a path, so it can be drawn on (pathLength 1): from its left, down and round. */
 const ring = (cx: number, cy: number, r: number) => `M ${cx - r} ${cy} a ${r} ${r} 0 1 0 ${2 * r} 0 a ${r} ${r} 0 1 0 ${-2 * r} 0`;
-/** The same from its right, down and round the other way. */
-const ringR = (cx: number, cy: number, r: number) => `M ${cx + r} ${cy} a ${r} ${r} 0 1 1 ${-2 * r} 0 a ${r} ${r} 0 1 1 ${2 * r} 0`;
 /** A magnifying glass at (cx, cy), its lens r. */
 const lens = (cx: number, cy: number, r: number) => `${ring(cx, cy, r)} M ${cx + r * 0.75} ${cy + r * 0.8} L ${cx + r * 1.75} ${cy + r * 1.8}`;
 /** A four-pointed sparkle at (cx, cy), r to its points: the usual sign of an AI answer. */
@@ -95,7 +93,8 @@ const sparkle = (cx: number, cy: number, r: number) =>
   `M ${cx} ${cy - r} Q ${cx} ${cy} ${cx + r} ${cy} Q ${cx} ${cy} ${cx} ${cy + r} Q ${cx} ${cy} ${cx - r} ${cy} Q ${cx} ${cy} ${cx} ${cy - r} Z`;
 const HANDSET = "q 10 -18 22 -6 l 8 8 q 6 8 -2 16 q 10 18 26 26 q 8 -8 16 -2 l 8 8 q 12 12 -6 22 q -38 6 -72 -72 z";
 const STAR = "l 5.5 11 l 12 1.6 l -8.8 8.6 l 2.4 12 l -11.1 -5.6 l -11.1 5.6 l 2.4 -12 l -8.8 -8.6 l 12 -1.6 z";
-const sec = (t: number) => `${t.toFixed(3)}s`;
+/** About how wide a line of Hanken is, in set units, at `size`. */
+const wide = (text: string, size: number, em = 0.52) => text.length * size * em;
 
 /** A drawing on the set. */
 function Art({ tall, children }: { tall: boolean; children: ReactNode }) {
@@ -142,13 +141,12 @@ function Gold({ d, fx, thin }: { d: string; fx?: Beat; thin?: boolean }) {
   );
 }
 
-/** A big word, in HTML on the set: `x`, `y` in % of the set, `size` a share of its width; `tracked`, its letters spaced like the wordmark's. */
+/** A big word, in HTML on the set: `x`, `y` in % of the set, `size` a share of its width. */
 function Word({
   x,
   y,
   size,
   tone = "gold",
-  tracked,
   rise,
   shine,
   D,
@@ -158,7 +156,6 @@ function Word({
   y: number;
   size: number;
   tone?: "gold" | "paper" | "label" | "note";
-  tracked?: boolean;
   rise: number;
   shine?: number;
   D: number;
@@ -172,7 +169,7 @@ function Word({
     "--sh": shine === undefined ? 3 : +(shine / D).toFixed(4),
   };
   return (
-    <p className={`film-word film-word--${tone}${tracked ? " film-word--tracked" : ""}`} style={style}>
+    <p className={`film-word film-word--${tone}`} style={style}>
       {children}
     </p>
   );
@@ -230,9 +227,12 @@ function Tick({ cx, cy, r }: { cx: number; cy: number; r: number }) {
 
 /* ── Real work, playing ────────────────────────────────────────────────── */
 
-export type ClipId = "openingSite" | "pearlsSite" | "websiteExample" | "wineWebsite" | "wineFootage" | "localExample" | "clinical" | "pearlsDrone";
+/** The demos of the tools (/demos, filmed for each business by video/scripts/demos.mjs): reviews, a booking, the front desk, one entry, a tool of their own. */
+type ToolInd = Exclude<Industry, "dental">;
+type DemoMedia = `reviews-${Industry}` | `booking-${Industry}` | `desk-${Industry}` | `entry-${Industry}` | `tool-${ToolInd}`;
+export type MediaId = "pearlsSite" | "pearlsCrew" | "prosperandoSite" | "practiceSite" | "clinical" | "photoReel" | DemoMedia;
 type Cuts = { desktop: string; mobile?: string; desktopSd: string; mobileSd?: string };
-/** The film's own loops, made for it (video/scripts/film.mjs), in public/m/film/. */
+/** The film's own videos, made for it (video/scripts/film.mjs), in public/m/film/. */
 const filmCuts = (name: string): Cuts => ({
   desktop: `/m/film/${name}-d.mp4`,
   mobile: `/m/film/${name}-m.mp4`,
@@ -241,264 +241,211 @@ const filmCuts = (name: string): Cuts => ({
 });
 const filmPosters = (name: string) => ({ desktop: `/m/film/${name}-d-poster.jpg`, mobile: `/m/film/${name}-m-poster.jpg` });
 /**
- * Three videos of Elorro's real work, made for the film (video/scripts/film.mjs),
- * each in its scene: its still first, the video over it once it plays, once
- * through, holding its last frame. `at` and `until` are when it plays, in
- * seconds into its scene as designed; `offset`, where in the video it starts. The tall layout plays the phone cut, the wide one the desktop cut.
- * film.tsx loads each shortly before (never at the film's start), plays it in
- * step with the film, and leaves it on its still under reduced motion or on a
- * connection too slow for it.
+ * Elorro's real work, playing: each video's cuts (the tall layout plays the
+ * phone cut, the wide one the desktop cut) and its stills. Each plays once
+ * through and holds its last frame, but a loop made to repeat (`loop`).
  */
-export const CLIPS: Record<ClipId, { scene: SceneId; at: number; until: number; offset: number; cuts: Cuts; poster: { desktop: string; mobile: string } }> = {
-  openingSite: { scene: "elora", at: 0.3, until: 9, offset: 0, cuts: filmCuts("pearls-site"), poster: filmPosters("pearls-site") },
-  websiteExample: { scene: "website", at: 0.45, until: 10.1, offset: 0, cuts: filmCuts("pearls-site"), poster: filmPosters("pearls-site") },
-  wineWebsite: { scene: "wineSite", at: 0.45, until: 12.8, offset: 0, cuts: filmCuts("prosperando-site"), poster: filmPosters("prosperando-site") },
-  wineFootage: {
-    scene: "winePhoto", at: 0.18, until: 5.4, offset: 0,
-    cuts: {
-      desktop: "/m/work/prosperando-m.mp4", mobile: "/m/work/prosperando-m.mp4",
-      desktopSd: "/m/work/prosperando-m-sd.mp4", mobileSd: "/m/work/prosperando-m-sd.mp4",
-    },
-    poster: { desktop: "/m/work/prosperando-m-poster.jpg", mobile: "/m/work/prosperando-m-poster.jpg" },
-  },
-  localExample: {
-    scene: "local", at: 0.6, until: 9.3, offset: 0,
-    cuts: { desktop: "/m/work/cubic-d.mp4", desktopSd: "/m/work/cubic-d-sd.mp4" },
-    poster: { desktop: "/m/work/cubic-d-poster.jpg", mobile: "/m/work/cubic-m-poster.jpg" },
-  },
-  pearlsSite: { scene: "site", at: 3.9, until: 14.1, offset: 0, cuts: filmCuts("pearls-site"), poster: filmPosters("pearls-site") },
+export const MEDIA: Record<MediaId, { cuts: Cuts; poster: { desktop: string; mobile: string }; loop?: boolean }> = {
+  // Pearls Farm Labor's site, as one flow, into Request a crew.
+  pearlsSite: { cuts: filmCuts("pearls-site"), poster: filmPosters("pearls-site") },
+  // The same site from its crews' side: the crews at work, into Request a crew (a contractor's).
+  pearlsCrew: { cuts: filmCuts("pearls-crew"), poster: filmPosters("pearls-crew") },
+  // Prosperando's site (Jordan's capture).
+  prosperandoSite: { cuts: filmCuts("prosperando-site"), poster: filmPosters("prosperando-site") },
+  // A practice's site we built as a concept (/demos/practice, a made-up practice), down to its Book a consult form.
+  practiceSite: { cuts: filmCuts("practice-site"), poster: filmPosters("practice-site") },
   // Clinical Scribe: a consult recorded, written up, the coaching for it, and the follow-up letter drafted. Made-up demo data.
-  clinical: { scene: "tools", at: 1.5, until: 17.7, offset: 0, cuts: filmCuts("clinical-film"), poster: filmPosters("clinical-film") },
+  clinical: { cuts: filmCuts("clinical-film"), poster: filmPosters("clinical-film") },
   // Pearls: the drone over the vines, then the posts on Pearls' Instagram.
-  pearlsDrone: { scene: "photo", at: 1.2, until: 15.7, offset: 0, cuts: filmCuts("photo-reel"), poster: filmPosters("photo-reel") },
+  photoReel: { cuts: filmCuts("photo-reel"), poster: filmPosters("photo-reel") },
+  // The demos, each business's own: made-up data, every screen labelled Demo. Each poster is its finished state.
+  ...(Object.fromEntries(
+    (["reviews", "booking", "desk", "entry", "tool"] as const).flatMap((demo) =>
+      (["winery", "dental", "contractor", "general"] as const)
+        .filter((ind) => demo !== "tool" || ind !== "dental")
+        .map((ind) => [`${demo}-${ind}`, { cuts: filmCuts(`demo-${demo}-${ind}`), poster: filmPosters(`demo-${demo}-${ind}`) }])
+    )
+  ) as Record<DemoMedia, { cuts: Cuts; poster: { desktop: string; mobile: string } }>),
 };
+/** One video in one scene: when it plays, in seconds into the scene, and from where in it. */
+export type ClipUse = { media: MediaId; at: number; until: number; offset?: number };
+/** A video's place in the film is its scene's: each scene has its own element. */
+export const clipKey = (scene: string, media: MediaId) => `${scene}:${media}`;
 
-/** Where film.tsx puts a loop's video once its scene is in the page (null as it leaves). */
-export const ClipContext = createContext<((id: ClipId, slot: HTMLElement | null) => void) | null>(null);
+/** Where film.tsx puts a video once its scene is in the page (null as it leaves). */
+export const ClipContext = createContext<((key: string, slot: HTMLElement | null) => void) | null>(null);
 
-/** A loop on the set, in its box (set units): its still, and a place for its video, fading in at `fx`. `clean`: no darkening at its edges. */
-function Clip({ id, tall, box: [x, y, w, h], fx, top, clean }: { id: ClipId; tall: boolean; box: Box; fx?: Beat; top?: boolean; clean?: boolean }) {
+/**
+ * A video on the set, in its box (set units): its still, and a place for the
+ * video, fading in at `fx`. `clean`: no darkening at its edges. `round`: its
+ * bottom corners rounded to that radius (set units), to sit exactly inside a
+ * window's rounded frame, video and all (a border radius, and a clip path,
+ * which also holds where the browser draws the video on a layer of its own).
+ */
+function Clip({ p, media, box: [x, y, w, h], fx, top, clean, round }: { p: ArtProps; media: MediaId; box: Box; fx?: Beat; top?: boolean; clean?: boolean; round?: number }) {
   const attach = useContext(ClipContext);
   const slot = useRef<HTMLDivElement>(null);
+  const key = clipKey(p.id, media);
   useLayoutEffect(() => {
-    attach?.(id, slot.current);
-    return () => attach?.(id, null);
-  }, [attach, id]);
-  const V = tall ? 1100 : 1000;
-  const c = CLIPS[id];
+    attach?.(key, slot.current);
+    return () => attach?.(key, null);
+  }, [attach, key]);
+  const V = p.tall ? 1100 : 1000;
+  const c = MEDIA[media];
   const style: Vars = { ...fx?.style, left: `${x / 10}%`, top: `${(y / V) * 100}%`, width: `${w / 10}%`, height: `${(h / V) * 100}%` };
+  if (round) {
+    const rx = `${+((round / w) * 100).toFixed(3)}%`;
+    const ry = `${+((round / h) * 100).toFixed(3)}%`;
+    style.borderRadius = `0 0 ${rx} ${rx} / 0 0 ${ry} ${ry}`;
+    style.clipPath = `inset(0 round 0 0 ${rx} ${rx} / 0 0 ${ry} ${ry})`;
+  }
   return (
     <div className={`${fx?.className ?? ""} film-clip${top ? " film-clip--top" : ""}${clean ? " film-clip--clean" : ""}`} style={style}>
       <picture>
-        <img src={tall ? c.poster.mobile : c.poster.desktop} alt="" decoding="async" />
+        <img src={p.tall ? c.poster.mobile : c.poster.desktop} alt="" decoding="async" />
       </picture>
       <div ref={slot} className="film-clip-slot" />
     </div>
   );
 }
 
-/* ── Between Elora and the call: the thread she leaves ─────────────────── */
+/**
+ * When things happen in each demo's video, in seconds from its start: the
+ * same for every business and both sizes (video/scripts/demos.mjs). The
+ * scene's sounds and light follow them; `length` is the video's.
+ */
+const DEMO_AT = {
+  // A new 5-star review comes in (0.5); its reply is typed and posted (3.3); the 3-star's reply posted (5.9); the "How did
+  // we do?" text sent (6.85); a new review lands (7.8), and the rating ticks up (8.1).
+  reviews: { arrives: 0.5, posted: 3.3, calm: 5.9, text: 6.85, landed: 7.8, length: REVIEWS_LEN },
+  // A booking comes in (0.5), is checked and saved, and is confirmed on its own (2.8); the confirmation goes (3.4).
+  booking: { tap: 0.5, confirmed: 2.8, length: 5.13 },
+  // The phone rings until 1.0, is answered, the call is transcribed, the slot booked (6.1), the text sent (7.3), all handled (7.8).
+  desk: { ring: 0.1, answered: 1.0, booked: 6.1, text: 7.3, done: 7.8, length: 8.63 },
+  // Typed once (0.2–1.4), saved (1.9), and the three systems fill in and tick (2.2 to 3.0).
+  entry: { typed: 0.2, filled: 3.0, length: 4.23 },
+  // The tool is run (0.5), writes its draft line by line, and is done (3.2).
+  tool: { start: 0.5, done: 3.2, length: 4.63 },
+};
+
+/** The tool's demo starts as she says they build one (her second line), and is done once it's made its draft. */
+const toolAt = (p: ArtProps) => {
+  const make = Math.max(2.4, (p.at[1] ?? 2.8) + 0.1);
+  return { make, done: make + DEMO_AT.tool.done };
+};
 
 /**
- * As Elora goes to her corner, a gold thread draws out from behind her, both
- * ways across the middle of the frame; "How they work" rises at the top as
- * she settles. Then the thread gathers to the length of the call's, between
- * where its two circles draw on (Call), and hands over to it. Times are in
- * seconds into the film (this layer's --s is 0 and its --d one second).
+ * A demo of a tool, playing in a window (the same as the website scene's,
+ * its name in the address bar), coming in at `from`; its video starts as
+ * the scene says (SCENES, clips), holding its first frame until then.
  */
-export function Handoff({ tall, thread, title, gone }: { tall: boolean; thread: number; title: number; gone: number }) {
-  const b = beats(1);
-  const y = tall ? 560 : 500;
-  const reach = tall ? 440 : 380;
-  const keep = tall ? 70 : 100;
-  const half = (to: number) =>
-    ["g-halo", "g-glow", "g-core"].map((c) => <path key={c} d={`M 500 ${y} H ${to}`} pathLength={1} className={`${c} h-thread`} />);
+function DemoFrame({ p, media, from, name, b }: { p: ArtProps; media: MediaId; from: number; name: string; b: Beats }) {
+  const L = p.tall ? SITE_TALL : SITE_WIDE;
+  const [fx, fy, fw, fh] = L.frame;
+  const [px, py, pw, ph] = L.pill;
+  const r = p.tall ? 44 : 18;
   return (
-    <div className="film-handoff" aria-hidden="true" style={{ "--s": "0s", "--d": "1s", "--from": sec(thread), "--keep": +(1 - keep / reach).toFixed(4) } as Vars}>
-      <Art tall={tall}>
-        <g {...b("out", gone, { len: 0.7 })}>
-          {half(500 - reach)}
-          {half(500 + reach)}
-        </g>
+    <div {...b("come", from, { len: 0.8, cls: "film-layer" })}>
+      <Art tall={p.tall}>
+        <rect className="card card--site s-paper-soft" x={fx} y={fy} width={fw} height={fh} rx={r} />
+        {!p.tall && (
+          <g className="f-dim">
+            <circle cx={fx + 32} cy={fy + L.bar / 2} r="7" />
+            <circle cx={fx + 56} cy={fy + L.bar / 2} r="7" />
+            <circle cx={fx + 80} cy={fy + L.bar / 2} r="7" />
+          </g>
+        )}
+        <rect className="f-url" x={px} y={py} width={pw} height={ph} rx={ph / 2} />
+        <text className="t-body" x="500" y={py + ph / 2 + L.url * 0.36} fontSize={L.url}>
+          {name}
+        </text>
       </Art>
-      <div {...b("out", gone + 0.9, { len: 0.8, cls: "film-out" })}>
-        <Word x={50} y={tall ? 13 : 15} size={tall ? 0.11 : 0.085} rise={title} shine={title + 0.6} D={1}>
-          How they work
-        </Word>
-      </div>
+      <Clip p={p} media={media} box={L.body} clean round={r - INSET} />
+      <Art tall={p.tall}>
+        <rect className="s-gold-edge" fill="none" x={fx} y={fy} width={fw} height={fh} rx={r} />
+      </Art>
     </div>
   );
 }
 
-/* ── Elora ─────────────────────────────────────────────────────────────── */
+/* ── Through the door: the warm room beyond it, where she says hello ───── */
 
-function Elora(tall: boolean): SceneArt {
-  return {
-    far: <Far><Glow id="far-elora-spot" cx={74} cy={45} r={65} o={0.23} color="#E8C27A" /></Far>,
-    mid: null,
-    near: (
-      <div className="film-opening">
-        <div className="film-opening-copy">
-          <p>Ashan &amp; Jordan</p>
-          <h2>Make it easier to find and book you.</h2>
-          <p>Websites, photo &amp; video, and tools that take booking and follow-up off your plate.</p>
-        </div>
-        <figure className="film-opening-example">
-          <div className="film-proof-window">
-            <Clip id="openingSite" tall={tall} box={[0, 0, 1000, tall ? 1100 : 1000]} clean />
-          </div>
-          <figcaption>Client work · Pearls Farm Labor website</figcaption>
-        </figure>
-      </div>
-    ),
-  };
-}
-
-function WebsiteProof(tall: boolean, clip: "websiteExample" | "wineWebsite", credit: ReactNode): SceneArt {
-  return {
-    far: <Far><Glow id={`far-${clip}`} cx={50} cy={50} r={65} o={0.18} /></Far>,
-    mid: (
-      <div className="film-proof-example">
-        <div className="film-proof-window">
-          <Clip id={clip} tall={tall} box={[0, 0, 1000, tall ? 1100 : 1000]} clean />
-        </div>
-        <p>{credit}</p>
-      </div>
-    ),
-  };
-}
-
-const WebsiteExample = (tall: boolean) => WebsiteProof(tall, "websiteExample", "Client work · Pearls Farm Labor website");
-const WineWebsite = (tall: boolean) => WebsiteProof(tall, "wineWebsite", <>Client work · Prosperando Vineyards<br />Website, photography &amp; video</>);
-
-function WinePhoto(tall: boolean): SceneArt {
-  return {
-    far: <Far><Glow id="far-wine-photo" cx={50} cy={50} r={65} o={0.18} /></Far>,
-    mid: (
-      <div className="film-proof-example film-proof-example--portrait">
-        <div className="film-proof-window">
-          <Clip id="wineFootage" tall={tall} box={[0, 0, 1000, tall ? 1100 : 1000]} clean />
-        </div>
-        <p>Client work · Prosperando Vineyards<br />Photography, video &amp; site color</p>
-      </div>
-    ),
-  };
-}
-
-function LocalExample(tall: boolean): SceneArt {
-  return {
-    far: <Far><Glow id="far-local-example" cx={50} cy={50} r={65} o={0.18} /></Far>,
-    mid: (
-      <div className="film-proof-example">
-        <div className="film-proof-window">
-          <Clip id="localExample" tall={tall} box={[0, 0, 1000, tall ? 1100 : 1000]} clean />
-        </div>
-        <p>Client work · Cubic Ship website</p>
-      </div>
-    ),
-  };
-}
-
-/* ── The call ──────────────────────────────────────────────────────────── */
-
-/** The owners, side by side in the film's line: a woman and a man, head and shoulders, centred on (0, 0). */
-function Owners() {
-  return (
-    <>
-      {/* Her: hair to her shoulders, parted to one side. */}
-      <g transform="translate(-62 4)">
-        <path className="s-paper" d="M -21 -50 C -22 -24, -12 -11, 0 -11 C 12 -11, 22 -24, 21 -50" />
-        <path className="s-paper" d="M -37 8 C -30 -6, -32 -26, -32 -46 C -32 -72, -17 -84, 0 -84 C 17 -84, 32 -72, 32 -46 C 32 -26, 30 -6, 37 8" />
-        <path className="s-paper" d="M -21 -50 C -6 -52, 8 -60, 16 -74 M 21 -50 C 20 -60, 18 -68, 16 -74" />
-        <path className="s-paper" d="M -58 66 C -56 34, -40 16, -14 9 M 14 9 C 40 16, 56 34, 58 66 M -9 -10 V 6 M 9 -10 V 6" />
-      </g>
-      {/* Him: short hair, an open collar. */}
-      <g transform="translate(62 4)">
-        <path className="s-paper" d="M -25 -48 C -26 -20, -14 -8, 0 -8 C 14 -8, 26 -20, 25 -48" />
-        <path className="s-paper" d="M -25 -48 C -29 -72, -12 -82, 3 -80 C 19 -79, 30 -68, 25 -48 C 19 -58, 9 -62, -2 -58 C -10 -55, -18 -54, -25 -48 Z" />
-        <path className="s-paper" d="M -62 66 C -60 30, -42 14, -16 8 L 0 26 L 16 8 C 42 14, 60 30, 62 66 M -10 -8 V 7 M 10 -8 V 7" />
-      </g>
-    </>
-  );
-}
-
-function Call(tall: boolean): SceneArt {
-  const D = DESIGN.call;
-  const b = beats(D);
-  // The two circles, side by side; bigger on a phone. The thread between them is the one Elora left (Handoff).
-  const r = tall ? 190 : 150;
-  const cy = tall ? 560 : 500;
-  const you = tall ? 240 : 250;
-  const us = tall ? 760 : 750;
-  const label = cy + r + 70;
+/** Where the camera comes to rest once it's through (film.tsx, the way in): the door's light, all round; Elora in the middle of it. */
+function Opener(): SceneArt {
   return {
     far: (
       <Far>
-        <defs>
-          <linearGradient id="far-call-line" x1="0" x2="1">
-            <stop offset="0" stopColor="#BE9645" stopOpacity="0" />
-            <stop offset=".5" stopColor="#BE9645" stopOpacity=".22" />
-            <stop offset="1" stopColor="#BE9645" stopOpacity="0" />
-          </linearGradient>
-        </defs>
-        <Glow id="far-call-you" cx={34} cy={52} r={40} o={0.07} color="#F4F1EA" />
-        <Glow id="far-call-us" cx={66} cy={52} r={44} o={0.2} />
-        <rect x="0" y="719" width="1600" height="2" fill="url(#far-call-line)" />
+        <Glow id="far-opener-warm" cx={50} cy={44} r={62} o={0.3} color="#E8C27A" />
+        <Glow id="far-opener-floor" cx={50} cy={104} r={60} o={0.16} color="#BE9645" />
+        <Glow id="far-opener-paper" cx={50} cy={40} r={30} o={0.06} color="#F4F1EA" />
       </Far>
     ),
-    mid: (
-      <>
-        <Word x={50} y={tall ? 14 : 15} size={tall ? 0.13 : 0.11} rise={4.6} shine={5.3} D={D}>
-          Listen.
-        </Word>
-        <Art tall={tall}>
-          <defs>
-            <clipPath id="film-call-line">
-              <rect x={you + r + 2} y={cy - 60} width={us - you - 2 * r - 4} height="120" />
-            </clipPath>
-          </defs>
-          {/* You, the owners, both of you: drawn on from the thread's end. */}
-          <path pathLength={1} d={ringR(you, cy, r)} {...b("draw", 0.9, { len: 1.3, cls: "s-paper-soft" })} />
-          <g {...b("fade", 1.5, { len: 1 })}>
-            <g transform={`translate(${you} ${cy}) scale(${((r / 150) * 1.06).toFixed(3)})`}>
-              <Owners />
-            </g>
-          </g>
-          <text x={you} y={label} fontSize={tall ? 38 : 30} {...b("fade", 1.6, { cls: "t-small" })}>
-            You
-          </text>
-          {/* The two of them, drawn on from the thread's other end. */}
-          <Gold d={ring(us, cy, r)} fx={b("draw", 1, { len: 1.4 })} />
-          <g {...b("fade", 1.6, { len: 1 })}>
-            <text className="t-disp" x={us} y={cy + (tall ? 44 : 34)} fontSize={tall ? 134 : 104}>
-              A <tspan className="t-gold">&amp;</tspan> J
-            </text>
-          </g>
-          <text x={us} y={label} fontSize={tall ? 38 : 30} {...b("fade", 1.8, { cls: "t-small" })}>
-            Ashan &amp; Jordan
-          </text>
-          {/* The call, and your voice coming down it. */}
-          <Gold d={`M ${you + r + 2} ${cy} H ${us - r - 2}`} fx={b("fade", 1.3, { len: 0.6 })} />
-          <g clipPath="url(#film-call-line)">
-            <g {...b("fade", 2.6, { len: 0.5 })}>
-              <g {...b("out", 7, { len: 0.6 })}>
-                <path d={wave(you, us - 90, cy, 30, 72)} {...b("flow", 2.6, { len: 0.75, n: 6, dx: 72, cls: "g-glow thin" })} />
-                <path d={wave(you, us - 90, cy, 30, 72)} {...b("flow", 2.6, { len: 0.75, n: 6, dx: 72, cls: "g-core thin" })} />
-              </g>
-            </g>
-          </g>
-          {/* And they listen. */}
-          <circle cx={us} cy={cy} r={r} {...b("ring", 3, { len: 1.6, n: 3, cls: "s-gold-thin" })} />
-          <circle cx={us} cy={cy} r={r} {...b("ring", 3.5, { len: 1.6, n: 3, cls: "s-gold-thin" })} />
-        </Art>
-      </>
-    ),
+    mid: null,
   };
 }
 
-/* ── Getting found: page two, the top, and the answer an AI gives ──────── */
+/* ── 1 Getting found: page two, the top, and the answer an AI gives ────── */
 
-/** The search, as laid out: its bar, the results, page two's divider, the winery's result, and how far each moves. */
+type Search = {
+  query: string;
+  you: string;
+  sub: string;
+  lead: string;
+  blurb: [string, string];
+  blurbTall: string;
+  ask: [string, string];
+  askTall: string;
+  bullets: [string, string, string];
+};
+/** What they'd search for, and what the result and the AI answers say, for each business. */
+const SEARCH: Record<Industry, Search> = {
+  winery: {
+    query: "winery tasting napa",
+    you: "Your winery",
+    sub: "Napa · Tastings daily",
+    lead: "For a tasting near Napa, try",
+    blurb: ["Small-batch tastings, booked", "online, open daily."],
+    blurbTall: "Small-batch tastings, booked online, open daily.",
+    ask: ["Best winery for a", "tasting near Napa?"],
+    askTall: "Best winery for a tasting near Napa?",
+    bullets: ["Small-batch tastings", "Booked online", "Open daily"],
+  },
+  dental: {
+    query: "orthodontist san ramon",
+    you: "Your practice",
+    sub: "San Ramon · New patients welcome",
+    lead: "For an orthodontist nearby, try",
+    blurb: ["Braces and aligners for kids", "and adults, booked online."],
+    blurbTall: "Braces and aligners for kids and adults, booked online.",
+    ask: ["Best orthodontist", "near San Ramon?"],
+    askTall: "Best orthodontist near San Ramon?",
+    bullets: ["Braces and aligners", "Consults booked online", "Kids and adults"],
+  },
+  contractor: {
+    query: "general contractor near me",
+    you: "Your company",
+    sub: "General contractor · Licensed & insured",
+    lead: "For a general contractor nearby, try",
+    blurb: ["Remodels and additions, site", "visits booked online."],
+    blurbTall: "Remodels and additions, site visits booked online.",
+    ask: ["Best general contractor", "near me?"],
+    askTall: "Best general contractor near me?",
+    bullets: ["Remodels and additions", "Licensed and insured", "Site visits booked online"],
+  },
+  general: {
+    query: "best near me",
+    you: "Your business",
+    sub: "Near you · Open today",
+    lead: "Near you, people recommend",
+    blurb: ["Well reviewed, quick to reply,", "and easy to book online."],
+    blurbTall: "Well reviewed, quick to reply, and easy to book online.",
+    ask: ["Who’s best for this", "near me?"],
+    askTall: "Who’s best for this near me?",
+    bullets: ["Well reviewed", "Booked online", "Open today"],
+  },
+};
+
+/** The search, as laid out: its bar, the results, page two's divider, the business's result, and how far each moves. */
 const FIND_WIDE = {
   x: 70, w: 860, bar: [76, 96], mag: [130, 122, 16], q: [180, 141, 46],
   res: { y: 222, h: 104, gap: 124, l1: 38, l2: 74, w1: 400, w2: 700, k: 104 },
@@ -509,18 +456,27 @@ const FIND_TALL = {
   res: { y: 230, h: 136, gap: 160, l1: 50, l2: 96, w1: 460, w2: 780, k: 84 },
   page: [732, 30, 110], you: { y: 770, h: 150, title: [40, 70, 56], star: [44, 92, 1.3], sub: [260, 122, 30] },
 };
-const QUERY = "winery napa";
 
-function Found(tall: boolean): SceneArt {
-  const D = DESIGN.found;
-  const b = beats(D);
+/** When things happen in the search: page two as she says so, the move to the top, the AI answers. */
+const foundAt = (p: ArtProps) => {
+  const page = Math.max(2.2, (p.at[1] ?? 2.4) - 0.2);
+  return { page, you: page + 0.2, move: (p.at[2] ?? 4.6) + 0.5, ai: (p.at[3] ?? 6.9) + 0.55 };
+};
+
+function Found(p: ArtProps): SceneArt {
+  const { tall } = p;
+  const b = beats(p.d);
   const S = tall ? FIND_TALL : FIND_WIDE;
+  const Q = SEARCH[p.ind];
   const [barY, barH] = S.bar;
   const [py, ps, pgap] = S.page;
   const Y = S.you;
-  // The winery's result moves to the top as she says so; the others make way.
-  const MOVE = 5.1;
-  const AI = 7.4;
+  const T = foundAt(p);
+  // The query, as big as fits its bar, typed in about a second and a half.
+  const qSize = Math.min(S.q[2], Math.floor((S.x + S.w - S.q[0] - 30) / (Q.query.length * 0.53)));
+  const step = Math.min(0.07, 1.5 / Q.query.length);
+  // The result's line under its name, in spaced capitals, as big as fits its card.
+  const subSize = Math.min(Y.sub[2], Math.floor((S.w - Y.sub[0] - 28) / (Q.sub.length * 0.78)));
   const stars = (cls: string) => (
     <g className={cls} transform={`translate(${S.x + Y.star[0]} ${Y.y + Y.star[1]}) scale(${Y.star[2]})`}>
       {[0, 1, 2, 3, 4].map((s) => (
@@ -532,11 +488,11 @@ function Found(tall: boolean): SceneArt {
     <>
       <rect className={`card card--deep ${gold ? "s-gold-edge" : "s-paper-soft"}`} x={S.x} y={Y.y} width={S.w} height={Y.h} rx="18" />
       <text className={`t-disp t-left ${gold ? "t-gold" : "t-faint"}`} x={S.x + Y.title[0]} y={Y.y + Y.title[1]} fontSize={Y.title[2]}>
-        Your winery
+        {Q.you}
       </text>
       {stars(gold ? "f-gold" : "s-faint-star")}
-      <text className="t-small t-left" x={S.x + Y.sub[0]} y={Y.y + Y.sub[1]} fontSize={Y.sub[2]}>
-        Napa · Tastings daily
+      <text className="t-small t-left" x={S.x + Y.sub[0]} y={Y.y + Y.sub[1]} fontSize={subSize}>
+        {Q.sub}
       </text>
     </>
   );
@@ -544,27 +500,27 @@ function Found(tall: boolean): SceneArt {
     far: (
       <Far>
         <Glow id="far-found-a" cx={50} cy={42} r={56} o={0.15} />
-        <g {...b("fade", AI, { len: 1.2 })}>
+        <g {...b("fade", T.ai, { len: 1.2 })}>
           <Glow id="far-found-b" cx={50} cy={52} r={62} o={0.08} color="#F4F1EA" />
         </g>
       </Far>
     ),
     mid: (
       <>
-        <Stage b={b} to={AI - 0.1}>
+        <Stage b={b} to={T.ai - 0.1}>
           <Art tall={tall}>
             {/* The search. */}
             <g {...b("rise", 0.15, { len: 1 })}>
               <rect className="card card--deep s-paper-soft" x={S.x} y={barY} width={S.w} height={barH} rx={barH / 2} />
               <path className="s-paper" d={lens(S.mag[0], S.mag[1], S.mag[2])} />
             </g>
-            <text className="t-body t-left" x={S.q[0]} y={S.q[1]} fontSize={S.q[2]}>
-              <Typed text={QUERY} at={0.5} b={b} step={0.07} />
+            <text className="t-body t-left" x={S.q[0]} y={S.q[1] - (S.q[2] - qSize) * 0.36} fontSize={qSize}>
+              <Typed text={Q.query} at={0.5} b={b} step={step} />
             </text>
             {[0, 1, 2].map((i) => {
               const y = S.res.y + i * S.res.gap;
               return (
-                <g key={i} {...b("moveto", MOVE, { len: 1.3, dy: S.res.gap })}>
+                <g key={i} {...b("moveto", T.move, { len: 1.3, dy: S.res.gap })}>
                   <g {...b("rise", 1.4 + i * 0.15, { len: 0.8 })}>
                     <rect className="card card--deep" x={S.x} y={y} width={S.w} height={S.res.h} rx="16" />
                     <path className="s-dim thick" d={`M ${S.x + 34} ${y + S.res.l1} h ${S.res.w1 - i * 40}`} />
@@ -573,23 +529,23 @@ function Found(tall: boolean): SceneArt {
                 </g>
               );
             })}
-            {/* Page two, where the winery is. */}
-            <g {...b("out", MOVE - 0.2, { len: 0.4 })}>
-              <g {...b("fade", 2.2, { len: 0.6 })}>
+            {/* Page two, where the business is. */}
+            <g {...b("out", T.move - 0.2, { len: 0.4 })}>
+              <g {...b("fade", T.page, { len: 0.6 })}>
                 <path className="s-soft" d={`M ${S.x} ${py} H ${500 - pgap} M ${500 + pgap} ${py} H ${S.x + S.w}`} />
                 <text className="t-small" x="500" y={py + ps * 0.36} fontSize={ps}>
                   Page 2
                 </text>
               </g>
             </g>
-            <g {...b("moveto", MOVE, { len: 1.3, dy: S.res.y - Y.y })}>
-              <g {...b("rise", 2.4, { len: 0.9 })}>{result(false)}</g>
+            <g {...b("moveto", T.move, { len: 1.3, dy: S.res.y - Y.y })}>
+              <g {...b("rise", T.you, { len: 0.9 })}>{result(false)}</g>
               {/* At the top, in gold. */}
-              <g {...b("fade", MOVE + 0.6, { len: 0.8 })}>{result(true)}</g>
+              <g {...b("fade", T.move + 0.6, { len: 0.8 })}>{result(true)}</g>
             </g>
           </Art>
         </Stage>
-        <Stage b={b}>{tall ? <AnswersTall b={b} at={AI} /> : <AnswersWide b={b} at={AI} />}</Stage>
+        <Stage b={b}>{tall ? <AnswersTall b={b} at={T.ai} Q={Q} /> : <AnswersWide b={b} at={T.ai} Q={Q} />}</Stage>
       </>
     ),
   };
@@ -597,10 +553,10 @@ function Found(tall: boolean): SceneArt {
 
 /**
  * The newer way to look: ask an AI. Two answer panels, side by side, both
- * naming the winery: an AI answer on a search page and a chat. Generic UI in
- * the film's own hand, the services' names in plain text, no logos.
+ * naming the business: an AI answer on a search page and a chat. Generic UI
+ * in the film's own hand, the services' names in plain text, no logos.
  */
-function AnswersWide({ b, at }: { b: Beats; at: number }) {
+function AnswersWide({ b, at, Q }: { b: Beats; at: number; Q: Search }) {
   return (
     <Art tall={false}>
       {/* An AI answer, at the top of a search page. */}
@@ -611,8 +567,8 @@ function AnswersWide({ b, at }: { b: Beats; at: number }) {
         </text>
         <rect className="s-ink-line" fill="none" x="82" y="192" width="376" height="52" rx="26" />
         <path className="s-ink-mid" d={lens(108, 216, 8)} />
-        <text className="t-ink-soft t-left" x="130" y="225" fontSize="19">
-          winery tasting napa
+        <text className="t-ink-soft t-left" x="130" y="225" fontSize={Math.min(19, Math.floor(310 / (Q.query.length * 0.52)))}>
+          {Q.query}
         </text>
         {["All", "Maps", "Images"].map((t, i) => (
           <text key={t} className={`t-left ${i ? "t-ink-soft" : "t-ink t-strong"}`} x={82 + [0, 54, 124][i]} y="284" fontSize="16">
@@ -636,21 +592,21 @@ function AnswersWide({ b, at }: { b: Beats; at: number }) {
       </g>
       <g {...b("fade", at + 1.2, { len: 0.6 })}>
         <text className="t-ink t-left" x="104" y="410" fontSize="21">
-          For a tasting near Napa, try
+          {Q.lead}
         </text>
       </g>
       <g {...b("fade", at + 1.45, { len: 0.6 })}>
         <text className="t-gold-deep t-left t-strong" x="104" y="454" fontSize="28">
-          Your winery
+          {Q.you}
         </text>
         <text className="t-ink-soft t-left" x="104" y="496" fontSize="19">
-          Small-batch tastings, booked
+          {Q.blurb[0]}
         </text>
         <text className="t-ink-soft t-left" x="104" y="524" fontSize="19">
-          online, open daily.
+          {Q.blurb[1]}
         </text>
       </g>
-      <path pathLength={1} d="M 104 466 H 262" {...b("draw", at + 2.3, { len: 0.6, cls: "s-gold" })} />
+      <path pathLength={1} d={`M 104 466 H ${104 + wide(Q.you, 28, 0.56)}`} {...b("draw", at + 2.3, { len: 0.6, cls: "s-gold" })} />
 
       {/* And asked of a chat. */}
       <g {...b("drop", at + 0.5, { len: 0.9, dy: -50 })}>
@@ -669,10 +625,10 @@ function AnswersWide({ b, at }: { b: Beats; at: number }) {
       <g {...b("slide-in", at + 0.9, { len: 0.7, dx: 40 })}>
         <rect className="f-ink-soft" x="630" y="204" width="288" height="96" rx="30" />
         <text className="t-ink t-left" x="654" y="244" fontSize="21">
-          Best winery for a
+          {Q.ask[0]}
         </text>
         <text className="t-ink t-left" x="654" y="274" fontSize="21">
-          tasting near Napa?
+          {Q.ask[1]}
         </text>
       </g>
       <g {...b("fade", at + 1.5, { len: 0.6 })}>
@@ -682,21 +638,21 @@ function AnswersWide({ b, at }: { b: Beats; at: number }) {
       </g>
       <g {...b("fade", at + 1.75, { len: 0.6 })}>
         <text className="t-gold-deep t-left t-strong" x="542" y="408" fontSize="28">
-          Your winery
+          {Q.you}
         </text>
-        {["Small-batch tastings", "Booked online", "Open daily"].map((t, i) => (
+        {Q.bullets.map((t, i) => (
           <text key={t} className="t-ink-soft t-left" x="542" y={452 + i * 32} fontSize="19">
             •&#8194;{t}
           </text>
         ))}
       </g>
-      <path pathLength={1} d="M 542 420 H 700" {...b("draw", at + 2.45, { len: 0.6, cls: "s-gold" })} />
+      <path pathLength={1} d={`M 542 420 H ${542 + wide(Q.you, 28, 0.56)}`} {...b("draw", at + 2.45, { len: 0.6, cls: "s-gold" })} />
     </Art>
   );
 }
 
 /** The same on a phone upright: the two answers one above the other. */
-function AnswersTall({ b, at }: { b: Beats; at: number }) {
+function AnswersTall({ b, at, Q }: { b: Beats; at: number; Q: Search }) {
   return (
     <Art tall>
       <g {...b("drop", at + 0.2, { len: 0.9, dy: -50 })}>
@@ -707,7 +663,7 @@ function AnswersTall({ b, at }: { b: Beats; at: number }) {
         <rect className="s-ink-line" fill="none" x="84" y="124" width="832" height="70" rx="35" />
         <path className="s-ink-mid" d={lens(122, 156, 11)} />
         <text className="t-ink-soft t-left" x="152" y="170" fontSize="30">
-          winery tasting napa
+          {Q.query}
         </text>
         {["All", "Maps", "Images"].map((t, i) => (
           <text key={t} className={`t-left ${i ? "t-ink-soft" : "t-ink t-strong"}`} x={84 + [0, 76, 182][i]} y="240" fontSize="26">
@@ -726,18 +682,18 @@ function AnswersTall({ b, at }: { b: Beats; at: number }) {
       </g>
       <g {...b("fade", at + 1.2, { len: 0.6 })}>
         <text className="t-ink t-left" x="114" y="380" fontSize="30">
-          For a tasting near Napa, try
+          {Q.lead}
         </text>
       </g>
       <g {...b("fade", at + 1.45, { len: 0.6 })}>
         <text className="t-gold-deep t-left t-strong" x="114" y="432" fontSize="40">
-          Your winery
+          {Q.you}
         </text>
         <text className="t-ink-soft t-left" x="114" y="484" fontSize="28">
-          Small-batch tastings, booked online, open daily.
+          {Q.blurbTall}
         </text>
       </g>
-      <path pathLength={1} d="M 114 446 H 340" {...b("draw", at + 2.3, { len: 0.6, cls: "s-gold" })} />
+      <path pathLength={1} d={`M 114 446 H ${114 + wide(Q.you, 40, 0.56)}`} {...b("draw", at + 2.3, { len: 0.6, cls: "s-gold" })} />
 
       <g {...b("drop", at + 0.5, { len: 0.9, dy: -50 })}>
         <rect className="page" x="40" y="570" width="920" height="500" rx="26" />
@@ -753,9 +709,9 @@ function AnswersTall({ b, at }: { b: Beats; at: number }) {
         <path className="s-paper-on-ink" d="M 874 1013 V 990 M 864 1000 l 10 -10 l 10 10" />
       </g>
       <g {...b("slide-in", at + 0.9, { len: 0.7, dx: 40 })}>
-        <rect className="f-ink-soft" x="318" y="662" width="598" height="78" rx="39" />
-        <text className="t-ink t-left" x="350" y="711" fontSize="28">
-          Best winery for a tasting near Napa?
+        <rect className="f-ink-soft" x={916 - wide(Q.askTall, 28) - 64} y="662" width={wide(Q.askTall, 28) + 64} height="78" rx="39" />
+        <text className="t-ink t-left" x={916 - wide(Q.askTall, 28) - 32} y="711" fontSize="28">
+          {Q.askTall}
         </text>
       </g>
       <g {...b("fade", at + 1.5, { len: 0.6 })}>
@@ -765,38 +721,186 @@ function AnswersTall({ b, at }: { b: Beats; at: number }) {
       </g>
       <g {...b("fade", at + 1.75, { len: 0.6 })}>
         <text className="t-gold-deep t-left t-strong" x="262" y="806" fontSize="40">
-          Your winery
+          {Q.you}
         </text>
         <text className="t-ink-soft t-left" x="84" y="866" fontSize="28">
-          •&#8194;Small-batch tastings&#8194;•&#8194;Booked online
+          •&#8194;{Q.bullets[0]}&#8194;•&#8194;{Q.bullets[1]}
         </text>
         <text className="t-ink-soft t-left" x="84" y="910" fontSize="28">
-          •&#8194;Open daily
+          •&#8194;{Q.bullets[2]}
         </text>
       </g>
-      <path pathLength={1} d="M 262 820 H 488" {...b("draw", at + 2.45, { len: 0.6, cls: "s-gold" })} />
+      <path pathLength={1} d={`M 262 820 H ${262 + wide(Q.you, 40, 0.56)}`} {...b("draw", at + 2.45, { len: 0.6, cls: "s-gold" })} />
     </Art>
   );
 }
 
-/* ── The website: a dated one, then one they built ─────────────────────── */
+/* ── 2 Reviews: the numbers, then their reviews answered ────────────────── */
 
+/**
+ * The two numbers, word for word as Ashan gave them, each with its source
+ * under it, in small type; nothing else is claimed. Each card comes in as she
+ * says its sentence.
+ */
+const STATS = [
+  {
+    figure: "97%",
+    after: "",
+    lines: ["of people read reviews before", "choosing a local business."],
+    linesTall: ["of people read reviews before choosing", "a local business."],
+    source: ["Source: BrightLocal, Local Consumer", "Review Survey 2026"],
+    sourceTall: ["Source: BrightLocal, Local Consumer Review Survey 2026"],
+  },
+  {
+    figure: "35%",
+    after: " more",
+    lines: ["Businesses that reply to at least", "1 in 4 reviews earn 35% more than", "average. 3 in 4 small businesses", "don’t reply to any."],
+    linesTall: ["Businesses that reply to at least 1 in 4 reviews", "earn 35% more than average. 3 in 4 small", "businesses don’t reply to any."],
+    source: ["Source: Womply, study of 200,000+", "U.S. small businesses (2019)"],
+    sourceTall: ["Source: Womply, study of 200,000+ U.S. small businesses (2019)"],
+  },
+];
+/** Side by side on a wide screen; one over the other, upright. */
+const STAT_WIDE = { cards: [[70, 250, 420, 470], [510, 250, 420, 470]] as Box[], m: 36, fig: [140, 104], text: [204, 25, 36], src: [418, 15, 22] };
+const STAT_TALL = { cards: [[50, 60, 900, 430], [50, 530, 900, 500]] as Box[], m: 52, fig: [150, 120], text: [222, 34, 46], src: [0, 23, 30] };
+
+/** The demo comes in as she starts on their business (her fourth chunk), the numbers giving way. */
+const reviewsFix = (p: ArtProps) => Math.max(6, (p.at[3] ?? 8.6) + 0.1);
+
+function Reviews(p: ArtProps): SceneArt {
+  const { tall, ind } = p;
+  const b = beats(p.d);
+  const FIX = reviewsFix(p);
+  const S = tall ? STAT_TALL : STAT_WIDE;
+  // Each card as she starts its sentence; the second's figure counted up as she says it.
+  const at = [Math.max(0.3, (p.at[0] ?? 0.35) - 0.05), Math.max(2.6, (p.at[1] ?? 3.2) - 0.05)];
+  return {
+    far: (
+      <Far>
+        <Glow id="far-reviews-a" cx={50} cy={46} r={56} o={0.14} color="#E8C27A" />
+        <g {...b("fade", FIX, { len: 1.4 })}>
+          <Glow id="far-reviews-b" cx={50} cy={44} r={58} o={0.16} />
+        </g>
+      </Far>
+    ),
+    mid: (
+      <>
+        <Stage b={b} to={FIX - 0.1}>
+          <Art tall={tall}>
+            {STATS.map((st, k) => {
+              const [x, y, w, h] = S.cards[k];
+              const l = x + S.m;
+              const lines = tall ? st.linesTall : st.lines;
+              const source = tall ? st.sourceTall : st.source;
+              const srcY = tall ? y + h - S.m - (source.length - 1) * S.src[2] : y + S.src[0];
+              return (
+                <g key={st.figure} {...b("rise", at[k], { len: 1 })}>
+                  <rect className="card" x={x} y={y} width={w} height={h} rx={tall ? 28 : 20} />
+                  <text className="t-disp t-gold t-left" x={l} y={y + S.fig[0]} fontSize={S.fig[1]}>
+                    {st.figure}
+                    {st.after && <tspan fontSize={S.fig[1] * 0.42}>{st.after}</tspan>}
+                  </text>
+                  {/* A gold line drawn under the number, a beat after it's in. */}
+                  <Gold d={`M ${l} ${y + S.fig[0] + S.fig[1] * 0.2} H ${l + S.fig[1] * 1.6}`} fx={b("draw", at[k] + 0.55, { len: 0.9 })} thin />
+                  {lines.map((line, i) => (
+                    <text key={line} className="t-body t-left" x={l} y={y + S.text[0] + i * S.text[2]} fontSize={S.text[1]}>
+                      {line}
+                    </text>
+                  ))}
+                  {source.map((line, i) => (
+                    <text key={line} className="t-faint t-left" x={l} y={srcY + i * S.src[2]} fontSize={S.src[1]}>
+                      {line}
+                    </text>
+                  ))}
+                </g>
+              );
+            })}
+          </Art>
+        </Stage>
+        <DemoFrame p={p} media={`reviews-${ind}`} from={FIX} name="Reviews · Demo" b={b} />
+      </>
+    ),
+  };
+}
+
+/* ── 3 The website: a dated one, then one they built ──────────────────── */
+
+type Dated = { url: string; banner: string; bannerTall: [string, string]; links: string; linksTall: [string, string]; side: string[]; cta: string; ctaTall: string };
+/** The business's old site, the kind that sends people away. */
+const DATED: Record<Industry, Dated> = {
+  winery: {
+    url: "yourwinery.com",
+    banner: "WELCOME TO OUR WINERY!!!",
+    bannerTall: ["WELCOME TO OUR", "WINERY!!!"],
+    links: "Home | About Us | Our Wines | Events | Gift Shop | Guestbook | Links",
+    linksTall: ["Home | About Us | Our Wines | Events", "Gift Shop | Guestbook | Links"],
+    side: ["» Specials", "» Wine Club", "» Gift Shop", "» Directions", "» Guestbook", "» Newsletter", "» Awards", "» Photos", "» Links"],
+    cta: "Click HERE to book a tasting!!",
+    ctaTall: "Click HERE to book!!",
+  },
+  dental: {
+    url: "yourpractice.com",
+    banner: "WELCOME TO OUR PRACTICE!!!",
+    bannerTall: ["WELCOME TO OUR", "PRACTICE!!!"],
+    links: "Home | About Us | Our Team | Services | Forms | Insurance | Links",
+    linksTall: ["Home | About Us | Our Team | Services", "Forms | Insurance | Links"],
+    side: ["» New Patients", "» Our Doctors", "» Braces", "» Forms", "» Insurance", "» Directions", "» Smile Gallery", "» Newsletter", "» Links"],
+    cta: "Click HERE to request an appt!!",
+    ctaTall: "Click HERE for an appt!!",
+  },
+  contractor: {
+    url: "yourcompany.com",
+    banner: "WELCOME TO OUR COMPANY!!!",
+    bannerTall: ["WELCOME TO OUR", "COMPANY!!!"],
+    links: "Home | About Us | Services | Projects | Gallery | Reviews | Links",
+    linksTall: ["Home | About Us | Services | Projects", "Gallery | Reviews | Links"],
+    side: ["» Kitchens", "» Bathrooms", "» Additions", "» Gallery", "» Reviews", "» Directions", "» Licenses", "» Newsletter", "» Links"],
+    cta: "Click HERE to request an estimate!!",
+    ctaTall: "Click HERE for a quote!!",
+  },
+  general: {
+    url: "yourbusiness.com",
+    banner: "WELCOME TO OUR WEBSITE!!!",
+    bannerTall: ["WELCOME TO OUR", "WEBSITE!!!"],
+    links: "Home | About Us | Services | Gallery | Events | Guestbook | Links",
+    linksTall: ["Home | About Us | Services | Gallery", "Events | Guestbook | Links"],
+    side: ["» Specials", "» Services", "» Gallery", "» Directions", "» Guestbook", "» Newsletter", "» Awards", "» Photos", "» Links"],
+    cta: "Click HERE to book!!",
+    ctaTall: "Click HERE to book!!",
+  },
+};
+/**
+ * The real site each business's walkthrough shows (its credit: script.ts,
+ * SITE_CREDIT): a winery, Prosperando's, then Pearls'; a practice, the
+ * concept site we built (we have no dental client site); a contractor,
+ * Pearls' from its crews' side; any other business, Pearls'.
+ */
+const SITE_MEDIA: Record<Industry, MediaId> = { winery: "prosperandoSite", dental: "practiceSite", contractor: "pearlsCrew", general: "pearlsSite" };
+const SITE_MEDIA_2: Partial<Record<Industry, MediaId>> = { winery: "pearlsSite" };
+
+/** A browser window on the set: its frame (rounded: 18, or 44 tall), its bar, its address pill, and the page in it, INSET in from the frame's sides and foot. */
 const SITE_WIDE = { frame: [70, 100, 860, 596] as Box, bar: 56, url: 20, pill: [300, 110, 400, 36] as Box, body: [72, 158, 856, 536] as Box };
 const SITE_TALL = { frame: [130, 40, 740, 1014] as Box, bar: 90, url: 26, pill: [190, 60, 620, 50] as Box, body: [132, 132, 736, 920] as Box };
+const INSET = 2;
+/** The new site comes in as she says they build one; a winery's cuts from Prosperando's to Pearls' (script.ts). */
+const siteAt = (p: ArtProps) => ({ now: siteNow(p.at[1]), cut: siteCut(p.at[1]) });
 
-function Site(tall: boolean): SceneArt {
-  const D = DESIGN.site;
-  const b = beats(D);
+function Site(p: ArtProps): SceneArt {
+  const { tall, ind } = p;
+  const b = beats(p.d);
   const L = tall ? SITE_TALL : SITE_WIDE;
   const [fx, fy, fw, fh] = L.frame;
   const [px, py, pw, ph] = L.pill;
+  const r = tall ? 44 : 18;
   const urlY = py + ph / 2 + L.url * 0.36;
-  const NEW = 3.6;
+  const T = siteAt(p);
+  const media = SITE_MEDIA[ind];
+  const second = SITE_MEDIA_2[ind];
   return {
     far: (
       <Far>
         <Glow id="far-site-a" cx={50} cy={46} r={58} o={0.13} color="#F4F1EA" />
-        <g {...b("fade", NEW, { len: 1.4 })}>
+        <g {...b("fade", T.now, { len: 1.4 })}>
           <Glow id="far-site-b" cx={50} cy={50} r={60} o={0.16} />
         </g>
       </Far>
@@ -805,7 +909,7 @@ function Site(tall: boolean): SceneArt {
       <div {...b("rise", 0.1, { len: 1, cls: "film-layer" })}>
         {/* A browser: the same frame for the old site and the new. */}
         <Art tall={tall}>
-          <rect className="card card--site s-paper-soft" x={fx} y={fy} width={fw} height={fh} rx={tall ? 44 : 18} />
+          <rect className="card card--site s-paper-soft" x={fx} y={fy} width={fw} height={fh} rx={r} />
           {!tall && (
             <g className="f-dim">
               <circle cx={fx + 32} cy={fy + L.bar / 2} r="7" />
@@ -815,23 +919,37 @@ function Site(tall: boolean): SceneArt {
           )}
           <rect className="f-url" x={px} y={py} width={pw} height={ph} rx={ph / 2} />
         </Art>
-        {/* The real Pearls Farm Labor site. */}
-        <Clip id="pearlsSite" tall={tall} box={L.body} fx={b("fade", NEW + 0.2, { len: 0.6 })} clean />
+        {/* The new one, playing; a winery's, then a quick cut to the second. */}
+        <Clip p={p} media={media} box={L.body} fx={b("fade", T.now + 0.2, { len: 0.6 })} clean round={r - INSET} />
+        {second && <Clip p={p} media={second} box={L.body} fx={b("fade", T.cut, { len: 0.18 })} clean round={r - INSET} />}
         {/* Over it, until it gives way: the old one. */}
-        <div {...b("pass", NEW, { len: 0.8, cls: "film-layer" })}>
+        <div {...b("pass", T.now, { len: 0.8, cls: "film-layer" })}>
           <Art tall={tall}>
-            {tall ? <DatedTall b={b} body={L.body} /> : <DatedWide b={b} body={L.body} />}
+            {tall ? <DatedTall b={b} body={L.body} D={DATED[ind]} /> : <DatedWide b={b} body={L.body} D={DATED[ind]} />}
             <text className="t-faint" x="500" y={urlY} fontSize={L.url}>
-              yourwinery.com
+              {DATED[ind].url}
             </text>
           </Art>
         </div>
         <Art tall={tall}>
-          <text x="500" y={urlY} fontSize={L.url} {...b("fade", NEW + 0.3, { len: 0.6, cls: "t-body" })}>
-            Client work · Pearls Farm Labor
-          </text>
-          <g {...b("fade", NEW + 0.9, { len: 1 })}>
-            <rect className="s-gold-edge" fill="none" x={fx} y={fy} width={fw} height={fh} rx={tall ? 44 : 18} />
+          {second ? (
+            <>
+              <g {...b("pass", T.cut, { len: 0.18 })}>
+                <text x="500" y={urlY} fontSize={L.url} {...b("fade", T.now + 0.3, { len: 0.6, cls: "t-body" })}>
+                  {SITE_CREDIT[ind]}
+                </text>
+              </g>
+              <text x="500" y={urlY} fontSize={L.url} {...b("fade", T.cut, { len: 0.18, cls: "t-body" })}>
+                {SITE_CREDIT_2}
+              </text>
+            </>
+          ) : (
+            <text x="500" y={urlY} fontSize={L.url} {...b("fade", T.now + 0.3, { len: 0.6, cls: "t-body" })}>
+              {SITE_CREDIT[ind]}
+            </text>
+          )}
+          <g {...b("fade", T.now + 0.9, { len: 1 })}>
+            <rect className="s-gold-edge" fill="none" x={fx} y={fy} width={fw} height={fh} rx={r} />
           </g>
         </Art>
       </div>
@@ -839,24 +957,24 @@ function Site(tall: boolean): SceneArt {
   };
 }
 
-/** A dated, cluttered winery site, in its box: a shouting banner, a wall of links, a broken picture, a visitor counter. */
-function DatedWide({ b, body: [x, y, w, h] }: { b: Beats; body: Box }) {
-  const bar = (bx: number, by: number, bw: number) => <rect className="f-old-text" x={bx} y={by} width={bw} height="8" rx="2" />;
+/** A dated, cluttered site, in its box: a shouting banner, a wall of links, a broken picture, a visitor counter. */
+function DatedWide({ b, body: [x, y, w, h], D }: { b: Beats; body: Box; D: Dated }) {
+  const bar = (bx: number, by: number, bw: number) => <rect key={`${bx} ${by}`} className="f-old-text" x={bx} y={by} width={bw} height="8" rx="2" />;
   return (
     <>
       <rect className="f-old-page" x={x} y={y} width={w} height={h} />
       <g {...b("pop", 0.2, { len: 0.4 })}>
         <rect className="f-old-banner" x={x + 16} y={y + 14} width={w - 32} height="70" />
         <text className="t-old t-old-yellow t-strong" x="500" y={y + 61} fontSize="32">
-          WELCOME TO OUR WINERY!!!
+          {D.banner}
         </text>
       </g>
       <text x="500" y={y + 112} fontSize="16" {...b("fade", 0.35, { len: 0.2, cls: "t-old t-old-link" })}>
-        Home | About Us | Our Wines | Events | Gift Shop | Guestbook | Links
+        {D.links}
       </text>
       <g {...b("pop", 0.5, { len: 0.4 })}>
         <rect className="f-old-box" x={x + 16} y={y + 130} width="170" height="380" />
-        {["» Specials", "» Wine Club", "» Gift Shop", "» Directions", "» Guestbook", "» Newsletter", "» Awards", "» Photos", "» Links"].map((t, i) => (
+        {D.side.map((t, i) => (
           <text key={t} className="t-old t-old-link t-left" x={x + 30} y={y + 162 + i * 38} fontSize="16">
             {t}
           </text>
@@ -872,9 +990,9 @@ function DatedWide({ b, body: [x, y, w, h] }: { b: Beats; body: Box }) {
       </g>
       <g {...b("blink", 1.4, { len: 0.6, n: 4 })}>
         <text className="t-old t-old-link t-left" x={x + 202} y={y + 492} fontSize="20">
-          Click HERE to book a tasting!!
+          {D.cta}
         </text>
-        <path className="s-old-link" d={`M ${x + 202} ${y + 497} H ${x + 478}`} />
+        <path className="s-old-link" d={`M ${x + 202} ${y + 497} h ${Math.round(D.cta.length * 9.2)}`} />
       </g>
       <g {...b("pop", 0.8, { len: 0.4 })}>
         <rect className="f-old-news" x={x + 656} y={y + 130} width="184" height="150" />
@@ -907,31 +1025,31 @@ function DatedWide({ b, body: [x, y, w, h] }: { b: Beats; body: Box }) {
 }
 
 /** The same, on a phone: a desktop page squeezed small, as such sites are. */
-function DatedTall({ b, body: [x, y, w] }: { b: Beats; body: Box }) {
-  const bar = (bx: number, by: number, bw: number) => <rect className="f-old-text" x={bx} y={by} width={bw} height="11" rx="3" />;
+function DatedTall({ b, body: [x, y, w], D }: { b: Beats; body: Box; D: Dated }) {
+  const bar = (bx: number, by: number, bw: number) => <rect key={`${bx} ${by}`} className="f-old-text" x={bx} y={by} width={bw} height="11" rx="3" />;
   return (
     <>
       <rect className="f-old-page" x={x} y={y} width={w} height="920" />
       <g {...b("pop", 0.2, { len: 0.4 })}>
         <rect className="f-old-banner" x={x + 14} y={y + 14} width={w - 28} height="116" />
         <text className="t-old t-old-yellow t-strong" x="500" y={y + 64} fontSize="38">
-          WELCOME TO OUR
+          {D.bannerTall[0]}
         </text>
         <text className="t-old t-old-yellow t-strong" x="500" y={y + 110} fontSize="38">
-          WINERY!!!
+          {D.bannerTall[1]}
         </text>
       </g>
       <g {...b("fade", 0.35, { len: 0.2 })}>
         <text className="t-old t-old-link" x="500" y={y + 170} fontSize="24">
-          Home | About Us | Our Wines | Events
+          {D.linksTall[0]}
         </text>
         <text className="t-old t-old-link" x="500" y={y + 204} fontSize="24">
-          Gift Shop | Guestbook | Links
+          {D.linksTall[1]}
         </text>
       </g>
       <g {...b("pop", 0.5, { len: 0.4 })}>
         <rect className="f-old-box" x={x + 14} y={y + 228} width="220" height="440" />
-        {["» Specials", "» Wine Club", "» Gift Shop", "» Directions", "» Guestbook", "» Newsletter", "» Awards", "» Photos"].map((t, i) => (
+        {D.side.slice(0, 8).map((t, i) => (
           <text key={t} className="t-old t-old-link t-left" x={x + 30} y={y + 274 + i * 52} fontSize="23">
             {t}
           </text>
@@ -951,9 +1069,9 @@ function DatedTall({ b, body: [x, y, w] }: { b: Beats; body: Box }) {
       <g {...b("fade", 0.7, { len: 0.3 })}>{[0, 1, 2, 3].map((i) => bar(x + 14, y + 692 + i * 30, [708, 660, 690, 520][i]))}</g>
       <g {...b("blink", 1.4, { len: 0.6, n: 4 })}>
         <text className="t-old t-old-link t-left" x={x + 14} y={y + 872} fontSize="26">
-          Click HERE to book!!
+          {D.ctaTall}
         </text>
-        <path className="s-old-link" d={`M ${x + 14} ${y + 878} H ${x + 254}`} />
+        <path className="s-old-link" d={`M ${x + 14} ${y + 878} h ${Math.round(D.ctaTall.length * 12)}`} />
       </g>
       <g {...b("pop", 1, { len: 0.4 })}>
         <rect className="f-old-counter" x={x + 470} y={y + 838} width="252" height="56" />
@@ -965,21 +1083,63 @@ function DatedTall({ b, body: [x, y, w] }: { b: Beats; body: Box }) {
   );
 }
 
-/* ── Booking: an inbox of requests, then a click ───────────────────────── */
+/* ── 3 Booking: the requests piling up, then their booking app ─────────── */
 
-const TEXTS = ["Can I book Saturday at 2?", "Is 4 still open?", "Any room for 6 on Sunday?", "Did you get my text?", "Can we do 3 instead?"];
-const MAILS: [string, string][] = [
-  ["Booking request", "Hi, is Saturday at 2 free?"],
-  ["Re: Tasting for 6", "Following up on my email…"],
-  ["Fwd: Saturday?", "Can you fit us in…"],
-  ["Group of 8", "Any time this weekend?"],
-  ["Re: Re: Booking", "Just checking again…"],
-];
+type Inbox = { texts: string[]; box: string; mails: [string, string][] };
+/** What piles up for each: texts, and an inbox or voicemail. */
+const INBOX: Record<Industry, Inbox> = {
+  winery: {
+    texts: ["Can I book Saturday at 2?", "Is 4 still open?", "Any room for 6 on Sunday?", "Did you get my text?", "Can we do 3 instead?"],
+    box: "Inbox",
+    mails: [
+      ["Booking request", "Hi, is Saturday at 2 free?"],
+      ["Re: Tasting for 6", "Following up on my email…"],
+      ["Fwd: Saturday?", "Can you fit us in…"],
+      ["Group of 8", "Any time this weekend?"],
+      ["Re: Re: Booking", "Just checking again…"],
+    ],
+  },
+  dental: {
+    texts: ["Sorry, missed your call!", "Can you call me back?", "Is Thursday still open?", "Tried you again at 5", "Any time after school?"],
+    box: "Voicemail",
+    mails: [
+      ["Voicemail · 0:42", "Hi, returning your call…"],
+      ["Voicemail · 1:05", "About my son’s consult…"],
+      ["Missed call", "925 555 0110"],
+      ["Voicemail · 0:31", "Calling back again…"],
+      ["Missed call", "925 555 0148"],
+    ],
+  },
+  contractor: {
+    texts: ["When can you come out?", "Still need that estimate", "Any update on the quote?", "Can you do Tuesday?", "Did you get my photos?"],
+    box: "Voicemail",
+    mails: [
+      ["Voicemail · 0:48", "About the kitchen estimate…"],
+      ["Voicemail · 1:12", "Following up on the remodel…"],
+      ["Missed call", "925 555 0163"],
+      ["Voicemail · 0:36", "Just checking in again…"],
+      ["Voicemail · 0:54", "Can someone come by…"],
+    ],
+  },
+  general: {
+    texts: ["Can I book Wednesday?", "Is 3 still open?", "Any time this week?", "Did you get my text?", "Can we do 4 instead?"],
+    box: "Inbox",
+    mails: [
+      ["Booking request", "Hi, is Wednesday at 3 free?"],
+      ["Re: Appointment", "Following up on my email…"],
+      ["Fwd: This week?", "Can you fit me in…"],
+      ["New customer", "Any time this week?"],
+      ["Re: Re: Booking", "Just checking again…"],
+    ],
+  },
+};
+/** The fix comes in as she says "Now…". */
+const bookingFix = (p: ArtProps) => Math.max(3.4, (p.at[1] ?? 3.75) + 0.15);
 
-function Booking(tall: boolean): SceneArt {
-  const D = DESIGN.booking;
-  const b = beats(D);
-  const FIX = 3.9;
+function Booking(p: ArtProps): SceneArt {
+  const { tall, ind } = p;
+  const b = beats(p.d);
+  const FIX = bookingFix(p);
   return {
     far: (
       <Far>
@@ -991,14 +1151,14 @@ function Booking(tall: boolean): SceneArt {
     ),
     mid: (
       <>
-        <Stage b={b} to={FIX - 0.1}>{tall ? <InboxTall b={b} /> : <InboxWide b={b} />}</Stage>
-        <Stage b={b} from={FIX}>{tall ? <BookTall b={b} /> : <BookWide b={b} />}</Stage>
+        <Stage b={b} to={FIX - 0.1}>{tall ? <InboxTall b={b} I={INBOX[ind]} /> : <InboxWide b={b} I={INBOX[ind]} />}</Stage>
+        <DemoFrame p={p} media={`booking-${ind}`} from={FIX} name="Booking · Demo" b={b} />
       </>
     ),
   };
 }
 
-function InboxWide({ b }: { b: Beats }) {
+function InboxWide({ b, I }: { b: Beats; I: Inbox }) {
   return (
     <Art tall={false}>
       {/* Texts, one after another. */}
@@ -1009,7 +1169,7 @@ function InboxWide({ b }: { b: Beats }) {
         </text>
         <path className="s-soft" d="M 70 196 H 470" />
       </g>
-      {TEXTS.map((t, i) => (
+      {I.texts.map((t, i) => (
         <g key={t} {...b("pop", 0.35 + i * 0.5, { len: 0.5 })}>
           <rect className="bubble" x="96" y={222 + i * 98} width={Math.min(348, t.length * 11.6 + 46)} height="72" rx="26" />
           <text className="t-body t-left" x="120" y={266 + i * 98} fontSize="23">
@@ -1017,18 +1177,18 @@ function InboxWide({ b }: { b: Beats }) {
           </text>
         </g>
       ))}
-      {/* And emails, piling up. */}
+      {/* And emails or voicemails, piling up. */}
       <g {...b("rise", 0.25, { len: 0.9 })}>
         <rect className="card" x="510" y="110" width="420" height="640" rx="26" />
         <text className="t-small t-left" x="546" y="170" fontSize="20">
-          Inbox
+          {I.box}
         </text>
         <path className="s-soft" d="M 510 196 H 930" />
         <circle className="f-paper" cx="886" cy="162" r="24" />
       </g>
       <Count values={["3", "8", "14"]} at={[0.6, 1.5, 2.4]} x={886} y={170} size={22} cls="t-ink t-strong" b={b} />
-      {MAILS.map(([from, subject], i) => (
-        <g key={from} {...b("rise", 0.6 + i * 0.45, { len: 0.6 })}>
+      {I.mails.map(([from, subject], i) => (
+        <g key={from + i} {...b("rise", 0.6 + i * 0.45, { len: 0.6 })}>
           <circle className="f-paper" cx="544" cy={240 + i * 100} r="6" />
           <text className="t-body t-left t-strong" x="564" y={248 + i * 100} fontSize="24">
             {from}
@@ -1036,14 +1196,14 @@ function InboxWide({ b }: { b: Beats }) {
           <text className="t-faint t-left" x="564" y={282 + i * 100} fontSize="20">
             {subject}
           </text>
-          {i < MAILS.length - 1 && <path className="s-soft" d={`M 544 ${308 + i * 100} H 900`} />}
+          {i < I.mails.length - 1 && <path className="s-soft" d={`M 544 ${308 + i * 100} H 900`} />}
         </g>
       ))}
     </Art>
   );
 }
 
-function InboxTall({ b }: { b: Beats }) {
+function InboxTall({ b, I }: { b: Beats; I: Inbox }) {
   return (
     <Art tall>
       <g {...b("rise", 0.1, { len: 0.9 })}>
@@ -1053,7 +1213,7 @@ function InboxTall({ b }: { b: Beats }) {
         </text>
         <path className="s-soft" d="M 40 124 H 960" />
       </g>
-      {TEXTS.slice(0, 4).map((t, i) => (
+      {I.texts.slice(0, 4).map((t, i) => (
         <g key={t} {...b("pop", 0.35 + i * 0.55, { len: 0.5 })}>
           <rect className="bubble" x="76" y={148 + i * 92} width={t.length * 16.2 + 64} height="76" rx="34" />
           <text className="t-body t-left" x="108" y={198 + i * 92} fontSize="32">
@@ -1064,14 +1224,14 @@ function InboxTall({ b }: { b: Beats }) {
       <g {...b("rise", 0.25, { len: 0.9 })}>
         <rect className="card" x="40" y="560" width="920" height="520" rx="30" />
         <text className="t-small t-left" x="84" y="624" fontSize="28">
-          Inbox
+          {I.box}
         </text>
         <path className="s-soft" d="M 40 654 H 960" />
         <circle className="f-paper" cx="900" cy="614" r="32" />
       </g>
       <Count values={["3", "8", "14"]} at={[0.6, 1.5, 2.4]} x={900} y={624} size={30} cls="t-ink t-strong" b={b} />
-      {MAILS.slice(0, 4).map(([from, subject], i) => (
-        <g key={from} {...b("rise", 0.6 + i * 0.5, { len: 0.6 })}>
+      {I.mails.slice(0, 4).map(([from, subject], i) => (
+        <g key={from + i} {...b("rise", 0.6 + i * 0.5, { len: 0.6 })}>
           <circle className="f-paper" cx="86" cy={692 + i * 100} r="8" />
           <text className="t-body t-left t-strong" x="112" y={704 + i * 100} fontSize="32">
             {from}
@@ -1087,176 +1247,36 @@ function InboxTall({ b }: { b: Beats }) {
 }
 
 /** A choice on the booking form: picked (gold) from `pick`, if it's the one. */
-function Choice({ x, y, w, h, size, text, pick, b }: { x: number; y: number; w: number; h: number; size: number; text: string; pick?: number; b: Beats }) {
-  return (
-    <>
-      <rect className="card s-paper-soft" x={x} y={y} width={w} height={h} rx="10" />
-      <text className="t-body" x={x + w / 2} y={y + h / 2 + size * 0.36} fontSize={size}>
-        {text}
-      </text>
-      {pick !== undefined && (
-        <g {...b("pop", pick, { len: 0.4 })}>
-          <rect className="f-gold-v" x={x} y={y} width={w} height={h} rx="10" />
-          <text className="t-ink t-strong" x={x + w / 2} y={y + h / 2 + size * 0.36} fontSize={size}>
-            {text}
-          </text>
-        </g>
-      )}
-    </>
-  );
-}
+/* ── 4 Calls: the phone unanswered; then the front desk takes a call ────── */
 
-function BookWide({ b }: { b: Beats }) {
-  return (
-    <Art tall={false}>
-      {/* The winery's own booking, on its site. */}
-      <rect className="card card--deep s-paper-soft" x="250" y="96" width="500" height="490" rx="24" />
-      <text className="t-disp t-gold t-left" x="290" y="168" fontSize="48">
-        Your winery
-      </text>
-      <text className="t-small t-left" x="292" y="210" fontSize="19">
-        Book a tasting · Saturday
-      </text>
-      {["Fri", "Sat", "Sun"].map((d, i) => (
-        <Choice key={d} x={290 + i * 145} y={238} w={130} h={64} size={24} text={d} pick={i === 1 ? 4.4 : undefined} b={b} />
-      ))}
-      {["12pm", "2pm", "4pm"].map((t, i) => (
-        <Choice key={t} x={290 + i * 145} y={318} w={130} h={64} size={24} text={t} pick={i === 1 ? 4.7 : undefined} b={b} />
-      ))}
-      <text className="t-faint t-left" x="290" y="428" fontSize="22">
-        Guests
-      </text>
-      <text className="t-body t-right" x="710" y="428" fontSize="26">
-        4
-      </text>
-      <path className="s-soft" d="M 290 448 H 710" />
-      <g {...b("press", 5.2, { len: 0.5 })}>
-        <rect className="f-gold-v" x="290" y="478" width="420" height="76" rx="8" />
-        <text className="t-ink t-caps" x="500" y="525" fontSize="24">
-          Book a tasting
-        </text>
-      </g>
-      <circle cx="500" cy="516" r="44" {...b("ring", 5.2, { len: 0.9, n: 1, cls: "s-gold-thin" })} />
-      {/* It comes in, confirmed, with nobody sorting it. */}
-      <g {...b("slide-in", 5.8, { len: 0.9, dx: 80 })}>
-        <rect className="page" x="250" y="620" width="500" height="160" rx="18" />
-        <circle className="f-gold" cx="290" cy="668" r="12" />
-        <text className="t-ink t-left t-strong" x="314" y="680" fontSize="32">
-          New booking
-        </text>
-        <text className="t-ink-soft t-left" x="290" y="740" fontSize="26">
-          Tasting for 4 · Sat 2pm
-        </text>
-      </g>
-      <g {...b("pop", 6.6, { len: 0.5 })}>
-        <text className="t-gold-deep t-right t-strong t-caps" x="674" y="676" fontSize="17">
-          Confirmed
-        </text>
-        <Tick cx={708} cy={670} r={22} />
-      </g>
-    </Art>
-  );
-}
+/** Whose phone rings unanswered, for each. */
+const PHONE: Record<Industry, string> = { winery: "Tasting room", dental: "Front desk", contractor: "Your phone", general: "Your phone" };
+/** The front desk demo comes in as she says "Now every call…". */
+const callsFix = (p: ArtProps) => Math.max(3.2, (p.at[1] ?? 4.4) - 0.1);
 
-function BookTall({ b }: { b: Beats }) {
-  return (
-    <Art tall>
-      <rect className="card card--deep s-paper-soft" x="40" y="30" width="920" height="600" rx="30" />
-      <text className="t-disp t-gold t-left" x="84" y="120" fontSize="62">
-        Your winery
-      </text>
-      <text className="t-small t-left" x="86" y="174" fontSize="27">
-        Book a tasting · Saturday
-      </text>
-      {["Fri", "Sat", "Sun"].map((d, i) => (
-        <Choice key={d} x={84 + i * 284} y={210} w={264} h={84} size={34} text={d} pick={i === 1 ? 4.4 : undefined} b={b} />
-      ))}
-      {["12pm", "2pm", "4pm"].map((t, i) => (
-        <Choice key={t} x={84 + i * 284} y={312} w={264} h={84} size={34} text={t} pick={i === 1 ? 4.7 : undefined} b={b} />
-      ))}
-      <text className="t-faint t-left" x="84" y="448" fontSize="30">
-        Guests
-      </text>
-      <text className="t-body t-right" x="916" y="448" fontSize="36">
-        4
-      </text>
-      <path className="s-soft" d="M 84 472 H 916" />
-      <g {...b("press", 5.2, { len: 0.5 })}>
-        <rect className="f-gold-v" x="84" y="500" width="832" height="96" rx="10" />
-        <text className="t-ink t-caps" x="500" y="560" fontSize="34">
-          Book a tasting
-        </text>
-      </g>
-      <circle cx="500" cy="548" r="58" {...b("ring", 5.2, { len: 0.9, n: 1, cls: "s-gold-thin" })} />
-      <g {...b("slide-in", 5.8, { len: 0.9, dx: 80 })}>
-        <rect className="page" x="40" y="680" width="920" height="230" rx="24" />
-        <circle className="f-gold" cx="96" cy="750" r="16" />
-        <text className="t-ink t-left t-strong" x="128" y="766" fontSize="46">
-          New booking
-        </text>
-        <text className="t-ink-soft t-left" x="84" y="850" fontSize="38">
-          Tasting for 4 · Sat 2pm
-        </text>
-      </g>
-      <g {...b("pop", 6.6, { len: 0.5 })}>
-        <text className="t-gold-deep t-right t-strong t-caps" x="836" y="760" fontSize="26">
-          Confirmed
-        </text>
-        <Tick cx={884} cy={750} r={34} />
-      </g>
-    </Art>
-  );
-}
-
-/* ── Calls: the front desk, too busy; then every call answered ─────────── */
-
-/** The caller, the same on both layouts: a made-up patient of the orthodontist's (and, later, in its office). */
-const CALLER = { name: "Sofia Park", initials: "SP" };
-
-/** The answer button's handset, in ink, at (cx, cy). */
-const Handset = ({ cx, cy, k, cls = "s-ink" }: { cx: number; cy: number; k: number; cls?: string }) => (
-  <g transform={`translate(${cx} ${cy}) scale(${k}) translate(-300 -486)`}>
-    <path className={cls} d={`M 262 450 ${HANDSET}`} />
-  </g>
-);
-
-/** A call coming in to the front desk, at (cx, cy): the caller's circle, ringing from `at`, until it's answered. */
-function Ringing({ cx, cy, r, at, b }: { cx: number; cy: number; r: number; at: number; b: Beats }) {
-  return (
-    <>
-      <circle cx={cx} cy={cy} r={r} {...b("ring", at, { len: 1, n: 1, cls: "s-gold-thin" })} />
-      <circle cx={cx} cy={cy} r={r} {...b("ring", at + 0.45, { len: 1, n: 1, cls: "s-gold-thin" })} />
-      <circle className="f-gold-dim s-gold-edge" cx={cx} cy={cy} r={r} />
-      <text className="t-disp" x={cx} y={cy + r * 0.27} fontSize={r * 0.78}>
-        {CALLER.initials}
-      </text>
-    </>
-  );
-}
-
-function Calls(tall: boolean): SceneArt {
-  const D = DESIGN.calls;
-  const b = beats(D);
-  const FIX = 4.5;
+function Calls(p: ArtProps): SceneArt {
+  const { tall, ind } = p;
+  const b = beats(p.d);
+  const FIX = callsFix(p);
   return {
     far: (
       <Far>
         <Glow id="far-calls-a" cx={50} cy={48} r={54} o={0.1} color="#F4F1EA" />
-        <g {...b("fade", FIX, { len: 1.4 })}>
-          <Glow id="far-calls-b" cx={40} cy={46} r={60} o={0.17} />
+        <g {...b("fade", FIX + DEMO_AT.desk.done, { len: 1.2 })}>
+          <Glow id="far-calls-b" cx={60} cy={44} r={62} o={0.16} />
         </g>
       </Far>
     ),
     mid: (
       <>
-        {/* The front desk's phone, ringing and ringing, the missed calls counting up. */}
+        {/* Their phone, ringing and ringing, the missed calls counting up. */}
         <Stage b={b} to={FIX - 0.1}>
           <Art tall={tall}>
             <g transform={tall ? "translate(500 560) scale(1.3) translate(-500 -440)" : "translate(500 430) scale(.97) translate(-500 -460)"}>
               <g {...b("rise", 0.15, { len: 0.9 })}>
                 <rect className="s-paper-soft card" x="330" y="120" width="340" height="680" rx="56" />
                 <text className="t-small" x="500" y="236" fontSize="30">
-                  Front desk
+                  {PHONE[ind]}
                 </text>
                 <g transform="translate(500 450) scale(2.4) translate(-300 -486)">
                   <path className="s-paper" d={`M 262 450 ${HANDSET}`} />
@@ -1277,168 +1297,40 @@ function Calls(tall: boolean): SceneArt {
             </g>
           </Art>
         </Stage>
-        {/* Then a call comes in, and it's answered, booked and followed up. */}
-        <Stage b={b} from={FIX}>{tall ? <AnsweredTall b={b} /> : <AnsweredWide b={b} />}</Stage>
+        {/* Then a call comes in, and the front desk takes it, books it and follows it up. */}
+        <DemoFrame p={p} media={`desk-${ind}`} from={FIX} name="Front desk · Demo" b={b} />
       </>
     ),
   };
 }
 
-function AnsweredWide({ b }: { b: Beats }) {
-  return (
-    <Art tall={false}>
-      {/* The front desk's phone: a call coming in, then answered. */}
-      <g {...b("rise", 4.6, { len: 0.8 })}>
-        <rect className="card s-paper-soft" x="70" y="230" width="290" height="560" rx="44" />
-        <path className="s-soft thick" d="M 190 262 H 240" />
-        <text className="t-small t-gold-text" x="215" y="322" fontSize="22">
-          Front desk
-        </text>
-        <Ringing cx={215} cy={450} r={58} at={4.8} b={b} />
-        <text className="t-body" x="215" y="566" fontSize="32">
-          {CALLER.name}
-        </text>
-      </g>
-      <g {...b("out", 5.8, { len: 0.3 })}>
-        <text x="215" y="602" fontSize="22" {...b("fade", 4.8, { cls: "t-faint" })}>
-          Incoming call
-        </text>
-        <circle fill="none" cx="160" cy="700" r="36" {...b("fade", 4.8, { cls: "s-paper-soft" })} />
-        <path d="M 148 688 l 24 24 M 172 688 l -24 24" {...b("fade", 4.8, { cls: "s-paper-soft" })} />
-        <g {...b("press", 5.5, { len: 0.4 })}>
-          <g {...b("fade", 4.8)}>
-            <circle className="f-gold-v" cx="270" cy="700" r="36" />
-            <Handset cx={270} cy={702} k={0.42} />
-          </g>
-        </g>
-      </g>
-      <g {...b("pop", 5.9, { len: 0.6 })}>
-        <text className="t-faint" x="215" y="602" fontSize="22">
-          On the call · 0:04
-        </text>
-        <rect className="f-gold-v" x="110" y="668" width="210" height="64" rx="32" />
-        <text className="t-ink t-caps" x="215" y="709" fontSize="22">
-          Answered
-        </text>
-      </g>
-      {/* Thursday fills in. */}
-      <g {...b("rise", 6.2, { len: 0.9 })}>
-        <rect className="card card--deep s-paper-soft" x="410" y="230" width="520" height="320" rx="20" />
-        <text className="t-small t-gold-text t-left" x="444" y="292" fontSize="28">
-          Thursday
-        </text>
-        <path className="s-soft" d="M 444 330 H 896 M 444 412 H 896 M 444 494 H 896" />
-      </g>
-      <g {...b("grow", 6.8, { len: 0.7 })}>
-        <rect className="f-gold-v" x="444" y="344" width="452" height="58" rx="8" />
-      </g>
-      <text x="464" y="382" fontSize="26" {...b("fade", 7.2, { cls: "t-ink t-left" })}>
-        Consult · 10am · {CALLER.name}
-      </text>
-      {/* And the follow-up goes out. */}
-      <g {...b("slide-in", 7.8, { len: 0.9, dx: 80 })}>
-        <path className="page" d="M 430 600 h 480 a 22 22 0 0 1 22 22 v 120 a 22 22 0 0 1 -22 22 h -420 l -34 34 v -34 h -26 a 22 22 0 0 1 -22 -22 v -120 a 22 22 0 0 1 22 -22 z" />
-        <text className="t-ink t-left" x="442" y="672" fontSize="34">
-          Thanks, see you Thursday.
-        </text>
-        <text className="t-ink-soft t-left" x="442" y="724" fontSize="28">
-          Follow-up · sent
-        </text>
-      </g>
-      <g {...b("pop", 8.6, { len: 0.5 })}>
-        <circle className="f-gold" cx="914" cy="600" r="28" />
-        <path className="s-ink" d="M 901 601 l 9 9 l 17 -18" />
-      </g>
-    </Art>
-  );
-}
+/* ── 5 Behind the scenes: the same details two or three times, then once ── */
 
-/** On a phone upright: the call across the top, the Thursday card under it, the follow-up under that. */
-function AnsweredTall({ b }: { b: Beats }) {
-  return (
-    <Art tall>
-      <g {...b("rise", 4.6, { len: 0.8 })}>
-        <rect className="card s-paper-soft" x="40" y="130" width="920" height="230" rx="60" />
-        <Ringing cx={156} cy={245} r={64} at={4.8} b={b} />
-        <text className="t-small t-gold-text t-left" x="256" y="216" fontSize="26">
-          Front desk
-        </text>
-        <text className="t-body t-left" x="256" y="272" fontSize="46">
-          {CALLER.name}
-        </text>
-      </g>
-      <g {...b("out", 5.8, { len: 0.3 })}>
-        <text x="256" y="316" fontSize="28" {...b("fade", 4.8, { cls: "t-faint t-left" })}>
-          Incoming call
-        </text>
-        <circle fill="none" cx="766" cy="245" r="46" {...b("fade", 4.8, { cls: "s-paper-soft" })} />
-        <path d="M 751 230 l 30 30 M 781 230 l -30 30" {...b("fade", 4.8, { cls: "s-paper-soft" })} />
-        <g {...b("press", 5.5, { len: 0.4 })}>
-          <g {...b("fade", 4.8)}>
-            <circle className="f-gold-v" cx="884" cy="245" r="46" />
-            <Handset cx={884} cy={247} k={0.54} />
-          </g>
-        </g>
-      </g>
-      <g {...b("pop", 5.9, { len: 0.6 })}>
-        <text className="t-faint t-left" x="256" y="316" fontSize="28">
-          On the call · 0:04
-        </text>
-        <rect className="f-gold-v" x="660" y="209" width="270" height="72" rx="36" />
-        <text className="t-ink t-caps" x="795" y="255" fontSize="26">
-          Answered
-        </text>
-      </g>
-      <g {...b("rise", 6.2, { len: 0.9 })}>
-        <rect className="card card--deep s-paper-soft" x="40" y="400" width="920" height="330" rx="22" />
-        <text className="t-small t-gold-text t-left" x="84" y="466" fontSize="34">
-          Thursday
-        </text>
-        <path className="s-soft" d="M 84 508 H 916 M 84 606 H 916 M 84 694 H 916" />
-      </g>
-      <g {...b("grow", 6.8, { len: 0.7 })}>
-        <rect className="f-gold-v" x="84" y="522" width="832" height="72" rx="10" />
-      </g>
-      <text x="112" y="571" fontSize="36" {...b("fade", 7.2, { cls: "t-ink t-left" })}>
-        Consult · 10am · {CALLER.name}
-      </text>
-      <g {...b("slide-in", 7.8, { len: 0.9, dx: 80 })}>
-        <path className="page" d="M 62 770 h 876 a 22 22 0 0 1 22 22 v 130 a 22 22 0 0 1 -22 22 h -800 l -34 34 v -34 h -42 a 22 22 0 0 1 -22 -22 v -130 a 22 22 0 0 1 22 -22 z" />
-        <text className="t-ink t-left" x="80" y="842" fontSize="44">
-          Thanks, see you Thursday.
-        </text>
-        <text className="t-ink-soft t-left" x="80" y="904" fontSize="32">
-          Follow-up · sent
-        </text>
-      </g>
-      <g {...b("pop", 8.6, { len: 0.5 })}>
-        <circle className="f-gold" cx="928" cy="772" r="34" />
-        <path className="s-ink" d="M 912 773 l 11 11 l 21 -22" />
-      </g>
-    </Art>
-  );
-}
-
-/* ── Behind the scenes: the same details three times, then once; then a tool of their own ── */
+type Rec = { type: string; first: string; when: string; name: string; phone: string; short: string; re: string };
+/** The record that gets typed in, for each: a guest, a patient, a job, a customer. */
+const REC: Record<Industry, Rec> = {
+  winery: { type: "Guest", first: "Maya Chen", when: "Tasting for 6 · Sat 2pm", name: "Maya Chen", phone: "707 555 0186", short: "Sat 2pm", re: "Your tasting, Sat 2pm" },
+  dental: { type: "Patient", first: "Sofia Park", when: "Consult · Thu 10am", name: "Sofia Park", phone: "415 555 0142", short: "Thu 10am", re: "Your consult, Thu 10am" },
+  contractor: { type: "Job", first: "Bennett kitchen", when: "Site visit · Tue 9am", name: "Laura Bennett", phone: "925 555 0173", short: "Tue 9am", re: "Your site visit, Tue 9am" },
+  general: { type: "Customer", first: "Emma Ruiz", when: "Appointment · Wed 3pm", name: "Emma Ruiz", phone: "510 555 0119", short: "Wed 3pm", re: "Your appointment, Wed 3pm" },
+};
 
 type Win = { x: number; w: number; h: number; bar: number; ys: number[]; title: number; label: number; value: number; k: number };
 const DESK_WIDE: Win = { x: 330, w: 600, h: 200, bar: 50, ys: [110, 330, 550], title: 17, label: 20, value: 26, k: 1 };
 const DESK_TALL: Win = { x: 90, w: 870, h: 270, bar: 64, ys: [210, 500, 790], title: 26, label: 28, value: 36, k: 1.4 };
 const APPS = ["Booking system", "Spreadsheet", "Email"];
-/** When each app gets the patient typed in by hand; and, once there's one entry, filled in on its own. */
+/** When each app gets the record typed in by hand. */
 const TYPE_AT = [0.7, 1.8, 2.9];
-const FILL_AT = 5.55;
+/** The one entry comes in as she says they make one (a demo, /demos/one-entry). */
+const officeAt = (p: ArtProps) => ({ one: Math.max(3.9, (p.at[1] ?? 4.1) + 0.3) });
 
-/**
- * One of the office's apps with the patient in it: typed by hand (`typed`,
- * from its time), or filled in on its own from the one entry.
- */
-function AppFields({ i, W, wy, b, typed }: { i: number; W: Win; wy: number; b: Beats; typed: boolean }) {
+/** One of the apps with the record in it: typed by hand (`typed`, from its time), or filled in on its own from the one entry. */
+function AppFields({ i, W, wy, b, typed, R }: { i: number; W: Win; wy: number; b: Beats; typed: boolean; R: Rec }) {
   const x = W.x;
   const k = W.k;
-  const name = (cls: string, nx: number, ny: number, size: number) => (
-    <text className={`${cls} t-left`} x={nx} y={ny} fontSize={size}>
-      {typed ? <Typed text={CALLER.name} at={TYPE_AT[i]} b={b} /> : CALLER.name}
+  const name = (text: string, nx: number, ny: number, size: number) => (
+    <text className={`${typed ? "t-body" : "t-gold-text"} t-left`} x={nx} y={ny} fontSize={size}>
+      {typed ? <Typed text={text} at={TYPE_AT[i]} b={b} /> : text}
     </text>
   );
   const rest = (node: ReactNode) => (typed ? <g {...b("fade", TYPE_AT[i] + 0.65, { len: 0.3 })}>{node}</g> : node);
@@ -1446,10 +1338,10 @@ function AppFields({ i, W, wy, b, typed }: { i: number; W: Win; wy: number; b: B
   if (i === 0)
     return (
       <>
-        {name(val, x + 170 * k, wy + 104 * k, W.value)}
+        {name(R.first, x + 170 * k, wy + 104 * k, W.value)}
         {rest(
           <text className={`${val} t-left`} x={x + 170 * k} y={wy + 158 * k} fontSize={W.value}>
-            Consult · Thu 10am
+            {R.when}
           </text>
         )}
       </>
@@ -1457,14 +1349,14 @@ function AppFields({ i, W, wy, b, typed }: { i: number; W: Win; wy: number; b: B
   if (i === 1)
     return (
       <>
-        {name(val, x + 32 * k, wy + 154 * k, W.value - 2)}
+        {name(R.name, x + 32 * k, wy + 154 * k, W.value - 2)}
         {rest(
           <>
             <text className={`${val} t-left`} x={x + 226 * k} y={wy + 154 * k} fontSize={W.value - 4}>
-              415 555 0142
+              {R.phone}
             </text>
             <text className={`${val} t-left`} x={x + 420 * k} y={wy + 154 * k} fontSize={W.value - 4}>
-              Thu 10am
+              {R.short}
             </text>
           </>
         )}
@@ -1472,10 +1364,10 @@ function AppFields({ i, W, wy, b, typed }: { i: number; W: Win; wy: number; b: B
     );
   return (
     <>
-      {name(val, x + 92 * k, wy + 104 * k, W.value)}
+      {name(R.name, x + 92 * k, wy + 104 * k, W.value)}
       {rest(
         <text className={`${val} t-left`} x={x + 92 * k} y={wy + 158 * k} fontSize={W.value - 2}>
-          Your consult, Thu 10am
+          {R.re}
         </text>
       )}
     </>
@@ -1483,7 +1375,7 @@ function AppFields({ i, W, wy, b, typed }: { i: number; W: Win; wy: number; b: B
 }
 
 /** An app's window, its labels and lines, empty. */
-function AppWindow({ i, W, wy }: { i: number; W: Win; wy: number }) {
+function AppWindow({ i, W, wy, R }: { i: number; W: Win; wy: number; R: Rec }) {
   const x = W.x;
   const k = W.k;
   const label = (t: string, lx: number, ly: number) => (
@@ -1505,7 +1397,7 @@ function AppWindow({ i, W, wy }: { i: number; W: Win; wy: number }) {
       </text>
       {i === 0 && (
         <>
-          {label("Patient", x + 32 * k, wy + 104 * k)}
+          {label(R.type, x + 32 * k, wy + 104 * k)}
           {label("Visit", x + 32 * k, wy + 158 * k)}
         </>
       )}
@@ -1527,24 +1419,14 @@ function AppWindow({ i, W, wy }: { i: number; W: Win; wy: number }) {
   );
 }
 
-function Office(tall: boolean): SceneArt {
-  const D = DESIGN.office;
-  const b = beats(D);
+function Office(p: ArtProps): SceneArt {
+  const { tall } = p;
+  const b = beats(p.d);
   const W = tall ? DESK_TALL : DESK_WIDE;
-  const ONE = 4.4;
-  // The card beside them: hours lost to typing, then the one entry.
-  const side = tall ? ([40, 30, 920, 150] as Box) : ([70, 300, 200, 260] as Box);
-  const [sx, sy, sw, sh] = side;
-  const mid = (wy: number) => wy + W.h / 2;
-  // From the one entry into each app: down the left of them on a phone; across, then up or down, on a wide screen.
-  const feed = (wy: number) => {
-    const m = mid(wy);
-    if (tall) return `M 56 ${sy + sh} V ${m - 10} Q 56 ${m} 66 ${m} H ${W.x}`;
-    const from = sy + sh / 2;
-    if (m === from) return `M ${sx + sw} ${from} H ${W.x}`;
-    const s = m > from ? 1 : -1;
-    return `M ${sx + sw} ${from} H 292 Q 300 ${from} 300 ${from + 8 * s} V ${m - 8 * s} Q 300 ${m} 308 ${m} H ${W.x}`;
-  };
+  const R = REC[p.ind];
+  const { one: ONE } = officeAt(p);
+  // The card beside them: typed by hand.
+  const [sx, sy, sw, sh] = tall ? ([40, 30, 920, 150] as Box) : ([70, 300, 200, 260] as Box);
   return {
     far: (
       <Far>
@@ -1556,71 +1438,59 @@ function Office(tall: boolean): SceneArt {
     ),
     mid: (
       <>
-        <Stage b={b}>
+        {/* The same details, entered by hand in each tool. */}
+        <Stage b={b} to={ONE - 0.1}>
           <Art tall={tall}>
             {W.ys.map((y, i) => (
               <g key={y} {...b("rise", 0.2 + i * 0.2, { len: 0.8 })}>
-                <AppWindow i={i} W={W} wy={y} />
+                <AppWindow i={i} W={W} wy={y} R={R} />
               </g>
-            ))}
-            {/* The same details are entered by hand in each tool. */}
-            <g {...b("out", ONE, { len: 0.35 })}>
-              {W.ys.map((y, i) => (
-                <AppFields key={y} i={i} W={W} wy={y} b={b} typed />
-              ))}
-              <g {...b("rise", 0.4, { len: 0.8 })}>
-                <rect className="card s-paper-soft" x={sx} y={sy} width={sw} height={sh} rx="20" />
-                <text className="t-small t-left" x={tall ? 84 : sx + 28} y={tall ? sy + 62 : sy + 50} fontSize={tall ? 26 : 18}>
-                  By hand
-                </text>
-                <text className="t-faint t-left" x={tall ? 84 : sx + 28} y={tall ? sy + 114 : sy + 222} fontSize={tall ? 30 : 20}>
-                  Repeated entry
-                </text>
-              </g>
-            </g>
-            {/* Then once: one entry, and all three fill in on their own. */}
-            <g {...b("fade", ONE + 0.2, { len: 0.6 })}>
-              <rect className="card card--deep s-gold-edge" x={sx} y={sy} width={sw} height={sh} rx="20" />
-              <text className="t-small t-gold-text t-left" x={tall ? 84 : sx + 28} y={tall ? sy + 62 : sy + 50} fontSize={tall ? 26 : 18}>
-                One entry
-              </text>
-              {!tall && (
-                <text className="t-faint t-left" x={sx + 28} y={sy + 196} fontSize={20}>
-                  Thu 10am
-                </text>
-              )}
-            </g>
-            <text className="t-disp t-gold t-left" x={tall ? 84 : sx + 26} y={tall ? sy + 122 : sy + 150} fontSize={tall ? 52 : 36}>
-              <Typed text={tall ? `${CALLER.name} · Thu 10am` : CALLER.name} at={ONE + 0.45} b={b} step={0.04} />
-            </text>
-            {W.ys.map((y) => (
-              <Gold key={y} d={feed(y)} fx={b("draw", 5.1, { len: 0.5 })} thin />
             ))}
             {W.ys.map((y, i) => (
-              <g key={y}>
-                <g {...b("fade", FILL_AT + i * 0.1, { len: 0.3 })}>
-                  <AppFields i={i} W={W} wy={y} b={b} typed={false} />
-                </g>
-                <g {...b("pop", FILL_AT + 0.3 + i * 0.1, { len: 0.4 })}>
-                  <Tick cx={W.x + W.w - 30 * W.k} cy={y + W.bar / 2} r={15 * W.k} />
-                </g>
-              </g>
+              <AppFields key={y} i={i} W={W} wy={y} b={b} typed R={R} />
             ))}
+            <g {...b("rise", 0.4, { len: 0.8 })}>
+              <rect className="card s-paper-soft" x={sx} y={sy} width={sw} height={sh} rx="20" />
+              <text className="t-small t-left" x={tall ? 84 : sx + 28} y={tall ? sy + 62 : sy + 50} fontSize={tall ? 26 : 18}>
+                By hand
+              </text>
+              <text className="t-faint t-left" x={tall ? 84 : sx + 28} y={tall ? sy + 114 : sy + 222} fontSize={tall ? 30 : 20}>
+                Repeated entry
+              </text>
+            </g>
           </Art>
         </Stage>
-
+        {/* Then once: one entry, and every system fills in on its own. */}
+        <DemoFrame p={p} media={`entry-${p.ind}`} from={ONE} name="One entry · Demo" b={b} />
       </>
     ),
   };
 }
 
-/* ── Demo: custom tools ────────────────────────────────────────────────── */
+/** A tool of their own, as she says they build one: their notes, then what it makes of them (a demo, /demos/tool). */
+function ToolDemo(p: ArtProps): SceneArt {
+  const b = beats(p.d);
+  const T = toolAt(p);
+  return {
+    far: (
+      <Far>
+        <Glow id="far-tool-a" cx={50} cy={46} r={58} o={0.1} color="#F4F1EA" />
+        <g {...b("fade", T.done, { len: 1.2 })}>
+          <Glow id="far-tool-b" cx={56} cy={44} r={62} o={0.16} />
+        </g>
+      </Far>
+    ),
+    mid: <DemoFrame p={p} media={`tool-${p.ind as ToolInd}`} from={0.15} name="Your tool · Demo" b={b} />,
+  };
+}
 
-/** Clinical Scribe's consult workflow shown in recreated screens with fictional data. */
-function Tools(tall: boolean): SceneArt {
-  const D = DESIGN.tools;
-  const b = beats(D);
-  // Custom tools: the consult-notes window, its title bar, and its body, where the gold sketch turns into the real thing.
+/* ── 5, and a tool of their own ────────────────────────────────────────── */
+
+/** Clinical Scribe's consult workflow, in recreated screens with fictional data (a practice's tool of their own). */
+function ClinicalTools(p: ArtProps): SceneArt {
+  const { tall } = p;
+  const b = beats(p.d);
+  // The consult-notes window, its title bar, and its body, where the gold sketch turns into the real thing.
   const T = tall ? { win: [40, 190, 920, 850] as Box, bar: 70, title: 122, size: 92, rec: 236 } : { win: [70, 210, 860, 600] as Box, bar: 74, title: 150, size: 88, rec: 210 };
   const [wx, wy, ww, wh] = T.win;
   const body: Box = [wx + 2, wy + T.bar + 2, ww - 4, wh - T.bar - 4];
@@ -1639,8 +1509,7 @@ function Tools(tall: boolean): SceneArt {
           <text x="500" y={T.title} fontSize={T.size} {...b("rise", 0.2, { len: 1.2, cls: "t-disp" })}>
             Clinical Scribe
           </text>
-          <text x="500" y={T.title + (tall ? 42 : 34)} fontSize={tall ? 32 : 24}
-            {...b("fade", 0.7, { len: 0.5, cls: "t-small" })}>
+          <text x="500" y={T.title + (tall ? 42 : 34)} fontSize={tall ? 32 : 24} {...b("fade", 0.7, { len: 0.5, cls: "t-small" })}>
             Recreated screens · Demo data
           </text>
         </Art>
@@ -1670,7 +1539,7 @@ function Tools(tall: boolean): SceneArt {
               ))}
             </g>
           </Art>
-          <Clip id="clinical" tall={tall} box={body} fx={b("fade", 1.5, { len: 0.8 })} top />
+          <Clip p={p} media="clinical" box={body} fx={b("fade", 1.5, { len: 0.8 })} top />
           <Art tall={tall}>
             <rect className="s-gold-edge" fill="none" x={wx} y={wy} width={ww} height={wh} rx="22" />
             <g {...b("pop", 14.6, { len: 0.7 })}>
@@ -1692,7 +1561,7 @@ function Tools(tall: boolean): SceneArt {
 
 const WAVE = [22, 48, 30, 70, 44, 90, 56, 34, 80, 62, 40, 96, 52, 28, 74, 58, 36, 86, 46, 64, 30, 78, 50, 38, 68, 26];
 
-/* ── The choice: its backdrop (the cards themselves are film.tsx's) ───── */
+/* ── The picker and the note: their backdrop (what's on it is film.tsx's) ── */
 
 function ChoiceBackdrop(): SceneArt {
   return {
@@ -1706,348 +1575,21 @@ function ChoiceBackdrop(): SceneArt {
   };
 }
 
-/* ── Demo: the front desk, behind the scenes ───────────────────────────── */
+/* ── 6 Photo & video ───────────────────────────────────────────────────── */
 
-/** The call, as the live transcript has it: who says it, and what. Made-up demo data. */
-const TRANSCRIPT: [who: "caller" | "desk", text: string, at: number][] = [
-  ["caller", "Hi, I’d like to book a consult.", 2.3],
-  ["desk", "Of course. Are you a new patient?", 3.1],
-  ["caller", "Yes. Thursday morning, if you can.", 3.9],
-  ["desk", "Thursday at 10 is open. Shall I book it?", 5.3],
-  ["caller", "Perfect, thank you.", 6.1],
-];
-/** What happens meanwhile, each ticked in turn: the step, what came of it, and when. */
-const STEPS: [title: string, detail: string, at: number][] = [
-  ["Call answered", "On the first ring", 1.9],
-  ["Request picked out", "New patient consult, Thu am", 4.7],
-  ["Slot found and booked", "Thursday, 10:00 AM", 6.9],
-  ["Patient record filled in", `${CALLER.name} · 415 555 0142`, 8],
-  ["Confirmation text sent", "Delivered · 9:42 AM", 9.9],
-];
-const HANDLED = 10.8;
+/** Pearls' reel keeps the pace it was designed at, as shares of this length, whatever its scene's. */
+const REEL_D = 15.04;
 
-/**
- * While the front desk's phone is answered (05, Calls), what happens behind
- * it, as a live view of the desk would show it: the call comes in from Sofia
- * Park, its transcript appears line by line, her request is picked out, a
- * slot found and booked, her record filled in and the confirmation texted,
- * each step ticking in turn. Labelled a demo; the data is made up.
- */
-function FrontDesk(tall: boolean): SceneArt {
-  const b = beats(DESIGN.frontdesk);
-  return {
-    far: (
-      <Far>
-        <Glow id="far-desk-a" cx={50} cy={46} r={60} o={0.1} color="#F4F1EA" />
-        <g {...b("fade", HANDLED, { len: 1.2 })}>
-          <Glow id="far-desk-b" cx={60} cy={44} r={62} o={0.16} />
-        </g>
-      </Far>
-    ),
-    mid: <div {...b("rise", 0.15, { len: 1, cls: "film-layer" })}>{tall ? <DeskTall b={b} /> : <DeskWide b={b} />}</div>,
-  };
-}
-
-/** On a wide screen: the call and its transcript on the left, every step listed down the right. */
-function DeskWide({ b }: { b: Beats }) {
-  const L = {
-    win: [40, 110, 920, 700] as Box, bar: 64, title: 18, tag: [838, 125, 92, 34] as Box, tagSize: 15,
-    card: [70, 196, 490, 112] as Box, av: 36, name: 28, sub: 19, pill: [404, 234, 136, 36] as Box, pillSize: 15,
-    tLabel: 352, tSize: 16, bub: 372, bubGap: 74, bubH: 56, bubSize: 21, bubX: [70, 560] as const,
-    chip: [70, 742, 490, 46] as Box, chipSize: 19,
-    steps: { y: 244, gap: 110, cx: 616, r: 18, x: 648, title: 21, detail: 18 },
-  };
-  const [wx, wy, ww, wh] = L.win;
-  const [cx0, cy0, cw, ch] = L.card;
-  const avX = cx0 + L.av + 22;
-  const avY = cy0 + ch / 2;
-  const [px, py, pw, ph] = L.pill;
-  const [tx, ty, tw, th] = L.tag;
-  const [kx, ky, kw, kh] = L.chip;
-  const S = L.steps;
-  const stepY = (i: number) => S.y + i * S.gap;
-  // A bubble's width, from its text: Hanken's letters run about half an em wide.
-  const bubW = (text: string) => Math.round(text.length * L.bubSize * 0.5 + L.bubSize * 2);
-  return (
-    <Art tall={false}>
-      {/* The desk's live view: its title bar, live, and labelled a demo. */}
-      <rect className="card card--deep" x={wx} y={wy} width={ww} height={wh} rx="22" />
-      <path className="s-soft" d={`M ${wx} ${wy + L.bar} H ${wx + ww}`} />
-      <g {...b("blink", 0.5, { len: 1.2, n: 8 })}>
-        <circle className="f-gold" cx={wx + 40} cy={wy + L.bar / 2} r={8} />
-      </g>
-      <text className="t-small t-gold-text t-left" x={wx + 62} y={wy + L.bar / 2 + L.title * 0.36} fontSize={L.title}>
-        Front desk · live
-      </text>
-      <rect className="s-gold-faint" x={tx} y={ty} width={tw} height={th} rx={th / 2} />
-      <text className="t-caps t-gold-text" x={tx + tw / 2} y={ty + th / 2 + L.tagSize * 0.36} fontSize={L.tagSize}>
-        Demo
-      </text>
-
-      {/* The call: Sofia Park, ringing, then answered. */}
-      <g {...b("rise", 0.5, { len: 0.8 })}>
-        <rect className="card s-paper-soft" x={cx0} y={cy0} width={cw} height={ch} rx="18" />
-        <Ringing cx={avX} cy={avY} r={L.av} at={0.8} b={b} />
-        <text className="t-body t-left" x={avX + L.av + 24} y={avY - 2} fontSize={L.name}>
-          {CALLER.name}
-        </text>
-        <text className="t-faint t-left" x={avX + L.av + 24} y={avY + L.sub * 1.3} fontSize={L.sub}>
-          415 555 0142
-        </text>
-      </g>
-      <g {...b("fade", 0.6, { len: 0.3 })}>
-        <g {...b("out", 1.6, { len: 0.25 })}>
-          <rect className="s-paper-soft" fill="none" x={px} y={py} width={pw} height={ph} rx={ph / 2} />
-          <text className="t-small" x={px + pw / 2} y={py + ph / 2 + L.pillSize * 0.36} fontSize={L.pillSize}>
-            Incoming
-          </text>
-        </g>
-      </g>
-      <g {...b("pop", 1.6, { len: 0.5 })}>
-        <g {...b("out", HANDLED, { len: 0.25 })}>
-          <rect className="f-gold-v" x={px} y={py} width={pw} height={ph} rx={ph / 2} />
-          <text className="t-ink t-caps" x={px + pw / 2} y={py + ph / 2 + L.pillSize * 0.36} fontSize={L.pillSize}>
-            Answered
-          </text>
-        </g>
-      </g>
-      <g {...b("pop", HANDLED, { len: 0.5 })}>
-        <rect className="f-paper" x={px} y={py} width={pw} height={ph} rx={ph / 2} />
-        <text className="t-ink t-caps" x={px + pw / 2} y={py + ph / 2 + L.pillSize * 0.36} fontSize={L.pillSize}>
-          Handled
-        </text>
-      </g>
-
-      {/* What's said, line by line. */}
-      <text x={cx0} y={L.tLabel} fontSize={L.tSize} {...b("fade", 2, { len: 0.4, cls: "t-small t-left" })}>
-        Live transcript
-      </text>
-      {TRANSCRIPT.map(([who, text, at], i) => {
-        const w = bubW(text);
-        const x = who === "caller" ? L.bubX[0] : L.bubX[1] - w;
-        const y = L.bub + i * L.bubGap;
-        return (
-          <g key={text} {...b("rise", at, { len: 0.6 })}>
-            <rect className={who === "caller" ? "bubble" : "f-ai"} x={x} y={y} width={w} height={L.bubH} rx="16" />
-            <text className="t-body t-left" x={x + L.bubSize} y={y + L.bubH / 2 + L.bubSize * 0.36} fontSize={L.bubSize}>
-              {text}
-            </text>
-          </g>
-        );
-      })}
-
-      {/* Her request, picked out of what she said. */}
-      <g {...b("pop", 4.5, { len: 0.6 })}>
-        <rect className="f-gold-dim s-gold-edge" x={kx} y={ky} width={kw} height={kh} rx={kh / 2} />
-        <path className="f-gold" d={sparkle(kx + kh * 0.62, ky + kh / 2, kh * 0.26)} />
-        <text className="t-gold-text t-left t-strong" x={kx + kh * 1.12} y={ky + kh / 2 + L.chipSize * 0.36} fontSize={L.chipSize}>
-          New patient consult, Thursday morning
-        </text>
-      </g>
-
-      {/* Meanwhile: each step, ticked in turn, the thread between them drawn on as they go. */}
-      <text x={S.cx - S.r} y={S.y - 34} fontSize={L.tSize} {...b("fade", 1.2, { len: 0.4, cls: "t-small t-left" })}>
-        What happens
-      </text>
-      {STEPS.map(([title, detail, at], i) => {
-        const y = stepY(i);
-        const next = STEPS[i + 1];
-        return (
-          <g key={title}>
-            {next && (
-              <>
-                <path className="s-soft" d={`M ${S.cx} ${y + S.r + 6} V ${stepY(i + 1) - S.r - 6}`} />
-                <Gold d={`M ${S.cx} ${y + S.r + 6} V ${stepY(i + 1) - S.r - 6}`} fx={b("draw", next[2] - 0.45, { len: 0.45 })} thin />
-              </>
-            )}
-            <circle fill="none" cx={S.cx} cy={y} r={S.r} {...b("fade", 1 + i * 0.12, { len: 0.4, cls: "s-paper-soft" })} />
-            <g {...b("pop", at, { len: 0.5 })}>
-              <Tick cx={S.cx} cy={y} r={S.r} />
-            </g>
-            <text x={S.x} y={y + S.title * 0.36} fontSize={S.title} {...b("fade", 1 + i * 0.12, { len: 0.4, cls: "t-faint t-left" })}>
-              {title}
-            </text>
-            <text x={S.x} y={y + S.title * 0.36} fontSize={S.title} {...b("fade", at, { len: 0.4, cls: "t-body t-left" })}>
-              {title}
-            </text>
-            <text
-              className="t-gold-text t-left"
-              x={S.x}
-              y={y + S.title * 0.36 + S.detail * 1.7}
-              fontSize={S.detail}
-            >
-              {i === 3 ? <Typed text={detail} at={at + 0.1} b={b} step={0.035} /> : <tspan {...b("fade", at + 0.1, { len: 0.4 })}>{detail}</tspan>}
-            </text>
-          </g>
-        );
-      })}
-
-      {/* All of it done, nobody at the desk having stopped. */}
-      <g {...b("fade", HANDLED, { len: 1 })}>
-        <rect className="s-gold-edge" fill="none" x={wx} y={wy} width={ww} height={wh} rx="22" />
-      </g>
-    </Art>
-  );
-}
-
-/**
- * On a phone upright, readable at its size (nothing under 12px: 32 set
- * units, at 1000 across 390px): the call across the top; the transcript's
- * last three lines, each new one pushing the oldest up and out; her request
- * picked out; then the steps as a row of five ticks, the one just done
- * named large under them.
- */
-function DeskTall({ b }: { b: Beats }) {
-  const win: Box = [30, 30, 940, 1040];
-  const [wx, wy, ww, wh] = win;
-  const bar = 96;
-  const card: Box = [60, 152, 880, 150];
-  const [cx0, cy0, cw, ch] = card;
-  const av = 48;
-  const avX = cx0 + av + 26;
-  const avY = cy0 + ch / 2;
-  const pill: Box = [680, avY - 30, 230, 60];
-  const [px, py, pw, ph] = pill;
-  // The transcript: three places for its lines, the newest at the bottom.
-  const bub = { y: 384, gap: 94, h: 78, size: 36, x: [60, 940] as const };
-  const SLOTS = 3;
-  const chip: Box = [60, 676, 880, 72];
-  const [kx, ky, kw, kh] = chip;
-  const row = { y: 812, r: 26, xs: [120, 300, 480, 660, 840] };
-  const bubW = (text: string) => Math.round(text.length * bub.size * 0.5 + bub.size * 2);
-  return (
-    <Art tall>
-      <rect className="card card--deep" x={wx} y={wy} width={ww} height={wh} rx="26" />
-      <path className="s-soft" d={`M ${wx} ${wy + bar} H ${wx + ww}`} />
-      <g {...b("blink", 0.5, { len: 1.2, n: 8 })}>
-        <circle className="f-gold" cx={wx + 44} cy={wy + bar / 2} r={11} />
-      </g>
-      <text className="t-small t-gold-text t-left" x={wx + 72} y={wy + bar / 2 + 12} fontSize={32}>
-        Front desk · live
-      </text>
-      <rect className="s-gold-faint" x={wx + ww - 196} y={wy + bar / 2 - 29} width={170} height={58} rx={29} />
-      <text className="t-caps t-gold-text" x={wx + ww - 111} y={wy + bar / 2 + 12} fontSize={32}>
-        Demo
-      </text>
-
-      {/* The call: Sofia Park, ringing, then answered. */}
-      <g {...b("rise", 0.5, { len: 0.8 })}>
-        <rect className="card s-paper-soft" x={cx0} y={cy0} width={cw} height={ch} rx="22" />
-        <Ringing cx={avX} cy={avY} r={av} at={0.8} b={b} />
-        <text className="t-body t-left" x={avX + av + 26} y={avY - 6} fontSize={46}>
-          {CALLER.name}
-        </text>
-        <text className="t-faint t-left" x={avX + av + 26} y={avY + 42} fontSize={36}>
-          415 555 0142
-        </text>
-      </g>
-      <g {...b("fade", 0.6, { len: 0.3 })}>
-        <g {...b("out", 1.6, { len: 0.25 })}>
-          <rect className="s-paper-soft" fill="none" x={px} y={py} width={pw} height={ph} rx={ph / 2} />
-          <text className="t-small" x={px + pw / 2} y={py + ph / 2 + 11} fontSize={32}>
-            Incoming
-          </text>
-        </g>
-      </g>
-      <g {...b("pop", 1.6, { len: 0.5 })}>
-        <g {...b("out", HANDLED, { len: 0.25 })}>
-          <rect className="f-gold-v" x={px} y={py} width={pw} height={ph} rx={ph / 2} />
-          <text className="t-ink t-caps" x={px + pw / 2} y={py + ph / 2 + 11} fontSize={32}>
-            Answered
-          </text>
-        </g>
-      </g>
-      <g {...b("pop", HANDLED, { len: 0.5 })}>
-        <rect className="f-paper" x={px} y={py} width={pw} height={ph} rx={ph / 2} />
-        <text className="t-ink t-caps" x={px + pw / 2} y={py + ph / 2 + 11} fontSize={32}>
-          Handled
-        </text>
-      </g>
-
-      {/* The transcript's last three lines: each newcomer comes in at the bottom, and the rest move up. */}
-      <text x={cx0} y={bub.y - 22} fontSize={32} {...b("fade", 2, { len: 0.4, cls: "t-small t-left" })}>
-        Live transcript
-      </text>
-      {TRANSCRIPT.map(([who, text, at], i) => {
-        const w = bubW(text);
-        const x = who === "caller" ? bub.x[0] : bub.x[1] - w;
-        const y = bub.y + Math.min(i, SLOTS - 1) * bub.gap;
-        // Each line after the third moves this one up a place; the one that would leave the top goes.
-        const later = TRANSCRIPT.slice(i + 1).map((t, k) => ({ at: t[2], n: i + 1 + k })).filter((t) => t.n >= SLOTS);
-        let node = (
-          <g {...b("rise", at, { len: 0.6 })}>
-            <rect className={who === "caller" ? "bubble" : "f-ai"} x={x} y={y} width={w} height={bub.h} rx="20" />
-            <text className="t-body t-left" x={x + bub.size} y={y + bub.h / 2 + bub.size * 0.36} fontSize={bub.size}>
-              {text}
-            </text>
-          </g>
-        );
-        later.forEach((t, k) => {
-          const place = Math.min(i, SLOTS - 1) - (k + 1);
-          node = <g {...b("moveto", t.at, { len: 0.5, dy: -bub.gap })}>{place < 0 ? <g {...b("out", t.at, { len: 0.3 })}>{node}</g> : node}</g>;
-        });
-        return <g key={text}>{node}</g>;
-      })}
-
-      {/* Her request, picked out of what she said. */}
-      <g {...b("pop", 4.5, { len: 0.6 })}>
-        <rect className="f-gold-dim s-gold-edge" x={kx} y={ky} width={kw} height={kh} rx={kh / 2} />
-        <path className="f-gold" d={sparkle(kx + kh * 0.6, ky + kh / 2, kh * 0.24)} />
-        <text className="t-gold-text t-left t-strong" x={kx + kh * 1.1} y={ky + kh / 2 + 12} fontSize={32}>
-          New patient consult, Thursday morning
-        </text>
-      </g>
-
-      {/* The steps: five ticks in a row, the thread drawn on between them as they go. */}
-      <path className="s-soft" d={`M ${row.xs[0] + row.r + 8} ${row.y} H ${row.xs[4] - row.r - 8}`} />
-      {STEPS.map(([title, , at], i) => {
-        const cx = row.xs[i];
-        const next = STEPS[i + 1];
-        return (
-          <g key={title}>
-            {next && <Gold d={`M ${cx + row.r + 8} ${row.y} H ${row.xs[i + 1] - row.r - 8}`} fx={b("draw", next[2] - 0.45, { len: 0.45 })} thin />}
-            <circle fill="none" cx={cx} cy={row.y} r={row.r} {...b("fade", 1 + i * 0.12, { len: 0.4, cls: "s-paper-soft" })} />
-            <g {...b("pop", at, { len: 0.5 })}>
-              <Tick cx={cx} cy={row.y} r={row.r} />
-            </g>
-          </g>
-        );
-      })}
-      {/* The step just done, named large under the row, until the next. */}
-      {STEPS.map(([title, detail, at], i) => {
-        const next = STEPS[i + 1];
-        const label = (
-          <g {...b("rise", at, { len: 0.5 })}>
-            <text className="t-body" x={500} y={row.y + 96} fontSize={44}>
-              {title}
-            </text>
-            <text className="t-gold-text" x={500} y={row.y + 152} fontSize={36}>
-              {i === 3 ? <Typed text={detail} at={at + 0.1} b={b} step={0.035} /> : detail}
-            </text>
-          </g>
-        );
-        return <g key={title}>{next ? <g {...b("out", next[2] - 0.05, { len: 0.25 })}>{label}</g> : label}</g>;
-      })}
-
-      <g {...b("fade", HANDLED, { len: 1 })}>
-        <rect className="s-gold-edge" fill="none" x={wx} y={wy} width={ww} height={wh} rx="26" />
-      </g>
-    </Art>
-  );
-}
-
-/* ── Photo & video: the vineyard drawn in gold, filmed, then posted ─────── */
-
-function Photo(tall: boolean): SceneArt {
-  const D = DESIGN.photo;
-  const b = beats(D);
+/** The vineyard drawn in gold, then filmed: our drone footage for Pearls, into Pearls' posts. */
+function Photo(p: ArtProps): SceneArt {
+  const { tall } = p;
+  const b = paced(REEL_D, p);
   const rows = [-300, -200, -100, 0, 100, 200, 300];
   const T = tall ? { title: 122, size: 92 } : { title: 150, size: 88 };
-  // The viewfinder, and the footage inside it: our drone footage for Pearls.
+  // The viewfinder, and the footage inside it.
   const V = tall
     ? { c: [40, 190, 960, 1030], clip: [60, 210, 880, 800] as Box, rec: [100, 262], hill: "M 60 640 C 260 520, 420 590, 540 560 S 800 500, 940 580", sun: [720, 430, 66], row: [640, 1000], focus: [410, 690, 180, 140] }
     : { c: [70, 210, 930, 820], clip: [90, 230, 820, 570] as Box, rec: [132, 272], hill: "M 90 560 C 260 450, 400 510, 520 480 S 800 420, 910 500", sun: [720, 380, 58], row: [560, 800], focus: [420, 600, 160, 120] };
-  const [c0, c1, c2, c3] = V.c;
   return {
     far: (
       <Far>
@@ -2060,8 +1602,7 @@ function Photo(tall: boolean): SceneArt {
           <text x="500" y={T.title} fontSize={T.size} {...b("rise", 0.2, { len: 1.2, cls: "t-disp" })}>
             Photo &amp; video
           </text>
-          <text x="500" y={T.title + (tall ? 42 : 34)} fontSize={tall ? 32 : 24}
-            {...b("fade", 0.65, { len: 0.5, cls: "t-small" })}>
+          <text x="500" y={T.title + (tall ? 42 : 34)} fontSize={tall ? 32 : 24} {...b("fade", 0.65, { len: 0.5, cls: "t-small" })}>
             Client work · Pearls Farm Labor
           </text>
           <g {...b("out", 1.2, { len: 0.8 })}>
@@ -2072,60 +1613,132 @@ function Photo(tall: boolean): SceneArt {
             ))}
           </g>
         </Art>
-        <Clip id="pearlsDrone" tall={tall} box={V.clip} fx={b("fade", 1.2, { len: 0.8 })} />
+        <Clip p={p} media="photoReel" box={V.clip} fx={b("fade", 1.2, { len: 0.8 })} />
         {/* The viewfinder, while the drone films; it lifts as the footage gives way to the posts. */}
         <div {...b("out", 5.5, { len: 0.7, cls: "film-layer" })}>
-        <Art tall={tall}>
-          <path d={`M ${c0} ${c1 + 60} V ${c1} H ${c0 + 70} M ${c2 - 70} ${c1} H ${c2} V ${c1 + 60} M ${c2} ${c3 - 60} V ${c3} H ${c2 - 70} M ${c0 + 70} ${c3} H ${c0} V ${c3 - 60}`} {...b("fade", 0.2, { cls: "s-paper thick-ish" })} />
-          <g {...b("blink", 0.6, { len: 0.8, n: 4 })}>
-            <circle className="f-gold" cx={V.rec[0]} cy={V.rec[1]} r={tall ? 13 : 12} />
-          </g>
-          <text x={V.rec[0] + 24} y={V.rec[1] + 10} fontSize={tall ? 32 : 28} {...b("fade", 0.6, { cls: "t-small t-left t-on-film" })}>
-            Rec
-          </text>
-          <g {...b("focus", 1.7, { len: 0.9 })}>
-            <rect className="s-paper" x={V.focus[0]} y={V.focus[1]} width={V.focus[2]} height={V.focus[3]} />
-          </g>
-        </Art>
+          <Viewfinder b={b} V={V} tall={tall} />
         </div>
       </>
     ),
   };
 }
 
+/** A camera's viewfinder over the set: its corners, Rec blinking, and focus pulled at `focus`. */
+function Viewfinder({ b, V, tall, focus = 1.7 }: { b: Beats; V: { c: number[]; rec: number[]; focus: number[] }; tall: boolean; focus?: number }) {
+  const [c0, c1, c2, c3] = V.c;
+  return (
+    <Art tall={tall}>
+      <path d={`M ${c0} ${c1 + 60} V ${c1} H ${c0 + 70} M ${c2 - 70} ${c1} H ${c2} V ${c1 + 60} M ${c2} ${c3 - 60} V ${c3} H ${c2 - 70} M ${c0 + 70} ${c3} H ${c0} V ${c3 - 60}`} {...b("fade", 0.2, { cls: "s-paper thick-ish" })} />
+      <g {...b("blink", 0.6, { len: 0.8, n: 4 })}>
+        <circle className="f-gold" cx={V.rec[0]} cy={V.rec[1]} r={tall ? 13 : 12} />
+      </g>
+      <text x={V.rec[0] + 24} y={V.rec[1] + 10} fontSize={tall ? 32 : 28} {...b("fade", 0.6, { cls: "t-small t-left t-on-film" })}>
+        Rec
+      </text>
+      <g {...b("focus", focus, { len: 0.9 })}>
+        <rect className="s-paper" x={V.focus[0]} y={V.focus[1]} width={V.focus[2]} height={V.focus[3]} />
+      </g>
+    </Art>
+  );
+}
+
 /* ── The plan: the page they'd get after the first call ────────────────── */
 
-/** The five things from the film, as the plan has them: what, and a line of what that means. */
-const PLAN = [
-  ["Get found on Google and in AI search", "At the top of search, and in AI answers"],
-  ["A new site", "Clear, quick and easy to use"],
-  ["Book online", "Tastings booked in a click, confirmed"],
-  ["Every call answered", "Booked in and followed up"],
-  ["One entry, no double work", "Typed once, filled in everywhere"],
-];
+/** What the film just showed, in the same order, as each business's plan has it: what, and a line of what that means. */
+const PLAN: Record<Industry, [string, string][]> = {
+  winery: [
+    ["Found on Google and in AI search", "At the top when people look for a tasting"],
+    ["Reviews answered, and more of them", "Every review replied to, and happy guests asked for one"],
+    ["A new site", "Your wines, and exactly how to visit"],
+    ["Tastings booked online", "Booked in a click, confirmed on its own"],
+    ["Every call answered", "Booked in and followed up, even after hours"],
+    ["One entry, no double work", "Each guest typed once, filled in everywhere"],
+    ["A tool built for you", "Around how your week runs"],
+    ["Photo & video", "Your vineyard, in posts people see"],
+  ],
+  dental: [
+    ["Found on Google and in AI search", "At the top when parents look nearby"],
+    ["Reviews answered, and more of them", "Careful replies, and happy patients asked for one"],
+    ["A new site", "Your practice, and how to book a consult"],
+    ["Consults booked online", "Booked in a click, confirmed on its own"],
+    ["Every call answered", "Even while the desk is with a patient"],
+    ["One entry, no double work", "Each patient typed once, filled in everywhere"],
+    ["A tool built for you", "Consults written up, follow-ups drafted"],
+    ["Photo & video", "A welcoming practice, before anyone walks in"],
+  ],
+  contractor: [
+    ["Found on Google and in AI search", "At the top when homeowners look"],
+    ["Reviews answered, and more of them", "Every review replied to, and happy clients asked for one"],
+    ["A new site", "Your work, and how to get a quote"],
+    ["Site visits booked online", "Booked in a click, confirmed on its own"],
+    ["Every call answered", "Even while you’re on a job site"],
+    ["One entry, no double work", "Each job typed once, filled in everywhere"],
+    ["A tool built for you", "Estimates written up from your site notes"],
+    ["Photo & video", "Finished work that sells the next job"],
+  ],
+  general: [
+    ["Found on Google and in AI search", "At the top when people look for you"],
+    ["Reviews answered, and more of them", "Every review replied to, and happy customers asked for one"],
+    ["A new site", "What you do, and what to do next"],
+    ["Booking online", "Booked in a click, confirmed on its own"],
+    ["Every call answered", "Booked in and followed up, even after hours"],
+    ["One entry, no double work", "Each customer typed once, filled in everywhere"],
+    ["A tool built for you", "Around how your week runs"],
+    ["Photo & video", "What you do, in posts people see"],
+  ],
+};
+/**
+ * The page, wide and tall. `split`: with what they said yes to first and the
+ * rest under "Also available" (a closer pitch, the label's room, and the
+ * quieter rows' own pitch and sizes).
+ */
 const PAGE_WIDE = {
-  page: [190, 40, 620, 790] as Box, m: 52, mark: [104, 24], date: 16, rule: 128, title: [196, 46], by: [228, 17],
-  items: [290, 84], indent: 48, num: 24, what: 21, why: [17, 27], tick: [-16, -7, 15], line: 46, sep: 684,
-  field: { label: 718, size: 13, y: 732, h: 24, w: 230, dx: 286 }, foot: [802, 14],
+  page: [190, 40, 620, 790] as Box, m: 52, mark: [100, 24], date: 16, rule: 122, title: [180, 44], by: [210, 17],
+  items: [262, 52], indent: 46, num: 21, what: 18, why: [14.5, 21.5], tick: [-14, -6, 12], line: 34, sep: 676,
+  field: { label: 708, size: 13, y: 722, h: 24, w: 230, dx: 286 }, foot: [802, 14],
+  split: { pitch: 48, label: 58, size: 12.5, first: 34, also: 42, what: 16, why: [13, 18.5] },
 };
 const PAGE_TALL = {
-  page: [50, 30, 900, 1040] as Box, m: 60, mark: [106, 34], date: 24, rule: 140, title: [220, 62], by: [262, 26],
-  items: [350, 118], indent: 66, num: 34, what: 31, why: [28, 40], tick: [-24, -10, 22], line: 70, sep: 914,
-  field: { label: 956, size: 22, y: 974, h: 34, w: 370, dx: 410 }, foot: [1050, 22],
+  page: [50, 30, 900, 1040] as Box, m: 60, mark: [104, 34], date: 24, rule: 136, title: [210, 60], by: [252, 26],
+  items: [322, 74], indent: 64, num: 30, what: 28, why: [23.5, 34], tick: [-24, -10, 19], line: 50, sep: 900,
+  field: { label: 942, size: 22, y: 960, h: 34, w: 370, dx: 410 }, foot: [1050, 22],
+  split: { pitch: 66, label: 76, size: 20, first: 48, also: 58, what: 25, why: [20, 30] },
 };
+/** Each item they said yes to ticked as she runs through the page (`n` of them); the two fields lit as she says how long it takes. */
+const planAt = (p: ArtProps, n: number) => {
+  const a = (p.at[0] ?? 0.4) + 1.5;
+  const z = Math.max(a + 3.6, (p.at[1] ?? 3.8) + 1.9);
+  return { ticks: Array.from({ length: n }, (_, i) => +(a + ((z - a) * i) / Math.max(1, n - 1)).toFixed(2)), fields: (p.at[1] ?? 3.8) + 2.4 };
+};
+/**
+ * Their plan's items, as they answered: what they said yes to, in the film's
+ * order, then the rest ("Also available"). Yes to nothing (or not asked yet),
+ * or to everything: the whole plan, as one list.
+ */
+export function planFor(ind: Industry, answers: Answers) {
+  const items = PLAN[ind];
+  const yes = new Set(SERVICES.filter((s) => answers[s] === true).flatMap((s) => SERVICE[s].plan));
+  if (!yes.size || yes.size === items.length) return { first: items, also: [] as [string, string][] };
+  return { first: items.filter((_, i) => yes.has(i)), also: items.filter((_, i) => !yes.has(i)) };
+}
 
-function Plan(tall: boolean, subject: PlanSubject = "business"): SceneArt {
-  const D = DESIGN.plan;
-  const b = beats(D);
+function Plan(p: ArtProps): SceneArt {
+  const { tall } = p;
+  const b = beats(p.d);
   const P = tall ? PAGE_TALL : PAGE_WIDE;
+  const { first: items, also } = planFor(p.ind, p.answers);
   const [x, y, w, h] = P.page;
   const l = x + P.m;
   const r = x + w - P.m;
   const F = P.field;
-  const itemY = (i: number) => P.items[0] + i * P.items[1];
+  const S = P.split;
+  const pitch = also.length ? S.pitch : P.items[1];
+  const itemY = (i: number) => P.items[0] + i * pitch;
+  // "Also available", under what they said yes to, and its quieter rows.
+  const alsoY = itemY(items.length - 1) + S.label;
+  const otherY = (j: number) => alsoY + S.first + j * S.also;
   const tick = (i: number) => ({ cx: r + P.tick[0], cy: itemY(i) + P.tick[1], r: P.tick[2] });
-  // Ticked in turn, as she runs through it.
-  const TICK = [2, 2.75, 3.5, 4.25, 5];
+  const T = planAt(p, items.length);
   const date = new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
   return {
     far: (
@@ -2150,13 +1763,13 @@ function Plan(tall: boolean, subject: PlanSubject = "business"): SceneArt {
             </text>
             <path className="s-gold-hair" d={`M ${l} ${P.rule} H ${r}`} />
             <text className="t-disp t-ink t-left" x={l} y={P.title[0]} fontSize={P.title[1]}>
-              Plan for your {subject}
+              {INDUSTRY[p.ind].plan}
             </text>
             <text className="t-ink-soft t-left" x={l} y={P.by[0]} fontSize={P.by[1]}>
               Prepared by Ashan &amp; Jordan, after your first call
             </text>
-            {/* The five things, in order. */}
-            {PLAN.map(([what, why], i) => (
+            {/* What the film showed, in order: what they said yes to (or all of it). */}
+            {items.map(([what, why], i) => (
               <g key={what}>
                 <text className="t-disp t-gold-deep t-left" x={l} y={itemY(i)} fontSize={P.num}>
                   {`0${i + 1}`}
@@ -2167,10 +1780,29 @@ function Plan(tall: boolean, subject: PlanSubject = "business"): SceneArt {
                 <text className="t-ink-soft t-left" x={l + P.indent} y={itemY(i) + P.why[1]} fontSize={P.why[0]}>
                   {why}
                 </text>
-                {i < PLAN.length - 1 && <path className="s-ink-line" d={`M ${l} ${itemY(i) + P.line} H ${r}`} />}
+                {i < items.length - 1 && <path className="s-ink-line" d={`M ${l} ${itemY(i) + (also.length ? pitch * 0.62 : P.line)} H ${r}`} />}
                 <circle className="s-ink-line" fill="none" {...tick(i)} />
               </g>
             ))}
+            {/* The rest, quieter, there if they want it. */}
+            {also.length > 0 && (
+              <g className="plan-also">
+                <path className="s-ink-line" d={`M ${l} ${alsoY - S.size * 1.7} H ${r}`} />
+                <text className="t-ink-soft t-left t-caps" x={l} y={alsoY} fontSize={S.size}>
+                  Also available
+                </text>
+                {also.map(([what, why], j) => (
+                  <g key={what}>
+                    <text className="t-ink-soft t-left" x={l + P.indent} y={otherY(j)} fontSize={S.what}>
+                      {what}
+                    </text>
+                    <text className="t-ink-faint t-left" x={l + P.indent} y={otherY(j) + S.why[1]} fontSize={S.why[0]}>
+                      {why}
+                    </text>
+                  </g>
+                ))}
+              </g>
+            )}
             {/* How long, and the investment: placeholders, left to the call itself. */}
             <path className="s-ink-line" d={`M ${l} ${P.sep} H ${r}`} />
             {["Timeline", "Investment"].map((t, i) => (
@@ -2185,13 +1817,13 @@ function Plan(tall: boolean, subject: PlanSubject = "business"): SceneArt {
               elorro.com · Bay Area
             </text>
           </g>
-          {PLAN.map(([what], i) => (
-            <g key={what} {...b("pop", TICK[i], { len: 0.5 })}>
+          {items.map(([what], i) => (
+            <g key={what} {...b("pop", T.ticks[i], { len: 0.5 })}>
               <Tick {...tick(i)} />
             </g>
           ))}
           {/* The two fields, lit as she says how long it takes. */}
-          <g {...b("fade", 6.2, { len: 0.8 })}>
+          <g {...b("fade", T.fields, { len: 0.8 })}>
             {[0, 1].map((i) => (
               <rect key={i} className="s-gold-faint" x={l + i * F.dx} y={F.y} width={F.w} height={F.h} rx={F.h / 2} />
             ))}
@@ -2204,10 +1836,15 @@ function Plan(tall: boolean, subject: PlanSubject = "business"): SceneArt {
 
 /* ── One plan ──────────────────────────────────────────────────────────── */
 
-function Close(tall: boolean): SceneArt {
-  const D = DESIGN.close;
-  const b = beats(D);
-  const ry = tall ? 540 : 470;
+/** The close keeps the pace it was designed at, as shares of this length. */
+const CLOSE_D = 10.5;
+
+function Close(p: ArtProps): SceneArt {
+  const { tall } = p;
+  const b = beats(CLOSE_D);
+  // The gold line sits clear below "A & J", the J's tail included: half way between it and "One plan." (measured in
+  // Chrome at eight sizes from 360 to 1440 wide; both scale with the set, so it holds at every size).
+  const ry = tall ? 547 : 492;
   const rx = tall ? 240 : 200;
   return {
     far: (
@@ -2217,17 +1854,17 @@ function Close(tall: boolean): SceneArt {
     ),
     mid: (
       <>
-        <Word x={50} y={tall ? 34 : 33} size={tall ? 0.27 : 0.22} tone="paper" rise={0.2} shine={0.9} D={D}>
+        <Word x={50} y={tall ? 32.5 : 33} size={tall ? 0.27 : 0.22} tone="paper" rise={0.2} shine={0.9} D={CLOSE_D}>
           A <span className="film-amp">&amp;</span> J
         </Word>
         <Art tall={tall}>
           <Gold d={`M 500 ${ry} H ${500 - rx}`} fx={b("draw", 0.9, { len: 1.4 })} />
           <Gold d={`M 500 ${ry} H ${500 + rx}`} fx={b("draw", 0.9, { len: 1.4 })} />
         </Art>
-        <Word x={50} y={tall ? 58.5 : 58} size={tall ? 0.14 : 0.115} rise={1.1} shine={2} D={D}>
+        <Word x={50} y={tall ? 58.5 : 58} size={tall ? 0.14 : 0.115} rise={1.1} shine={2} D={CLOSE_D}>
           One plan.
         </Word>
-        <Word x={50} y={tall ? 67.5 : 67} size={tall ? 0.042 : 0.04} tone="note" rise={3.7} D={D}>
+        <Word x={50} y={tall ? 67.5 : 67} size={tall ? 0.042 : 0.04} tone="note" rise={3.7} D={CLOSE_D}>
           Built and looked after by the two of them
         </Word>
       </>
@@ -2236,49 +1873,99 @@ function Close(tall: boolean): SceneArt {
   };
 }
 
-/** Each scene's pictures, tall for a phone upright. */
-export const SCENE_ART: Record<SceneId, (tall: boolean, subject?: PlanSubject) => SceneArt> = {
-  elora: Elora,
-  call: Call,
-  found: Found,
-  site: Site,
-  booking: Booking,
-  calls: Calls,
-  office: Office,
-  choice: ChoiceBackdrop,
-  tools: Tools,
-  photo: Photo,
-  frontdesk: FrontDesk,
-  website: WebsiteExample,
-  wineSite: WineWebsite,
-  winePhoto: WinePhoto,
-  local: LocalExample,
-  plan: Plan,
-  close: Close,
+/* ── Every kind of scene: its pictures, its videos, its sounds ─────────── */
+
+type Def = {
+  art: (p: ArtProps) => SceneArt;
+  /** Its videos: when each plays, in seconds into the scene. */
+  clips?: (p: ArtProps) => ClipUse[];
+  /** Its sound effects (effects.ts), in seconds into the scene. */
+  sfx?: (p: ArtProps) => [number, Cue][];
+};
+
+const reelClip = (p: ArtProps): ClipUse[] => [{ media: "photoReel", at: (1.2 * p.content) / REEL_D, until: (15.7 * p.content) / REEL_D }];
+const reelSfx = (p: ArtProps): [number, Cue][] => [[(1.1 * p.content) / REEL_D, "tap"]];
+const clinicalClip = (): ClipUse[] => [{ media: "clinical", at: 1.5, until: 17.7 }];
+const clinicalSfx = (): [number, Cue][] => [[5.9, "tick"], [10.1, "tick"], [14.6, "text"]];
+
+export const SCENES: Record<Kind, Def> = {
+  opener: { art: Opener },
+  pick: { art: ChoiceBackdrop },
+  found: { art: Found, sfx: () => [[0.5, "tap"], [0.75, "tap"], [1, "tap"]] },
+  reviews: {
+    art: Reviews,
+    clips: (p) => [{ media: `reviews-${p.ind}`, at: reviewsFix(p), until: p.content }],
+    sfx: (p) => [
+      [reviewsFix(p) + DEMO_AT.reviews.posted, "tick"],
+      [reviewsFix(p) + DEMO_AT.reviews.text, "text"],
+      [reviewsFix(p) + DEMO_AT.reviews.landed, "tick"],
+    ],
+  },
+  site: {
+    art: Site,
+    clips: (p) => {
+      const T = siteAt(p);
+      const second = SITE_MEDIA_2[p.ind];
+      return second
+        ? [
+            { media: SITE_MEDIA[p.ind], at: T.now + 0.2, until: T.cut + 0.2 },
+            { media: second, at: T.cut, until: p.content },
+          ]
+        : [{ media: SITE_MEDIA[p.ind], at: T.now + 0.2, until: p.content }];
+    },
+  },
+  booking: {
+    art: Booking,
+    clips: (p) => [{ media: `booking-${p.ind}`, at: bookingFix(p), until: p.content }],
+    sfx: (p) => [[bookingFix(p) + DEMO_AT.booking.tap, "tap"], [bookingFix(p) + DEMO_AT.booking.confirmed, "tick"]],
+  },
+  calls: {
+    art: Calls,
+    clips: (p) => [{ media: `desk-${p.ind}`, at: callsFix(p), until: p.content }],
+    sfx: (p) => [
+      [callsFix(p) + DEMO_AT.desk.ring, "ring"],
+      [callsFix(p) + DEMO_AT.desk.answered, "pickup"],
+      [callsFix(p) + DEMO_AT.desk.booked, "tick"],
+      [callsFix(p) + DEMO_AT.desk.text, "text"],
+    ],
+  },
+  office: {
+    art: Office,
+    clips: (p) => [{ media: `entry-${p.ind}`, at: officeAt(p).one, until: p.content }],
+    sfx: (p) => [[officeAt(p).one + DEMO_AT.entry.filled, "tick"]],
+  },
+  tools: {
+    art: (p) => (p.ind === "dental" ? ClinicalTools(p) : ToolDemo(p)),
+    clips: (p) => (p.ind === "dental" ? clinicalClip() : [{ media: `tool-${p.ind as ToolInd}`, at: toolAt(p).make, until: p.content }]),
+    sfx: (p) => (p.ind === "dental" ? clinicalSfx() : [[toolAt(p).done, "text"]]),
+  },
+  photo: { art: Photo, clips: reelClip, sfx: reelSfx },
+  plan: { art: Plan },
+  close: { art: Close },
+  send: { art: ChoiceBackdrop },
 };
 
 /**
  * How the camera moves through each scene: the set's drift (x, y, a share of
  * it), its push (scale from, to) and its turn; the backdrop drifts less. On a
  * phone upright the push is halved (film.css, --zk), so the set's edges stay
- * on screen.
+ * on screen. Real work in a window of its own holds still.
  */
-export const CAMERA: Record<SceneId, { px: string; py: string; z0: number; z1: number; ry: string }> = {
-  elora: { px: "0%", py: "-1.2%", z0: 1.02, z1: 1.1, ry: "0deg" },
-  call: { px: "-1.6%", py: "0%", z0: 1.02, z1: 1.07, ry: "5deg" },
+type Camera = { px: string; py: string; z0: number; z1: number; ry: string };
+const CAMERA: Record<Kind, Camera> = {
+  opener: { px: "0%", py: "-1.2%", z0: 1.02, z1: 1.1, ry: "0deg" },
+  pick: { px: "0%", py: "0%", z0: 1, z1: 1.02, ry: "0deg" },
   found: { px: "-1%", py: "0%", z0: 1.02, z1: 1.06, ry: "2deg" },
+  reviews: { px: "0.8%", py: "0%", z0: 1.02, z1: 1.05, ry: "0deg" },
   site: { px: "0%", py: "-0.8%", z0: 1, z1: 1.05, ry: "0deg" },
-  booking: { px: "1%", py: "0%", z0: 1.02, z1: 1.06, ry: "-2deg" },
-  calls: { px: "-1%", py: "0.5%", z0: 1.02, z1: 1.06, ry: "2deg" },
-  office: { px: "1%", py: "0%", z0: 1.02, z1: 1.05, ry: "-2deg" },
-  choice: { px: "0%", py: "0%", z0: 1, z1: 1.02, ry: "0deg" },
-  tools: { px: "1%", py: "0%", z0: 1.02, z1: 1.05, ry: "-2deg" },
+  // (No turn where a demo plays: a turning set with a video in it is a lot to draw, at half the frame rate in Chrome.)
+  booking: { px: "1%", py: "0%", z0: 1.02, z1: 1.05, ry: "0deg" },
+  calls: { px: "-0.6%", py: "0.4%", z0: 1.01, z1: 1.04, ry: "0deg" },
+  office: { px: "1%", py: "0%", z0: 1.02, z1: 1.05, ry: "0deg" },
+  tools: { px: "1%", py: "0%", z0: 1.02, z1: 1.05, ry: "0deg" },
   photo: { px: "0%", py: "0%", z0: 1.02, z1: 1.06, ry: "0deg" },
-  frontdesk: { px: "0%", py: "-0.6%", z0: 1.01, z1: 1.04, ry: "0deg" },
-  website: { px: "0%", py: "0%", z0: 1, z1: 1, ry: "0deg" },
-  wineSite: { px: "0%", py: "0%", z0: 1, z1: 1, ry: "0deg" },
-  winePhoto: { px: "0%", py: "0%", z0: 1, z1: 1, ry: "0deg" },
-  local: { px: "0%", py: "0%", z0: 1, z1: 1, ry: "0deg" },
   plan: { px: "0%", py: "-1.2%", z0: 1.06, z1: 1, ry: "0deg" },
   close: { px: "0%", py: "-2%", z0: 1.1, z1: 1, ry: "0deg" },
+  send: { px: "0%", py: "0%", z0: 1, z1: 1.02, ry: "0deg" },
 };
+export const cameraOf = (kind: Kind) => CAMERA[kind];

@@ -13,12 +13,17 @@
   initial-value: 120%;
 }
 
-.elo-intro {
+/* The black and the logo's golds, as they read on it: light, mid and deep.
+   (Also wherever the intro's picture is shown again: the film's way in,
+   components/elorro/film/way.tsx, sets .elo-intro-host.) */
+.elo-intro,
+.elo-intro-host {
   --night: #0C0A08;
-  /* The logo's golds, as they read on the black: light, mid and deep. */
   --gilt-hi: #F3DA96;
   --gilt: #D6AA4E;
   --gilt-lo: #9A6C28;
+}
+.elo-intro {
   position: fixed;
   inset: 0;
   z-index: 1000;

@@ -282,3 +282,12 @@ export const DRAFT = {
   closeButton: "Close",
   hint: "Sending is not part of this prototype — copy it into your email.",
 };
+
+/**
+ * The film's cut (ClinicalFilm.tsx) shows no amounts: its fee line and its
+ * drafted message, reworded. The Work card's loop keeps the lines above.
+ */
+export const FILM_COPY = {
+  financial: "A monthly payment plan was explained. Insurance may cover part of it, to be verified.",
+  draft: `Hi Zz-Dana, it's Zz-Kim at ${PRACTICE}. As promised, here's Zz-Maya's plan in writing: clear aligners for about 18 months, on the payment plan we discussed. We're confirming your insurance now. Would Thursday after 4 work for a quick call with you both?`,
+};

@@ -1,6 +1,6 @@
 import { AbsoluteFill, useCurrentFrame } from "remotion";
-import { DRAFT, RECORD } from "./clinical/data";
-import { DraftDialog, RecordScreen, SUMMARY_LINES, SummaryScreen } from "./clinical/screens";
+import { FILM_COPY, RECORD } from "./clinical/data";
+import { ClinicalCopy, DraftDialog, RecordScreen, SUMMARY_LINES, SummaryScreen } from "./clinical/screens";
 import { Viewport } from "./clinical/tw";
 import { RESET, Scale } from "./clinical/ui";
 import {
@@ -89,7 +89,7 @@ function contentsAt(size: Size, frame: number): Content[] {
       open > 0
         ? (visible) => (
             <DraftDialog
-              chars={chars(frame, F.draftStream, DRAFT.body)}
+              chars={chars(frame, F.draftStream, FILM_COPY.draft)}
               visible={ease(open) * visible}
               zoom={closeUp(size)}
               width={VIEW[size].column + 2 * PAD - 32}
@@ -115,7 +115,9 @@ export const ClinicalFilm: React.FC<{ size: Size }> = ({ size }) => {
       <Scale.Provider value={closeUp(size)}>
         <AbsoluteFill style={{ background: "#fff" }}>
           <style>{RESET}</style>
-          <AppFrame size={size} frame={frame} contents={contentsAt(size, frame)} path={PATH} />
+          <ClinicalCopy.Provider value={FILM_COPY}>
+            <AppFrame size={size} frame={frame} contents={contentsAt(size, frame)} path={PATH} />
+          </ClinicalCopy.Provider>
         </AbsoluteFill>
       </Scale.Provider>
     </Viewport.Provider>

@@ -36,6 +36,8 @@ export type Lead = {
   message?: string;
   source?: string;
   userAgent?: string;
+  /** From the film's note (/film): their kind of business, and what they said yes and no to after each chapter. */
+  film?: { industry: string; yes: string[]; no: string[] };
 };
 
 type DurableResult = { sink: string; ok: boolean; durable: boolean; error?: string };
@@ -94,6 +96,35 @@ async function toFile(lead: Lead): Promise<DurableResult> {
   }
 }
 
+/** The email a lead sends us (Resend, below): every field, and from the film's note its industry and answers. */
+export function emailText(lead: Lead) {
+  return [
+    `Ticket:   ${lead.ticket}`,
+    `Name:     ${lead.name}`,
+    `Email:    ${lead.email || "—"}`,
+    `Phone:    ${lead.phone || "—"}`,
+    `Business: ${lead.business || "—"}`,
+    `Needs:    ${lead.needs.length ? lead.needs.join(", ") : "—"}`,
+    `Budget:   ${lead.budget || "—"}`,
+    `Reply:    ${lead.replyFrom || "—"}`,
+    `Source:   ${lead.source || "—"}`,
+    ...(lead.film
+      ? [
+          "",
+          "From the film:",
+          `Industry: ${lead.film.industry}`,
+          `Said yes: ${lead.film.yes.length ? lead.film.yes.join(", ") : "—"}`,
+          `Said no:  ${lead.film.no.length ? lead.film.no.join(", ") : "—"}`,
+        ]
+      : []),
+    "",
+    lead.film ? "Their note:" : "The problem:",
+    lead.message || "(not filled in)",
+    "",
+    `— id ${lead.id} · ${lead.createdAt}`,
+  ].join("\n");
+}
+
 async function toEmail(lead: Lead): Promise<DurableResult> {
   const apiKey = process.env.RESEND_API_KEY;
   const to = process.env.CONTACT_TO_EMAIL;
@@ -112,22 +143,7 @@ async function toEmail(lead: Lead): Promise<DurableResult> {
     const { Resend } = await import("resend");
     const resend = new Resend(apiKey);
 
-    const lines = [
-      `Ticket:   ${lead.ticket}`,
-      `Name:     ${lead.name}`,
-      `Email:    ${lead.email || "—"}`,
-      `Phone:    ${lead.phone || "—"}`,
-      `Business: ${lead.business || "—"}`,
-      `Needs:    ${lead.needs.length ? lead.needs.join(", ") : "—"}`,
-      `Budget:   ${lead.budget || "—"}`,
-      `Reply:    ${lead.replyFrom || "—"}`,
-      `Source:   ${lead.source || "—"}`,
-      "",
-      "The problem:",
-      lead.message || "(not filled in)",
-      "",
-      `— id ${lead.id} · ${lead.createdAt}`,
-    ].join("\n");
+    const lines = emailText(lead);
 
     const { error } = await resend.emails.send({
       from,

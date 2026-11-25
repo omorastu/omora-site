@@ -240,65 +240,75 @@ const Finding: React.FC<{ k: number; children: ReactNode; spaceAfter?: number }>
   </B>
 );
 
-const SummaryCard: React.FC<{ shown: Shown; spaceAfter?: number }> = ({ shown, spaceAfter }) => (
-  <Card cam="sum-card" spaceAfter={spaceAfter}>
-    <CardTitle right={<Button variant="secondary">{SUMMARY_PAGE.copy}</Button>}>{SUMMARY.title}</CardTitle>
-    <B as="dl" c="mt-3 space-y-3 text-sm">
-      <Field label={SUMMARY.chiefComplaint.label} k={shown(0)}>
-        <B as="dd" c="text-zinc-800">
-          {SUMMARY.chiefComplaint.value}
-        </B>
-      </Field>
-      <Field label={SUMMARY.findings.label} k={shown(1)}>
-        <B as="ul" c="list-disc space-y-0.5 pl-5 text-zinc-800">
-          {SUMMARY.findings.value.map((f, i) => (
-            <Finding key={f} k={shown(1 + i)}>
-              {f}
-            </Finding>
-          ))}
-        </B>
-      </Field>
-      <Field label={SUMMARY.plan.label} k={shown(6)}>
-        <B as="dd" c="text-zinc-800">
-          {SUMMARY.plan.value}
-        </B>
-      </Field>
-      <Field label={SUMMARY.alternatives.label} k={shown(7)}>
-        <B as="dd" c="text-zinc-800">
-          {SUMMARY.alternatives.value}
-        </B>
-      </Field>
-      <Field label={SUMMARY.financial.label} k={shown(8)}>
-        <B as="dd" c="text-zinc-800">
-          {SUMMARY.financial.value}
-        </B>
-      </Field>
-      <Field label={SUMMARY.objection.label} k={shown(9)}>
-        <B as="dd" c="text-zinc-800">
-          {SUMMARY.objection.value}
-        </B>
-      </Field>
-      <Field label={SUMMARY.outcome.label} k={shown(10)}>
-        <B as="dd" c="text-zinc-800">
-          {SUMMARY.outcome.value}
-        </B>
-        <B c="mt-1 flex flex-wrap gap-1.5">
-          {SUMMARY.reasons.map((r, i) => (
-            <Chip key={r} primary={i === 0}>
-              {r}
-              {i === 0 && SUMMARY.primary}
-            </Chip>
-          ))}
-        </B>
-      </Field>
-      <Field label={SUMMARY.nextStep.label} k={shown(11)}>
-        <B as="dd" c="text-zinc-800">
-          {SUMMARY.nextStep.value}
-        </B>
-      </Field>
-    </B>
-  </Card>
-);
+/**
+ * The words that differ in the film's cut (ClinicalFilm.tsx, which says no
+ * amounts): its fee line and its drafted message. Without a provider, the Work
+ * card's own words, so its loop is drawn exactly as before.
+ */
+export const ClinicalCopy = React.createContext<{ financial: string; draft: string }>({ financial: SUMMARY.financial.value, draft: DRAFT.body });
+
+const SummaryCard: React.FC<{ shown: Shown; spaceAfter?: number }> = ({ shown, spaceAfter }) => {
+  const copy = useContext(ClinicalCopy);
+  return (
+    <Card cam="sum-card" spaceAfter={spaceAfter}>
+      <CardTitle right={<Button variant="secondary">{SUMMARY_PAGE.copy}</Button>}>{SUMMARY.title}</CardTitle>
+      <B as="dl" c="mt-3 space-y-3 text-sm">
+        <Field label={SUMMARY.chiefComplaint.label} k={shown(0)}>
+          <B as="dd" c="text-zinc-800">
+            {SUMMARY.chiefComplaint.value}
+          </B>
+        </Field>
+        <Field label={SUMMARY.findings.label} k={shown(1)}>
+          <B as="ul" c="list-disc space-y-0.5 pl-5 text-zinc-800">
+            {SUMMARY.findings.value.map((f, i) => (
+              <Finding key={f} k={shown(1 + i)}>
+                {f}
+              </Finding>
+            ))}
+          </B>
+        </Field>
+        <Field label={SUMMARY.plan.label} k={shown(6)}>
+          <B as="dd" c="text-zinc-800">
+            {SUMMARY.plan.value}
+          </B>
+        </Field>
+        <Field label={SUMMARY.alternatives.label} k={shown(7)}>
+          <B as="dd" c="text-zinc-800">
+            {SUMMARY.alternatives.value}
+          </B>
+        </Field>
+        <Field label={SUMMARY.financial.label} k={shown(8)}>
+          <B as="dd" c="text-zinc-800">
+            {copy.financial}
+          </B>
+        </Field>
+        <Field label={SUMMARY.objection.label} k={shown(9)}>
+          <B as="dd" c="text-zinc-800">
+            {SUMMARY.objection.value}
+          </B>
+        </Field>
+        <Field label={SUMMARY.outcome.label} k={shown(10)}>
+          <B as="dd" c="text-zinc-800">
+            {SUMMARY.outcome.value}
+          </B>
+          <B c="mt-1 flex flex-wrap gap-1.5">
+            {SUMMARY.reasons.map((r, i) => (
+              <Chip key={r} primary={i === 0}>
+                {r}
+                {i === 0 && SUMMARY.primary}
+              </Chip>
+            ))}
+          </B>
+        </Field>
+        <Field label={SUMMARY.nextStep.label} k={shown(11)}>
+          <B as="dd" c="text-zinc-800">
+            {SUMMARY.nextStep.value}
+          </B>
+        </Field>
+      </B>
+    </Card>
+  );
+};
 
 /**
  * recommendation.tsx's card, as the summary tab shows it under the summary.
@@ -598,31 +608,34 @@ export const FollowUpsScreen: React.FC<{ pointed: boolean; picked: boolean }> = 
  * opacity on a parent would stop the blur reaching the page behind. `zoom`
  * and `width` size the card as the page under it is seen.
  */
-export const DraftDialog: React.FC<{ chars: number; visible: number; zoom: number; width: number }> = ({ chars, visible, zoom, width }) => (
-  <B
-    c="fixed inset-0 z-30 flex items-center justify-center bg-zinc-900/30 p-4 backdrop-blur-[2px] font-sans"
-    s={{
-      backgroundColor: `color-mix(in oklab, oklch(21% 0.006 285.885) ${30 * visible}%, transparent)`,
-      backdropFilter: `blur(${2 * visible}px)`,
-    }}
-  >
-    <B c="w-full max-w-2xl rounded-lg bg-white p-4 shadow-xl ring-1 ring-zinc-200" s={{ opacity: visible, zoom, width }}>
-      <B c="flex items-baseline justify-between gap-4">
-        <B as="h2" c="text-sm font-semibold text-zinc-900">
-          {DRAFT.title}
+export const DraftDialog: React.FC<{ chars: number; visible: number; zoom: number; width: number }> = ({ chars, visible, zoom, width }) => {
+  const copy = useContext(ClinicalCopy);
+  return (
+    <B
+      c="fixed inset-0 z-30 flex items-center justify-center bg-zinc-900/30 p-4 backdrop-blur-[2px] font-sans"
+      s={{
+        backgroundColor: `color-mix(in oklab, oklch(21% 0.006 285.885) ${30 * visible}%, transparent)`,
+        backdropFilter: `blur(${2 * visible}px)`,
+      }}
+    >
+      <B c="w-full max-w-2xl rounded-lg bg-white p-4 shadow-xl ring-1 ring-zinc-200" s={{ opacity: visible, zoom, width }}>
+        <B c="flex items-baseline justify-between gap-4">
+          <B as="h2" c="text-sm font-semibold text-zinc-900">
+            {DRAFT.title}
+          </B>
+          <Button variant="link">{DRAFT.close}</Button>
         </B>
-        <Button variant="link">{DRAFT.close}</Button>
-      </B>
-      <B c="mt-3">
-        <B c={`${INPUT} font-mono text-xs`} s={{ whiteSpace: "pre-wrap", overflowWrap: "break-word", minHeight: 6 * 16 + 12 + 2 }}>
-          {streamed(DRAFT.body, chars)}
-        </B>
-        <B c="mt-3 flex items-center gap-2">
-          <Button variant="primary">{DRAFT.copy}</Button>
-          <Button variant="secondary">{DRAFT.closeButton}</Button>
-          <Muted>{DRAFT.hint}</Muted>
+        <B c="mt-3">
+          <B c={`${INPUT} font-mono text-xs`} s={{ whiteSpace: "pre-wrap", overflowWrap: "break-word", minHeight: 6 * 16 + 12 + 2 }}>
+            {streamed(copy.draft, chars)}
+          </B>
+          <B c="mt-3 flex items-center gap-2">
+            <Button variant="primary">{DRAFT.copy}</Button>
+            <Button variant="secondary">{DRAFT.closeButton}</Button>
+            <Muted>{DRAFT.hint}</Muted>
+          </B>
         </B>
       </B>
     </B>
-  </B>
-);
+  );
+};

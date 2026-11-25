@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { newLead, saveLead } from "@/lib/leads";
 import { NEED_OPTIONS } from "@/lib/prefill";
 import { contact as homeContact, people } from "@/lib/elorro";
+import { INDUSTRIES, INDUSTRY, SERVICE, SERVICES } from "@/components/elorro/film/script";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -17,6 +18,17 @@ const BUDGETS = ["under-2k", "2-5k", "5-15k", "15k-plus", "not-sure"];
 // The home page's "Who should get back to you?" — one of the two of us, or
 // either. Read from the same data the form renders, for the same reason.
 const REPLY_FROM = [people.a.name, people.j.name, homeContact.either];
+// The film’s note (/film): its kinds of business and its seven questions, as the film names them.
+const FILM_INDUSTRIES = INDUSTRIES.map((i) => INDUSTRY[i].title);
+const FILM_SERVICES = SERVICES.map((s) => SERVICE[s].title);
+function filmAnswers(v: unknown) {
+  if (!v || typeof v !== "object") return undefined;
+  const f = v as Record<string, unknown>;
+  const industry = FILM_INDUSTRIES.find((i) => i === f.industry);
+  if (!industry) return undefined;
+  const pick = (list: unknown) => (Array.isArray(list) ? FILM_SERVICES.filter((s) => list.includes(s)) : []);
+  return { industry, yes: pick(f.yes), no: pick(f.no) };
+}
 
 const LIMITS = { name: 100, email: 200, phone: 40, business: 120, message: 4000 } as const;
 
@@ -153,6 +165,7 @@ export async function POST(req: Request) {
     message,
     source: str(body.source, 200) || "elorro.com",
     userAgent: req.headers.get("user-agent")?.slice(0, 300) ?? undefined,
+    film: filmAnswers(body.film),
   });
 
   const { stored } = await saveLead(lead);

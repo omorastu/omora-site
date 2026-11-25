@@ -2,13 +2,23 @@ import { AbsoluteFill, Easing, Img, interpolate, OffthreadVideo, staticFile, use
 import captures from "./film-captures.json";
 
 /**
- * Two of the film's loops (/film), from scripts/film-capture.mjs's captures:
+ * Four of the film's loops (/film), from scripts/film-capture.mjs's captures:
  *
  * PearlsSite: Pearls Farm Labor's site as one flow, for the website scene.
  * The hero, then one smooth scroll down the homepage through every section
  * to its last, "Let's talk about your block", then into the Request a crew
  * page, where it rests. Played once (the scene is shorter than a loop), so
  * it has no seam to hide.
+ *
+ * PearlsCrew: the same site from its crew side, for a contractor's
+ * walkthrough: it starts on the crews (the services: harvest crews, orchard
+ * crews, labor crews), scrolls on past the founder's crew and the crews at
+ * work, to "Let's talk about your block" and its Request a crew, then into
+ * the Request a crew page, where it rests. It never shows the vineyard year.
+ *
+ * PracticeSite: Brightline Orthodontics, the made-up practice's concept site
+ * (/demos/practice), for a practice's walkthrough: its top, then one smooth
+ * scroll down the whole site, resting on its Book a consult form.
  *
  * PhotoReel: the capture, then the results, for the Photo & video demo.
  * Jordan's drone footage of a Pearls crew in the rows (from the hero video
@@ -21,12 +31,14 @@ import captures from "./film-captures.json";
  */
 
 export type Size = "desktop" | "phone";
-type PageName = "pearls" | "pearlsRequest" | "instagram";
+type PageName = "pearls" | "pearlsRequest" | "instagram" | "practice";
 type At = { page: PageName; y: number };
 
 export const FPS = 30;
 export const SITE_FRAMES = 270; // 9 s
 export const REEL_FRAMES = 330; // 11 s
+export const CREW_FRAMES = 270; // 9 s
+export const PRACTICE_FRAMES = 270; // 9 s
 
 export const FRAME_SIZE: Record<Size, { width: number; height: number }> = {
   desktop: { width: 2160, height: 1350 },
@@ -37,6 +49,8 @@ type PageCapture = {
   height: number;
   header: number;
   stickyHeader: boolean;
+  /** Where a sticky header sits before it sticks, when that isn't the very top (a notice bar above it). */
+  headerTop?: number;
   anchors: Record<string, number>;
   tiles: { file: string; y: number; h: number }[];
 };
@@ -76,9 +90,9 @@ const PageView: React.FC<{ size: Size; at: At }> = ({ size, at }) => {
         <Img key={t.file} src={staticFile(`film-captures/${t.file}`)} style={{ position: "absolute", left, top: t.y * s - shift, width, height: t.h * s }} />
       ))}
       {/* A sticky header stays at the top while the page moves under it. */}
-      {p.stickyHeader && at.y > 0 && (
+      {p.stickyHeader && at.y > (p.headerTop ?? 0) && (
         <div style={{ position: "absolute", left: 0, top: 0, width, height: Math.round(p.header * s), overflow: "hidden" }}>
-          <Img src={staticFile(`film-captures/${first.file}`)} style={{ position: "absolute", left: 0, top: 0, width, height: first.h * s }} />
+          <Img src={staticFile(`film-captures/${first.file}`)} style={{ position: "absolute", left: 0, top: p.headerTop ? -Math.round(p.headerTop * s) : 0, width, height: first.h * s }} />
         </div>
       )}
     </AbsoluteFill>
@@ -113,6 +127,73 @@ export const PearlsSite: React.FC<{ size: Size }> = ({ size }) => {
           <PageView size={size} at={{ page: "pearlsRequest", y: 0 }} />
         </AbsoluteFill>
       )}
+    </AbsoluteFill>
+  );
+};
+
+/* ── Pearls' site from its crew side, for a contractor ──────────────────── */
+
+/**
+ * Where the crew side starts, in CSS px down the homepage: the top of
+ * "Vineyard and orchard services." (the crews), read off the captures' tiles
+ * (the homepage's capture has no anchor of its own there).
+ */
+const CREW_FROM: Record<Size, number> = { desktop: 5874, phone: 4433 };
+/** Its beats, in frames: the crews; the scroll to the last section; a moment; into Request a crew. In by 7.2 s, as PearlsSite is. */
+const CREW = { hold: 24, scroll: 168, rest: 9, fade: 15 };
+
+export const PearlsCrew: React.FC<{ size: Size }> = ({ size }) => {
+  const frame = useCurrentFrame();
+  const home = page(size, "pearls");
+  const stuck = home.stickyHeader ? home.header : 0;
+  const from = clampY(size, "pearls", CREW_FROM[size] - stuck);
+  const last = clampY(size, "pearls", home.anchors.close - stuck);
+  const s0 = CREW.hold;
+  const s1 = s0 + CREW.scroll;
+  const f0 = s1 + CREW.rest;
+  const f1 = f0 + CREW.fade;
+  const y = frame < s0 ? from : frame < s1 ? from + (last - from) * cruise(interpolate(frame, [s0, s1], [0, 1])) : last;
+  const mix = ease(interpolate(frame, [f0, f1], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" }));
+  return (
+    <AbsoluteFill style={{ background: "#fff" }}>
+      <PageView size={size} at={{ page: "pearls", y }} />
+      {mix > 0 && (
+        <AbsoluteFill style={{ opacity: mix }}>
+          <PageView size={size} at={{ page: "pearlsRequest", y: 0 }} />
+        </AbsoluteFill>
+      )}
+    </AbsoluteFill>
+  );
+};
+
+/* ── The practice concept site ─────────────────────────────────────────── */
+
+/** Its beats, in frames: the top; the one scroll down to the form, in and resting by 7.5 s; then resting there. */
+const PRACTICE = { hold: 18, scroll: 207 };
+
+/**
+ * Where it rests. On a wide screen: the Book a consult section just under
+ * the header, the whole form in view. On a phone (too short for all of it):
+ * the section's heading just under the header, the form's first fields
+ * below it.
+ */
+const practiceEnd = (size: Size) => {
+  const p = page(size, "practice");
+  const stuck = p.stickyHeader ? p.header : 0;
+  // (The section's padding above its heading, on a phone: practice.css, .bl-section.)
+  const y = size === "desktop" ? p.anchors.book - stuck + 24 : p.anchors.book + 72 - stuck - 16;
+  return clampY(size, "practice", y);
+};
+
+export const PracticeSite: React.FC<{ size: Size }> = ({ size }) => {
+  const frame = useCurrentFrame();
+  const end = practiceEnd(size);
+  const s0 = PRACTICE.hold;
+  const s1 = s0 + PRACTICE.scroll;
+  const y = frame < s0 ? 0 : frame < s1 ? end * cruise(interpolate(frame, [s0, s1], [0, 1])) : end;
+  return (
+    <AbsoluteFill style={{ background: "#fff" }}>
+      <PageView size={size} at={{ page: "practice", y }} />
     </AbsoluteFill>
   );
 };
