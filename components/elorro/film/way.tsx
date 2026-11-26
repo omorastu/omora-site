@@ -71,12 +71,29 @@ export function FilmWay({ stage, onOpen }: { stage: "in" | "door" | "through"; o
   const dustCanvas = useRef<HTMLCanvasElement>(null);
   const door = useRef<HTMLButtonElement>(null);
   const opened = useRef(false);
-  /** The door, opened: once. */
+  /** The door, opened: once. (Should opening fail, it isn't counted: the next click tries again.) */
   const open = useCallback(() => {
     if (opened.current) return;
     opened.current = true;
-    onOpen();
+    try {
+      onOpen();
+    } catch (err) {
+      opened.current = false;
+      throw err;
+    }
   }, [onOpen]);
+  /**
+   * A mouse's (or a pen's) release on the door opens it too, as its click
+   * would: a browser can drop the click when the press and the release land
+   * on different parts of the door (its leaf swings a little under a pointer
+   * that's over it). A finger's tap is left to the click, as ever.
+   */
+  const release = useCallback(
+    (e: React.PointerEvent<HTMLButtonElement>) => {
+      if (e.pointerType !== "touch" && e.button === 0) open();
+    },
+    [open]
+  );
 
   // Up over the page: the page's own dark cover, there since its first paint (app/film/page.tsx), can go.
   useLayoutEffect(() => {
@@ -207,7 +224,7 @@ export function FilmWay({ stage, onOpen }: { stage: "in" | "door" | "through"; o
               Welcome to the <span className="way-h-us">Ashan &amp; Jordan experience.</span>
             </span>
           </h2>
-          <button ref={door} type="button" className="way-door" onClick={open} tabIndex={atDoor ? 0 : -1}>
+          <button ref={door} type="button" className="way-door" onClick={open} onPointerUp={release} tabIndex={atDoor ? 0 : -1}>
             <span className="way-door-at" aria-hidden="true">
               <span className="way-doorway">
                 <span className="way-light" />

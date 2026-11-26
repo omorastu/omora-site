@@ -47,8 +47,10 @@ export function encode(source, [w, h], dest, cap, prefilter) {
     ffmpeg([
       "-i", scaled, "-an",
       // veryslow and one keyframe per loop (it always plays from the start):
-      // about a CRF step lower than slow's defaults for the same size.
-      "-c:v", "libx264", "-preset", "veryslow", "-g", "600", "-profile:v", "high", "-pix_fmt", "yuv420p",
+      // about a CRF step lower than slow's defaults for the same size. Level
+      // 4.0, with 4 reference frames (veryslow's own 16 needed level 5.0 at the
+      // phone cut's 720×900): within what every iPhone plays (High, up to 4.2).
+      "-c:v", "libx264", "-preset", "veryslow", "-g", "600", "-profile:v", "high", "-level:v", "4.0", "-refs", "4", "-pix_fmt", "yuv420p",
       "-crf", String(crf), "-movflags", "+faststart", dest,
     ]);
     return fs.statSync(dest).size;

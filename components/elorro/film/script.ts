@@ -260,13 +260,13 @@ export const SITE_CREDIT_2 = "Client work · Pearls Farm Labor";
 /**
  * When the website scene's new site comes in (as she says they build one, her
  * second chunk, `at1` seconds in), and for a winery, when Prosperando's site
- * (which reaches its vineyards about five seconds in) cuts to Pearls'.
+ * cuts to Pearls': once it has played to its end (its video is 12 s).
  */
 export const siteNow = (at1?: number) => Math.max(2.6, (at1 ?? 3.7) - 0.1);
-export const SITE_CUT = 5.6;
+export const SITE_CUT = 12;
 export const siteCut = (at1?: number) => siteNow(at1) + 0.2 + SITE_CUT;
-/** How long a site's scroll plays before it's in and resting on its last page, and a moment on it (the Pearls loops, the practice's). */
-const SITE_PLAY = 7.9;
+/** A site's scroll played to its end (the Pearls loops, the practice's: 9 s), and a moment on its last page. */
+const SITE_PLAY = 9 + 0.5;
 
 /**
  * How long the demos play from her "Now…" (their videos' lengths, from
@@ -314,7 +314,7 @@ const walk = (ind: Industry): Plan[] => [
     duration: 11,
     say: ["site-shared", `${ind}-site`],
     // (From her second chunk: the site comes in 0.1 s later; a winery's cuts to Pearls' SITE_CUT after that.)
-    hold: [1, ind === "winery" ? 0.1 + SITE_CUT + SITE_PLAY : 9.6],
+    hold: [1, ind === "winery" ? 0.1 + SITE_CUT + SITE_PLAY : 0.1 + SITE_PLAY],
     tail: 0.6,
     ask: ["ask-site", "site"],
   },

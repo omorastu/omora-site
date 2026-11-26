@@ -208,6 +208,68 @@
     linear-gradient(rgb(12 10 8 / .42), rgb(12 10 8 / 0) 22%, rgb(12 10 8 / 0) 78%, rgb(12 10 8 / .3)),
     radial-gradient(ellipse 80% 80% at 50% 50%, rgb(12 10 8 / 0) 60%, rgb(12 10 8 / .3));
 }
+/* A video the film is waiting for (film.tsx): over its box, above everything in its scene (a stage still fading out over
+   it too), under Elora, the captions and the top. Still loading: a quiet word in its corner. Not let to start on its own
+   (an iPhone in Low Power Mode): "Tap to play" over it, which plays it where it is. Its animations keep their own time. */
+.film-clip-wait {
+  position: absolute;
+  z-index: 2;
+  display: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--paper);
+  font: 600 max(calc(.8125 * var(--fr)), 13px)/1 var(--text);
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  -webkit-tap-highlight-color: transparent;
+}
+.film-clip-wait[data-wait] { display: flex; }
+.film-clip-wait > span { display: none; }
+.film-clip-wait[data-wait="load"] { align-items: flex-end; justify-content: flex-end; padding: 12px; pointer-events: none; animation: clip-wait-in .4s ease .3s both; }
+.film-clip-wait[data-wait="load"] .film-clip-wait-load {
+  display: block;
+  padding: 7px 11px 7px 24px;
+  border-radius: 999px;
+  background: rgb(12 10 8 / .62) radial-gradient(circle 3.5px at 13px 50%, #DDBB73 98%, transparent) no-repeat;
+  color: rgb(244 241 234 / .78);
+  font-size: max(calc(.6875 * var(--fr)), 11px);
+  animation: clip-wait-breathe 1.6s ease-in-out infinite;
+}
+.film-clip-wait[data-wait="tap"] {
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  background: rgb(12 10 8 / .55);
+  pointer-events: auto;
+  cursor: pointer;
+  animation: clip-wait-in .3s ease both;
+}
+.film-clip-wait[data-wait="tap"] .film-clip-wait-play {
+  position: relative;
+  display: block;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: linear-gradient(180deg, var(--gold-hi), #886826 36%, #6D4F1C);
+  box-shadow: 0 0 22px rgb(190 150 69 / .4);
+}
+.film-clip-wait[data-wait="tap"] .film-clip-wait-play::after {
+  content: "";
+  position: absolute;
+  left: 42%;
+  top: 50%;
+  border-style: solid;
+  border-width: 9px 0 9px 15px;
+  border-color: transparent transparent transparent #1A130B;
+  transform: translate(-30%, -50%);
+}
+.film-clip-wait[data-wait="tap"] .film-clip-wait-tap { display: block; padding: 8px 14px; border-radius: 999px; background: rgb(12 10 8 / .7); }
+.film-clip-wait:focus-visible { outline: 2px solid var(--gold-hi); outline-offset: -4px; }
+@keyframes clip-wait-in { from { opacity: 0; } }
+@keyframes clip-wait-breathe { 50% { opacity: .55; } }
 
 /* Between Elora and the call: the thread she leaves, drawn out both ways,
    held, then gathered to the call's length (--keep), handing over to it. */
@@ -1414,6 +1476,10 @@ html.way-boot body { visibility: hidden; }
 .way.is-at-door .way-door-at { visibility: visible; animation: way-rise 1.4s var(--ease) both; }
 @keyframes way-rise { from { opacity: 0; transform: translate3d(0, 18px, 0); } }
 .way-doorway { position: relative; display: block; width: 100%; height: 100%; perspective: 900px; background: #060504; }
+/* What's drawn in the doorway (its light, the leaf on its hinge in 3D, the frame) is never what a click lands on: the
+   doorway itself is, a flat box inside the door's button, however a browser hit-tests the 3D leaf. (Its hover still swings
+   the leaf: it's the doorway being hovered.) */
+.way-doorway > * { pointer-events: none; }
 /* The light beyond it, through the gap, and spilling out of it. */
 .way-light {
   position: absolute;

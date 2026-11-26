@@ -168,6 +168,18 @@ const CLIP_AT = parts.flatMap(({ scene, start, segment }, i) =>
 const CLIP_KEYS = CLIP_AT.map((c) => c.key);
 /** A video loads shortly before it plays, on the part the visitor actually chose. */
 const PREFETCH = 8;
+/** A video not under way this long (film seconds) after it should be (still loading, or not let to start): the film waits for it. */
+const STUCK = 0.25;
+/** A video the film has waited this long for (ms) with nothing coming in: the film goes on without it, on its still. */
+const GIVE_UP_MS = 25000;
+/** A video the film had to wait this long for (ms) to load: the connection is slow, and from then on each video is its SD cut. */
+const SLOW_LOAD_MS = 1500;
+/**
+ * The connection seen to be slow this visit (a browser that says so up front,
+ * work-video.tsx's budget(), takes the SD cuts from the start; Safari doesn't
+ * say, so it's found out from a video that kept the film waiting).
+ */
+let slowNet = false;
 /** Nothing done on the picker for this long, in ms: the cards pulse once. */
 const NUDGE_MS = 20000;
 /** A phone upright: the scenes' tall layout. Kept the same as film.css's. */
@@ -326,6 +338,8 @@ declare global {
       sendHold: number;
       voice: typeof VOICE;
       captions: typeof CAPTIONS;
+      /** Each video: when it plays, in seconds into the film, and where in it it starts. */
+      clips: typeof CLIP_AT;
     };
     /** Set only while reviewing (?at=): stops the film at a time, in seconds. */
     __eloFilm?: {
@@ -383,6 +397,7 @@ if (typeof window !== "undefined")
     sendHold: SEND_HOLD,
     voice: VOICE,
     captions: CAPTIONS,
+    clips: CLIP_AT,
   };
 
 /**
@@ -485,7 +500,12 @@ export function FilmDoor({ label }: { label: string }) {
   /** The door, opened: the film starts behind it as the camera goes through (or at once, under reduced motion). */
   const enter = useCallback(() => {
     const go = { ...target.current, ind: target.current.ind ?? visit.current.ind, memory: { ...visit.current } };
-    prime(go.at);
+    // Her voice, the sound effects and the videos, unlocked in the tap; should a browser refuse any of it, the door opens all the same.
+    try {
+      prime(go.at);
+    } catch {
+      /* (The film plays on without what wasn't unlocked: a video that won't start asks for a tap of its own.) */
+    }
     clearTimeout(leaving.current);
     setClosing(false);
     setShowing(go);
@@ -637,6 +657,7 @@ function Film({
     (key: string, slot: HTMLElement | null) => {
       if (still) return;
       const v = (clips.current[key] ??= makeClip());
+      v.dataset.clip = key;
       if (slot) slot.appendChild(v);
       else {
         v.pause();
@@ -668,8 +689,12 @@ function Film({
     if (!el || typeof el.getAnimations !== "function") return;
     const a = sound?.current ?? null;
     const player = review ? null : effectsPlayer.current;
-    // (Transitions, such as a video fading in over its still, keep their own time.)
-    const anims = () => el.getAnimations({ subtree: true }).filter((x) => !(typeof CSSTransition !== "undefined" && x instanceof CSSTransition));
+    // (Transitions, such as a video fading in over its still, keep their own time; so does a waiting video's word, below.)
+    const waitMark = (x: Animation) => {
+      const target = x.effect instanceof KeyframeEffect ? x.effect.target : null;
+      return target instanceof Element && !!target.closest(".film-clip-wait");
+    };
+    const anims = () => el.getAnimations({ subtree: true }).filter((x) => !(typeof CSSTransition !== "undefined" && x instanceof CSSTransition) && !waitMark(x));
     const tick0 = el.querySelector(".film-clock")?.getAnimations()[0];
     const now = () => Number(tick0?.currentTime ?? 0) / 1000;
     /** The part of the film playing, as the clock goes: the hook, the picker (stopped), a walkthrough, the plan and the close, or the note. */
@@ -688,28 +713,152 @@ function Film({
       else if (v.paused) v.play().catch(() => {});
     };
     /**
-     * The videos, at `t`: each loads PREFETCH seconds before it plays; while
-     * it plays it runs on its own, put back only if it drifts a second off;
-     * stopped, or not yet on, it waits on the right frame. One the browser
-     * won't start (an iPhone in Low Power Mode, despite the click) starts on
-     * the visitor's next tap.
+     * A video whose moment has come but that isn't under way: still loading,
+     * or not let to start on its own (an iPhone in Low Power Mode, despite the
+     * door's tap). The film waits for it right there, her voice and all, with
+     * a word on the video: a quiet "Loading" while it loads; "Tap to play"
+     * while it needs a tap, which plays it in place (a tap anywhere on the
+     * film does). Once it's under way, the film goes on with it, so it plays
+     * to its end before the film moves on. One that fails to load at all is
+     * left on its still, and the film goes on.
      */
-    const blocked = new Set<HTMLVideoElement>();
+    let held: { v: HTMLVideoElement; t: number; pos: number; why: "load" | "tap"; since: number } | null = null;
+    let loadPoll = 0;
+    /** When (film time) each video should have been under way and wasn't yet. */
+    const stuck = new Map<HTMLVideoElement, number>();
+    /** Each playing video's time at a film time, to see that it keeps up. */
+    const prog = new Map<HTMLVideoElement, { t: number; ct: number }>();
+    const failed = new Set<HTMLVideoElement>();
     // (Taps anywhere on the film count, the cards too.)
     const host = el.parentElement ?? el;
-    const onGesture = () => {
-      for (const v of blocked) {
-        v.play()?.catch(() => {});
-        if (!v.paused) blocked.delete(v);
+    let slowTimer = 0;
+    /** The word on a waiting video: over everything in its scene (a stage still fading out over it, too), on the video's box. */
+    let note: HTMLButtonElement | null = null;
+    const placeNote = () => {
+      if (!held || !note) return;
+      const r = (held.v.closest(".film-clip") ?? held.v).getBoundingClientRect();
+      const o = el.getBoundingClientRect();
+      note.style.left = `${r.left - o.left}px`;
+      note.style.top = `${r.top - o.top}px`;
+      note.style.width = `${r.width}px`;
+      note.style.height = `${r.height}px`;
+    };
+    const markWait = (why: "load" | "tap" | null) => {
+      if (!why) {
+        note?.remove();
+        note = null;
+        window.removeEventListener("resize", placeNote);
+        return;
       }
-      if (!blocked.size) for (const type of GESTURES) host.removeEventListener(type, onGesture, true);
-      clock.current?.align();
+      if (!note) {
+        note = document.createElement("button");
+        note.type = "button";
+        note.className = "film-clip-wait";
+        note.innerHTML =
+          '<span class="film-clip-wait-play" aria-hidden="true"></span><span class="film-clip-wait-tap">Tap to play</span><span class="film-clip-wait-load">Loading</span>';
+        note.addEventListener("click", () => onTap());
+        el.appendChild(note);
+        window.addEventListener("resize", placeNote);
+      }
+      note.dataset.wait = why;
+      note.tabIndex = why === "tap" ? 0 : -1;
+      note.setAttribute("aria-label", why === "tap" ? "Play the video" : "The video is loading");
+      placeNote();
+    };
+    /** The wait let go of (and its word off the video): on with the film from where it waited, or (`stay`) left where it is. */
+    const release = (stay = false) => {
+      const h = held;
+      if (!h) return;
+      held = null;
+      clearTimeout(slowTimer);
+      clearInterval(loadPoll);
+      markWait(null);
+      h.v.removeEventListener("canplay", onReady);
+      h.v.removeEventListener("canplaythrough", onReady);
+      h.v.removeEventListener("playing", onReady);
+      h.v.removeEventListener("error", onFail);
+      for (const type of GESTURES) host.removeEventListener(type, onTap, true);
+      stuck.clear();
+      prog.clear();
+      if (stay) return;
+      // (Kept playing while it loaded: back to the frame the film waited on, so none of it is missed.)
+      if (h.why === "load" && !h.v.paused) h.v.pause();
+      if (Math.abs(h.v.currentTime - h.pos) > 0.05) h.v.currentTime = h.pos;
+      clock.current?.go(h.t, true);
+    };
+    /**
+     * Enough of a waiting video there to go on with it, from the frame the film
+     * waits on (`from`): the browser says it can play through; or the next 2.5 s
+     * (or the rest of it) is in; or it's been seen to play 1.5 s on from there.
+     */
+    const covered = (v: HTMLVideoElement, from: number) => {
+      if (v.readyState < 3) return false;
+      if (v.readyState >= 4) return true;
+      const need = Math.min(2.5, Math.max(0.2, (Number.isFinite(v.duration) ? v.duration : Infinity) - from - 0.1));
+      const b = v.buffered;
+      for (let i = 0; i < b.length; i++) if (b.start(i) <= from + 0.05 && b.end(i) - from >= need) return true;
+      return v.currentTime - from >= Math.min(1.5, need);
+    };
+    const onReady = () => {
+      if (held?.why !== "load") return;
+      if (covered(held.v, held.pos)) release();
+      // Nothing comes in at all (the connection's gone): on without it, on its still.
+      else if (performance.now() - held.since > GIVE_UP_MS) onFail();
+    };
+    const onFail = () => {
+      if (!held) return;
+      failed.add(held.v);
+      release();
+    };
+    // In the tap itself, so the video may start: the film goes on, and starts the video as it does (keepClips).
+    const onTap = () => {
+      if (held?.why === "tap") release();
+    };
+    /** The film waits for `v` at the film's time now, on its frame `pos`. */
+    const holdFor = (v: HTMLVideoElement, why: "load" | "tap", pos: number) => {
+      if (held) {
+        if (held.v !== v || held.why === why) return;
+        // Loading, but then not let to start: it needs a tap.
+        held.why = why;
+        clearInterval(loadPoll);
+      } else {
+        const t = now();
+        clock.current?.go(t, false);
+        held = { v, t, pos, why, since: performance.now() };
+      }
+      markWait(why);
+      if (why === "tap") {
+        for (const type of GESTURES) host.addEventListener(type, onTap, true);
+        return;
+      }
+      // Kept playing while the film waits (a browser may load no more of a stopped video: an iPhone's doesn't start to).
+      if (v.paused) v.play()?.catch(refused(v));
+      loadPoll = window.setInterval(onReady, 250);
+      v.addEventListener("canplay", onReady);
+      v.addEventListener("canplaythrough", onReady);
+      v.addEventListener("playing", onReady);
+      v.addEventListener("error", onFail);
+      // Slow to load: from now on the SD cuts (this one too, if it's still far off).
+      slowTimer = window.setTimeout(() => {
+        if (held?.why !== "load" || slowNet) return;
+        slowNet = true;
+        keepClips(now(), false);
+      }, SLOW_LOAD_MS);
+      onReady();
     };
     const refused = (v: HTMLVideoElement) => (err: unknown) => {
       if (!(err instanceof DOMException) || err.name !== "NotAllowedError") return;
-      if (!blocked.size) for (const type of GESTURES) host.addEventListener(type, onGesture, true);
-      blocked.add(v);
+      if (!v.isConnected || (paused && held?.v !== v)) return;
+      const c = CLIP_AT.find((x) => clips.current?.[x.key] === v);
+      holdFor(v, "tap", held?.v === v ? held.pos : c ? Math.max(0, now() - c.from) + c.offset : v.currentTime);
     };
+    /**
+     * The videos, at `t`: each loads PREFETCH seconds before it plays; while
+     * it plays it runs on its own, put back only if it gets a second ahead
+     * (never jumped ahead: behind, it has run out of what it loaded); stopped,
+     * or not yet on, it waits on the right frame. One not under way STUCK
+     * seconds after it should be: the film waits for it (above).
+     */
     const keepClips = (t: number, moving: boolean) => {
       if (still) return;
       for (const c of CLIP_AT) {
@@ -719,7 +868,7 @@ function Film({
         if (seg === c.segment && t >= c.from - PREFETCH && t <= c.to) {
           const cut = MEDIA[c.media].cuts;
           const upright = window.matchMedia(TALL).matches;
-          const src = budget() === "sd" ? (upright ? cut.mobileSd : cut.desktopSd) : upright ? cut.mobile : cut.desktop;
+          const src = budget() === "sd" || slowNet ? (upright ? cut.mobileSd : cut.desktopSd) : upright ? cut.mobile : cut.desktop;
           if (!src) {
             if (v.dataset.src) {
               v.pause();
@@ -746,16 +895,43 @@ function Film({
         const last = dur ? dur - 0.04 : Infinity;
         const pos = Math.min(want, last);
         const off = Math.abs(v.currentTime - pos);
+        // The one the film is waiting for to load: left playing (so it loads), wherever it's got to.
+        if (held?.v === v && held.why === "load") {
+          if (v.paused) v.play()?.catch(refused(v));
+          continue;
+        }
         if (!moving || !v.isConnected || t < c.from || t > c.to || (!loops && want >= last)) {
           if (!v.paused) v.pause();
           if (t <= c.to && off > 0.05) v.currentTime = pos;
+          stuck.delete(v);
+          prog.delete(v);
           continue;
         }
         if (loops && !v.loop) v.loop = true;
+        if (failed.has(v)) continue;
+        // Behind the film while it plays: it ran out of what it had loaded. It's never jumped ahead to catch up (that
+        // throws away what it has, and shows a frozen frame): the film waits for it instead (below).
+        const behind = !loops && !v.paused && !v.seeking && pos - v.currentTime > 0.6;
         if (v.paused) {
           if (off > 0.15) v.currentTime = pos;
-          if (!blocked.has(v)) v.play()?.catch(refused(v));
-        } else if (off > 1 && !(loops && dur - off < 1)) v.currentTime = pos;
+          v.play()?.catch(refused(v));
+        } else if (!behind && off > 1 && !(loops && dur - off < 1)) v.currentTime = pos;
+        // Under way, or not: not started (still loading, or not let to start), or playing but not keeping up.
+        let going = !v.paused && v.readyState >= 3 && !behind;
+        const p = prog.get(v);
+        if (!going || loops) prog.delete(v);
+        else if (!p || v.seeking) prog.set(v, { t, ct: v.currentTime });
+        else if (t - p.t >= 0.4) {
+          if (v.currentTime - p.ct < 0.3 * (t - p.t)) going = false;
+          else prog.set(v, { t, ct: v.currentTime });
+        }
+        // Not under way for STUCK seconds now: the film waits for it, on the frame it should be on.
+        if (going) stuck.delete(v);
+        else if (!stuck.has(v)) stuck.set(v, t);
+        else if (t - stuck.get(v)! >= STUCK) {
+          holdFor(v, "load", pos);
+          return;
+        }
       }
     };
     /** All running at `t`: set by their start time, so none that has finished starts over. */
@@ -950,6 +1126,8 @@ function Film({
     };
     /** To `t` on the timeline, playing or stopped there: the pictures, then her voice, ready where she'll pick up. */
     const go = (t: number, play: boolean) => {
+      // (Moved on any other way while waiting for a video (a question answered, another business): the wait's over.)
+      release(true);
       quiet();
       seg = segOf(t).id;
       setPart(seg);
@@ -1093,7 +1271,7 @@ function Film({
       quiet();
       a?.removeEventListener("waiting", onWaiting);
       a?.removeEventListener("playing", onPlaying);
-      for (const type of GESTURES) host.removeEventListener(type, onGesture, true);
+      release(true);
       clock.current = null;
       delete window.__eloFilm;
     };
